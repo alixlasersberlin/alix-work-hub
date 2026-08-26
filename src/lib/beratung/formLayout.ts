@@ -58,12 +58,15 @@ export type BeratungFormLayout = {
   steps: Record<string, BeratungStepOverride>;
   /** Überschreibungen für die Startseite des Wizards. */
   intro?: { title?: string; sub?: string; cta?: string };
+  /** Optionslisten (Reihenfolge, ausgeblendete und zusätzliche Optionen). */
+  options?: Record<string, { order?: string[]; hidden?: string[]; extra?: string[] }>;
 };
+
 
 export type BeratungLayoutConfig = Record<BeratungFormKey, BeratungFormLayout>;
 
 export function defaultLayout(form: BeratungFormKey): BeratungFormLayout {
-  return { order: stepDefs(form).map((s) => s.id), steps: {}, intro: {} };
+  return { order: stepDefs(form).map((s) => s.id), steps: {}, intro: {}, options: {} };
 }
 
 export const BERATUNG_LAYOUT_DEFAULTS: BeratungLayoutConfig = {
@@ -78,7 +81,7 @@ export function normalizeLayout(form: BeratungFormKey, raw: unknown): BeratungFo
   const cfg = (raw || {}) as Partial<BeratungFormLayout>;
   const order = Array.isArray(cfg.order) ? cfg.order.filter((n) => valid.includes(n)) : [];
   for (const id of valid) if (!order.includes(id)) order.push(id);
-  return { order, steps: cfg.steps || {}, intro: cfg.intro || {} };
+  return { order, steps: cfg.steps || {}, intro: cfg.intro || {}, options: cfg.options || {} };
 }
 
 export async function loadBeratungLayout(): Promise<BeratungLayoutConfig> {
@@ -125,4 +128,86 @@ export function visibleSequence(form: BeratungFormKey, layout: BeratungFormLayou
     return !l.steps?.[String(id)]?.hidden;
   });
   return seq.length ? seq : defs.map((d) => d.id);
+}
+
+/* ------------------------------------------------------------------ */
+/* Optionslisten (Auswahlmöglichkeiten innerhalb der Schritte)         */
+/* ------------------------------------------------------------------ */
+
+export type BeratungOptionListDef = {
+  /** Interner Schlüssel der Liste. */
+  key: string;
+  /** Anzeigename in der Verwaltung. */
+  name: string;
+  /** Zugehöriger Schritt (nur informativ). */
+  stepId: number;
+  /** Werkseinstellung der Optionen. */
+  defaults: string[];
+};
+
+export const DEFAULT_DELIVERY = ['schnellstmöglich', '2–4 Wochen', '4–8 Wochen', 'mehr als 8 Wochen'];
+export const DEFAULT_ADDITIONAL = [
+  'NiSV Ausbildung',
+  'Laserschulung',
+  'Finanzierungsmöglichkeiten',
+  'Mietkauf / Miete / Smart Impulse',
+  'Katalog anfordern',
+];
+export const DEFAULT_CONSULTATION = [
+  'Telefonische Beratung',
+  'WhatsApp Beratung',
+  'Studio Beratung',
+  'Alix Showroom',
+  'Videoberatung',
+];
+export const DEFAULT_INTERESTS = [
+  'Haarentfernung',
+  'Gesichtsbehandlungen',
+  'Körperbehandlungen',
+  'Medical Department',
+  'Professional Kurs',
+  'Alix Academy',
+];
+
+export const STANDARD_OPTION_LISTS: BeratungOptionListDef[] = [
+  { key: 'interests', name: 'Interessen', stepId: 1, defaults: DEFAULT_INTERESTS },
+  { key: 'additional', name: 'Weitere Interessen', stepId: 3, defaults: DEFAULT_ADDITIONAL },
+  { key: 'delivery', name: 'Lieferzeitraum', stepId: 4, defaults: DEFAULT_DELIVERY },
+  { key: 'consultation', name: 'Beratungsart', stepId: 10, defaults: DEFAULT_CONSULTATION },
+];
+
+export const PREMIUM_OPTION_LISTS: BeratungOptionListDef[] = [
+  { key: 'delivery', name: 'Lieferzeitraum', stepId: 3, defaults: DEFAULT_DELIVERY },
+  { key: 'consultation', name: 'Beratungsart', stepId: 3, defaults: DEFAULT_CONSULTATION },
+  { key: 'additional', name: 'Weitere Interessen', stepId: 3, defaults: DEFAULT_ADDITIONAL },
+];
+
+export function optionLists(form: BeratungFormKey): BeratungOptionListDef[] {
+  return form === 'premium' ? PREMIUM_OPTION_LISTS : STANDARD_OPTION_LISTS;
+}
+
+export type BeratungOptionConfig = {
+  /** Reihenfolge der Optionen (Werte). */
+  order?: string[];
+  /** Ausgeblendete Optionen (Werte). */
+  hidden?: string[];
+  /** Zusätzlich angelegte Optionen (Werte). */
+  extra?: string[];
+};
+
+/** Ermittelt die anzuzeigenden Optionen einer Liste. */
+export function resolveOptions(
+  layout: BeratungFormLayout | null | undefined,
+  key: string,
+  defaults: string[],
+): string[] {
+  const cfg = (layout?.options?.[key] || {}) as BeratungOptionConfig;
+  const all = [...defaults, ...(cfg.extra || []).filter((e) => !defaults.includes(e))];
+  const ordered = [
+    ...(cfg.order || []).filter((o) => all.includes(o)),
+    ...all.filter((o) => !(cfg.order || []).includes(o)),
+  ];
+  const hidden = new Set(cfg.hidden || []);
+  const visible = ordered.filter((o) => !hidden.has(o));
+  return visible.length ? visible : defaults;
 }

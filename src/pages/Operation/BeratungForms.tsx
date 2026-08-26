@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { ExternalLink, Copy, Eye, EyeOff, Loader2, Save, MessagesSquare, Code2, ArrowUp, ArrowDown, RotateCcw, GripVertical } from 'lucide-react';
+import { ExternalLink, Copy, Eye, EyeOff, Loader2, Save, MessagesSquare, Code2, ArrowUp, ArrowDown, RotateCcw, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import {
   BERATUNG_FORMS_META,
@@ -24,6 +24,7 @@ import {
   loadBeratungLayout,
   saveBeratungLayout,
   stepDefs,
+  optionLists,
   defaultLayout,
   type BeratungLayoutConfig,
 } from '@/lib/beratung/formLayout';
@@ -61,6 +62,54 @@ export default function BeratungForms() {
         steps: { ...prev[form].steps, [String(id)]: { ...(prev[form].steps?.[String(id)] || {}), ...patch } },
       },
     }));
+
+  const [newOption, setNewOption] = useState<Record<string, string>>({});
+
+  const allOptions = (form: BeratungFormKey, key: string, defaults: string[]) => {
+    const oc = layout[form].options?.[key] || {};
+    const all = [...defaults, ...(oc.extra || []).filter((e) => !defaults.includes(e))];
+    const order = oc.order || [];
+    return [...order.filter((o) => all.includes(o)), ...all.filter((o) => !order.includes(o))];
+  };
+
+  const setOptionCfg = (
+    form: BeratungFormKey,
+    key: string,
+    patch: { order?: string[]; hidden?: string[]; extra?: string[] },
+  ) =>
+    setLayout((prev) => ({
+      ...prev,
+      [form]: {
+        ...prev[form],
+        options: {
+          ...(prev[form].options || {}),
+          [key]: { ...((prev[form].options || {})[key] || {}), ...patch },
+        },
+      },
+    }));
+
+  const moveOption = (form: BeratungFormKey, key: string, defaults: string[], value: string, dir: -1 | 1) => {
+    const order = allOptions(form, key, defaults);
+    const i = order.indexOf(value);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    setOptionCfg(form, key, { order });
+  };
+
+  const addOption = (form: BeratungFormKey, key: string, defaults: string[]) => {
+    const k = `${form}:${key}`;
+    const value = (newOption[k] || '').trim();
+    if (!value) return;
+    const existing = allOptions(form, key, defaults);
+    if (existing.includes(value)) {
+      toast.error('Option existiert bereits');
+      return;
+    }
+    const oc = layout[form].options?.[key] || {};
+    setOptionCfg(form, key, { extra: [...(oc.extra || []), value], order: [...existing, value] });
+    setNewOption((p) => ({ ...p, [k]: '' }));
+  };
 
   const resetLayout = (form: BeratungFormKey) =>
     setLayout((prev) => ({ ...prev, [form]: defaultLayout(form) }));
@@ -283,6 +332,96 @@ export default function BeratungForms() {
                     })}
                   </div>
                 </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm">Auswahloptionen</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Optionen ein-/ausblenden, sortieren oder eigene Optionen hinzufügen.
+                    </p>
+                  </div>
+                  {optionLists(meta.key).map((list) => {
+                    const values = allOptions(meta.key, list.key, list.defaults);
+                    const oc = layout[meta.key].options?.[list.key] || {};
+                    const hidden = new Set(oc.hidden || []);
+                    return (
+                      <div key={list.key} className="rounded-lg border p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{list.name}</span>
+                          <Badge variant="outline" className="text-[10px]">Schritt {list.stepId}</Badge>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="ml-auto"
+                            onClick={() => setOptionCfg(meta.key, list.key, { order: undefined, hidden: [], extra: [] })}
+                          >
+                            <RotateCcw className="h-3 w-3 mr-1" /> Zurücksetzen
+                          </Button>
+                        </div>
+                        <div className="space-y-1.5">
+                          {values.map((v, i) => {
+                            const isExtra = !list.defaults.includes(v);
+                            return (
+                              <div key={v} className="flex items-center gap-2 rounded-md border bg-card px-2 py-1.5">
+                                <Switch
+                                  checked={!hidden.has(v)}
+                                  onCheckedChange={(on) =>
+                                    setOptionCfg(meta.key, list.key, {
+                                      hidden: on ? (oc.hidden || []).filter((h) => h !== v) : [...(oc.hidden || []), v],
+                                    })
+                                  }
+                                />
+                                <span className={`text-sm ${hidden.has(v) ? 'text-muted-foreground line-through' : ''}`}>
+                                  {v}
+                                </span>
+                                {isExtra && <Badge variant="secondary" className="text-[10px]">eigene</Badge>}
+                                <div className="ml-auto flex items-center gap-1">
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" disabled={i === 0}
+                                    onClick={() => moveOption(meta.key, list.key, list.defaults, v, -1)} aria-label="Nach oben">
+                                    <ArrowUp className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" disabled={i === values.length - 1}
+                                    onClick={() => moveOption(meta.key, list.key, list.defaults, v, 1)} aria-label="Nach unten">
+                                    <ArrowDown className="h-3.5 w-3.5" />
+                                  </Button>
+                                  {isExtra && (
+                                    <Button size="icon" variant="ghost" className="h-7 w-7"
+                                      onClick={() =>
+                                        setOptionCfg(meta.key, list.key, {
+                                          extra: (oc.extra || []).filter((e) => e !== v),
+                                          order: (oc.order || values).filter((o) => o !== v),
+                                        })
+                                      }
+                                      aria-label="Entfernen">
+                                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            className="h-8"
+                            placeholder="Neue Option …"
+                            value={newOption[`${meta.key}:${list.key}`] ?? ''}
+                            onChange={(e) => setNewOption((p) => ({ ...p, [`${meta.key}:${list.key}`]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') { e.preventDefault(); addOption(meta.key, list.key, list.defaults); }
+                            }}
+                          />
+                          <Button size="sm" variant="outline" onClick={() => addOption(meta.key, list.key, list.defaults)}>
+                            <Plus className="h-3 w-3 mr-1" /> Hinzufügen
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
 
                 <p className="text-xs text-muted-foreground">
                   Inhalte/Schritte: <code>{meta.component}</code> · Anfragen landen unter{' '}

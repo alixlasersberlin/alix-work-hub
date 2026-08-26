@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
-import { loadBeratungLayoutFor, visibleSequence, defaultLayout, type BeratungFormLayout } from '@/lib/beratung/formLayout';
+import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
 import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import {
   PREMIUM_CATEGORIES,
@@ -170,6 +170,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const lastSlot = seq.length;
   const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
   const so = (id: number) => layout.steps?.[String(id)] || {};
+  const additionalOptions = useMemo(() => resolveOptions(layout, 'additional', DEFAULT_ADDITIONAL), [layout]);
+  const deliveryOptions = useMemo(() => resolveOptions(layout, 'delivery', DEFAULT_DELIVERY), [layout]);
+  const consultationOptions = useMemo(() => resolveOptions(layout, 'consultation', DEFAULT_CONSULTATION), [layout]);
   const STEP_LABELS = useMemo(
     () => seq.map((id) => layout.steps?.[String(id)]?.title || t.steps[id - 1] || `0${id}`),
     [seq, layout, t],
@@ -609,7 +612,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   error={attempted[3] && !data.delivery_preference ? t.g_delivery_err : null}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {DELIVERY.map((d) => (
+                    {deliveryOptions.map((d) => (
                       <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
                         {tv(t.delivery, d)}
                       </Pill>
@@ -622,7 +625,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   error={attempted[3] && !data.consultation_type ? t.g_consultation_err : null}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {CONSULTATION.map((c) => (
+                    {consultationOptions.map((c) => (
                       <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
                         {tv(t.consultation, c)}
                       </Pill>
@@ -632,7 +635,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
                 <Group label={t.g_additional}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {ADDITIONAL.map((a) => (
+                    {additionalOptions.map((a) => (
                       <Pill key={a} active={data.additional_interests.includes(a)} onClick={() => toggleAdditional(a)}>
                         {tv(t.additional, a)}
                       </Pill>
