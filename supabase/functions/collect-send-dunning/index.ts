@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;color:#111;border:1px solid #ece5d3">
         <div style="background:#f3f0e8;padding:18px 24px;border-bottom:3px solid #c9a227">
           <div style="font-size:16px;font-weight:bold;color:#111">Alix Lasers GmbH</div>
-          <div style="font-size:11px;color:#666">Zeppelin Straße 3 · 12529 Berlin · Deutschland</div>
+          <div style="font-size:11px;color:#666">Zeppelin Straße 3 · 12529 Berlin- Schönefeld · Deutschland</div>
         </div>
         <div style="padding:24px">
           <h2 style="margin:0 0 12px;font-size:17px;color:#111">${esc(stage?.label ?? 'Zahlungserinnerung')}</h2>
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
           <p style="margin-top:16px">Mit freundlichen Grüßen<br/><strong>Alix Lasers Finance – Buchhaltung</strong></p>
         </div>
         <div style="background:#faf8f3;border-top:1px solid #ece5d3;padding:12px 24px;font-size:11px;color:#777">
-          Alix Lasers GmbH · Zeppelin Straße 3 · 12529 Berlin · Telefon +49 30 577 127 45 · service@alix-lasers.com<br/>
+          Alix Lasers GmbH · Zeppelin Straße 3 · 12529 Berlin- Schönefeld · Telefon +49 30 577 127 45 · service@alix-lasers.com<br/>
           Bankverbindung: Deutsche Bank · IBAN DE07 1007 0100 0142 6600 00 · BIC DEUTDEBB101
         </div>
       </div>`;

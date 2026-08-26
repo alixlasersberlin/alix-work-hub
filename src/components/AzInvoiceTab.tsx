@@ -383,7 +383,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(7.5);
       doc.setTextColor(90, 90, 90);
       doc.text(
-        'Alix Lasers GmbH · Zeppelin Straße 3 · 12529 Berlin · USt-IdNr. DE321691012',
+        'Alix Lasers GmbH · Zeppelin Straße 3 · 12529 Berlin- Schönefeld · USt-IdNr. DE321691012',
         LEFT, TOP_CONTENT + 8,
       );
 
@@ -536,7 +536,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         doc.setTextColor(120, 120, 120);
         // Absender-Pflichtangaben im Footer auf jeder Seite
         doc.text(
-          'Alix Lasers GmbH · Zeppelin Straße 3 · 12529 Berlin · USt-IdNr. DE321691012',
+          'Alix Lasers GmbH · Zeppelin Straße 3 · 12529 Berlin- Schönefeld · USt-IdNr. DE321691012',
           LEFT, PAGE_H - 12,
         );
         doc.text(

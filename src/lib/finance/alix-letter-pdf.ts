@@ -6,7 +6,7 @@ import kontoauszugBg from '@/assets/kontoauszug-vorlage.png.asset.json';
 export const COMPANY = {
   name: 'Alix Lasers GmbH',
   street: 'Zeppelin Straße 3',
-  city: '12529 Berlin',
+  city: '12529 Berlin- Schönefeld',
   country: 'Deutschland',
   phone: '+49 30 577 127 45',
   fax: '+49 30 577 127 46',

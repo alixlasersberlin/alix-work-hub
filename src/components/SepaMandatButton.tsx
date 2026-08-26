@@ -15,7 +15,7 @@ interface Props {
 const ALIX = {
   name: 'Alix Lasers GmbH',
   street: 'Zeppelin Straße 3',
-  city: '12529 Berlin',
+  city: '12529 Berlin- Schönefeld',
   country: 'Deutschland',
   glaeubigerId: 'DE02ZZZ00002605062',
 };
