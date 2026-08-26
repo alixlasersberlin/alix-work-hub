@@ -188,10 +188,15 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   );
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
   /** Unterschritte: pro Schritt nur eine Frage. */
-  const SUB_COUNT: Record<number, number> = { 3: 4 };
+  const step1Subs = useMemo(
+    () => ['name', ...(isFieldVisible('premium', layout, 'company') ? ['company'] : []), 'email', 'phone'] as const,
+    [layout],
+  );
+  const SUB_COUNT: Record<number, number> = { 1: step1Subs.length, 3: 4 };
   const subTotal = SUB_COUNT[cur] ?? 1;
   const [sub, setSub] = useState(0);
   useEffect(() => { setSub(0); }, [cur]);
+  const s1 = step1Subs[sub];
 
 
   const [submitting, setSubmitting] = useState(false);
