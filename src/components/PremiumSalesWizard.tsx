@@ -461,13 +461,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 </Labeled>
                 )}
 
-                <Labeled label={t.email} error={showError('email')} valid={isValid('email')}>
+                <Labeled label={fl('email', t.email)} error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
                     inputMode="email"
                     autoComplete="email"
                     maxLength={255}
-                    placeholder={t.email_ph}
+                    placeholder={fp('email', t.email_ph)}
                     className={cn(fieldCls, showError('email') && '!border-red-300 focus:!ring-red-200')}
                     value={data.email}
                     aria-invalid={!!showError('email')}
@@ -476,7 +476,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   />
                 </Labeled>
                 <Labeled
-                  label={t.phone}
+                  label={fl('phone', t.phone)}
+
                   error={showError('country_code') ?? showError('phone')}
                   valid={isValid('phone') && !errors.country_code}
                 >
