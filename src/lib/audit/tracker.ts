@@ -25,7 +25,7 @@ class AuditTracker {
   private pauseUntil = 0;
 
 
-  async start() {
+  async start(attempt = 0) {
     if (this.started) return;
     this.started = true;
     try {
@@ -33,10 +33,16 @@ class AuditTracker {
       const { data, error } = await supabase.functions.invoke("audit-session-start", { body: info });
       if (error) throw error;
       this.sessionId = (data as any)?.session_id ?? null;
+      if (!this.sessionId) throw new Error("no session id");
     } catch (e) {
-      // Silent — audit must not break UX
+      // Silent — audit must never break UX. Retry a few times with backoff
+      // for transient edge-runtime issues (503 / service degraded).
       console.warn("[audit] session start failed", e);
       this.started = false;
+      if (attempt < 3) {
+        const delay = 15_000 * Math.pow(2, attempt);
+        window.setTimeout(() => { if (!this.started) this.start(attempt + 1); }, delay);
+      }
       return;
     }
     this.attachListeners();
@@ -44,6 +50,7 @@ class AuditTracker {
     this.flushTimer = window.setInterval(() => this.flush(), 15_000);
     window.addEventListener("beforeunload", this.handleUnload);
   }
+
 
   async stop() {
     if (!this.started) return;
