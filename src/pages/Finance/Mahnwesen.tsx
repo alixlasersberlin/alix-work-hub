@@ -119,8 +119,22 @@ export default function FinanceMahnwesen() {
       if (customerIds && customerIds.length) body.customer_ids = customerIds;
       const { data, error } = await supabase.functions.invoke('finance-reminder-engine', { body });
       if (error) throw error;
-      toast({ title: `Mahn-Engine ausgeführt (${region}${customerIds?.length ? ` • ${customerIds.length} ausgewählt` : ''})`, description: `Konten: ${data?.accounts_seen ?? 0} • Entwürfe erstellt: ${data?.drafts_created ?? 0} • übersprungen: ${data?.skipped ?? 0}` });
-      setSelected(new Set());
+      const seen = Number(data?.accounts_seen ?? 0);
+      const created = Number(data?.drafts_created ?? 0);
+      const existing = Number(data?.skip_reasons?.already_has_draft ?? 0);
+      const noItems = Number(data?.skip_reasons?.no_overdue_items ?? 0);
+      const noLevel = Number(data?.skip_reasons?.no_next_level ?? 0);
+      const details = [
+        created ? `${created} neue Entwürfe erstellt` : null,
+        existing ? `${existing} bereits als Entwurf vorhanden` : null,
+        noItems ? `${noItems} ohne fällige Rechnungsposition` : null,
+        noLevel ? `${noLevel} noch ohne nächste Mahnstufe` : null,
+      ].filter(Boolean).join(' • ');
+      toast({
+        title: created > 0 ? 'Mahn-Engine erfolgreich' : seen > 0 ? 'Keine neue Mahnung erforderlich' : 'Kein passendes Konto verarbeitet',
+        description: details || `${seen} Konten geprüft, keine Änderung erforderlich.`,
+      });
+      if (seen > 0) setSelected(new Set());
       await load();
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message ?? 'Unbekannt', variant: 'destructive' });
