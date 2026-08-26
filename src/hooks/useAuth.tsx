@@ -76,8 +76,19 @@ const MFA_PRIV_KEY = 'alixwork.mfa_privileged';
 const MFA_SMS_TAB_KEY = 'alixwork.mfa_sms_verified_tab';
 const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 
+const MFA_TAB_USER_KEY = 'alixwork.mfa_verified_user';
+
+function rememberMfaUser() {
+  try {
+    const raw = localStorage.getItem(`sb-${(import.meta as any).env?.VITE_SUPABASE_PROJECT_ID}-auth-token`);
+    const uid = raw ? JSON.parse(raw)?.user?.id : null;
+    if (uid) sessionStorage.setItem(MFA_TAB_USER_KEY, uid);
+  } catch { /* ignore */ }
+}
+
 export function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
+  rememberMfaUser();
   // Beim erfolgreichen TOTP startet ein 24h-Grace-Window auf diesem Gerät
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
 }
@@ -92,10 +103,20 @@ function isMfaSmsVerifiedThisTab() {
   try { return sessionStorage.getItem(MFA_SMS_TAB_KEY) === '1'; } catch { return false; }
 }
 
+/** True, wenn die MFA-Markierung zu genau diesem User gehört. */
+function mfaMarkerBelongsTo(userId?: string | null) {
+  try {
+    const stored = sessionStorage.getItem(MFA_TAB_USER_KEY);
+    return !!userId && !!stored && stored === userId;
+  } catch { return false; }
+}
+
 export function clearMfaTabMarker() {
   try { sessionStorage.removeItem(MFA_TAB_KEY); } catch { /* ignore */ }
   try { sessionStorage.removeItem(MFA_SMS_TAB_KEY); } catch { /* ignore */ }
+  try { sessionStorage.removeItem(MFA_TAB_USER_KEY); } catch { /* ignore */ }
 }
+
 
 /** Super Admin / Admin bleiben streng (OTP je Session), alle anderen nutzen das 24h-Fenster. */
 export function setMfaPrivileged(privileged: boolean) {
