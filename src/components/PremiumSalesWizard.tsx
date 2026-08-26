@@ -203,7 +203,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step]);
+  }, [step, sub]);
 
   const devices = useMemo(() => devicesForCategory(data.category), [data.category]);
 
