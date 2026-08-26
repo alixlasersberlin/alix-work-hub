@@ -79,12 +79,13 @@ const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 const MFA_TAB_USER_KEY = 'alixwork.mfa_verified_user';
 
 function rememberMfaUser() {
-  try {
-    const raw = localStorage.getItem(`sb-${(import.meta as any).env?.VITE_SUPABASE_PROJECT_ID}-auth-token`);
-    const uid = raw ? JSON.parse(raw)?.user?.id : null;
-    if (uid) sessionStorage.setItem(MFA_TAB_USER_KEY, uid);
-  } catch { /* ignore */ }
+  // Session-User asynchron nachtragen (Storage-Adapter-unabhängig)
+  supabase.auth.getSession().then(({ data }) => {
+    const uid = data?.session?.user?.id;
+    try { if (uid) sessionStorage.setItem(MFA_TAB_USER_KEY, uid); } catch { /* ignore */ }
+  }).catch(() => { /* ignore */ });
 }
+
 
 export function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
