@@ -471,8 +471,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 1 — Profil */}
           {cur === 1 && (
             <Chapter title={so(1).title || t.c1_title} sub={so(1).sub ?? t.c1_sub}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              <div key={`p-sub-${sub}`} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 animate-in fade-in slide-in-from-right-8 duration-500">
 
+                {s1 === 'name' && (<>
                 <Labeled label={fl('first_name', t.first_name)} error={showError('first_name')} valid={isValid('first_name')}>
                   <input
                     className={cn(fieldCls, showError('first_name') && '!border-red-300 focus:!ring-red-200')}
