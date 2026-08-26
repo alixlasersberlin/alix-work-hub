@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Loader2, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
@@ -159,6 +159,12 @@ interface Props {
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const { lang, setLang, t } = usePremiumLang();
   const [step, setStep] = useState(0);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+  const slideBy = (dir: number) => {
+    const el = sliderRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: 'smooth' });
+  };
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
@@ -566,48 +572,72 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               title={so(2).title || t.c2_title}
               sub={so(2).sub ?? t.c2_sub}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
-                {PREMIUM_CATEGORIES.map((c) => {
-                  const active = data.category === c.key;
-                  return (
-                    <button
-                      key={c.key}
-                      type="button"
-                      onClick={() => selectCategory(c.key)}
-                      className={cn(
-                        'group relative text-left rounded-[26px] p-[1px] transition-transform duration-500 hover:-translate-y-[3px]',
-                        chrome,
-                        active && 'ring-2 ring-sky-300/70',
-                      )}
-                    >
-                      <div className="relative overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
-                        <div className="relative h-32 sm:h-40 md:h-44 overflow-hidden">
-                          <img
-                            src={c.img}
-                            alt={c.key}
-                            loading="lazy"
-                            width={1024}
-                            height={768}
-                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] group-hover:scale-[1.05]"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-white/85 via-white/10 to-transparent" />
-                          <span className="absolute top-4 left-5 text-[11px] tracking-[0.3em] text-slate-500">{c.no}</span>
-                          <span
-                            aria-hidden
-                            className="pointer-events-none absolute -inset-x-1 top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.7)_50%,transparent_65%)]"
-                          />
+              <div className="relative">
+                <div
+                  ref={sliderRef}
+                  className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-3 -mx-4 px-4 sm:mx-0 sm:px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  {PREMIUM_CATEGORIES.map((c) => {
+                    const active = data.category === c.key;
+                    return (
+                      <button
+                        key={c.key}
+                        type="button"
+                        onClick={() => selectCategory(c.key)}
+                        className={cn(
+                          'group relative shrink-0 snap-start text-left rounded-[26px] p-[1px] transition-transform duration-500 hover:-translate-y-[3px]',
+                          'w-[78%] xs:w-[70%] sm:w-[46%] md:w-[32%] lg:w-[30%]',
+                          chrome,
+                          active && 'ring-2 ring-sky-300/70',
+                        )}
+                      >
+                        <div className="relative overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
+                          <div className="relative aspect-[4/3] max-h-44 overflow-hidden">
+                            <img
+                              src={c.img}
+                              alt={c.key}
+                              loading="lazy"
+                              width={1024}
+                              height={768}
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] group-hover:scale-[1.05]"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-white/85 via-white/10 to-transparent" />
+                            <span className="absolute top-4 left-5 text-[11px] tracking-[0.3em] text-slate-500">{c.no}</span>
+                            <span
+                              aria-hidden
+                              className="pointer-events-none absolute -inset-x-1 top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.7)_50%,transparent_65%)]"
+                            />
+                          </div>
+                          <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3">
+                            <h3 className="!text-slate-900 text-base sm:text-lg font-light tracking-tight uppercase text-balance">{tv(t.categories, c.key)}</h3>
+                            <p className="mt-1.5 text-[13px] text-slate-500 font-light text-pretty">{t.category_desc[c.key] ?? c.desc}</p>
+                          </div>
                         </div>
-                        <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3">
-                          <h3 className="!text-slate-900 text-base sm:text-lg md:text-xl font-light tracking-tight uppercase text-balance">{tv(t.categories, c.key)}</h3>
-                          <p className="mt-1.5 text-[13px] text-slate-500 font-light text-pretty">{t.category_desc[c.key] ?? c.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
 
-
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                <div className="mt-1 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    aria-label="Zurück"
+                    onClick={() => slideBy(-1)}
+                    className="h-9 w-9 rounded-full border border-slate-200 bg-white/90 !text-slate-600 flex items-center justify-center shadow-sm hover:!text-slate-900 transition"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Weiter"
+                    onClick={() => slideBy(1)}
+                    className="h-9 w-9 rounded-full border border-slate-200 bg-white/90 !text-slate-600 flex items-center justify-center shadow-sm hover:!text-slate-900 transition"
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
+
             </Chapter>
           )}
 
