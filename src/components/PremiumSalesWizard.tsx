@@ -279,12 +279,19 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     setStep((s) => Math.max(0, s - 1));
   }
 
-  /** Antwort gegeben → automatisch zur nächsten Frage sliden. */
-  function autoAdvance() {
-    window.setTimeout(() => {
-      setSub((s) => (s < subTotal - 1 ? s + 1 : s));
+  /** Antwort gegeben → automatisch zur nächsten Frage sliden (nur einmal, nur mit Auswahl). */
+  const advanceTimer = useRef<number | null>(null);
+  useEffect(() => () => { if (advanceTimer.current) window.clearTimeout(advanceTimer.current); }, []);
+  function autoAdvance(hasValue: boolean) {
+    if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
+    if (!hasValue) return;
+    const from = sub;
+    advanceTimer.current = window.setTimeout(() => {
+      advanceTimer.current = null;
+      setSub((s) => (s === from && s < subTotal - 1 ? s + 1 : s));
     }, 650);
   }
+
 
   /** Blockierter „Weiter“-Klick: alle Fehler des Schritts sichtbar machen. */
   function revealStepErrors() {
