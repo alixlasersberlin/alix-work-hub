@@ -227,6 +227,9 @@ export default function FinanceMahnwesen() {
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                 <tr>
+                  <th className="px-4 py-3 w-10">
+                    <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
+                  </th>
                   <th className="text-left px-4 py-3 font-medium">Kunde</th>
                   <th className="text-left px-4 py-3 font-medium">E-Mail</th>
                   <th className="text-left px-4 py-3 font-medium">Aktuelle Stufe</th>
@@ -239,9 +242,13 @@ export default function FinanceMahnwesen() {
               <tbody>
                 {visibleAccounts.map(a => {
                   const d = draftsByCustomer.get(a.customer_id);
+                  const isSel = selected.has(a.customer_id);
 
                   return (
-                    <tr key={a.id} className="border-t border-border hover:bg-muted/20">
+                    <tr key={a.id} className={`border-t border-border hover:bg-muted/20 ${isSel ? 'bg-amber-500/5' : ''}`}>
+                      <td className="px-4 py-3">
+                        <Checkbox checked={isSel} onCheckedChange={() => toggleOne(a.customer_id)} aria-label="Auswählen" />
+                      </td>
                       <td className="px-4 py-3">{a.customers?.company_name || a.customers?.contact_name || a.customer_id.slice(0, 8)}</td>
                       <td className="px-4 py-3 text-muted-foreground">{a.customers?.email ?? '–'}</td>
                       <td className="px-4 py-3"><Badge variant="outline">{LEVEL_LABEL[a.reminder_level ?? 0] ?? `Stufe ${a.reminder_level}`}</Badge></td>
@@ -253,6 +260,7 @@ export default function FinanceMahnwesen() {
                           <Button size="sm" variant="outline"><Eye className="w-3.5 h-3.5 mr-1" />Detail</Button>
                         </Link>
                       </td>
+
                     </tr>
                   );
                 })}
