@@ -69,14 +69,30 @@ export default function MfaChallenge() {
     setBusy(true);
     const { data, error } = await supabase.functions.invoke('mfa-sms-send', { body: { purpose: 'login' } });
     setBusy(false);
-    if (error || data?.error) {
-      setErr(data?.error === 'cooldown' || data?.error === 'rate_limited'
-        ? 'Bitte kurz warten, bevor ein neuer Code angefordert wird.'
-        : 'SMS konnte nicht gesendet werden.');
+
+    // Bei Nicht-2xx liefert invoke() einen FunctionsHttpError – Body auslesen
+    let payload: any = data;
+    if (error && (error as any).context?.json) {
+      payload = await (error as any).context.json().catch(() => null);
+    } else if (error && typeof (error as any).context?.text === 'function') {
+      const t = await (error as any).context.text().catch(() => '');
+      try { payload = JSON.parse(t); } catch { /* ignore */ }
+    }
+
+    const code = payload?.error;
+    if (code === 'cooldown' || code === 'rate_limited') {
+      // Kein Fehlerzustand: es wurde bereits ein Code gesendet
+      setSmsSent(true);
+      setErr('Es wurde bereits ein Code gesendet. Bitte den letzten Code eingeben oder kurz warten.');
+      return;
+    }
+    if (error || code) {
+      setErr('SMS konnte nicht gesendet werden.');
       return;
     }
     setSmsSent(true);
   };
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
