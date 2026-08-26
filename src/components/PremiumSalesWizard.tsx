@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
-import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
+import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, fieldLabel, fieldPlaceholder, isFieldVisible, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
 import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import {
   PREMIUM_CATEGORIES,
@@ -170,6 +170,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const lastSlot = seq.length;
   const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
   const so = (id: number) => layout.steps?.[String(id)] || {};
+  const fl = (key: string, fallback: string) => fieldLabel(layout, key, fallback);
+  const fp = (key: string, fallback?: string) => fieldPlaceholder(layout, key, fallback);
+  const fVisible = (key: string) => isFieldVisible('premium', layout, key);
   const additionalOptions = useMemo(() => resolveOptions(layout, 'additional', DEFAULT_ADDITIONAL), [layout]);
   const deliveryOptions = useMemo(() => resolveOptions(layout, 'delivery', DEFAULT_DELIVERY), [layout]);
   const consultationOptions = useMemo(() => resolveOptions(layout, 'consultation', DEFAULT_CONSULTATION), [layout]);
@@ -427,7 +430,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             <Chapter title={so(1).title || t.c1_title} sub={so(1).sub ?? t.c1_sub}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
 
-                <Labeled label={t.first_name} error={showError('first_name')} valid={isValid('first_name')}>
+                <Labeled label={fl('first_name', t.first_name)} error={showError('first_name')} valid={isValid('first_name')}>
                   <input
                     className={cn(fieldCls, showError('first_name') && '!border-red-300 focus:!ring-red-200')}
                     value={data.first_name}
@@ -437,7 +440,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('first_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label={t.last_name} error={showError('last_name')} valid={isValid('last_name')}>
+                <Labeled label={fl('last_name', t.last_name)} error={showError('last_name')} valid={isValid('last_name')}>
                   <input
                     className={cn(fieldCls, showError('last_name') && '!border-red-300 focus:!ring-red-200')}
                     value={data.last_name}
@@ -447,23 +450,27 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('last_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label={t.company} error={showError('company')} valid={isValid('company')}>
+                {fVisible('company') && (
+                <Labeled label={fl('company', t.company)} error={showError('company')} valid={isValid('company')}>
                   <input
                     className={cn(fieldCls, showError('company') && '!border-red-300 focus:!ring-red-200')}
                     value={data.company}
                     maxLength={150}
+                    placeholder={fp('company')}
                     aria-invalid={!!showError('company')}
                     onBlur={() => markTouched('company')}
                     onChange={(e) => update('company', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label={t.email} error={showError('email')} valid={isValid('email')}>
+                )}
+
+                <Labeled label={fl('email', t.email)} error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
                     inputMode="email"
                     autoComplete="email"
                     maxLength={255}
-                    placeholder={t.email_ph}
+                    placeholder={fp('email', t.email_ph)}
                     className={cn(fieldCls, showError('email') && '!border-red-300 focus:!ring-red-200')}
                     value={data.email}
                     aria-invalid={!!showError('email')}
@@ -472,7 +479,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   />
                 </Labeled>
                 <Labeled
-                  label={t.phone}
+                  label={fl('phone', t.phone)}
+
                   error={showError('country_code') ?? showError('phone')}
                   valid={isValid('phone') && !errors.country_code}
                 >
@@ -532,7 +540,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       inputMode="tel"
                       autoComplete="tel"
                       maxLength={20}
-                      placeholder={t.phone_ph}
+                      placeholder={fp('phone', t.phone_ph)}
                       aria-invalid={!!showError('phone')}
                       className={cn(fieldCls, 'flex-1 min-w-[160px]', showError('phone') && '!border-red-300 focus:!ring-red-200')}
                       value={data.phone}

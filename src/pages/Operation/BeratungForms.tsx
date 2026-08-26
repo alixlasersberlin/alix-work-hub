@@ -25,6 +25,7 @@ import {
   saveBeratungLayout,
   stepDefs,
   optionLists,
+  profileFields,
   defaultLayout,
   type BeratungLayoutConfig,
 } from '@/lib/beratung/formLayout';
@@ -110,6 +111,18 @@ export default function BeratungForms() {
     setOptionCfg(form, key, { extra: [...(oc.extra || []), value], order: [...existing, value] });
     setNewOption((p) => ({ ...p, [k]: '' }));
   };
+
+  const setFieldCfg = (form: BeratungFormKey, key: string, patch: Record<string, unknown>) =>
+    setLayout((prev) => ({
+      ...prev,
+      [form]: {
+        ...prev[form],
+        fields: { ...(prev[form].fields || {}), [key]: { ...((prev[form].fields || {})[key] || {}), ...patch } },
+      },
+    }));
+
+  const setFieldsCfg = (form: BeratungFormKey, fields: Record<string, never>) =>
+    setLayout((prev) => ({ ...prev, [form]: { ...prev[form], fields } }));
 
   const resetLayout = (form: BeratungFormKey) =>
     setLayout((prev) => ({ ...prev, [form]: defaultLayout(form) }));
@@ -420,6 +433,66 @@ export default function BeratungForms() {
                       </div>
                     );
                   })}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <Label className="text-sm">Profildaten</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Feldbezeichnungen und Platzhalter anpassen, optionale Felder ausblenden.
+                      </p>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setFieldsCfg(meta.key, {})}>
+                      <RotateCcw className="h-3 w-3 mr-1" /> Zurücksetzen
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {profileFields(meta.key).map((f) => {
+                      const fc = layout[meta.key].fields?.[f.key] || {};
+                      const hidden = !f.required && fc.hidden === true;
+                      return (
+                        <div
+                          key={f.key}
+                          className={`rounded-lg border p-3 space-y-2 ${hidden ? 'opacity-60 bg-muted/40' : 'bg-card'}`}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium">{f.name}</span>
+                            <Badge variant="outline" className="text-[10px]">Schritt {f.stepId}</Badge>
+                            <div className="ml-auto flex items-center gap-2">
+                              {f.required ? (
+                                <Badge variant="secondary" className="text-[10px]">Pflicht</Badge>
+                              ) : (
+                                <>
+                                  <Label className="text-[11px] text-muted-foreground">Sichtbar</Label>
+                                  <Switch
+                                    checked={!hidden}
+                                    onCheckedChange={(v) => setFieldCfg(meta.key, f.key, { hidden: !v })}
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid gap-2 md:grid-cols-2">
+                            <Input
+                              value={fc.label ?? ''}
+                              placeholder="Bezeichnung (Standard beibehalten)"
+                              onChange={(e) => setFieldCfg(meta.key, f.key, { label: e.target.value || undefined })}
+                            />
+                            {f.hasPlaceholder && (
+                              <Input
+                                value={fc.placeholder ?? ''}
+                                placeholder="Platzhalter (Standard beibehalten)"
+                                onChange={(e) => setFieldCfg(meta.key, f.key, { placeholder: e.target.value || undefined })}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
 
