@@ -257,10 +257,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Bei jedem frischen Sign-In bzw. Sign-Out muss der TOTP erneut verlangt werden.
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+      // Bei echtem Sign-Out oder Wechsel des Users MFA erneut verlangen.
+      // Wichtig: Beim Wiederherstellen der Session nach einem Reload feuert
+      // Supabase ebenfalls SIGNED_IN – dann darf die Markierung NICHT gelöscht
+      // werden, sonst landet man direkt nach erfolgreicher SMS-Prüfung wieder
+      // auf /mfa-challenge.
+      if (event === 'SIGNED_OUT') {
         clearMfaTabMarker();
+      } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        if (!mfaMarkerBelongsTo(session?.user?.id)) clearMfaTabMarker();
       }
+
 
       setSession(session);
       setUser(session?.user ?? null);
