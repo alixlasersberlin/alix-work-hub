@@ -247,6 +247,10 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   function canContinue(): boolean {
     switch (cur) {
       case 1:
+        if (s1 === 'name') return !errors.first_name && !errors.last_name;
+        if (s1 === 'company') return !errors.company;
+        if (s1 === 'email') return !errors.email;
+        if (s1 === 'phone') return !errors.country_code && !errors.phone;
         return step1Ok;
 
       case 2:
