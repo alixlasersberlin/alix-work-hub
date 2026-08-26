@@ -247,12 +247,34 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       case 2:
         return !!data.category;
       case 3:
-        return !!data.delivery_preference && !!data.consultation_type && !errors.notes;
+        if (sub === 0) return !!data.delivery_preference;
+        if (sub === 1) return !!data.consultation_type;
+        if (sub === 2) return true;
+        return !errors.notes;
       case LAST_STEP:
         return data.consent_data && data.consent_contact && (publicMode && !captchaUnavailable ? !!captchaToken : true);
       default:
         return true;
     }
+  }
+
+  /** Weiter: erst Unterfrage, dann Schritt. */
+  function goNext() {
+    if (!canContinue()) { revealStepErrors(); return; }
+    if (sub < subTotal - 1) { setSub((s) => s + 1); return; }
+    setStep((s) => s + 1);
+  }
+
+  function goBack() {
+    if (sub > 0) { setSub((s) => s - 1); return; }
+    setStep((s) => Math.max(0, s - 1));
+  }
+
+  /** Antwort gegeben → automatisch zur nächsten Frage sliden. */
+  function autoAdvance() {
+    window.setTimeout(() => {
+      setSub((s) => (s < subTotal - 1 ? s + 1 : s));
+    }, 650);
   }
 
   /** Blockierter „Weiter“-Klick: alle Fehler des Schritts sichtbar machen. */
