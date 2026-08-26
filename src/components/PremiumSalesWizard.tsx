@@ -524,6 +524,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 </Labeled>
                 )}
                 {s1 === 'phone' && (
+                <Labeled
+                  label={fl('phone', t.phone)}
 
                   error={showError('country_code') ?? showError('phone')}
                   valid={isValid('phone') && !errors.country_code}
