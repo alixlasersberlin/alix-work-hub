@@ -187,6 +187,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     [seq, layout, t],
   );
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
+  /** Unterschritte: pro Schritt nur eine Frage. */
+  const SUB_COUNT: Record<number, number> = { 3: 4 };
+  const subTotal = SUB_COUNT[cur] ?? 1;
+  const [sub, setSub] = useState(0);
+  useEffect(() => { setSub(0); }, [cur]);
 
 
   const [submitting, setSubmitting] = useState(false);
