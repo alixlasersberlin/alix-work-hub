@@ -909,9 +909,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 function Chapter({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <section className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h2 className="!text-slate-900 text-xl sm:text-2xl md:text-4xl font-light tracking-tight uppercase text-balance">{title}</h2>
-      {sub && <p className="mt-2 sm:mt-3 !text-slate-500 font-light max-w-2xl text-sm sm:text-base text-pretty">{sub}</p>}
-      <div className="mt-6 sm:mt-8 md:mt-12">{children}</div>
+      <h2 className="!text-slate-900 text-lg sm:text-xl md:text-2xl font-light tracking-tight uppercase text-balance">{title}</h2>
+      {sub && <p className="mt-1.5 sm:mt-2 !text-slate-500 font-light max-w-2xl text-[13px] sm:text-sm text-pretty">{sub}</p>}
+      <div className="mt-4 sm:mt-6 md:mt-8">{children}</div>
     </section>
   );
 }
