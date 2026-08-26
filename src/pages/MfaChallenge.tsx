@@ -20,8 +20,8 @@ export default function MfaChallenge() {
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState('');
 
-  const finish = (viaSms = false) => {
-    if (viaSms) markMfaSmsVerifiedThisTab(); else markMfaVerifiedThisTab();
+  const finish = async (viaSms = false) => {
+    if (viaSms) await markMfaSmsVerifiedThisTab(); else await markMfaVerifiedThisTab();
     const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
       ? '/esc/kalender'
       : '/dashboard';
@@ -29,6 +29,7 @@ export default function MfaChallenge() {
     // Maus-/Pointer-Freeze durch stale Auth-/Overlay-State nach MFA.
     window.location.replace(postMfaTarget);
   };
+
 
   useEffect(() => {
     (async () => {
@@ -102,7 +103,7 @@ export default function MfaChallenge() {
       if (mode === 'sms') {
         const { data, error } = await supabase.functions.invoke('mfa-sms-verify', { body: { code: code.trim() } });
         if (error || data?.error) throw new Error('Code ungültig oder abgelaufen');
-        finish(true);
+        await finish(true);
         return;
       }
       const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
@@ -113,7 +114,7 @@ export default function MfaChallenge() {
         code: code.trim(),
       });
       if (vErr) throw vErr;
-      finish();
+      await finish();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Code ungültig');
       setBusy(false);

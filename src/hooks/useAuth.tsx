@@ -76,26 +76,50 @@ const MFA_PRIV_KEY = 'alixwork.mfa_privileged';
 const MFA_SMS_TAB_KEY = 'alixwork.mfa_sms_verified_tab';
 const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 
-export function markMfaVerifiedThisTab() {
+const MFA_TAB_USER_KEY = 'alixwork.mfa_verified_user';
+
+async function rememberMfaUser() {
+  // Session-User nachtragen (Storage-Adapter-unabhängig)
+  try {
+    const { data } = await supabase.auth.getSession();
+    const uid = data?.session?.user?.id;
+    if (uid) sessionStorage.setItem(MFA_TAB_USER_KEY, uid);
+  } catch { /* ignore */ }
+}
+
+
+export async function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
   // Beim erfolgreichen TOTP startet ein 24h-Grace-Window auf diesem Gerät
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
+  await rememberMfaUser();
 }
 
 /** Nach erfolgreicher SMS-Verifikation (eigener Faktor, kein Supabase-AAL2). */
-export function markMfaSmsVerifiedThisTab() {
+export async function markMfaSmsVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_SMS_TAB_KEY, '1'); } catch { /* ignore */ }
-  markMfaVerifiedThisTab();
+  await markMfaVerifiedThisTab();
 }
+
 
 function isMfaSmsVerifiedThisTab() {
   try { return sessionStorage.getItem(MFA_SMS_TAB_KEY) === '1'; } catch { return false; }
 }
 
+/** True, wenn die MFA-Markierung zu genau diesem User gehört. */
+function mfaMarkerBelongsTo(userId?: string | null) {
+  try {
+    const stored = sessionStorage.getItem(MFA_TAB_USER_KEY);
+    return !!userId && !!stored && stored === userId;
+  } catch { return false; }
+}
+
 export function clearMfaTabMarker() {
   try { sessionStorage.removeItem(MFA_TAB_KEY); } catch { /* ignore */ }
   try { sessionStorage.removeItem(MFA_SMS_TAB_KEY); } catch { /* ignore */ }
+  try { sessionStorage.removeItem(MFA_TAB_USER_KEY); } catch { /* ignore */ }
 }
+
 
 /** Super Admin / Admin bleiben streng (OTP je Session), alle anderen nutzen das 24h-Fenster. */
 export function setMfaPrivileged(privileged: boolean) {
@@ -236,10 +260,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Bei jedem frischen Sign-In bzw. Sign-Out muss der TOTP erneut verlangt werden.
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+      // Bei echtem Sign-Out oder Wechsel des Users MFA erneut verlangen.
+      // Wichtig: Beim Wiederherstellen der Session nach einem Reload feuert
+      // Supabase ebenfalls SIGNED_IN – dann darf die Markierung NICHT gelöscht
+      // werden, sonst landet man direkt nach erfolgreicher SMS-Prüfung wieder
+      // auf /mfa-challenge.
+      if (event === 'SIGNED_OUT') {
         clearMfaTabMarker();
+      } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        if (!mfaMarkerBelongsTo(session?.user?.id)) clearMfaTabMarker();
       }
+
 
       setSession(session);
       setUser(session?.user ?? null);
