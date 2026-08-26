@@ -416,13 +416,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 {t.step_of(step, STEP_LABELS.length)} · {STEP_LABELS[step - 1]}
               </span>
               <span className="tabular-nums shrink-0">
-                {Math.round((step / STEP_LABELS.length) * 100)} %
+                {Math.round(((step - 1 + (sub + 1) / subTotal) / STEP_LABELS.length) * 100)} %
               </span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-slate-200/70 overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-sky-500 to-sky-400 transition-[width] duration-500 ease-out"
-                style={{ width: `${(step / STEP_LABELS.length) * 100}%` }}
+                style={{ width: `${((step - 1 + (sub + 1) / subTotal) / STEP_LABELS.length) * 100}%` }}
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={STEP_LABELS.length}
@@ -430,6 +430,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 aria-label={t.progress_aria}
               />
             </div>
+
           </div>
 
           <div className="mx-auto max-w-4xl mt-3 sm:mt-4 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
