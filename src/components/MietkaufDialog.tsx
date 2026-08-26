@@ -25,8 +25,8 @@ const VAT_RATE = 0.19;
 
 const ALIX = {
   name: 'Alix Lasers GmbH',
-  street: 'Buchsbaumweg 53',
-  city: '12357 Berlin',
+  street: 'Zeppelin Straße 3',
+  city: '12529 Berlin',
   ustIdNr: 'DE321691012',
 };
 
@@ -467,7 +467,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     doc.setFontSize(7);
     doc.setTextColor(100);
     doc.text(
-      `Alix Lasers GmbH - Alix Lasers ® Deutschland – Buchsbaumweg 53 - 12357 Berlin, DE - USt-IdNr.: ${ALIX.ustIdNr}`,
+      `Alix Lasers GmbH - Alix Lasers ® Deutschland – Zeppelin Straße 3 - 12529 Berlin, DE - USt-IdNr.: ${ALIX.ustIdNr}`,
       pw / 2,
       footerY,
       { align: 'center' }

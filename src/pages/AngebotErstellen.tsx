@@ -706,7 +706,7 @@ export default function AngebotErstellen() {
     // Customer block
     doc.setTextColor(120, 120, 120);
     doc.setFontSize(8);
-    doc.text('Alix Lasers GmbH · Buchsbaumweg 53 · 12357 Berlin', LEFT, TOP_CONTENT + 14);
+    doc.text('Alix Lasers GmbH · Zeppelin Straße 3 · 12529 Berlin', LEFT, TOP_CONTENT + 14);
     doc.setDrawColor(200, 200, 200);
     doc.line(LEFT, TOP_CONTENT + 16, LEFT + 80, TOP_CONTENT + 16);
 
