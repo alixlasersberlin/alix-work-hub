@@ -427,7 +427,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             <Chapter title={so(1).title || t.c1_title} sub={so(1).sub ?? t.c1_sub}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
 
-                <Labeled label={t.first_name} error={showError('first_name')} valid={isValid('first_name')}>
+                <Labeled label={fl('first_name', t.first_name)} error={showError('first_name')} valid={isValid('first_name')}>
                   <input
                     className={cn(fieldCls, showError('first_name') && '!border-red-300 focus:!ring-red-200')}
                     value={data.first_name}
@@ -437,7 +437,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('first_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label={t.last_name} error={showError('last_name')} valid={isValid('last_name')}>
+                <Labeled label={fl('last_name', t.last_name)} error={showError('last_name')} valid={isValid('last_name')}>
                   <input
                     className={cn(fieldCls, showError('last_name') && '!border-red-300 focus:!ring-red-200')}
                     value={data.last_name}
@@ -447,16 +447,20 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('last_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label={t.company} error={showError('company')} valid={isValid('company')}>
+                {fVisible('company') && (
+                <Labeled label={fl('company', t.company)} error={showError('company')} valid={isValid('company')}>
                   <input
                     className={cn(fieldCls, showError('company') && '!border-red-300 focus:!ring-red-200')}
                     value={data.company}
                     maxLength={150}
+                    placeholder={fp('company')}
                     aria-invalid={!!showError('company')}
                     onBlur={() => markTouched('company')}
                     onChange={(e) => update('company', e.target.value)}
                   />
                 </Labeled>
+                )}
+
                 <Labeled label={t.email} error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
