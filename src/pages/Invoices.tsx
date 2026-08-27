@@ -2206,15 +2206,16 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         />
                       </th>
                     )}
-                    <SortableTh label="Status" sortKey="status" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Rechnung" sortKey="invoice_number" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Kunde" sortKey="customer_name" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Referenz" sortKey="reference_number" colSort={colSort} onSort={toggleColSort} />
                     <SortableTh label="Datum" sortKey="invoice_date" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Fällig" sortKey="due_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Fälligkeit" sortKey="due_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Status" sortKey="status" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Kunde" sortKey="customer_name" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Rechnung" sortKey="invoice_number" colSort={colSort} onSort={toggleColSort} />
                     <SortableTh label="Betrag" sortKey="total" align="right" colSort={colSort} onSort={toggleColSort} />
                     <SortableTh label="Saldo" sortKey="balance" align="right" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Referenz" sortKey="reference_number" colSort={colSort} onSort={toggleColSort} />
                     <th className="text-right px-4 py-2 font-medium">Aktion</th>
+
 
                   </tr>
                 </thead>
