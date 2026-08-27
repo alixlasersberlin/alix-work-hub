@@ -967,16 +967,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
 
-  // "Anwalt"- und "Inkasso Intern"-Rechnungen nur in ihrer eigenen Ansicht sichtbar
-  const scopedRows = useMemo<Row[]>(
-    () =>
-      viewMode === 'anwalt'
-        ? rows.filter(isAnwaltRow)
-        : viewMode === 'inkasso'
-          ? rows.filter(isInkassoRow)
-          : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r)),
-    [rows, viewMode],
-  );
+  // "Anwalt"/"Inkasso Intern"/"Überfällig" sind kombinierbare Filter
+  const scopedRows = useMemo<Row[]>(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const isPaid = (r: Row) => {
+      const ps = String(r.payment_status || r.status || '').toLowerCase();
+      return ps.includes('bezahlt') && !ps.includes('teilweise') && !ps.includes('unbezahlt') && !ps.includes('nicht');
+    };
+    let res =
+      extra.anwalt || extra.inkasso
+        ? rows.filter((r) => (extra.anwalt && isAnwaltRow(r)) || (extra.inkasso && isInkassoRow(r)))
+        : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r));
+    if (extra.overdue) {
+      res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
+    }
+    return res;
+  }, [rows, extra]);
+
 
   const accounts = useMemo<Account[]>(() => {
     let res = scopedRows;
