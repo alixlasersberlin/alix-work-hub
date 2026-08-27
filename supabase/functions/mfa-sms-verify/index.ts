@@ -38,22 +38,25 @@ Deno.serve(async (req) => {
     const code = String(body?.code ?? "").trim();
     if (!/^\d{6}$/.test(code)) return json({ error: "invalid_code" }, 400);
 
-    const { data: row } = await admin
+    const nowIso = new Date().toISOString();
+    const { data: rows } = await admin
       .from("mfa_sms_codes")
       .select("id, purpose, phone, code_hash, attempts, expires_at")
       .eq("user_id", user.id)
       .is("consumed_at", null)
+      .gt("expires_at", nowIso)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(10);
 
-    if (!row) return json({ error: "no_pending_code" }, 400);
-    if (new Date(row.expires_at).getTime() < Date.now()) return json({ error: "expired" }, 400);
-    if (row.attempts >= 5) return json({ error: "too_many_attempts" }, 429);
+    if (!rows || rows.length === 0) return json({ error: "no_pending_code" }, 400);
+    if (rows.every((r) => (r.attempts ?? 0) >= 5)) return json({ error: "too_many_attempts" }, 429);
 
     const expected = await sha256(`${user.id}:${code}`);
-    if (expected !== row.code_hash) {
-      await admin.from("mfa_sms_codes").update({ attempts: row.attempts + 1 }).eq("id", row.id);
+    const row = rows.find((r) => r.code_hash === expected && (r.attempts ?? 0) < 5);
+    if (!row) {
+      for (const r of rows) {
+        await admin.from("mfa_sms_codes").update({ attempts: (r.attempts ?? 0) + 1 }).eq("id", r.id);
+      }
       return json({ error: "wrong_code" }, 400);
     }
 

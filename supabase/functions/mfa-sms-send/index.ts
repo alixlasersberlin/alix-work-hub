@@ -100,12 +100,6 @@ Deno.serve(async (req) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const codeHash = await sha256(`${user.id}:${code}`);
 
-    await admin
-      .from("mfa_sms_codes")
-      .update({ consumed_at: new Date().toISOString() })
-      .eq("user_id", user.id)
-      .is("consumed_at", null);
-
     const { error: insErr } = await admin.from("mfa_sms_codes").insert({
       user_id: user.id,
       purpose,
