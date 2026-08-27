@@ -2525,6 +2525,27 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           <Zap className="w-3.5 h-3.5" /> SOFORT RECHNUNG
                         </Button>
                       )}
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+                          title="Zahlungsstatus für ALLE Rechnungen dieses Kundenkontos ändern"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const ids = a.rows.filter((r) => r.source !== 'unpaid').map((r) => r.id);
+                            if (ids.length === 0) {
+                              toast({ title: 'Keine änderbaren Rechnungen', variant: 'destructive' });
+                              return;
+                            }
+                            setSelectedIds(ids);
+                            setBulkStatusValue('');
+                            setBulkStatusOpen(true);
+                          }}
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" /> KONTO STATUS ÄNDERN
+                        </Button>
+                      )}
                       <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
                         <AccountStatementActions
                           customerName={a.customer_name}
