@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, X as LucideXIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -158,7 +159,7 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
-type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest';
+type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue';
 
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
@@ -427,7 +428,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'highest';
     const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
-    return v && ['accounts', 'list', 'highest', 'oldest', 'newest'].includes(v) ? v : 'highest';
+    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue'].includes(v) ? v : 'highest';
   });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
@@ -439,7 +440,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list' || viewMode === 'newest';
+  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue';
   const isAccountView = !isListView;
 
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
@@ -948,7 +949,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = dSearch.trim() ? res.filter((r) => matchesQuery(r, dSearch)) : res;
+    if (viewMode === 'overdue') {
+      const today = new Date().toISOString().slice(0, 10);
+      res = res.filter((r) => Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
+    }
     const sorted = [...res].sort((a, b) => {
+      if (viewMode === 'overdue') {
+        // Am längsten überfällig zuerst
+        return String(a.due_date ?? '9999').localeCompare(String(b.due_date ?? '9999'));
+      }
       if (viewMode === 'newest') {
         // Neueste zuerst nach Erfassungsdatum (created_at), Fallback Rechnungsdatum
         const av = String(a.created_at ?? a.invoice_date ?? '');
@@ -1808,8 +1817,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'overdue' ? 'Überfällige Rechnungen' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'overdue' ? 'Alle Rechnungen mit offenem Betrag und überschrittenem Fälligkeitsdatum – am längsten überfällig zuerst' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -1907,6 +1916,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             onClick={() => setViewModePersist('newest')}
           >
             <Clock className="w-3.5 h-3.5" /> Neuste
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'overdue' ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", viewMode !== 'overdue' && "text-red-500 hover:text-red-500")}
+            onClick={() => setViewModePersist('overdue')}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" /> Überfällig
           </Button>
         </div>
         {viewMode === 'list' && (
