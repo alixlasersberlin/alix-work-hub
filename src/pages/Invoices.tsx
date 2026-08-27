@@ -1972,7 +1972,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <div className="inline-flex items-center rounded-lg border border-border bg-secondary p-0.5">
+        <div className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-secondary p-0.5 max-w-full">
           <Button
             type="button"
             size="sm"
