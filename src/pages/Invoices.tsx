@@ -2391,7 +2391,20 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       </td>
                       <td className="px-4 py-2">
                         <div className="truncate max-w-[220px]">{r.customer_name ?? '–'}</div>
-                        {r.city && <div className="text-xs text-muted-foreground truncate max-w-[220px]">{r.city}</div>}
+                        {(() => {
+                          const m = r.invoice_number ? rowMeta[r.invoice_number] : undefined;
+                          if (!m) return r.city ? <div className="text-[10px] text-muted-foreground truncate max-w-[260px]">{r.city}</div> : null;
+                          return (
+                            <div className="text-[10px] text-muted-foreground truncate max-w-[320px] flex items-center gap-2 flex-wrap">
+                              {r.city && <span>{r.city}</span>}
+                              <span className={m.level ? 'text-amber-400' : ''}>Mahnung: {m.level ? `Stufe ${m.level}` : '–'}</span>
+                              <span>Emails versendet: {m.mails}</span>
+                              <span>Mahnstufe: {m.level ?? '–'}{m.reminderSent ? ` (${fmtDate(m.reminderSent)})` : ''}</span>
+                              <span className={m.opened ? 'text-emerald-400' : ''}>Email gelesen: {m.opened ? `ja (${m.opened})` : 'nein'}</span>
+                            </div>
+                          );
+                        })()}
+
                       </td>
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
