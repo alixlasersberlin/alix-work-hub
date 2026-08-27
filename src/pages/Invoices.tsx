@@ -7,7 +7,33 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, ArrowUp, ArrowDown, ChevronsUpDown, X as LucideXIcon } from 'lucide-react';
+
+function SortableTh({ label, sortKey, colSort, onSort, align = 'left' }: {
+  label: string;
+  sortKey: any;
+  colSort: { key: any; dir: 'asc' | 'desc' } | null;
+  onSort: (k: any) => void;
+  align?: 'left' | 'right';
+}) {
+  const active = colSort?.key === sortKey;
+  return (
+    <th className={`px-4 py-2 font-medium ${align === 'right' ? 'text-right' : 'text-left'}`}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        title={`Nach ${label} sortieren`}
+        className={`inline-flex items-center gap-1 uppercase transition-colors hover:text-primary ${active ? 'text-primary' : ''}`}
+      >
+        {label}
+        {active
+          ? (colSort!.dir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)
+          : <ChevronsUpDown className="w-3 h-3 opacity-30" />}
+      </button>
+    </th>
+  );
+}
+
 import { cn } from '@/lib/utils';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
