@@ -2115,7 +2115,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       {bulkBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
                       {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={dunningBusy}
+                      className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                      onClick={runDunningEngine}
+                      title="Ausgewählte Kundenkonten an die Mahn-Engine übergeben (nur Entwürfe)"
+                    >
+                      {dunningBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                      An Mahn-Engine
+                    </Button>
                   </div>
+
                 </div>
               )}
               <table className="w-full text-sm">
