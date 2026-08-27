@@ -185,11 +185,16 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
-type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue' | 'anwalt';
+type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue' | 'anwalt' | 'inkasso';
 
 // Rechnungen im Status "Anwalt" werden aus allen normalen Ansichten ausgeblendet
 export function isAnwaltRow(r: Row): boolean {
   return String(r.payment_status ?? '').trim().toLowerCase() === 'anwalt';
+}
+
+// Rechnungen im Status "Inkasso Intern" werden ebenfalls separat geführt
+export function isInkassoRow(r: Row): boolean {
+  return String(r.payment_status ?? '').trim().toLowerCase() === 'inkasso intern';
 }
 
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
