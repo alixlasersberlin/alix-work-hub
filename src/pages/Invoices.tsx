@@ -464,7 +464,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'highest';
     const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
-    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue', 'anwalt'].includes(v) ? v : 'highest';
+    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue', 'anwalt', 'inkasso'].includes(v) ? v : 'highest';
   });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
