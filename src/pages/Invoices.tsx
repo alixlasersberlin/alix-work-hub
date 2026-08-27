@@ -476,7 +476,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue' || viewMode === 'anwalt';
+  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue' || viewMode === 'anwalt' || viewMode === 'inkasso';
   const isAccountView = !isListView;
 
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
