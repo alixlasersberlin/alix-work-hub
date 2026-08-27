@@ -812,6 +812,41 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
   };
 
+  // ---- Ausgewählte an Mahn-Engine übergeben ----
+  const [dunningBusy, setDunningBusy] = useState(false);
+  const runDunningEngine = async () => {
+    const ids = Array.from(
+      new Set(
+        rows
+          .filter((x) => selectedIds.includes(x.id) && x.customer_id)
+          .map((x) => String(x.customer_id)),
+      ),
+    );
+    if (ids.length === 0) {
+      toast({ title: 'Keine Kundenzuordnung', description: 'Für die markierten Rechnungen ist kein Kundenkonto hinterlegt.', variant: 'destructive' });
+      return;
+    }
+    if (!confirm(`Mahn-Engine für ${ids.length} Kundenkonto(en) starten?\n\nEs werden nur Mahn-ENTWÜRFE erzeugt – kein automatischer Versand.`)) return;
+    setDunningBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('finance-reminder-engine', {
+        body: { customer_ids: ids },
+      });
+      if (error) throw error;
+      const created = (data as any)?.created ?? (data as any)?.drafts_created ?? 0;
+      const skipped = (data as any)?.skipped ?? 0;
+      toast({
+        title: 'Mahn-Engine ausgeführt',
+        description: `${created} Entwurf/Entwürfe erstellt${skipped ? `, ${skipped} übersprungen` : ''}. Versand unter Buchhaltung → Mahnwesen.`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Mahn-Engine fehlgeschlagen', variant: 'destructive' });
+    } finally {
+      setDunningBusy(false);
+    }
+  };
+
+
   useEffect(() => { fetchRows(); }, [region, mietkaufOnly, includeUnpaid, tenantId]);
 
 
@@ -2080,7 +2115,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       {bulkBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
                       {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={dunningBusy}
+                      className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                      onClick={runDunningEngine}
+                      title="Ausgewählte Kundenkonten an die Mahn-Engine übergeben (nur Entwürfe)"
+                    >
+                      {dunningBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                      An Mahn-Engine
+                    </Button>
                   </div>
+
                 </div>
               )}
               <table className="w-full text-sm">
