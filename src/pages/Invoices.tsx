@@ -7,7 +7,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, ArrowUp, ArrowDown, ChevronsUpDown, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, Gavel, ArrowUp, ArrowDown, ChevronsUpDown, X as LucideXIcon } from 'lucide-react';
 
 function SortableTh({ label, sortKey, colSort, onSort, align = 'left' }: {
   label: string;
@@ -185,11 +185,16 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
-type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue' | 'anwalt';
+type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue' | 'anwalt' | 'inkasso';
 
 // Rechnungen im Status "Anwalt" werden aus allen normalen Ansichten ausgeblendet
 export function isAnwaltRow(r: Row): boolean {
   return String(r.payment_status ?? '').trim().toLowerCase() === 'anwalt';
+}
+
+// Rechnungen im Status "Inkasso Intern" werden ebenfalls separat geführt
+export function isInkassoRow(r: Row): boolean {
+  return String(r.payment_status ?? '').trim().toLowerCase() === 'inkasso intern';
 }
 
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
@@ -459,7 +464,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'highest';
     const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
-    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue', 'anwalt'].includes(v) ? v : 'highest';
+    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue', 'anwalt', 'inkasso'].includes(v) ? v : 'highest';
   });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
@@ -471,7 +476,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue' || viewMode === 'anwalt';
+  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue' || viewMode === 'anwalt' || viewMode === 'inkasso';
   const isAccountView = !isListView;
 
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
@@ -937,9 +942,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
 
-  // "Anwalt"-Rechnungen nur in der Anwalt-Ansicht, sonst überall ausgeblendet
+  // "Anwalt"- und "Inkasso Intern"-Rechnungen nur in ihrer eigenen Ansicht sichtbar
   const scopedRows = useMemo<Row[]>(
-    () => (viewMode === 'anwalt' ? rows.filter(isAnwaltRow) : rows.filter((r) => !isAnwaltRow(r))),
+    () =>
+      viewMode === 'anwalt'
+        ? rows.filter(isAnwaltRow)
+        : viewMode === 'inkasso'
+          ? rows.filter(isInkassoRow)
+          : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r)),
     [rows, viewMode],
   );
 
@@ -1918,8 +1928,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'anwalt' ? 'Anwalt – Übergebene Rechnungen' : viewMode === 'overdue' ? 'Überfällige Rechnungen' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'anwalt' ? 'Alle Rechnungen mit Zahlungsstatus „Anwalt“ – aus den übrigen Übersichten ausgeblendet' : viewMode === 'overdue' ? 'Alle Rechnungen mit offenem Betrag und überschrittenem Fälligkeitsdatum – am längsten überfällig zuerst' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'anwalt' ? 'Anwalt – Übergebene Rechnungen' : viewMode === 'inkasso' ? 'Inkasso Intern'  : viewMode === 'overdue' ? 'Überfällige Rechnungen' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'anwalt' ? 'Alle Rechnungen mit Zahlungsstatus „Anwalt“ – aus den übrigen Übersichten ausgeblendet' : viewMode === 'inkasso' ? 'Alle Rechnungen im internen Inkasso – aus den übrigen Übersichten ausgeblendet'  : viewMode === 'overdue' ? 'Alle Rechnungen mit offenem Betrag und überschrittenem Fälligkeitsdatum – am längsten überfällig zuerst' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -2035,6 +2045,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             onClick={() => setViewModePersist('anwalt')}
           >
             <Scale className="w-3.5 h-3.5" /> Anwalt
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'inkasso' ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", viewMode !== 'inkasso' && "text-orange-500 hover:text-orange-500")}
+            onClick={() => setViewModePersist('inkasso')}
+          >
+            <Gavel className="w-3.5 h-3.5" /> Inkasso Intern
           </Button>
         </div>
         {viewMode === 'list' && (
@@ -2578,6 +2597,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                   <option value="Bezahlt">Bezahlt</option>
                   <option value="Teilweise bezahlt">Teilweise bezahlt</option>
                   <option value="Überfällig">Überfällig</option>
+                  <option value="Inkasso Intern">Inkasso Intern</option>
                 </select>
               </div>
               <div>
@@ -2628,6 +2648,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 <option value="Überfällig">Überfällig</option>
                 <option value="Storniert">Storniert</option>
                 <option value="Anwalt">Anwalt</option>
+                <option value="Inkasso Intern">Inkasso Intern</option>
               </select>
             </div>
             <div>
