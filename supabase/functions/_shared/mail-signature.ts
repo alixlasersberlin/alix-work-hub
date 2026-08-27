@@ -47,8 +47,15 @@ Alix Lasers ®
 
 Mit freundlichen Grüßen${name ? `\n${name}` : ""}
 
-Alix Lasers International
-Web: https://www.alix-lasers.com
+Alix Lasers ®
+Zeppelinstrasse 3
+12529 Schönefeld-Waltersdorf
+Deutschland
+
+Telefon: + 49 (0) 30 577 127 45
+
+Web: https://www.alix-lasers.de
+
 
 Wichtiger Hinweis:
 Diese Nachricht (einschließlich aller Anhänge) ist vertraulich. Sollten Sie nicht der für diese E-Mail bestimmte Adressat sein, unterrichten Sie bitte den Absender und vernichten Sie diese Mail. Jede unerlaubte Nutzung oder Weitergabe des Inhalts dieser Nachricht, sei es vollständig oder teilweise, ist unzulässig. Für die Vollständigkeit oder Richtigkeit dieser Nachricht können wir keine Haftung übernehmen.
