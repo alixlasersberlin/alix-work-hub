@@ -2063,8 +2063,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'anwalt' ? 'Anwalt – Übergebene Rechnungen' : viewMode === 'inkasso' ? 'Inkasso Intern'  : viewMode === 'overdue' ? 'Überfällige Rechnungen' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'anwalt' ? 'Alle Rechnungen mit Zahlungsstatus „Anwalt“ – aus den übrigen Übersichten ausgeblendet' : viewMode === 'inkasso' ? 'Alle Rechnungen im internen Inkasso – aus den übrigen Übersichten ausgeblendet'  : viewMode === 'overdue' ? 'Alle Rechnungen mit offenem Betrag und überschrittenem Fälligkeitsdatum – am längsten überfällig zuerst' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : [
+          (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste'),
+          [extra.overdue && 'Überfällig', extra.anwalt && 'Anwalt', extra.inkasso && 'Inkasso Intern'].filter(Boolean).join(' + '),
+        ].filter(Boolean).join(' · ')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
