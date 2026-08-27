@@ -7,7 +7,33 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, ArrowUp, ArrowDown, ChevronsUpDown, X as LucideXIcon } from 'lucide-react';
+
+function SortableTh({ label, sortKey, colSort, onSort, align = 'left' }: {
+  label: string;
+  sortKey: any;
+  colSort: { key: any; dir: 'asc' | 'desc' } | null;
+  onSort: (k: any) => void;
+  align?: 'left' | 'right';
+}) {
+  const active = colSort?.key === sortKey;
+  return (
+    <th className={`px-4 py-2 font-medium ${align === 'right' ? 'text-right' : 'text-left'}`}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        title={`Nach ${label} sortieren`}
+        className={`inline-flex items-center gap-1 uppercase transition-colors hover:text-primary ${active ? 'text-primary' : ''}`}
+      >
+        {label}
+        {active
+          ? (colSort!.dir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)
+          : <ChevronsUpDown className="w-3 h-3 opacity-30" />}
+      </button>
+    </th>
+  );
+}
+
 import { cn } from '@/lib/utils';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
@@ -988,6 +1014,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }, 0),
   }), [accounts, scopedRows, dSearch, statusFilter, docStatusFilter, mietkaufTotals]);
 
+  // ---- Spaltensortierung (Klick auf Spaltenkopf) ----
+  type SortKey = 'status' | 'invoice_number' | 'customer_name' | 'reference_number' | 'invoice_date' | 'due_date' | 'total' | 'balance';
+  const [colSort, setColSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null);
+  const toggleColSort = (key: SortKey) =>
+    setColSort((prev) =>
+      prev?.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : null,
+    );
+
+
   const flatRows = useMemo<Row[]>(() => {
     let res = scopedRows;
     if (statusFilter !== 'all') {
@@ -998,6 +1033,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     if (viewMode === 'overdue') {
       const today = new Date().toISOString().slice(0, 10);
       res = res.filter((r) => Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
+    }
+    if (colSort) {
+      const dir = colSort.dir === 'asc' ? 1 : -1;
+      const num = (v: any) => Number(v ?? 0);
+      const str = (v: any) => String(v ?? '');
+      const cmp = (a: Row, b: Row) => {
+        switch (colSort.key) {
+          case 'status': return str(a.payment_status || a.status).localeCompare(str(b.payment_status || b.status), 'de');
+          case 'invoice_number': return str(a.invoice_number).localeCompare(str(b.invoice_number), 'de', { numeric: true });
+          case 'customer_name': return str(a.customer_name).localeCompare(str(b.customer_name), 'de', { sensitivity: 'base' });
+          case 'reference_number': return str(a.reference_number).localeCompare(str(b.reference_number), 'de', { numeric: true });
+          case 'invoice_date': return str(a.invoice_date).localeCompare(str(b.invoice_date));
+          case 'due_date': return str(a.due_date).localeCompare(str(b.due_date));
+          case 'total': return num(a.total) - num(b.total);
+          case 'balance': return num(a.balance) - num(b.balance);
+          default: return 0;
+        }
+      };
+      return [...res].sort((a, b) => cmp(a, b) * dir);
     }
     const sorted = [...res].sort((a, b) => {
       if (viewMode === 'overdue') {
@@ -1020,7 +1074,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode]);
+  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode, colSort]);
+
 
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
@@ -2151,15 +2206,16 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         />
                       </th>
                     )}
-                    <th className="text-left px-4 py-2 font-medium">Status</th>
-                    <th className="text-left px-4 py-2 font-medium">Rechnung</th>
-                    <th className="text-left px-4 py-2 font-medium">Kunde</th>
-                    <th className="text-left px-4 py-2 font-medium">Referenz</th>
-                    <th className="text-left px-4 py-2 font-medium">Datum</th>
-                    <th className="text-left px-4 py-2 font-medium">Fällig</th>
-                    <th className="text-right px-4 py-2 font-medium">Betrag</th>
-                    <th className="text-right px-4 py-2 font-medium">Saldo</th>
+                    <SortableTh label="Status" sortKey="status" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Rechnung" sortKey="invoice_number" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Kunde" sortKey="customer_name" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Referenz" sortKey="reference_number" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Datum" sortKey="invoice_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Fällig" sortKey="due_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Betrag" sortKey="total" align="right" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Saldo" sortKey="balance" align="right" colSort={colSort} onSort={toggleColSort} />
                     <th className="text-right px-4 py-2 font-medium">Aktion</th>
+
                   </tr>
                 </thead>
                 {paginate(flatRows, pageSize).map((r, idx) => (
