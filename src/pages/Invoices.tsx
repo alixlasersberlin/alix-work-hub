@@ -2721,6 +2721,44 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={bulkStatusOpen} onOpenChange={(o) => !o && !bulkStatusSaving && setBulkStatusOpen(false)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-primary" />
+              Status für {selectedIds.length} Rechnung(en)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="bulkps">Zahlungsstatus</Label>
+              <select
+                id="bulkps"
+                value={bulkStatusValue}
+                onChange={(e) => setBulkStatusValue(e.target.value)}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Status wählen</option>
+                <option value="Offen">Offen</option>
+                <option value="Teilweise bezahlt">Teilweise bezahlt</option>
+                <option value="Bezahlt">Bezahlt</option>
+                <option value="Überfällig">Überfällig</option>
+                <option value="Storniert">Storniert</option>
+                <option value="Anwalt">Anwalt</option>
+                <option value="Inkasso Intern">Inkasso Intern</option>
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">Wird auf alle markierten Rechnungen angewendet (kein Zoho-Sync).</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusSaving}>Abbrechen</Button>
+            <Button onClick={saveBulkStatus} disabled={bulkStatusSaving || !bulkStatusValue} className="gold-gradient text-primary-foreground">
+              {bulkStatusSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Übernehmen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
 
       <Dialog open={!!emailRow} onOpenChange={(o) => !o && !emailSending && setEmailRow(null)}>
