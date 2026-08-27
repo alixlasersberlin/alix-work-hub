@@ -1045,8 +1045,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     res = dSearch.trim() ? res.filter((r) => matchesQuery(r, dSearch)) : res;
     if (viewMode === 'overdue') {
       const today = new Date().toISOString().slice(0, 10);
-      res = res.filter((r) => Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
+      const isPaid = (r: Row) => {
+        const ps = String(r.payment_status || r.status || '').toLowerCase();
+        return ps.includes('bezahlt') && !ps.includes('teilweise') && !ps.includes('unbezahlt') && !ps.includes('nicht');
+      };
+      res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
     }
+
     if (colSort) {
       const dir = colSort.dir === 'asc' ? 1 : -1;
       const num = (v: any) => Number(v ?? 0);
