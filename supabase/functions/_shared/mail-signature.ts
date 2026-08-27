@@ -61,7 +61,7 @@ Wichtiger Hinweis:
 Diese Nachricht (einschließlich aller Anhänge) ist vertraulich. Sollten Sie nicht der für diese E-Mail bestimmte Adressat sein, unterrichten Sie bitte den Absender und vernichten Sie diese Mail. Jede unerlaubte Nutzung oder Weitergabe des Inhalts dieser Nachricht, sei es vollständig oder teilweise, ist unzulässig. Für die Vollständigkeit oder Richtigkeit dieser Nachricht können wir keine Haftung übernehmen.
 
 Important note:
-This message (including any attachments) is confidential and may be privileged. If you are not the intended recipient of this e-mail please contact the sender and delete this message. Any unauthorized use or dissemination of this message in whole or in part is strictly prohibited.`;
+This message (including any attachments) is confidential and may be privileged. If you are not the intended recipient of this e-mail please contact the sender and delete this message. Any unauthorized use or dissemination of this message in whole or in part is strictly prohibited. Please note that any views or opinions presented in this email are solely those of the author and do not necessarily represent those of the company.`;
 }
 
 export function appendSignature(
