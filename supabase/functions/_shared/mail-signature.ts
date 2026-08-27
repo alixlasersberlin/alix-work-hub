@@ -20,9 +20,14 @@ export function buildSignatureHtml(loginName: string): string {
   <div style="margin-top:8px">Mit freundlichen Grüßen</div>
   ${safeName ? `<div style="font-weight:600">${safeName}</div>` : ""}
   <div style="margin-top:16px">
-    <div style="font-weight:600">Alix Lasers International</div>
-    <div>Web: <a href="https://www.alix-lasers.com" style="color:#b8860b;text-decoration:none">https://www.alix-lasers.com</a></div>
+    <div style="font-weight:600">Alix Lasers ®</div>
+    <div>Zeppelinstrasse 3</div>
+    <div>12529 Schönefeld-Waltersdorf</div>
+    <div>Deutschland</div>
+    <div style="margin-top:8px">Telefon: + 49 (0) 30 577 127 45</div>
+    <div style="margin-top:8px">Web: <a href="https://www.alix-lasers.de" style="color:#b8860b;text-decoration:none">https://www.alix-lasers.de</a></div>
   </div>
+
   <hr style="margin:18px 0;border:none;border-top:1px solid #e5e5e5"/>
   <div style="font-size:11px;color:#666">
     <div style="font-weight:600;color:#333">Wichtiger Hinweis:</div>
