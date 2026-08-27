@@ -617,6 +617,36 @@ export default function AppLayout() {
     return map;
   }, [visibleItems]);
 
+  // Menü offen halten: alle Gruppen, die den aktiven Pfad enthalten, bleiben aufgeklappt
+  useEffect(() => {
+    const path = location.pathname;
+    const matches = (p: string) => p !== '/' && !p.startsWith('#') && path.startsWith(p);
+    const toOpen: string[] = [];
+    const walk = (items: any[]) => {
+      for (const it of items) {
+        if (it.children && it.children.length > 0) {
+          const anyActive = it.children.some((c: any) =>
+            matches(c.path) || (c.children ?? []).some((g: any) => matches(g.path)),
+          );
+          if (anyActive) toOpen.push(it.path);
+          walk(it.children);
+        }
+      }
+    };
+    walk(visibleItems as any[]);
+    if (toOpen.length === 0) return;
+    setOpenGroups(s => {
+      const next = { ...s };
+      let changed = false;
+      for (const p of toOpen) {
+        if (next[p] !== true) { next[p] = true; changed = true; }
+      }
+      return changed ? next : s;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+
   const visibleFavorites = useMemo(
     () => favorites.filter(f => allowedLeafMap.has(f.path)),
     [favorites, allowedLeafMap],
