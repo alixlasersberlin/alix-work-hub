@@ -1894,7 +1894,26 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       if ((data as any)?.error) throw new Error((data as any).error);
 
       toast({ title: 'E-Mail versendet', description: `Rechnung ${emailRow.invoice_number ?? ''} an ${emailForm.to_email}` });
+
+      if (emailStatusAfter) {
+        if (emailRow.source === 'unpaid') {
+          toast({ title: 'Status nicht geändert', description: 'Offene-Posten-Rechnungen sind schreibgeschützt.', variant: 'destructive' });
+        } else {
+          try {
+            const table = tableFor(emailRow.source);
+            const patch: any = { payment_status: emailStatusAfter };
+            const { error: sErr } = await (supabase as any).from(table).update(patch).eq('id', emailRow.id);
+            if (sErr) throw sErr;
+            setRows((prev) => prev.map((x) => (x.id === emailRow.id && x.source === emailRow.source ? { ...x, ...patch } : x)));
+            toast({ title: 'Status geändert', description: `Neuer Status: ${emailStatusAfter}` });
+          } catch (se: any) {
+            toast({ title: 'Statusänderung fehlgeschlagen', description: se?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+          }
+        }
+      }
+      setEmailStatusAfter('');
       setEmailRow(null);
+
     } catch (e: any) {
       toast({ title: 'Versand fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
     } finally {
