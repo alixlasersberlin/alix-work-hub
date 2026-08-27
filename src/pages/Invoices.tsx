@@ -454,6 +454,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [statusSaving, setStatusSaving] = useState(false);
   const [emailRow, setEmailRow] = useState<Row | null>(null);
   const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', bcc: '', subject: '', body_text: '' });
+  const [emailStatusAfter, setEmailStatusAfter] = useState('');
+
   const [emailSending, setEmailSending] = useState(false);
   const [emailPreparing, setEmailPreparing] = useState(false);
   const [bookRow, setBookRow] = useState<Row | null>(null);
