@@ -2180,15 +2180,16 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         />
                       </th>
                     )}
-                    <th className="text-left px-4 py-2 font-medium">Status</th>
-                    <th className="text-left px-4 py-2 font-medium">Rechnung</th>
-                    <th className="text-left px-4 py-2 font-medium">Kunde</th>
-                    <th className="text-left px-4 py-2 font-medium">Referenz</th>
-                    <th className="text-left px-4 py-2 font-medium">Datum</th>
-                    <th className="text-left px-4 py-2 font-medium">Fällig</th>
-                    <th className="text-right px-4 py-2 font-medium">Betrag</th>
-                    <th className="text-right px-4 py-2 font-medium">Saldo</th>
+                    <SortableTh label="Status" sortKey="status" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Rechnung" sortKey="invoice_number" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Kunde" sortKey="customer_name" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Referenz" sortKey="reference_number" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Datum" sortKey="invoice_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Fällig" sortKey="due_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Betrag" sortKey="total" align="right" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Saldo" sortKey="balance" align="right" colSort={colSort} onSort={toggleColSort} />
                     <th className="text-right px-4 py-2 font-medium">Aktion</th>
+
                   </tr>
                 </thead>
                 {paginate(flatRows, pageSize).map((r, idx) => (
