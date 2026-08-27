@@ -1095,7 +1095,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return [...res].sort((a, b) => cmp(a, b) * dir);
     }
     const sorted = [...res].sort((a, b) => {
-      if (viewMode === 'overdue') {
+      if (extra.overdue && viewMode !== 'newest') {
         // Am längsten überfällig zuerst
         return String(a.due_date ?? '9999').localeCompare(String(b.due_date ?? '9999'));
       }
@@ -1115,7 +1115,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode, colSort]);
+  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode, extra, colSort]);
+
 
   // ---- Mahn-/E-Mail-Status je Rechnung (zweite Zeile unter dem Kundennamen) ----
   type RowMeta = { mails: number; opened: number; lastSent: string | null; level: number | null; reminderSent: string | null };
