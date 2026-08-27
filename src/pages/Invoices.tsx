@@ -1616,6 +1616,38 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }
   };
 
+  const saveBulkStatus = async () => {
+    const targets = rows.filter((x) => selectedIds.includes(x.id) && x.source !== 'unpaid');
+    if (targets.length === 0 || !bulkStatusValue) return;
+    setBulkStatusSaving(true);
+    let ok = 0;
+    let failed = 0;
+    try {
+      for (const t of targets) {
+        const { error } = await (supabase as any)
+          .from(tableFor(t.source))
+          .update({ payment_status: bulkStatusValue })
+          .eq('id', t.id);
+        if (error) failed++; else ok++;
+      }
+      const ids = new Set(targets.map((t) => t.id));
+      setRows((prev) => prev.map((x) => (ids.has(x.id) ? { ...x, payment_status: bulkStatusValue } : x)));
+      toast({
+        title: 'Status geändert',
+        description: `${ok} Rechnung(en) auf „${bulkStatusValue}" gesetzt${failed ? `, ${failed} fehlgeschlagen` : ''}.`,
+        variant: failed && !ok ? 'destructive' : undefined,
+      });
+      setBulkStatusOpen(false);
+      setSelectedIds([]);
+    } catch (e: any) {
+      toast({ title: 'Statusänderung fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setBulkStatusSaving(false);
+    }
+  };
+
+
+
   const openEmail = async (r: Row) => {
     console.log('[Invoices] openEmail clicked', { id: r.id, invoice_number: r.invoice_number });
     setEmailPreparing(true);
