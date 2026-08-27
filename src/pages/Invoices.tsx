@@ -454,6 +454,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [statusSaving, setStatusSaving] = useState(false);
   const [emailRow, setEmailRow] = useState<Row | null>(null);
   const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', bcc: '', subject: '', body_text: '' });
+  const [emailStatusAfter, setEmailStatusAfter] = useState('');
+
   const [emailSending, setEmailSending] = useState(false);
   const [emailPreparing, setEmailPreparing] = useState(false);
   const [bookRow, setBookRow] = useState<Row | null>(null);
@@ -1892,7 +1894,26 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       if ((data as any)?.error) throw new Error((data as any).error);
 
       toast({ title: 'E-Mail versendet', description: `Rechnung ${emailRow.invoice_number ?? ''} an ${emailForm.to_email}` });
+
+      if (emailStatusAfter) {
+        if (emailRow.source === 'unpaid') {
+          toast({ title: 'Status nicht geändert', description: 'Offene-Posten-Rechnungen sind schreibgeschützt.', variant: 'destructive' });
+        } else {
+          try {
+            const table = tableFor(emailRow.source);
+            const patch: any = { payment_status: emailStatusAfter };
+            const { error: sErr } = await (supabase as any).from(table).update(patch).eq('id', emailRow.id);
+            if (sErr) throw sErr;
+            setRows((prev) => prev.map((x) => (x.id === emailRow.id && x.source === emailRow.source ? { ...x, ...patch } : x)));
+            toast({ title: 'Status geändert', description: `Neuer Status: ${emailStatusAfter}` });
+          } catch (se: any) {
+            toast({ title: 'Statusänderung fehlgeschlagen', description: se?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+          }
+        }
+      }
+      setEmailStatusAfter('');
       setEmailRow(null);
+
     } catch (e: any) {
       toast({ title: 'Versand fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
     } finally {
@@ -3011,9 +3032,29 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
               <Label htmlFor="mbody">Nachricht</Label>
               <Textarea id="mbody" rows={8} value={emailForm.body_text} onChange={(e) => setEmailForm((f) => ({ ...f, body_text: e.target.value }))} />
             </div>
+            <div className="rounded-md border border-border bg-muted/20 p-3">
+              <Label htmlFor="mstatus">Status nach Versand ändern</Label>
+              <select
+                id="mstatus"
+                value={emailStatusAfter}
+                onChange={(e) => setEmailStatusAfter(e.target.value)}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Status unverändert lassen</option>
+                <option value="Offen">Offen</option>
+                <option value="Teilweise bezahlt">Teilweise bezahlt</option>
+                <option value="Bezahlt">Bezahlt</option>
+                <option value="Überfällig">Überfällig</option>
+                <option value="Storniert">Storniert</option>
+                <option value="Anwalt">Anwalt</option>
+                <option value="Inkasso Intern">Inkasso Intern</option>
+              </select>
+              <p className="text-[11px] text-muted-foreground mt-1">Wird erst nach erfolgreichem Versand automatisch gesetzt.</p>
+            </div>
             <p className="text-xs text-muted-foreground">
               Absender: <span className="font-mono">noreply@alixlasers.ai</span> (Alix Lasers ®) · Die Rechnung wird automatisch als PDF im Anhang beigefügt.
             </p>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEmailRow(null)} disabled={emailSending}>Abbrechen</Button>
