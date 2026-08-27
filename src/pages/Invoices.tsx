@@ -2206,15 +2206,16 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         />
                       </th>
                     )}
-                    <SortableTh label="Status" sortKey="status" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Rechnung" sortKey="invoice_number" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Kunde" sortKey="customer_name" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Referenz" sortKey="reference_number" colSort={colSort} onSort={toggleColSort} />
                     <SortableTh label="Datum" sortKey="invoice_date" colSort={colSort} onSort={toggleColSort} />
-                    <SortableTh label="Fällig" sortKey="due_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Fälligkeit" sortKey="due_date" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Status" sortKey="status" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Kunde" sortKey="customer_name" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Rechnung" sortKey="invoice_number" colSort={colSort} onSort={toggleColSort} />
                     <SortableTh label="Betrag" sortKey="total" align="right" colSort={colSort} onSort={toggleColSort} />
                     <SortableTh label="Saldo" sortKey="balance" align="right" colSort={colSort} onSort={toggleColSort} />
+                    <SortableTh label="Referenz" sortKey="reference_number" colSort={colSort} onSort={toggleColSort} />
                     <th className="text-right px-4 py-2 font-medium">Aktion</th>
+
 
                   </tr>
                 </thead>
@@ -2250,12 +2251,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           />
                         </td>
                       )}
+                      <td className="px-4 py-2 whitespace-nowrap">{fmtDate(r.invoice_date)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{fmtDate(r.due_date)}</td>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2 flex-nowrap whitespace-nowrap">
                           <Badge variant="outline" className={statusVariant(r.payment_status)}>
                             {r.payment_status ?? '–'}
                           </Badge>
                         </div>
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="truncate max-w-[220px]">{r.customer_name ?? '–'}</div>
+                        {r.city && <div className="text-xs text-muted-foreground truncate max-w-[220px]">{r.city}</div>}
                       </td>
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
@@ -2276,15 +2283,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
                         </div>
                       </td>
-                      <td className="px-4 py-2">
-                        <div className="truncate max-w-[220px]">{r.customer_name ?? '–'}</div>
-                        {r.city && <div className="text-xs text-muted-foreground truncate max-w-[220px]">{r.city}</div>}
-                      </td>
-                      <td className="px-4 py-2">{r.reference_number ?? '–'}</td>
-                      <td className="px-4 py-2">{fmtDate(r.invoice_date)}</td>
-                      <td className="px-4 py-2">{fmtDate(r.due_date)}</td>
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.total, r.currency)}</td>
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.balance, r.currency)}</td>
+                      <td className="px-4 py-2">{r.reference_number ?? '–'}</td>
+
                     </tr>
                     {openActions[`${r.source}-${r.id}`] && (
                       <tr>
