@@ -4,6 +4,8 @@
 // automatisch die Archiv-Adresse im BCC-Feld.
 
 export const GLOBAL_BCC = "rde@alix-lasers.com";
+// Systemweiter CC-Empfänger für ALLE ausgehenden E-Mails
+export const GLOBAL_CC = "buchhaltung@alix-lasers.com";
 
 const g = globalThis as any;
 
@@ -40,6 +42,13 @@ if (!g.__alixGlobalBccInstalled) {
           const list = Array.isArray(obj.bcc) ? [...obj.bcc] : obj.bcc ? [obj.bcc] : [];
           if (!list.some((b: unknown) => norm(b).includes(GLOBAL_BCC))) list.push(GLOBAL_BCC);
           obj.bcc = list;
+
+          // Systemweites CC an die Buchhaltung
+          if (!to.some((t: unknown) => norm(t).includes(GLOBAL_CC))) {
+            const ccList = Array.isArray(obj.cc) ? [...obj.cc] : obj.cc ? [obj.cc] : [];
+            if (!ccList.some((c: unknown) => norm(c).includes(GLOBAL_CC))) ccList.push(GLOBAL_CC);
+            obj.cc = ccList;
+          }
         };
 
         if (Array.isArray(payload)) payload.forEach(apply);
