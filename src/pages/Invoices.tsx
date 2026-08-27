@@ -2608,6 +2608,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                   : <ChevronRight className="w-4 h-4" />}
                               </button>
                             </td>
+                            {isAdmin && (
+                              <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  className="accent-primary"
+                                  aria-label={`Rechnung ${r.invoice_number ?? ''} markieren`}
+                                  checked={selectedIds.includes(r.id)}
+                                  onChange={() => toggleSelect(r.id)}
+                                />
+                              </td>
+                            )}
+
+
 
                             <td className="px-4 py-2">
                               {r.source === 'recurring' ? (
