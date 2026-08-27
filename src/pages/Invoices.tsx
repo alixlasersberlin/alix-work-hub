@@ -809,6 +809,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   // ---- Mehrfachauswahl (Rechnungsliste) ----
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkStatusValue, setBulkStatusValue] = useState('');
+  const [bulkStatusSaving, setBulkStatusSaving] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
