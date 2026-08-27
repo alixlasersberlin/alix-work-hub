@@ -988,6 +988,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }, 0),
   }), [accounts, scopedRows, dSearch, statusFilter, docStatusFilter, mietkaufTotals]);
 
+  // ---- Spaltensortierung (Klick auf Spaltenkopf) ----
+  type SortKey = 'status' | 'invoice_number' | 'customer_name' | 'reference_number' | 'invoice_date' | 'due_date' | 'total' | 'balance';
+  const [colSort, setColSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null);
+  const toggleColSort = (key: SortKey) =>
+    setColSort((prev) =>
+      prev?.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : null,
+    );
+
+
   const flatRows = useMemo<Row[]>(() => {
     let res = scopedRows;
     if (statusFilter !== 'all') {
