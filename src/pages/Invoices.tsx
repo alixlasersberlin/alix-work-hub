@@ -2235,6 +2235,17 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       {dunningBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
                       An Mahn-Engine
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+                      onClick={() => { setBulkStatusValue(''); setBulkStatusOpen(true); }}
+                      title="Zahlungsstatus für alle markierten Rechnungen ändern"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Status ändern
+                    </Button>
+
                   </div>
 
                 </div>
