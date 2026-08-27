@@ -464,8 +464,29 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'highest';
     const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
-    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue', 'anwalt', 'inkasso'].includes(v) ? v : 'highest';
+    // Legacy-Werte: overdue/anwalt/inkasso sind jetzt kombinierbare Filter
+    if (v === 'overdue' || v === 'anwalt' || v === 'inkasso') return 'list';
+    return v && ['accounts', 'list', 'highest', 'oldest', 'newest'].includes(v) ? v : 'highest';
   });
+  // Kombinierbare Zusatzfilter (können mit jeder Basis-Ansicht gemischt werden)
+  type ExtraFilters = { overdue: boolean; anwalt: boolean; inkasso: boolean };
+  const [extra, setExtra] = useState<ExtraFilters>(() => {
+    const base: ExtraFilters = { overdue: false, anwalt: false, inkasso: false };
+    if (typeof window === 'undefined') return base;
+    try {
+      const raw = localStorage.getItem('invoices_extra_filters');
+      if (raw) return { ...base, ...JSON.parse(raw) };
+      const v = localStorage.getItem('invoices_view_mode');
+      if (v === 'overdue' || v === 'anwalt' || v === 'inkasso') return { ...base, [v]: true };
+    } catch {}
+    return base;
+  });
+  const toggleExtra = (k: keyof ExtraFilters) =>
+    setExtra((prev) => {
+      const next = { ...prev, [k]: !prev[k] };
+      try { localStorage.setItem('invoices_extra_filters', JSON.stringify(next)); } catch {}
+      return next;
+    });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
     return (localStorage.getItem('invoices_list_sort') as 'number' | 'date') || 'date';
@@ -476,8 +497,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue' || viewMode === 'anwalt' || viewMode === 'inkasso';
+  const isListView = viewMode === 'list' || viewMode === 'newest';
   const isAccountView = !isListView;
+
 
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
   const [nachtragBusy, setNachtragBusy] = useState<string | null>(null);
@@ -945,16 +967,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
 
-  // "Anwalt"- und "Inkasso Intern"-Rechnungen nur in ihrer eigenen Ansicht sichtbar
-  const scopedRows = useMemo<Row[]>(
-    () =>
-      viewMode === 'anwalt'
-        ? rows.filter(isAnwaltRow)
-        : viewMode === 'inkasso'
-          ? rows.filter(isInkassoRow)
-          : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r)),
-    [rows, viewMode],
-  );
+  // "Anwalt"/"Inkasso Intern"/"Überfällig" sind kombinierbare Filter
+  const scopedRows = useMemo<Row[]>(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const isPaid = (r: Row) => {
+      const ps = String(r.payment_status || r.status || '').toLowerCase();
+      return ps.includes('bezahlt') && !ps.includes('teilweise') && !ps.includes('unbezahlt') && !ps.includes('nicht');
+    };
+    let res =
+      extra.anwalt || extra.inkasso
+        ? rows.filter((r) => (extra.anwalt && isAnwaltRow(r)) || (extra.inkasso && isInkassoRow(r)))
+        : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r));
+    if (extra.overdue) {
+      res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
+    }
+    return res;
+  }, [rows, extra]);
+
 
   const accounts = useMemo<Account[]>(() => {
     let res = scopedRows;
@@ -1043,14 +1072,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = dSearch.trim() ? res.filter((r) => matchesQuery(r, dSearch)) : res;
-    if (viewMode === 'overdue') {
-      const today = new Date().toISOString().slice(0, 10);
-      const isPaid = (r: Row) => {
-        const ps = String(r.payment_status || r.status || '').toLowerCase();
-        return ps.includes('bezahlt') && !ps.includes('teilweise') && !ps.includes('unbezahlt') && !ps.includes('nicht');
-      };
-      res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
-    }
+
+
 
     if (colSort) {
       const dir = colSort.dir === 'asc' ? 1 : -1;
@@ -1072,7 +1095,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return [...res].sort((a, b) => cmp(a, b) * dir);
     }
     const sorted = [...res].sort((a, b) => {
-      if (viewMode === 'overdue') {
+      if (extra.overdue && viewMode !== 'newest') {
         // Am längsten überfällig zuerst
         return String(a.due_date ?? '9999').localeCompare(String(b.due_date ?? '9999'));
       }
@@ -1092,7 +1115,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode, colSort]);
+  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode, extra, colSort]);
+
 
   // ---- Mahn-/E-Mail-Status je Rechnung (zweite Zeile unter dem Kundennamen) ----
   type RowMeta = { mails: number; opened: number; lastSent: string | null; level: number | null; reminderSent: string | null };
@@ -2039,8 +2063,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'anwalt' ? 'Anwalt – Übergebene Rechnungen' : viewMode === 'inkasso' ? 'Inkasso Intern'  : viewMode === 'overdue' ? 'Überfällige Rechnungen' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'anwalt' ? 'Alle Rechnungen mit Zahlungsstatus „Anwalt“ – aus den übrigen Übersichten ausgeblendet' : viewMode === 'inkasso' ? 'Alle Rechnungen im internen Inkasso – aus den übrigen Übersichten ausgeblendet'  : viewMode === 'overdue' ? 'Alle Rechnungen mit offenem Betrag und überschrittenem Fälligkeitsdatum – am längsten überfällig zuerst' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : [
+          (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste'),
+          [extra.overdue && 'Überfällig', extra.anwalt && 'Anwalt', extra.inkasso && 'Inkasso Intern'].filter(Boolean).join(' + '),
+        ].filter(Boolean).join(' · ')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -2139,34 +2167,42 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           >
             <Clock className="w-3.5 h-3.5" /> Neuste
           </Button>
+          <span className="mx-1 h-5 w-px bg-border" aria-hidden />
           <Button
             type="button"
             size="sm"
-            variant={viewMode === 'overdue' ? 'default' : 'ghost'}
-            className={cn("h-8 px-3 gap-1.5", viewMode !== 'overdue' && "text-red-500 hover:text-red-500")}
-            onClick={() => setViewModePersist('overdue')}
+            variant={extra.overdue ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", !extra.overdue && "text-red-500 hover:text-red-500")}
+            onClick={() => toggleExtra('overdue')}
+            aria-pressed={extra.overdue}
           >
             <AlertTriangle className="w-3.5 h-3.5" /> Überfällig
           </Button>
           <Button
             type="button"
             size="sm"
-            variant={viewMode === 'anwalt' ? 'default' : 'ghost'}
-            className={cn("h-8 px-3 gap-1.5", viewMode !== 'anwalt' && "text-amber-500 hover:text-amber-500")}
-            onClick={() => setViewModePersist('anwalt')}
+            variant={extra.anwalt ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", !extra.anwalt && "text-amber-500 hover:text-amber-500")}
+            onClick={() => toggleExtra('anwalt')}
+            aria-pressed={extra.anwalt}
           >
             <Scale className="w-3.5 h-3.5" /> Anwalt
           </Button>
           <Button
             type="button"
             size="sm"
-            variant={viewMode === 'inkasso' ? 'default' : 'ghost'}
-            className={cn("h-8 px-3 gap-1.5", viewMode !== 'inkasso' && "text-orange-500 hover:text-orange-500")}
-            onClick={() => setViewModePersist('inkasso')}
+            variant={extra.inkasso ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", !extra.inkasso && "text-orange-500 hover:text-orange-500")}
+            onClick={() => toggleExtra('inkasso')}
+            aria-pressed={extra.inkasso}
           >
             <Gavel className="w-3.5 h-3.5" /> Inkasso Intern
           </Button>
         </div>
+        {(extra.overdue || extra.anwalt || extra.inkasso) && (
+          <span className="text-xs text-muted-foreground">Filter kombinierbar – erneut klicken zum Entfernen</span>
+        )}
+
         {viewMode === 'list' && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Sortierung:</span>
