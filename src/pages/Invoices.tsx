@@ -942,9 +942,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
 
-  // "Anwalt"-Rechnungen nur in der Anwalt-Ansicht, sonst überall ausgeblendet
+  // "Anwalt"- und "Inkasso Intern"-Rechnungen nur in ihrer eigenen Ansicht sichtbar
   const scopedRows = useMemo<Row[]>(
-    () => (viewMode === 'anwalt' ? rows.filter(isAnwaltRow) : rows.filter((r) => !isAnwaltRow(r))),
+    () =>
+      viewMode === 'anwalt'
+        ? rows.filter(isAnwaltRow)
+        : viewMode === 'inkasso'
+          ? rows.filter(isInkassoRow)
+          : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r)),
     [rows, viewMode],
   );
 
