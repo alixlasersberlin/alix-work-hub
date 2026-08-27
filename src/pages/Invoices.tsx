@@ -2167,34 +2167,42 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           >
             <Clock className="w-3.5 h-3.5" /> Neuste
           </Button>
+          <span className="mx-1 h-5 w-px bg-border" aria-hidden />
           <Button
             type="button"
             size="sm"
-            variant={viewMode === 'overdue' ? 'default' : 'ghost'}
-            className={cn("h-8 px-3 gap-1.5", viewMode !== 'overdue' && "text-red-500 hover:text-red-500")}
-            onClick={() => setViewModePersist('overdue')}
+            variant={extra.overdue ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", !extra.overdue && "text-red-500 hover:text-red-500")}
+            onClick={() => toggleExtra('overdue')}
+            aria-pressed={extra.overdue}
           >
             <AlertTriangle className="w-3.5 h-3.5" /> Überfällig
           </Button>
           <Button
             type="button"
             size="sm"
-            variant={viewMode === 'anwalt' ? 'default' : 'ghost'}
-            className={cn("h-8 px-3 gap-1.5", viewMode !== 'anwalt' && "text-amber-500 hover:text-amber-500")}
-            onClick={() => setViewModePersist('anwalt')}
+            variant={extra.anwalt ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", !extra.anwalt && "text-amber-500 hover:text-amber-500")}
+            onClick={() => toggleExtra('anwalt')}
+            aria-pressed={extra.anwalt}
           >
             <Scale className="w-3.5 h-3.5" /> Anwalt
           </Button>
           <Button
             type="button"
             size="sm"
-            variant={viewMode === 'inkasso' ? 'default' : 'ghost'}
-            className={cn("h-8 px-3 gap-1.5", viewMode !== 'inkasso' && "text-orange-500 hover:text-orange-500")}
-            onClick={() => setViewModePersist('inkasso')}
+            variant={extra.inkasso ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", !extra.inkasso && "text-orange-500 hover:text-orange-500")}
+            onClick={() => toggleExtra('inkasso')}
+            aria-pressed={extra.inkasso}
           >
             <Gavel className="w-3.5 h-3.5" /> Inkasso Intern
           </Button>
         </div>
+        {(extra.overdue || extra.anwalt || extra.inkasso) && (
+          <span className="text-xs text-muted-foreground">Filter kombinierbar – erneut klicken zum Entfernen</span>
+        )}
+
         {viewMode === 'list' && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Sortierung:</span>
