@@ -2571,11 +2571,67 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
                 {open && (
                   <div className="border-t border-border overflow-x-auto">
+                    {isAdmin && a.rows.some((r) => selectedIds.includes(r.id)) && (
+                      <div className="flex items-center justify-between gap-3 px-4 py-2 bg-violet-500/10 border-b border-violet-500/30">
+                        <span className="text-sm">{a.rows.filter((r) => selectedIds.includes(r.id)).length} Rechnung(en) markiert</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(selectedIds.filter((id) => !a.rows.some((r) => r.id === id)))}>Auswahl aufheben</Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={bulkBusy}
+                            className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
+                            onClick={bulkMietkauf}
+                          >
+                            {bulkBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
+                            {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={dunningBusy}
+                            className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                            onClick={runDunningEngine}
+                            title="Ausgewählte Kundenkonten an die Mahn-Engine übergeben (nur Entwürfe)"
+                          >
+                            {dunningBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                            An Mahn-Engine
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+                            onClick={() => { setBulkStatusValue(''); setBulkStatusOpen(true); }}
+                            title="Zahlungsstatus für alle markierten Rechnungen ändern"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Status ändern
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     <table className="w-full text-sm">
                       <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                         <tr>
                           <th className="px-2 py-2 w-8"></th>
+                          {isAdmin && (
+                            <th className="px-3 py-2 w-8">
+                              <input
+                                type="checkbox"
+                                className="accent-primary"
+                                aria-label="Alle markieren"
+                                checked={a.rows.length > 0 && a.rows.every((r) => selectedIds.includes(r.id))}
+                                onChange={(e) => {
+                                  const ids = a.rows.map((r) => r.id);
+                                  setSelectedIds(e.target.checked
+                                    ? Array.from(new Set([...selectedIds, ...ids]))
+                                    : selectedIds.filter((id) => !ids.includes(id)));
+                                }}
+                              />
+                            </th>
+                          )}
                           <th className="text-left px-4 py-2 font-medium">Typ</th>
+
                           <th className="text-left px-4 py-2 font-medium">Rechnung</th>
                           <th className="text-left px-4 py-2 font-medium">Referenz</th>
                           <th className="text-left px-4 py-2 font-medium">Datum</th>
