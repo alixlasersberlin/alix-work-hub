@@ -16,8 +16,6 @@ export function buildSignatureHtml(loginName: string): string {
     );
   return `
 <div style="margin-top:32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#222;line-height:1.55">
-  <div style="font-weight:700;color:#0a0a0a;letter-spacing:.3px">Alix Lasers ®</div>
-  <div style="margin-top:8px">Mit freundlichen Grüßen</div>
   ${safeName ? `<div style="font-weight:600">${safeName}</div>` : ""}
   <div style="margin-top:16px">
     <div style="font-weight:600">Alix Lasers ®</div>
@@ -42,10 +40,7 @@ export function buildSignatureText(loginName: string): string {
   const name = sanitizeName(loginName);
   return `
 
---
-Alix Lasers ®
-
-Mit freundlichen Grüßen${name ? `\n${name}` : ""}
+--${name ? `\n${name}` : ""}
 
 Alix Lasers ®
 Zeppelinstrasse 3
