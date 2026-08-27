@@ -1089,6 +1089,70 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     return sorted;
   }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode, colSort]);
 
+  // ---- Mahn-/E-Mail-Status je Rechnung (zweite Zeile unter dem Kundennamen) ----
+  type RowMeta = { mails: number; opened: number; lastSent: string | null; level: number | null; reminderSent: string | null };
+  const [rowMeta, setRowMeta] = useState<Record<string, RowMeta>>({});
+  const visibleRows = useMemo(() => paginate(flatRows, pageSize), [flatRows, pageSize]);
+  const metaKeys = useMemo(() => {
+    const numbers = Array.from(new Set(visibleRows.map((r) => r.invoice_number).filter(Boolean) as string[])).slice(0, 60);
+    const names = Array.from(new Set(visibleRows.map((r) => r.customer_name).filter(Boolean) as string[])).slice(0, 60);
+    return { numbers, names, sig: `${numbers.join('|')}#${names.join('|')}` };
+  }, [visibleRows]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const { numbers, names } = metaKeys;
+    if (!numbers.length) { setRowMeta({}); return; }
+    (async () => {
+      try {
+        const [mailsRes, remsRes] = await Promise.all([
+          supabase
+            .from('mail_messages')
+            .select('subject, sent_at, opened_at, status')
+            .or(numbers.map((n) => `subject.ilike.%${n}%`).join(','))
+            .limit(500),
+          names.length
+            ? supabase.from('finance_reminders' as any).select('customer_name, level, status, sent_at').in('customer_name', names).limit(500)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+        if (cancelled) return;
+        const byNumber: Record<string, RowMeta> = {};
+        for (const n of numbers) byNumber[n] = { mails: 0, opened: 0, lastSent: null, level: null, reminderSent: null };
+        for (const m of (mailsRes.data ?? []) as any[]) {
+          const subj = String(m.subject ?? '');
+          for (const n of numbers) {
+            if (!subj.toLowerCase().includes(n.toLowerCase())) continue;
+            const e = byNumber[n];
+            e.mails += 1;
+            if (m.opened_at) e.opened += 1;
+            const s = m.sent_at ?? null;
+            if (s && (!e.lastSent || s > e.lastSent)) e.lastSent = s;
+          }
+        }
+        const byName: Record<string, { level: number | null; sent: string | null }> = {};
+        for (const r of ((remsRes as any).data ?? []) as any[]) {
+          const k = String(r.customer_name ?? '').toLowerCase();
+          const cur = byName[k] ?? { level: null, sent: null };
+          if (r.level != null && (cur.level == null || Number(r.level) > cur.level)) cur.level = Number(r.level);
+          if (r.sent_at && (!cur.sent || r.sent_at > cur.sent)) cur.sent = r.sent_at;
+          byName[k] = cur;
+        }
+        for (const r of visibleRows) {
+          const n = r.invoice_number;
+          if (!n || !byNumber[n]) continue;
+          const nm = byName[String(r.customer_name ?? '').toLowerCase()];
+          if (nm) { byNumber[n].level = nm.level; byNumber[n].reminderSent = nm.sent; }
+        }
+        setRowMeta(byNumber);
+      } catch {
+        /* Status ist optional */
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metaKeys.sig]);
+
+
 
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
