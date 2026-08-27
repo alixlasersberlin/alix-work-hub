@@ -999,6 +999,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       const today = new Date().toISOString().slice(0, 10);
       res = res.filter((r) => Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
     }
+    if (colSort) {
+      const dir = colSort.dir === 'asc' ? 1 : -1;
+      const num = (v: any) => Number(v ?? 0);
+      const str = (v: any) => String(v ?? '');
+      const cmp = (a: Row, b: Row) => {
+        switch (colSort.key) {
+          case 'status': return str(a.payment_status || a.status).localeCompare(str(b.payment_status || b.status), 'de');
+          case 'invoice_number': return str(a.invoice_number).localeCompare(str(b.invoice_number), 'de', { numeric: true });
+          case 'customer_name': return str(a.customer_name).localeCompare(str(b.customer_name), 'de', { sensitivity: 'base' });
+          case 'reference_number': return str(a.reference_number).localeCompare(str(b.reference_number), 'de', { numeric: true });
+          case 'invoice_date': return str(a.invoice_date).localeCompare(str(b.invoice_date));
+          case 'due_date': return str(a.due_date).localeCompare(str(b.due_date));
+          case 'total': return num(a.total) - num(b.total);
+          case 'balance': return num(a.balance) - num(b.balance);
+          default: return 0;
+        }
+      };
+      return [...res].sort((a, b) => cmp(a, b) * dir);
+    }
     const sorted = [...res].sort((a, b) => {
       if (viewMode === 'overdue') {
         // Am längsten überfällig zuerst
@@ -1020,7 +1039,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode]);
+  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode, colSort]);
+
 
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
