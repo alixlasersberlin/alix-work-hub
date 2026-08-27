@@ -7,7 +7,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, ArrowUp, ArrowDown, ChevronsUpDown, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, Gavel, ArrowUp, ArrowDown, ChevronsUpDown, X as LucideXIcon } from 'lucide-react';
 
 function SortableTh({ label, sortKey, colSort, onSort, align = 'left' }: {
   label: string;
