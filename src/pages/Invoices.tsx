@@ -809,6 +809,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   // ---- Mehrfachauswahl (Rechnungsliste) ----
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkStatusValue, setBulkStatusValue] = useState('');
+  const [bulkStatusSaving, setBulkStatusSaving] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -1616,6 +1619,38 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }
   };
 
+  const saveBulkStatus = async () => {
+    const targets = rows.filter((x) => selectedIds.includes(x.id) && x.source !== 'unpaid');
+    if (targets.length === 0 || !bulkStatusValue) return;
+    setBulkStatusSaving(true);
+    let ok = 0;
+    let failed = 0;
+    try {
+      for (const t of targets) {
+        const { error } = await (supabase as any)
+          .from(tableFor(t.source))
+          .update({ payment_status: bulkStatusValue })
+          .eq('id', t.id);
+        if (error) failed++; else ok++;
+      }
+      const ids = new Set(targets.map((t) => t.id));
+      setRows((prev) => prev.map((x) => (ids.has(x.id) ? { ...x, payment_status: bulkStatusValue } : x)));
+      toast({
+        title: 'Status geändert',
+        description: `${ok} Rechnung(en) auf „${bulkStatusValue}" gesetzt${failed ? `, ${failed} fehlgeschlagen` : ''}.`,
+        variant: failed && !ok ? 'destructive' : undefined,
+      });
+      setBulkStatusOpen(false);
+      setSelectedIds([]);
+    } catch (e: any) {
+      toast({ title: 'Statusänderung fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setBulkStatusSaving(false);
+    }
+  };
+
+
+
   const openEmail = async (r: Row) => {
     console.log('[Invoices] openEmail clicked', { id: r.id, invoice_number: r.invoice_number });
     setEmailPreparing(true);
@@ -2200,6 +2235,17 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       {dunningBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
                       An Mahn-Engine
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+                      onClick={() => { setBulkStatusValue(''); setBulkStatusOpen(true); }}
+                      title="Zahlungsstatus für alle markierten Rechnungen ändern"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Status ändern
+                    </Button>
+
                   </div>
 
                 </div>
@@ -2670,6 +2716,44 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             <Button variant="outline" onClick={() => setStatusRow(null)} disabled={statusSaving}>Abbrechen</Button>
             <Button onClick={saveStatus} disabled={statusSaving} className="gold-gradient text-primary-foreground">
               {statusSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkStatusOpen} onOpenChange={(o) => !o && !bulkStatusSaving && setBulkStatusOpen(false)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-primary" />
+              Status für {selectedIds.length} Rechnung(en)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="bulkps">Zahlungsstatus</Label>
+              <select
+                id="bulkps"
+                value={bulkStatusValue}
+                onChange={(e) => setBulkStatusValue(e.target.value)}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Status wählen</option>
+                <option value="Offen">Offen</option>
+                <option value="Teilweise bezahlt">Teilweise bezahlt</option>
+                <option value="Bezahlt">Bezahlt</option>
+                <option value="Überfällig">Überfällig</option>
+                <option value="Storniert">Storniert</option>
+                <option value="Anwalt">Anwalt</option>
+                <option value="Inkasso Intern">Inkasso Intern</option>
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">Wird auf alle markierten Rechnungen angewendet (kein Zoho-Sync).</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)} disabled={bulkStatusSaving}>Abbrechen</Button>
+            <Button onClick={saveBulkStatus} disabled={bulkStatusSaving || !bulkStatusValue} className="gold-gradient text-primary-foreground">
+              {bulkStatusSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Übernehmen
             </Button>
           </DialogFooter>
         </DialogContent>
