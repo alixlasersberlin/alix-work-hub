@@ -1,6 +1,16 @@
 // Alix Lasers – einheitliche Signatur für alle ausgehenden Mails
+// Rollen-/Funktionsbezeichnungen dürfen nicht als Signaturname erscheinen
+const SUPPRESSED_NAMES = ["chief operations"];
+
+function sanitizeName(loginName: string): string {
+  const n = String(loginName || "").trim();
+  if (!n || SUPPRESSED_NAMES.includes(n.toLowerCase())) return "";
+  return n;
+}
+
 export function buildSignatureHtml(loginName: string): string {
-  const safeName = String(loginName || "Alix Lasers Team")
+  const clean = sanitizeName(loginName);
+  const safeName = clean
     .replace(/[<>&"]/g, (c) =>
       ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c] as string),
     );
@@ -8,7 +18,7 @@ export function buildSignatureHtml(loginName: string): string {
 <div style="margin-top:32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#222;line-height:1.55">
   <div style="font-weight:700;color:#0a0a0a;letter-spacing:.3px">Alix Lasers ®</div>
   <div style="margin-top:8px">Mit freundlichen Grüßen</div>
-  <div style="font-weight:600">${safeName}</div>
+  ${safeName ? `<div style="font-weight:600">${safeName}</div>` : ""}
   <div style="margin-top:16px">
     <div style="font-weight:600">Alix Lasers International</div>
     <div>Web: <a href="https://www.alix-lasers.com" style="color:#b8860b;text-decoration:none">https://www.alix-lasers.com</a></div>
@@ -24,14 +34,13 @@ export function buildSignatureHtml(loginName: string): string {
 }
 
 export function buildSignatureText(loginName: string): string {
-  const name = loginName || "Alix Lasers Team";
+  const name = sanitizeName(loginName);
   return `
 
 --
 Alix Lasers ®
 
-Mit freundlichen Grüßen
-${name}
+Mit freundlichen Grüßen${name ? `\n${name}` : ""}
 
 Alix Lasers International
 Web: https://www.alix-lasers.com
