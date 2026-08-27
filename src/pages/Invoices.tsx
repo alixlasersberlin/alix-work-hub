@@ -1842,6 +1842,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           from_name: 'Alix Lasers | Finance',
           subject: emailForm.subject,
           body_text: emailForm.body_text,
+          body_html: `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111">${
+            (emailForm.body_text || '')
+              .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+              .split(/\n{2,}/)
+              .map((p) => `<p style="margin:0 0 12px">${p.replace(/\n/g, '<br/>')}</p>`)
+              .join('')
+          }</div>`,
           bcc: bccList.length ? bccList : null,
           customer_id: isUuid(emailRow.customer_id) ? emailRow.customer_id : null,
           attachments: [{
