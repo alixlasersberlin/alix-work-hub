@@ -1729,7 +1729,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       to_name: r.customer_name ?? '',
       bcc: '',
       subject: `Rechnung ${r.invoice_number ?? ''}`.trim(),
-      body_text: `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung ${r.invoice_number ?? ''}${r.reference_number ? ` zum Auftrag ${r.reference_number}` : ''}.\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nAlix Lasers`,
+      body_text: `Sehr geehrte Kundin, sehr geehrter Kunde,\n\nbitte beachten Sie die beigefügte Anlage zu dieser E-Mail.\n\nLeider haben wir trotz unserer bisherigen Kontaktaufnahme erneut keine Rückmeldung und keinen Zahlungseingang von Ihnen erhalten.\n\nWir fordern Sie daher auf, den noch offenen Rechnungsbetrag unverzüglich zu begleichen, um weitere Maßnahmen und die damit verbundenen zusätzlichen Kosten zu vermeiden.\n\nSollten Sie die Zahlung zwischenzeitlich bereits veranlasst haben, betrachten Sie dieses Schreiben bitte als gegenstandslos.\n\nMit freundlichen Grüßen\n\nAlix Lasers GmbH`,
     });
     try {
       let foundEmail: string | null = null;
