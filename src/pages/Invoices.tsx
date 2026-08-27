@@ -464,8 +464,29 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'highest';
     const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
-    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue', 'anwalt', 'inkasso'].includes(v) ? v : 'highest';
+    // Legacy-Werte: overdue/anwalt/inkasso sind jetzt kombinierbare Filter
+    if (v === 'overdue' || v === 'anwalt' || v === 'inkasso') return 'list';
+    return v && ['accounts', 'list', 'highest', 'oldest', 'newest'].includes(v) ? v : 'highest';
   });
+  // Kombinierbare Zusatzfilter (können mit jeder Basis-Ansicht gemischt werden)
+  type ExtraFilters = { overdue: boolean; anwalt: boolean; inkasso: boolean };
+  const [extra, setExtra] = useState<ExtraFilters>(() => {
+    const base: ExtraFilters = { overdue: false, anwalt: false, inkasso: false };
+    if (typeof window === 'undefined') return base;
+    try {
+      const raw = localStorage.getItem('invoices_extra_filters');
+      if (raw) return { ...base, ...JSON.parse(raw) };
+      const v = localStorage.getItem('invoices_view_mode');
+      if (v === 'overdue' || v === 'anwalt' || v === 'inkasso') return { ...base, [v]: true };
+    } catch {}
+    return base;
+  });
+  const toggleExtra = (k: keyof ExtraFilters) =>
+    setExtra((prev) => {
+      const next = { ...prev, [k]: !prev[k] };
+      try { localStorage.setItem('invoices_extra_filters', JSON.stringify(next)); } catch {}
+      return next;
+    });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
     return (localStorage.getItem('invoices_list_sort') as 'number' | 'date') || 'date';
@@ -476,8 +497,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue' || viewMode === 'anwalt' || viewMode === 'inkasso';
+  const isListView = viewMode === 'list' || viewMode === 'newest';
   const isAccountView = !isListView;
+
 
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
   const [nachtragBusy, setNachtragBusy] = useState<string | null>(null);
