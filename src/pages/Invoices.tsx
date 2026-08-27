@@ -7,7 +7,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, X as LucideXIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
@@ -159,7 +159,12 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
-type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue';
+type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue' | 'anwalt';
+
+// Rechnungen im Status "Anwalt" werden aus allen normalen Ansichten ausgeblendet
+export function isAnwaltRow(r: Row): boolean {
+  return String(r.payment_status ?? '').trim().toLowerCase() === 'anwalt';
+}
 
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
@@ -428,7 +433,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'highest';
     const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
-    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue'].includes(v) ? v : 'highest';
+    return v && ['accounts', 'list', 'highest', 'oldest', 'newest', 'overdue', 'anwalt'].includes(v) ? v : 'highest';
   });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
@@ -440,7 +445,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue';
+  const isListView = viewMode === 'list' || viewMode === 'newest' || viewMode === 'overdue' || viewMode === 'anwalt';
   const isAccountView = !isListView;
 
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
@@ -871,8 +876,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
 
+  // "Anwalt"-Rechnungen nur in der Anwalt-Ansicht, sonst überall ausgeblendet
+  const scopedRows = useMemo<Row[]>(
+    () => (viewMode === 'anwalt' ? rows.filter(isAnwaltRow) : rows.filter((r) => !isAnwaltRow(r))),
+    [rows, viewMode],
+  );
+
   const accounts = useMemo<Account[]>(() => {
-    let res = rows;
+    let res = scopedRows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
@@ -925,14 +936,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         String(a.lastFinalizedDate ?? a.lastInvoiceDate ?? ''),
       ),
     );
-  }, [rows, dSearch, statusFilter, docStatusFilter]);
+  }, [scopedRows, dSearch, statusFilter, docStatusFilter]);
 
   const kpi = useMemo(() => ({
     accounts: accounts.length,
     invoices: accounts.reduce((s, a) => s + a.totalInvoices + a.totalRecurring, 0),
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
     // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
-    totalOpen: flatRowsForKpi(rows, dSearch, statusFilter, docStatusFilter),
+    totalOpen: flatRowsForKpi(scopedRows, dSearch, statusFilter, docStatusFilter),
     // OP Total = Summe aller Konten (Mietkauf-Geräte-Volumen minus geleistete Zahlungen)
     opTotal: accounts.reduce((s, a) => {
       const mk = Number(mietkaufTotals[a.key] ?? 0);
@@ -940,10 +951,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       const paid = a.rows.reduce((p, r) => p + (Number(r.total ?? 0) - Number(r.balance ?? 0)), 0);
       return s + (mk - paid);
     }, 0),
-  }), [accounts, rows, dSearch, statusFilter, docStatusFilter, mietkaufTotals]);
+  }), [accounts, scopedRows, dSearch, statusFilter, docStatusFilter, mietkaufTotals]);
 
   const flatRows = useMemo<Row[]>(() => {
-    let res = rows;
+    let res = scopedRows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
@@ -974,7 +985,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [rows, dSearch, statusFilter, docStatusFilter, listSort, viewMode]);
+  }, [scopedRows, dSearch, statusFilter, docStatusFilter, listSort, viewMode]);
 
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
@@ -1817,8 +1828,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'overdue' ? 'Überfällige Rechnungen' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'overdue' ? 'Alle Rechnungen mit offenem Betrag und überschrittenem Fälligkeitsdatum – am längsten überfällig zuerst' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'anwalt' ? 'Anwalt – Übergebene Rechnungen' : viewMode === 'overdue' ? 'Überfällige Rechnungen' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'anwalt' ? 'Alle Rechnungen mit Zahlungsstatus „Anwalt“ – aus den übrigen Übersichten ausgeblendet' : viewMode === 'overdue' ? 'Alle Rechnungen mit offenem Betrag und überschrittenem Fälligkeitsdatum – am längsten überfällig zuerst' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -1925,6 +1936,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             onClick={() => setViewModePersist('overdue')}
           >
             <AlertTriangle className="w-3.5 h-3.5" /> Überfällig
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'anwalt' ? 'default' : 'ghost'}
+            className={cn("h-8 px-3 gap-1.5", viewMode !== 'anwalt' && "text-amber-500 hover:text-amber-500")}
+            onClick={() => setViewModePersist('anwalt')}
+          >
+            <Scale className="w-3.5 h-3.5" /> Anwalt
           </Button>
         </div>
         {viewMode === 'list' && (
