@@ -1749,6 +1749,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const openEmail = async (r: Row) => {
     console.log('[Invoices] openEmail clicked', { id: r.id, invoice_number: r.invoice_number });
     setEmailPreparing(true);
+    setEmailStatusAfter('');
     setEmailRow(r);
     setEmailForm({
       to_email: '',
