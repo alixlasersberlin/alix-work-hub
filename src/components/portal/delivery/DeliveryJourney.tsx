@@ -114,6 +114,25 @@ export function DeliveryJourney({
   const [showProduction, setShowProduction] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
+  // "NEU"-Markierung: Einträge, die seit dem letzten Portalbesuch dazugekommen sind
+  const seenKey = `dj-seen-${orderNumber}`;
+  const [lastSeen] = useState<number>(() => {
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem(seenKey) : null;
+    return raw ? Number(raw) || 0 : 0;
+  });
+  const newCount = useMemo(
+    () => data.history.filter((h) => {
+      const dt = d(h.date);
+      return dt ? dt.getTime() > lastSeen : false;
+    }).length,
+    [data.history, lastSeen],
+  );
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.localStorage.setItem(seenKey, String(Date.now()));
+  }, [seenKey]);
+
+
+
   const primaryDevice = data.devices?.[0]?.name ?? 'Ihr ALIX System';
   const plannedDate = d(data.eta.planned);
   const daysLeft = plannedDate ? differenceInCalendarDays(plannedDate, new Date()) : null;
