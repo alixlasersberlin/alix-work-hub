@@ -8,6 +8,7 @@ import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { DeliveryJourney } from '@/components/portal/delivery/DeliveryJourney';
 import { DeliveryConfirm } from '@/components/portal/delivery/DeliveryConfirm';
+import { CustomerActions } from '@/components/portal/delivery/CustomerActions';
 import type { DeliveryJourneyPayload } from '@/lib/portal/delivery-types';
 
 interface StatusPayload {
