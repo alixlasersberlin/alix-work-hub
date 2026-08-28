@@ -138,12 +138,22 @@ export function DeliveryJourney({
   const daysLeft = plannedDate ? differenceInCalendarDays(plannedDate, new Date()) : null;
   const isDelivered = data.phase === 'delivered';
 
+  // Headline: immer der geplante Termin (Bereich nur als Zusatzinfo)
   const etaText = useMemo(() => {
-    const e = fmt(data.eta.earliest, 'dd.');
-    const l = fmt(data.eta.latest);
-    if (e && l) return `${e}–${l}`;
-    return fmt(data.eta.planned) ?? null;
+    return fmt(data.eta.planned) ?? fmt(data.eta.latest) ?? fmt(data.eta.earliest) ?? null;
   }, [data.eta]);
+
+  // Zeitfenster korrekt formatiert (gleicher Monat → "12.–26. Oktober 2026")
+  const etaWindowText = useMemo(() => {
+    const de = d(data.eta.earliest);
+    const dl = d(data.eta.latest);
+    if (!de || !dl || de.getTime() > dl.getTime()) return null;
+    const sameMonth = de.getFullYear() === dl.getFullYear() && de.getMonth() === dl.getMonth();
+    return sameMonth
+      ? `${fmt(data.eta.earliest, 'dd.')}–${fmt(data.eta.latest)}`
+      : `${fmt(data.eta.earliest)} – ${fmt(data.eta.latest)}`;
+  }, [data.eta]);
+
 
   const confidenceLabel =
     data.confidence === 'confirmed'
