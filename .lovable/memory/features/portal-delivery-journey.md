@@ -13,3 +13,6 @@ type: feature
 - **Portal "NEU"-Badge**: Historieneinträge neuer als der letzte Portalbesuch (localStorage `dj-seen-<auftragsnummer>`) werden mit NEU markiert; Zähler am Button "Lieferhistorie".
 - Regeln: interne Kommentare (`delay_reason_internal`) nie im Portal ausgeben; Fortschritt nur aus echten Schritten (kein Fake-Prozent); nie "null"/"kein Datum" zeigen, stattdessen "Liefertermin wird geplant".
 - Frontend-Komponenten: `src/components/portal/delivery/DeliveryJourney.tsx`, `DeviceAssembly.tsx`, CSS `src/styles/delivery-journey.css` (reduced-motion respektiert).
+- **Phase 3**: Kundenbestätigung des Liefertermins im Portal (`DeliveryConfirm.tsx` + Edge Function `portal-delivery-confirm`, verifiziert Auftragsnr+PLZ+E-Mail) schreibt `customer_response`/`customer_responded_at`/`customer_alternative_date`/`customer_response_note` in `order_delivery_status`; Bestätigung setzt `eta_confirmed = true`.
+- Phase 3: optionaler **SMS-Versand** in `delivery-notify` über Twilio (`notify_sms` + `notify_phone` in `order_delivery_status`).
+- Phase 3: Admin-Cockpit **/dispatch/lieferstatus** (`src/pages/Dispatch/Lieferstatus.tsx`, Menü ALIX DISPATCH CENTER) mit KPI-Kacheln (gesamt, verzögert, Termin unbestätigt, Terminwunsch Kunde), Suche, Phasenfilter und Sprung in den Auftrags-Tab.
