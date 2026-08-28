@@ -200,11 +200,12 @@ export function DeliveryJourney({
             <div className="pt-2">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Voraussichtliche Lieferung</div>
               <div className="text-3xl md:text-5xl font-semibold tracking-tight mt-1 dj-rise">{etaText}</div>
-              {data.eta.planned && data.eta.earliest && data.eta.latest && (
+              {etaWindowText && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  Aktuell rechnen wir mit einer Lieferung am {fmt(data.eta.planned)}.
+                  Geplantes Lieferfenster: {etaWindowText}.
                 </p>
               )}
+
             </div>
           ) : (
             <div className="pt-2">
