@@ -1,0 +1,40 @@
+/* Animationen für die Liefertermin-Abfrage im Kundenportal (dezent, Premium/Medtech) */
+
+@keyframes dj-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dj-draw {
+  from { stroke-dashoffset: 260; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes dj-pulse-ring {
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45); }
+  70% { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+}
+@keyframes dj-scan {
+  0% { transform: translateX(-110%); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(110%); opacity: 0; }
+}
+@keyframes dj-drive {
+  0% { left: 0%; }
+  100% { left: calc(100% - 1.75rem); }
+}
+
+.dj-rise { animation: dj-rise 0.5s ease-out both; }
+.dj-pulse { animation: dj-pulse-ring 2.2s ease-out infinite; }
+.dj-progress-bar { transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
+.dj-check path { stroke-dasharray: 260; animation: dj-draw 0.6s ease-out both; }
+.dj-scan-line {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.28), transparent);
+  animation: dj-scan 2.6s ease-in-out infinite;
+}
+.dj-truck { animation: dj-drive 6s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dj-rise, .dj-pulse, .dj-check path, .dj-scan-line, .dj-truck { animation: none !important; }
+}

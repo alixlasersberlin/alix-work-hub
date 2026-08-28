@@ -52,6 +52,7 @@ import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog, { type MietkaufDialogHandle } from '@/components/MietkaufDialog';
 import WareneingangDialog, { type WareneingangDialogHandle } from '@/components/WareneingangDialog';
 import DeliveryNoteTab from '@/components/DeliveryNoteTab';
+import OrderDeliveryStatusPanel from '@/components/delivery/OrderDeliveryStatusPanel';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
 import AzInvoiceTab from '@/components/AzInvoiceTab';
@@ -94,7 +95,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'freigaben' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'docwizard' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'freigaben' | 'lieferstatus' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'docwizard' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
   const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
@@ -144,7 +145,7 @@ export default function OrderDetail() {
 
   // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
   const deliveryRelease = useDeliveryRelease(id);
-  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','freigaben','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','social_fragebogen','alixdocs','docwizard','notes','emails','sms','history','raw'] as const;
+  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','freigaben','lieferstatus','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','social_fragebogen','alixdocs','docwizard','notes','emails','sms','history','raw'] as const;
   useEffect(() => {
     const t = searchParams.get('tab');
     if (t && (validTabs as readonly string[]).includes(t)) {
@@ -478,6 +479,7 @@ export default function OrderDetail() {
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
         ...(canSeeAtApproval ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
         { key: 'freigaben', label: 'Freigaben', icon: ShieldCheck },
+        { key: 'lieferstatus', label: 'Lieferstatus (Portal)', icon: Truck },
 
       ],
     },
@@ -1355,6 +1357,10 @@ export default function OrderDetail() {
 
       {activeTab === 'freigaben' && id && (
         <DeliveryApprovalPanel orderId={id} orderNumber={order?.order_number} />
+      )}
+
+      {activeTab === 'lieferstatus' && id && (
+        <OrderDeliveryStatusPanel orderId={id} />
       )}
 
       {/* Packages Tab */}

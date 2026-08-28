@@ -3,6 +3,7 @@
 // returns a SAFE, derived status payload. No auth required.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
+import { buildJourney } from "../_shared/delivery-journey.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,7 +132,7 @@ Deno.serve(async (req) => {
 
     const { data: order } = await supabase
       .from("orders")
-      .select("id, order_number, order_status, deposit_ok, expected_shipment_date, billing_address, shipping_address, customer_id, source_system")
+      .select("id, order_number, order_status, order_date, updated_at, deposit_ok, expected_shipment_date, billing_address, shipping_address, customer_id, source_system")
       .eq("order_number", orderNumber)
       .maybeSingle();
 
@@ -215,7 +216,56 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // ---- Erweiterter Lieferstatus (Delivery Journey) ----
+    let delivery: any = null;
+    try {
+      const [ods, appr, po2, appt, items, odEvents] = await Promise.all([
+        supabase.from("order_delivery_status").select("*").eq("order_id", order.id).maybeSingle(),
+        supabase.from("delivery_approvals").select("*").eq("order_id", order.id).maybeSingle(),
+        supabase.from("production_orders").select("status, approval_status, seriennummer, liefertermin")
+          .eq("order_id", order.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("delivery_appointments")
+          .select("id, status, planned_date, time_window_start, time_window_end, confirmed_at, delivered_at, serial_number, device_name")
+          .eq("order_id", order.id).order("planned_date", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("order_items").select("item_name, quantity, item_order").eq("order_id", order.id).order("item_order"),
+        supabase.from("order_delivery_events").select("title, description, created_at")
+          .eq("order_id", order.id).eq("visible_to_customer", true).order("created_at", { ascending: false }).limit(50),
+      ]);
+
+      let tourStop: any = null;
+      let trackingEvents: any[] = [];
+      if (appt.data?.id) {
+        const [stopRes, evRes] = await Promise.all([
+          supabase.from("delivery_tour_stops")
+            .select("position, planned_arrival, actual_arrival, stop_status, delivery_tours(status, tour_date)")
+            .eq("appointment_id", appt.data.id).maybeSingle(),
+          supabase.from("delivery_tracking_events").select("event_type, message, created_at")
+            .eq("appointment_id", appt.data.id).eq("visible_to_customer", true)
+            .order("created_at", { ascending: false }).limit(30),
+        ]);
+        tourStop = stopRes.data
+          ? { ...stopRes.data, tour_status: (stopRes.data as any).delivery_tours?.status ?? null }
+          : null;
+        trackingEvents = evRes.data ?? [];
+      }
+
+      delivery = buildJourney({
+        order,
+        status: ods.data ?? null,
+        approvals: appr.data ?? null,
+        productionOrder: po2.data ?? null,
+        appointment: appt.data ?? null,
+        tourStop,
+        trackingEvents,
+        items: items.data ?? [],
+        events: odEvents.data ?? [],
+      });
+    } catch (e) {
+      console.error("[customer-portal-lookup] delivery journey", e);
+    }
+
     const status = STATUS_TEXTS[key];
+
     const payload = {
       ok: true,
       order_number: order.order_number,
@@ -225,6 +275,8 @@ Deno.serve(async (req) => {
       expected_delivery: order.expected_shipment_date,
       tracking_number: trackNote?.note_text || null,
       customer_name: customer?.contact_name || customer?.company_name || null,
+      order_date: (order as any).order_date ?? null,
+      delivery,
     };
 
     return new Response(JSON.stringify(payload), {

@@ -32500,6 +32500,129 @@ export type Database = {
           },
         ]
       }
+      order_delivery_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_type: string
+          id: string
+          order_id: string
+          title: string
+          visible_to_customer: boolean
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          order_id: string
+          title: string
+          visible_to_customer?: boolean
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          order_id?: string
+          title?: string
+          visible_to_customer?: boolean
+        }
+        Relationships: []
+      }
+      order_delivery_status: {
+        Row: {
+          created_at: string
+          customer_delay_reason: string | null
+          customer_note: string | null
+          delay_reason_internal: string | null
+          eta_confirmed: boolean
+          eta_earliest: string | null
+          eta_latest: string | null
+          eta_planned: string | null
+          id: string
+          is_delayed: boolean
+          last_status_change: string
+          notify_customer: boolean
+          order_id: string
+          partial_delivery: boolean
+          phase: string
+          production_end_planned: string | null
+          production_started_at: string | null
+          production_steps: Json
+          qc_completed_at: string | null
+          qc_started_at: string | null
+          qc_steps: Json
+          sub_status: string | null
+          time_window_end: string | null
+          time_window_start: string | null
+          tour_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_delay_reason?: string | null
+          customer_note?: string | null
+          delay_reason_internal?: string | null
+          eta_confirmed?: boolean
+          eta_earliest?: string | null
+          eta_latest?: string | null
+          eta_planned?: string | null
+          id?: string
+          is_delayed?: boolean
+          last_status_change?: string
+          notify_customer?: boolean
+          order_id: string
+          partial_delivery?: boolean
+          phase?: string
+          production_end_planned?: string | null
+          production_started_at?: string | null
+          production_steps?: Json
+          qc_completed_at?: string | null
+          qc_started_at?: string | null
+          qc_steps?: Json
+          sub_status?: string | null
+          time_window_end?: string | null
+          time_window_start?: string | null
+          tour_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_delay_reason?: string | null
+          customer_note?: string | null
+          delay_reason_internal?: string | null
+          eta_confirmed?: boolean
+          eta_earliest?: string | null
+          eta_latest?: string | null
+          eta_planned?: string | null
+          id?: string
+          is_delayed?: boolean
+          last_status_change?: string
+          notify_customer?: boolean
+          order_id?: string
+          partial_delivery?: boolean
+          phase?: string
+          production_end_planned?: string | null
+          production_started_at?: string | null
+          production_steps?: Json
+          qc_completed_at?: string | null
+          qc_started_at?: string | null
+          qc_steps?: Json
+          sub_status?: string | null
+          time_window_end?: string | null
+          time_window_start?: string | null
+          tour_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       order_documents: {
         Row: {
           created_at: string

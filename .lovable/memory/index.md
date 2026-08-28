@@ -39,6 +39,7 @@
 - [Bug & CAPA Modul](mem://features/bug-capa) — QM-Modul ISO 13485 unter /bug-capa, Rolle "QM", neue Tabellen bugs/capas/audit_findings/capa_actions
 - [Alix Flex](mem://features/alix-flex) — Periodische Rechnungs-Stammdaten aus Zoho unter /finance/alix-flex, Tabelle zoho_recurring_profiles, Edge Function sync-zoho-recurring-profiles
 - [Zoho Sync nur manuell](mem://features/zoho-customer-sync-manual) — Automatischer Kunden- UND Auftragsimport aus Zoho deaktiviert (Cron entfernt), Abgleich nur manuell
+- [Portal Delivery Journey](mem://features/portal-delivery-journey) — Animierter Lieferstatus /portal/status, order_delivery_status/_events, Admin-Tab „Lieferstatus (Portal)“
 - [Kundenportal](mem://features/customer-portal) — Public Statusabfrage unter /portal (Auftragsnr + PLZ + Email), Edge Function customer-portal-lookup, Admin unter /portal-admin
 - [Tickets-Modul](mem://features/tickets) — /tickets, Tabellen tickets/ticket_messages/ticket_attachments/ticket_sync_logs, Inbound-Webhook alixsmart-tickets-webhook
 - [Multi-Mandant](mem://features/multi-tenant) — Phase 15: tenants/user_tenant_access, TenantContext + Switcher, /mandanten + /konzern/dashboard
