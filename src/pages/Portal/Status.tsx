@@ -6,6 +6,8 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { Card, CardContent } from '@/components/ui/card';
+import { DeliveryJourney } from '@/components/portal/delivery/DeliveryJourney';
+import type { DeliveryJourneyPayload } from '@/lib/portal/delivery-types';
 
 interface StatusPayload {
   ok: true;
@@ -16,6 +18,8 @@ interface StatusPayload {
   expected_delivery: string | null;
   tracking_number: string | null;
   customer_name: string | null;
+  delivery?: DeliveryJourneyPayload | null;
+  order_date?: string | null;
 }
 
 const STEPS = [
@@ -42,6 +46,25 @@ export default function PortalStatus() {
   const currentIdx = STEPS.findIndex(s => s.code >= data.status_code);
   const reached = (idx: number) => currentIdx === -1 ? true : idx <= currentIdx;
   const isNeedsInfo = data.status_code === 10;
+
+  if (data.delivery) {
+    return (
+      <BookingLayout hideLegalLinks narrow step={2} totalSteps={2}>
+        <DeliveryJourney
+          data={data.delivery}
+          orderNumber={data.order_number}
+          orderDate={data.order_date ?? null}
+        />
+        <div className="text-center pt-2">
+          <Button onClick={() => navigate('/portal')} variant="outline">
+            Neue Abfrage starten
+          </Button>
+        </div>
+      </BookingLayout>
+    );
+  }
+
+
 
   return (
     <BookingLayout hideLegalLinks narrow step={2} totalSteps={2}>
