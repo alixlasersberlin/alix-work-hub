@@ -1584,6 +1584,8 @@ function AppRoutes() {
           <Route path="/dispatch/termine" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTermine /></ProtectedRoute>} />
           <Route path="/dispatch/ungeplant" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchUngeplant /></ProtectedRoute>} />
           <Route path="/dispatch/lieferstatus" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchLieferstatus /></ProtectedRoute>} />
+          <Route path="/dispatch/control-tower" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchControlTower /></ProtectedRoute>} />
+
 
           <Route path="/dispatch/touren" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTouren /></ProtectedRoute>} />
           <Route path="/dispatch/touren/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTourDetail /></ProtectedRoute>} />
