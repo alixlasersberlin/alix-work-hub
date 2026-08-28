@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Save, Truck, Send } from 'lucide-react';
 import DeliveryMailTemplatesDialog from './DeliveryMailTemplatesDialog';
+import DeliveryBlockersCard from './DeliveryBlockersCard';
+import DeliveryOpsCards from './DeliveryOpsCards';
+
 import { toast } from 'sonner';
 
 const db = supabase as any;
@@ -314,6 +317,11 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
           <CardContent>{stepEditor(qc, setQc)}</CardContent>
         </Card>
       </div>
+
+      <DeliveryBlockersCard orderId={orderId} />
+
+      <DeliveryOpsCards orderId={orderId} />
+
 
       <Card>
         <CardHeader><CardTitle className="text-base">Lieferhistorie</CardTitle></CardHeader>
