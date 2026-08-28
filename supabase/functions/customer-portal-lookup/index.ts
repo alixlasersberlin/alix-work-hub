@@ -191,12 +191,16 @@ Deno.serve(async (req) => {
 
     const { data: customer } = await supabase
       .from("customers")
-      .select("email, company_name, contact_name")
+      .select("email, company_name, contact_name, billing_address, shipping_address")
       .eq("id", order.customer_id)
       .maybeSingle();
 
-    const billZip = normZip((order.billing_address as any)?.zip);
-    const shipZip = normZip((order.shipping_address as any)?.zip);
+    const billZip = normZip(
+      (order.billing_address as any)?.zip ?? (customer?.billing_address as any)?.zip,
+    );
+    const shipZip = normZip(
+      (order.shipping_address as any)?.zip ?? (customer?.shipping_address as any)?.zip,
+    );
     const custEmail = normEmail(customer?.email);
 
     const zipOk = zip && (zip === billZip || zip === shipZip);
