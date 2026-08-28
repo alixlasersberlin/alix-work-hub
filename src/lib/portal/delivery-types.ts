@@ -46,6 +46,13 @@ export interface DeliveryJourneyPayload {
   confidence: 'confirmed' | 'planning' | 'forecast';
   delay: { active: boolean; reason: string | null };
   partial_delivery: boolean;
+  customer_response?: {
+    response: 'confirmed' | 'change_requested' | null;
+    responded_at: string | null;
+    alternative_date: string | null;
+    note: string | null;
+    can_confirm: boolean;
+  } | null;
   devices: { name: string; quantity: number; serial_number: string | null }[];
   tour_steps: DjStep[];
   history: { date: string; title: string; description: string | null }[];
