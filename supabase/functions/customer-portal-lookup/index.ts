@@ -262,6 +262,7 @@ Deno.serve(async (req) => {
         trackingEvents,
         items: items.data ?? [],
         events: odEvents.data ?? [],
+        blockers: odBlockers.data ?? [],
       });
     } catch (e) {
       console.error("[customer-portal-lookup] delivery journey", e);
