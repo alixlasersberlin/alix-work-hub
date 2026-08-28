@@ -32536,8 +32536,12 @@ export type Database = {
       order_delivery_status: {
         Row: {
           created_at: string
+          customer_alternative_date: string | null
           customer_delay_reason: string | null
           customer_note: string | null
+          customer_responded_at: string | null
+          customer_response: string | null
+          customer_response_note: string | null
           delay_reason_internal: string | null
           eta_confirmed: boolean
           eta_earliest: string | null
@@ -32547,6 +32551,8 @@ export type Database = {
           is_delayed: boolean
           last_status_change: string
           notify_customer: boolean
+          notify_phone: string | null
+          notify_sms: boolean
           order_id: string
           partial_delivery: boolean
           phase: string
@@ -32565,8 +32571,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_alternative_date?: string | null
           customer_delay_reason?: string | null
           customer_note?: string | null
+          customer_responded_at?: string | null
+          customer_response?: string | null
+          customer_response_note?: string | null
           delay_reason_internal?: string | null
           eta_confirmed?: boolean
           eta_earliest?: string | null
@@ -32576,6 +32586,8 @@ export type Database = {
           is_delayed?: boolean
           last_status_change?: string
           notify_customer?: boolean
+          notify_phone?: string | null
+          notify_sms?: boolean
           order_id: string
           partial_delivery?: boolean
           phase?: string
@@ -32594,8 +32606,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_alternative_date?: string | null
           customer_delay_reason?: string | null
           customer_note?: string | null
+          customer_responded_at?: string | null
+          customer_response?: string | null
+          customer_response_note?: string | null
           delay_reason_internal?: string | null
           eta_confirmed?: boolean
           eta_earliest?: string | null
@@ -32605,6 +32621,8 @@ export type Database = {
           is_delayed?: boolean
           last_status_change?: string
           notify_customer?: boolean
+          notify_phone?: string | null
+          notify_sms?: boolean
           order_id?: string
           partial_delivery?: boolean
           phase?: string
