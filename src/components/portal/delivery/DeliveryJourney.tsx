@@ -348,23 +348,33 @@ export function DeliveryJourney({
           <CardContent className="p-6">
             <Button variant="ghost" size="sm" className="px-0" onClick={() => setShowHistory((v) => !v)}>
               Lieferhistorie
+              {newCount > 0 && (
+                <Badge className="ml-2 h-5 px-1.5 text-[10px]">{newCount} NEU</Badge>
+              )}
               <ChevronDown className={cn('w-4 h-4 ml-1 transition-transform', showHistory && 'rotate-180')} />
             </Button>
             {showHistory && (
               <div className="mt-4 space-y-3 border-l border-border pl-4">
-                {data.history.map((h, i) => (
-                  <div key={`${h.date}-${i}`} className="relative dj-rise" style={{ animationDelay: `${i * 50}ms` }}>
-                    <div className="absolute -left-[1.4rem] w-2.5 h-2.5 rounded-full bg-primary mt-1.5" />
-                    <div className="text-sm font-medium">{h.title}</div>
-                    <div className="text-xs text-muted-foreground">{fmt(h.date, 'dd.MM.yyyy')}</div>
-                    {h.description && <p className="text-sm text-muted-foreground mt-0.5">{h.description}</p>}
-                  </div>
-                ))}
+                {data.history.map((h, i) => {
+                  const isNew = !!lastSeen && d(h.date) ? d(h.date)!.getTime() > lastSeen : !lastSeen;
+                  return (
+                    <div key={`${h.date}-${i}`} className="relative dj-rise" style={{ animationDelay: `${i * 50}ms` }}>
+                      <div className="absolute -left-[1.4rem] w-2.5 h-2.5 rounded-full bg-primary mt-1.5" />
+                      <div className="text-sm font-medium flex items-center gap-2">
+                        {h.title}
+                        {isNew && <Badge variant="outline" className="h-4 px-1 text-[9px] border-primary/50 text-primary">NEU</Badge>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{fmt(h.date, 'dd.MM.yyyy')}</div>
+                      {h.description && <p className="text-sm text-muted-foreground mt-0.5">{h.description}</p>}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
       )}
+
 
       {fmt(data.last_update, 'dd.MM.yyyy HH:mm') && (
         <p className="text-xs text-muted-foreground text-center">
