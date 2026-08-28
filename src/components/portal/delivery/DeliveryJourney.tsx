@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -113,6 +113,25 @@ export function DeliveryJourney({
 }) {
   const [showProduction, setShowProduction] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+
+  // "NEU"-Markierung: Einträge, die seit dem letzten Portalbesuch dazugekommen sind
+  const seenKey = `dj-seen-${orderNumber}`;
+  const [lastSeen] = useState<number>(() => {
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem(seenKey) : null;
+    return raw ? Number(raw) || 0 : 0;
+  });
+  const newCount = useMemo(
+    () => (lastSeen ? data.history.filter((h) => {
+      const dt = d(h.date);
+      return dt ? dt.getTime() > lastSeen : false;
+    }).length : 0),
+    [data.history, lastSeen],
+  );
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.localStorage.setItem(seenKey, String(Date.now()));
+  }, [seenKey]);
+
+
 
   const primaryDevice = data.devices?.[0]?.name ?? 'Ihr ALIX System';
   const plannedDate = d(data.eta.planned);
@@ -348,23 +367,34 @@ export function DeliveryJourney({
           <CardContent className="p-6">
             <Button variant="ghost" size="sm" className="px-0" onClick={() => setShowHistory((v) => !v)}>
               Lieferhistorie
+              {newCount > 0 && (
+                <Badge className="ml-2 h-5 px-1.5 text-[10px]">{newCount} NEU</Badge>
+              )}
               <ChevronDown className={cn('w-4 h-4 ml-1 transition-transform', showHistory && 'rotate-180')} />
             </Button>
             {showHistory && (
               <div className="mt-4 space-y-3 border-l border-border pl-4">
-                {data.history.map((h, i) => (
-                  <div key={`${h.date}-${i}`} className="relative dj-rise" style={{ animationDelay: `${i * 50}ms` }}>
-                    <div className="absolute -left-[1.4rem] w-2.5 h-2.5 rounded-full bg-primary mt-1.5" />
-                    <div className="text-sm font-medium">{h.title}</div>
-                    <div className="text-xs text-muted-foreground">{fmt(h.date, 'dd.MM.yyyy')}</div>
-                    {h.description && <p className="text-sm text-muted-foreground mt-0.5">{h.description}</p>}
-                  </div>
-                ))}
+                {data.history.map((h, i) => {
+                  const hd = d(h.date);
+                  const isNew = !!lastSeen && !!hd && hd.getTime() > lastSeen;
+                  return (
+                    <div key={`${h.date}-${i}`} className="relative dj-rise" style={{ animationDelay: `${i * 50}ms` }}>
+                      <div className="absolute -left-[1.4rem] w-2.5 h-2.5 rounded-full bg-primary mt-1.5" />
+                      <div className="text-sm font-medium flex items-center gap-2">
+                        {h.title}
+                        {isNew && <Badge variant="outline" className="h-4 px-1 text-[9px] border-primary/50 text-primary">NEU</Badge>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{fmt(h.date, 'dd.MM.yyyy')}</div>
+                      {h.description && <p className="text-sm text-muted-foreground mt-0.5">{h.description}</p>}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
       )}
+
 
       {fmt(data.last_update, 'dd.MM.yyyy HH:mm') && (
         <p className="text-xs text-muted-foreground text-center">
