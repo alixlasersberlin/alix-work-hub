@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, Truck, AlertTriangle, CalendarCheck, CalendarClock, ExternalLink, RefreshCw } from 'lucide-react';
+import { Loader2, Truck, AlertTriangle, CalendarCheck, CalendarClock, ExternalLink, RefreshCw, Mail, Download } from 'lucide-react';
 
 const db = supabase as any;
 
@@ -49,6 +50,9 @@ export default function DispatchLieferstatus() {
   const [q, setQ] = useState('');
   const [phase, setPhase] = useState('all');
   const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkPhase, setBulkPhase] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [view, setView] = useState<'all' | 'delayed' | 'unconfirmed' | 'change_requested'>('all');
 
   async function load() {
@@ -139,6 +143,72 @@ export default function DispatchLieferstatus() {
     { key: 'change_requested', label: 'Terminwunsch Kunde', value: kpi.changeRequested, icon: CalendarCheck },
   ];
 
+  function toggle(id: string) {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.includes(r.order_id));
+
+  function toggleAll() {
+    setSelected(allSelected ? [] : filtered.map((r) => r.order_id));
+  }
+
+  async function bulkSetPhase() {
+    if (!bulkPhase || selected.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const { error } = await db
+        .from('order_delivery_status')
+        .update({ phase: bulkPhase, last_status_change: new Date().toISOString() })
+        .in('order_id', selected);
+      if (error) throw error;
+      toast.success(`${selected.length} Aufträge aktualisiert`);
+      setSelected([]);
+      setBulkPhase('');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Aktualisierung fehlgeschlagen');
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkNotify() {
+    if (selected.length === 0) return;
+    setBulkBusy(true);
+    let ok = 0;
+    for (const id of selected) {
+      try {
+        const { error } = await supabase.functions.invoke('delivery-notify', { body: { order_id: id } });
+        if (!error) ok += 1;
+      } catch { /* einzelne Fehler ignorieren */ }
+    }
+    setBulkBusy(false);
+    toast.success(`${ok} von ${selected.length} Benachrichtigungen versendet`);
+  }
+
+  function exportCsv() {
+    const src = selected.length > 0 ? filtered.filter((r) => selected.includes(r.order_id)) : filtered;
+    const head = ['Auftrag', 'Kunde', 'Phase', 'Liefertermin', 'Bestätigt', 'Verzögert', 'Kundenantwort', 'Wunschtermin'];
+    const lines = src.map((r) => [
+      r.order_number ?? '',
+      r.customer_name ?? '',
+      PHASE_LABELS[r.phase ?? 'auto'] ?? r.phase ?? '',
+      fmt(r.eta_planned),
+      r.eta_confirmed ? 'ja' : 'nein',
+      r.is_delayed ? 'ja' : 'nein',
+      r.customer_response ?? '',
+      fmt(r.customer_alternative_date),
+    ]);
+    const csv = [head, ...lines].map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lieferstatus-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -187,9 +257,38 @@ export default function DispatchLieferstatus() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={exportCsv} disabled={filtered.length === 0}>
+                <Download className="w-4 h-4 mr-1.5" /> CSV
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
+            {!loading && filtered.length > 0 && (
+              <div className="flex items-center gap-3 flex-wrap rounded-md border bg-muted/40 p-2">
+                <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                <span className="text-sm text-muted-foreground">
+                  {selected.length > 0 ? `${selected.length} ausgewählt` : 'Alle auswählen'}
+                </span>
+                {selected.length > 0 && (
+                  <>
+                    <Select value={bulkPhase} onValueChange={setBulkPhase}>
+                      <SelectTrigger className="w-52 h-8"><SelectValue placeholder="Phase setzen…" /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PHASE_LABELS).map(([v, l]) => (
+                          <SelectItem key={v} value={v}>{l}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={bulkSetPhase} disabled={!bulkPhase || bulkBusy}>
+                      {bulkBusy && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />} Übernehmen
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={bulkNotify} disabled={bulkBusy}>
+                      <Mail className="w-4 h-4 mr-1.5" /> Kunden informieren
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
             {loading && <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>}
             {!loading && filtered.length === 0 && (
               <p className="text-sm text-muted-foreground py-6 text-center">Keine Einträge gefunden.</p>
@@ -199,6 +298,7 @@ export default function DispatchLieferstatus() {
                 key={r.order_id}
                 className={`flex items-center gap-3 flex-wrap rounded-md border p-3 ${idx % 2 === 1 ? 'bg-muted/30' : ''}`}
               >
+                <Checkbox checked={selected.includes(r.order_id)} onCheckedChange={() => toggle(r.order_id)} />
                 <div className="min-w-[180px]">
                   <div className="font-medium text-sm">{r.order_number ?? '–'}</div>
                   <div className="text-xs text-muted-foreground">{r.customer_name ?? '–'}</div>
