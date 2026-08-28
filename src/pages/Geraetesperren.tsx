@@ -273,8 +273,10 @@ export default function Geraetesperren() {
             <CardTitle className="text-base flex items-center gap-2">
               Gerätesperren <Badge variant="destructive">{filtered.length}</Badge>
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechnung / Kd.-Nr. / Kunde suchen…" className="w-64" />
+              <Button variant="outline" size="sm" onClick={exportPdf}><FileDown className="w-4 h-4 mr-1" /> PDF</Button>
+              <Button variant="outline" size="sm" onClick={exportCsv}><TableIcon className="w-4 h-4 mr-1" /> CSV</Button>
               <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="w-4 h-4" /></Button>
             </div>
           </div>
@@ -291,6 +293,16 @@ export default function Geraetesperren() {
               </Button>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground">
+            {selectedRows.length > 0
+              ? `${selectedRows.length} markiert – Export nur der Markierung`
+              : 'Keine Markierung – Export aller angezeigten Sperren'}
+            {selectedRows.length > 0 && (
+              <Button variant="link" size="sm" className="h-auto p-0 ml-2" onClick={() => setSelected({})}>
+                Auswahl zurücksetzen
+              </Button>
+            )}
+          </p>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
@@ -301,19 +313,18 @@ export default function Geraetesperren() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-left">
                 <tr>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Rechnung</th>
-                  <th className="p-2">Kd.-Nr.</th>
+                  <th className="p-2 w-8"><Checkbox checked={allSelected} onCheckedChange={toggleAll} /></th>
                   <th className="p-2">Kunde</th>
+                  <th className="p-2">Kd.-Nr.</th>
+                  <th className="p-2">Rechnungen</th>
+                  <th className="p-2">Status</th>
                   <th className="p-2 text-right">Betrag</th>
                   <th className="p-2">Rückl.-Datum</th>
-                  <th className="p-2">Sperrvermerk</th>
                   <th className="p-2"></th>
                 </tr>
               </thead>
               <tbody>
                 {groups.map((g) => {
-                  const multi = g.items.length > 1;
                   const open = !!openGroups[g.key];
                   const head = g.items[0];
                   const actions = (r: any) => (
@@ -336,50 +347,52 @@ export default function Geraetesperren() {
                     </div>
                   );
 
+                  const statuses = Array.from(new Set(g.items.map((i) => i.status)));
+
                   return (
                     <Fragment key={g.key}>
-                      {/* Eine Zeile je Rechnung */}
+                      {/* Eine Zeile je Kunde */}
                       <tr
-                        className={`border-t border-border hover:bg-red-500/5 ${multi ? 'cursor-pointer' : ''}`}
-                        onClick={multi ? () => toggleGroup(g.key) : undefined}
+                        className="border-t border-border hover:bg-red-500/5 cursor-pointer"
+                        onClick={() => toggleGroup(g.key)}
                       >
-                        <td className="p-2 whitespace-nowrap">
+                        <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={groupSelected(g) ? true : groupPartial(g) ? 'indeterminate' : false}
+                            onCheckedChange={() => toggleGroupSelect(g)}
+                          />
+                        </td>
+                        <td className="p-2 font-medium">
                           <span className="inline-flex items-center gap-1">
-                            {multi ? (open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />) : <span className="w-4" />}
-                            <StatusBadge status={head.status} />
+                            {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                            {g.name}
                           </span>
                         </td>
-                        <td className="p-2 font-medium whitespace-nowrap">
-                          {head.invoice_number ? (
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); openPdf(head); }}
-                              className="text-red-500 underline underline-offset-2 hover:text-red-400"
-                            >
-                              {head.invoice_number}
-                            </button>
-                          ) : '—'}
-                          {multi && <Badge variant="destructive" className="ml-2">{g.items.length}</Badge>}
-                        </td>
-                        <td className="p-2 font-mono text-xs whitespace-nowrap">{head.customer_number ?? head.customer_id ?? '—'}</td>
-                        <td className="p-2">{head.customer_name ?? '—'}</td>
-                        <td className="p-2 text-right whitespace-nowrap font-semibold">{fmt(multi ? g.total : head.amount)}</td>
+                        <td className="p-2 font-mono text-xs whitespace-nowrap">{g.customerNumber}</td>
                         <td className="p-2 whitespace-nowrap">
-                          {multi
-                            ? (g.items.map((i) => i.return_date).filter(Boolean).sort().slice(-1)[0] ?? '—')
-                            : (head.return_date ?? '—')}
+                          <Badge variant="destructive">{g.items.length}</Badge>
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {g.items.map((i) => i.invoice_number).filter(Boolean).slice(0, 3).join(', ')}
+                            {g.items.length > 3 ? ' …' : ''}
+                          </span>
                         </td>
-                        <td className="p-2 text-xs text-muted-foreground max-w-[420px] truncate">
-                          {multi ? 'Weitere Sperren – zum Aufklappen klicken' : head.lock_note}
+                        <td className="p-2 whitespace-nowrap space-x-1">
+                          {statuses.map((s) => <StatusBadge key={String(s)} status={s} />)}
                         </td>
-                        <td className="p-2 text-right">{actions(head)}</td>
+                        <td className="p-2 text-right whitespace-nowrap font-semibold">{fmt(g.total)}</td>
+                        <td className="p-2 whitespace-nowrap">
+                          {g.items.map((i) => i.return_date).filter(Boolean).sort().slice(-1)[0] ?? '—'}
+                        </td>
+                        <td className="p-2 text-right">{g.items.length === 1 ? actions(head) : null}</td>
                       </tr>
 
-                      {/* Aufgeklappte Detailzeilen */}
-                      {multi && open && g.items.map((r) => (
+                      {/* Aufgeklappte Rechnungszeilen */}
+                      {open && g.items.map((r) => (
                         <tr key={r.id} className="border-t border-border bg-muted/20 hover:bg-red-500/5">
-                          <td className="p-2 whitespace-nowrap pl-10"><StatusBadge status={r.status} /></td>
-                          <td className="p-2 font-medium whitespace-nowrap">
+                          <td className="p-2">
+                            <Checkbox checked={!!selected[r.id]} onCheckedChange={() => toggleRow(r.id)} />
+                          </td>
+                          <td className="p-2 pl-8 font-medium whitespace-nowrap">
                             {r.invoice_number ? (
                               <button
                                 type="button"
@@ -391,13 +404,14 @@ export default function Geraetesperren() {
                             ) : '—'}
                           </td>
                           <td className="p-2 font-mono text-xs whitespace-nowrap">{r.customer_number ?? r.customer_id ?? '—'}</td>
-                          <td className="p-2">{r.customer_name ?? '—'}</td>
+                          <td className="p-2 text-xs text-muted-foreground max-w-[420px]">{r.lock_note}</td>
+                          <td className="p-2 whitespace-nowrap"><StatusBadge status={r.status} /></td>
                           <td className="p-2 text-right whitespace-nowrap">{fmt(r.amount)}</td>
                           <td className="p-2 whitespace-nowrap">{r.return_date ?? '—'}</td>
-                          <td className="p-2 text-xs text-muted-foreground max-w-[420px]">{r.lock_note}</td>
                           <td className="p-2 text-right">{actions(r)}</td>
                         </tr>
                       ))}
+
                     </Fragment>
                   );
                 })}
