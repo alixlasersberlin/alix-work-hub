@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import AppLayout from '@/components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -99,7 +98,7 @@ export default function DispatchLieferstatus() {
   ];
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -192,6 +191,6 @@ export default function DispatchLieferstatus() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </>
   );
 }
