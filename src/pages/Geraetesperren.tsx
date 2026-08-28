@@ -1,16 +1,18 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Lock, RefreshCw, Unlock, Pencil, Wallet, ChevronDown, ChevronRight } from 'lucide-react';
+import { Lock, RefreshCw, Unlock, Pencil, Wallet, ChevronDown, ChevronRight, FileDown, Table as TableIcon } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GeraetesperrenTabs } from './GeraetesperrenTabs';
 import { useAuth } from '@/hooks/useAuth';
 import { DeviceLockEditDialog, DeviceLockBookDialog, type DeviceLock } from '@/components/finance/DeviceLockDialogs';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
+
 
 const fmt = (n: number | null | undefined) =>
   n == null ? '—' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
