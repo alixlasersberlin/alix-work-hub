@@ -46,6 +46,7 @@ export default function PortalLookup() {
         return;
       }
       sessionStorage.setItem('alix_portal_status', JSON.stringify(data));
+      sessionStorage.setItem('alix_portal_creds', JSON.stringify({ order_number: orderNumber, zip, email }));
       navigate('/portal/status');
     } catch {
       setError('Verbindung fehlgeschlagen. Bitte versuchen Sie es erneut.');

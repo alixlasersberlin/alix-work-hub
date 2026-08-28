@@ -7,6 +7,7 @@ import { de } from 'date-fns/locale';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { DeliveryJourney } from '@/components/portal/delivery/DeliveryJourney';
+import { DeliveryConfirm } from '@/components/portal/delivery/DeliveryConfirm';
 import type { DeliveryJourneyPayload } from '@/lib/portal/delivery-types';
 
 interface StatusPayload {
@@ -34,11 +35,16 @@ const STEPS = [
 export default function PortalStatus() {
   const navigate = useNavigate();
   const [data, setData] = useState<StatusPayload | null>(null);
+  const [creds, setCreds] = useState<{ order_number: string; zip: string; email: string } | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem('alix_portal_status');
     if (!raw) { navigate('/portal', { replace: true }); return; }
-    try { setData(JSON.parse(raw)); } catch { navigate('/portal', { replace: true }); }
+    try { setData(JSON.parse(raw)); } catch { navigate('/portal', { replace: true }); return; }
+    try {
+      const rawCreds = sessionStorage.getItem('alix_portal_creds');
+      if (rawCreds) setCreds(JSON.parse(rawCreds));
+    } catch { /* optional */ }
   }, [navigate]);
 
   if (!data) return null;
@@ -55,6 +61,13 @@ export default function PortalStatus() {
           orderNumber={data.order_number}
           orderDate={data.order_date ?? null}
         />
+        <div className="pt-3">
+          <DeliveryConfirm
+            creds={creds}
+            plannedDate={data.delivery.eta?.planned ?? null}
+            state={data.delivery.customer_response ?? null}
+          />
+        </div>
         <div className="text-center pt-2">
           <Button onClick={() => navigate('/portal')} variant="outline">
             Neue Abfrage starten
