@@ -103,6 +103,7 @@ const DispatchTermine = lazy(() => import("./pages/Dispatch/Termine"));
 const DispatchMeineTouren = lazy(() => import("./pages/Dispatch/MeineTouren"));
 const DispatchUngeplant = lazy(() => import("./pages/Dispatch/Ungeplant"));
 const DispatchLieferstatus = lazy(() => import("./pages/Dispatch/Lieferstatus"));
+const DispatchControlTower = lazy(() => import("./pages/Dispatch/ControlTower"));
 
 const DispatchTouren = lazy(() => import("./pages/Dispatch/Touren"));
 const DispatchTourDetail = lazy(() => import("./pages/Dispatch/TourDetail"));
@@ -1583,6 +1584,8 @@ function AppRoutes() {
           <Route path="/dispatch/termine" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTermine /></ProtectedRoute>} />
           <Route path="/dispatch/ungeplant" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchUngeplant /></ProtectedRoute>} />
           <Route path="/dispatch/lieferstatus" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchLieferstatus /></ProtectedRoute>} />
+          <Route path="/dispatch/control-tower" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchControlTower /></ProtectedRoute>} />
+
 
           <Route path="/dispatch/touren" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTouren /></ProtectedRoute>} />
           <Route path="/dispatch/touren/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTourDetail /></ProtectedRoute>} />

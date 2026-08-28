@@ -405,6 +405,7 @@ export const navItems: NavItem[] = [
           { path: '/dispatch/termine', label: 'Liefertermine', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/dispatch/ungeplant', label: 'Ungeplante Auslieferungen', icon: PackageSearch, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/dispatch/lieferstatus', label: 'Lieferstatus-Cockpit', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/dispatch/control-tower', label: 'Delivery Control Tower', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
 
           { path: '/dispatch/touren', label: 'Touren', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/dispatch/speditionsversand', label: 'Speditionsversand', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },

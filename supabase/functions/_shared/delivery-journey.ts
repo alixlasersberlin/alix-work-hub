@@ -110,6 +110,7 @@ export interface JourneyInput {
   trackingEvents: any[];
   items: any[];
   events: any[];                   // order_delivery_events (visible_to_customer)
+  blockers?: any[];                // order_delivery_blockers (offene Blocker)
 }
 
 /** Leitet die aktuelle Phase automatisch aus vorhandenen Daten ab. */
@@ -235,6 +236,83 @@ export function buildJourney(i: JourneyInput) {
     })),
   ].sort((x, y) => new Date(y.date).getTime() - new Date(x.date).getTime());
 
+  // ---- ETA-Zustand (transparent, regelbasiert – keine erfundene Prognose) ----
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const plannedDate = eta.planned ? new Date(`${String(eta.planned).slice(0, 10)}T00:00:00`) : null;
+  const daysToEta = plannedDate ? Math.round((plannedDate.getTime() - today.getTime()) / 86400000) : null;
+
+  let etaState: "forecast" | "planned" | "confirmed" | "at_risk" | "delayed" | "delivered";
+  if (phase === "delivered" || eta.delivered_at) etaState = "delivered";
+  else if (i.status?.is_delayed) etaState = "delayed";
+  else if (daysToEta !== null && daysToEta < 0) etaState = "delayed";
+  else if (
+    daysToEta !== null && daysToEta <= 3 &&
+    !i.status?.qc_completed_at && !["provisioning", "tour_planning", "out_for_delivery"].includes(phase)
+  ) etaState = "at_risk";
+  else if (eta.confirmed) etaState = "confirmed";
+  else if (eta.planned) etaState = "planned";
+  else etaState = "forecast";
+
+  const ETA_STATE_TEXT: Record<string, string> = {
+    forecast: "Voraussichtlicher Lieferzeitraum",
+    planned: "Ihre Lieferung wurde eingeplant.",
+    confirmed: "Ihr Liefertermin ist bestätigt.",
+    at_risk: "Der Liefertermin wird derzeit überprüft.",
+    delayed: "Der Liefertermin wurde aktualisiert.",
+    delivered: "Erfolgreich geliefert.",
+  };
+
+  // ---- Lieferadresse (nur Anschriftsdaten, keine internen Angaben) ----
+  const addrSrc = i.order?.shipping_address ?? i.order?.billing_address ?? {};
+  const address = {
+    company: addrSrc?.company ?? addrSrc?.company_name ?? null,
+    street: addrSrc?.street ?? addrSrc?.address ?? null,
+    zip: addrSrc?.zip ?? null,
+    city: addrSrc?.city ?? null,
+    country: addrSrc?.country ?? null,
+    attention: addrSrc?.attention ?? addrSrc?.contact_name ?? null,
+    phone: addrSrc?.phone ?? null,
+    confirmed: Boolean(i.status?.address_confirmed),
+  };
+
+  const canConfirmEta = Boolean(
+    (i.status?.eta_planned ?? i.appointment?.planned_date) &&
+    !i.status?.customer_response &&
+    !i.appointment?.delivered_at,
+  );
+
+  const conditions = (i.status?.delivery_conditions ?? {}) as Record<string, unknown>;
+  const contact = (i.status?.onsite_contact ?? {}) as Record<string, unknown>;
+
+  // ---- „Was muss ich tun?" ----
+  const todos: { key: string; label: string; text: string }[] = [];
+  if (phase !== "delivered") {
+    if (canConfirmEta) {
+      todos.push({
+        key: "confirm_eta",
+        label: "Liefertermin bestätigen",
+        text: i.status?.confirm_due_date
+          ? `Bitte bestätigen Sie bis zum ${new Date(i.status.confirm_due_date).toLocaleDateString("de-DE")} Ihren Liefertermin.`
+          : "Bitte bestätigen Sie Ihren Liefertermin.",
+      });
+    }
+    if (!address.confirmed && (address.street || address.city)) {
+      todos.push({ key: "confirm_address", label: "Lieferadresse prüfen", text: "Bitte prüfen und bestätigen Sie Ihre Lieferadresse." });
+    }
+    if (Object.keys(conditions).length === 0) {
+      todos.push({ key: "conditions", label: "Lieferbedingungen angeben", text: "Bitte teilen Sie uns die Gegebenheiten vor Ort mit (Aufzug, Etage, Zufahrt)." });
+    }
+    if (!contact?.name) {
+      todos.push({ key: "contact", label: "Ansprechpartner benennen", text: "Bitte nennen Sie uns Ihren Ansprechpartner am Liefertag." });
+    }
+  }
+
+  // Kundenfreundliche Blockerhinweise – niemals interne Texte
+  const blockerNotes = (i.blockers ?? [])
+    .filter((b: any) => b?.blocker_status !== "resolved" && b?.customer_visible_message)
+    .map((b: any) => String(b.customer_visible_message));
+
   return {
     phase,
     phase_label: PHASE_LABELS[phase],
@@ -255,6 +333,8 @@ export function buildJourney(i: JourneyInput) {
     },
     releases,
     eta,
+    eta_state: etaState,
+    eta_state_text: ETA_STATE_TEXT[etaState],
     confidence,
     delay: i.status?.is_delayed
       ? { active: true, reason: i.status?.customer_delay_reason || "Wir informieren Sie, sobald ein neuer Termin feststeht." }
@@ -265,15 +345,17 @@ export function buildJourney(i: JourneyInput) {
       responded_at: i.status?.customer_responded_at ?? null,
       alternative_date: i.status?.customer_alternative_date ?? null,
       note: i.status?.customer_response_note ?? null,
-      can_confirm: Boolean(
-        (i.status?.eta_planned ?? i.appointment?.planned_date) &&
-        !i.status?.customer_response &&
-        !i.appointment?.delivered_at,
-      ),
+      can_confirm: canConfirmEta,
     },
+    address,
+    conditions,
+    onsite_contact: contact,
+    todos,
+    blocker_notes: blockerNotes,
     devices,
     tour_steps: tourSteps,
     history,
     last_update: i.status?.last_status_change ?? i.order?.updated_at ?? null,
   };
 }
+

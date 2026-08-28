@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
     // ---- Erweiterter Lieferstatus (Delivery Journey) ----
     let delivery: any = null;
     try {
-      const [ods, appr, po2, appt, items, odEvents] = await Promise.all([
+      const [ods, appr, po2, appt, items, odEvents, odBlockers] = await Promise.all([
         supabase.from("order_delivery_status").select("*").eq("order_id", order.id).maybeSingle(),
         supabase.from("delivery_approvals").select("*").eq("order_id", order.id).maybeSingle(),
         supabase.from("production_orders").select("status, approval_status, seriennummer, liefertermin")
@@ -230,7 +230,10 @@ Deno.serve(async (req) => {
         supabase.from("order_items").select("item_name, quantity, item_order").eq("order_id", order.id).order("item_order"),
         supabase.from("order_delivery_events").select("title, description, created_at")
           .eq("order_id", order.id).eq("visible_to_customer", true).order("created_at", { ascending: false }).limit(50),
+        supabase.from("order_delivery_blockers").select("blocker_status, customer_visible_message")
+          .eq("order_id", order.id).neq("blocker_status", "resolved"),
       ]);
+
 
       let tourStop: any = null;
       let trackingEvents: any[] = [];
@@ -259,6 +262,7 @@ Deno.serve(async (req) => {
         trackingEvents,
         items: items.data ?? [],
         events: odEvents.data ?? [],
+        blockers: odBlockers.data ?? [],
       });
     } catch (e) {
       console.error("[customer-portal-lookup] delivery journey", e);

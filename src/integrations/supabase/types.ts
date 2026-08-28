@@ -32500,6 +32500,165 @@ export type Database = {
           },
         ]
       }
+      order_delivery_address_requests: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          order_id: string
+          proposed: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id: string
+          proposed?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id?: string
+          proposed?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      order_delivery_blockers: {
+        Row: {
+          blocker_status: string
+          blocker_type: string
+          created_at: string
+          created_by: string | null
+          customer_visible_message: string | null
+          id: string
+          internal_note: string | null
+          order_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+        }
+        Insert: {
+          blocker_status?: string
+          blocker_type: string
+          created_at?: string
+          created_by?: string | null
+          customer_visible_message?: string | null
+          id?: string
+          internal_note?: string | null
+          order_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Update: {
+          blocker_status?: string
+          blocker_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_visible_message?: string | null
+          id?: string
+          internal_note?: string | null
+          order_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Relationships: []
+      }
+      order_delivery_comms: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          created_by: string | null
+          direction: string
+          event_key: string | null
+          id: string
+          order_id: string
+          recipient: string | null
+          subject: string | null
+          success: boolean
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          event_key?: string | null
+          id?: string
+          order_id: string
+          recipient?: string | null
+          subject?: string | null
+          success?: boolean
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          event_key?: string | null
+          id?: string
+          order_id?: string
+          recipient?: string | null
+          subject?: string | null
+          success?: boolean
+        }
+        Relationships: []
+      }
+      order_delivery_eta_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          customer_informed: boolean
+          id: string
+          new_date: string | null
+          new_state: string | null
+          old_date: string | null
+          old_state: string | null
+          order_id: string
+          reason: string | null
+          source: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          customer_informed?: boolean
+          id?: string
+          new_date?: string | null
+          new_state?: string | null
+          old_date?: string | null
+          old_state?: string | null
+          order_id: string
+          reason?: string | null
+          source?: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          customer_informed?: boolean
+          id?: string
+          new_date?: string | null
+          new_state?: string | null
+          old_date?: string | null
+          old_state?: string | null
+          order_id?: string
+          reason?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       order_delivery_events: {
         Row: {
           created_at: string
@@ -32535,6 +32694,11 @@ export type Database = {
       }
       order_delivery_status: {
         Row: {
+          address_confirmed: boolean
+          address_confirmed_at: string | null
+          confirm_due_date: string | null
+          confirm_reminder_count: number
+          confirm_reminder_last_at: string | null
           created_at: string
           customer_alternative_date: string | null
           customer_delay_reason: string | null
@@ -32543,33 +32707,51 @@ export type Database = {
           customer_response: string | null
           customer_response_note: string | null
           delay_reason_internal: string | null
+          delivery_conditions: Json
           eta_confirmed: boolean
           eta_earliest: string | null
           eta_latest: string | null
           eta_planned: string | null
+          eta_state: string | null
           id: string
           is_delayed: boolean
           last_status_change: string
           notify_customer: boolean
           notify_phone: string | null
           notify_sms: boolean
+          onsite_contact: Json
           order_id: string
+          owner_accounting: string | null
+          owner_dispatch: string | null
+          owner_overall: string | null
+          owner_production: string | null
+          owner_provisioning: string | null
+          owner_qc: string | null
           partial_delivery: boolean
           phase: string
+          priority: string
           production_end_planned: string | null
           production_started_at: string | null
           production_steps: Json
           qc_completed_at: string | null
           qc_started_at: string | null
           qc_steps: Json
+          reschedule_preference: Json | null
+          show_contact_to_customer: boolean
           sub_status: string | null
           time_window_end: string | null
           time_window_start: string | null
           tour_id: string | null
+          traffic_light: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          address_confirmed?: boolean
+          address_confirmed_at?: string | null
+          confirm_due_date?: string | null
+          confirm_reminder_count?: number
+          confirm_reminder_last_at?: string | null
           created_at?: string
           customer_alternative_date?: string | null
           customer_delay_reason?: string | null
@@ -32578,33 +32760,51 @@ export type Database = {
           customer_response?: string | null
           customer_response_note?: string | null
           delay_reason_internal?: string | null
+          delivery_conditions?: Json
           eta_confirmed?: boolean
           eta_earliest?: string | null
           eta_latest?: string | null
           eta_planned?: string | null
+          eta_state?: string | null
           id?: string
           is_delayed?: boolean
           last_status_change?: string
           notify_customer?: boolean
           notify_phone?: string | null
           notify_sms?: boolean
+          onsite_contact?: Json
           order_id: string
+          owner_accounting?: string | null
+          owner_dispatch?: string | null
+          owner_overall?: string | null
+          owner_production?: string | null
+          owner_provisioning?: string | null
+          owner_qc?: string | null
           partial_delivery?: boolean
           phase?: string
+          priority?: string
           production_end_planned?: string | null
           production_started_at?: string | null
           production_steps?: Json
           qc_completed_at?: string | null
           qc_started_at?: string | null
           qc_steps?: Json
+          reschedule_preference?: Json | null
+          show_contact_to_customer?: boolean
           sub_status?: string | null
           time_window_end?: string | null
           time_window_start?: string | null
           tour_id?: string | null
+          traffic_light?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          address_confirmed?: boolean
+          address_confirmed_at?: string | null
+          confirm_due_date?: string | null
+          confirm_reminder_count?: number
+          confirm_reminder_last_at?: string | null
           created_at?: string
           customer_alternative_date?: string | null
           customer_delay_reason?: string | null
@@ -32613,29 +32813,42 @@ export type Database = {
           customer_response?: string | null
           customer_response_note?: string | null
           delay_reason_internal?: string | null
+          delivery_conditions?: Json
           eta_confirmed?: boolean
           eta_earliest?: string | null
           eta_latest?: string | null
           eta_planned?: string | null
+          eta_state?: string | null
           id?: string
           is_delayed?: boolean
           last_status_change?: string
           notify_customer?: boolean
           notify_phone?: string | null
           notify_sms?: boolean
+          onsite_contact?: Json
           order_id?: string
+          owner_accounting?: string | null
+          owner_dispatch?: string | null
+          owner_overall?: string | null
+          owner_production?: string | null
+          owner_provisioning?: string | null
+          owner_qc?: string | null
           partial_delivery?: boolean
           phase?: string
+          priority?: string
           production_end_planned?: string | null
           production_started_at?: string | null
           production_steps?: Json
           qc_completed_at?: string | null
           qc_started_at?: string | null
           qc_steps?: Json
+          reschedule_preference?: Json | null
+          show_contact_to_customer?: boolean
           sub_status?: string | null
           time_window_end?: string | null
           time_window_start?: string | null
           tour_id?: string | null
+          traffic_light?: string | null
           updated_at?: string
           updated_by?: string | null
         }
