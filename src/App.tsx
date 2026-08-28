@@ -742,6 +742,8 @@ const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPrevie
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
+const PortalCheckDelivery = lazy(() => import("./pages/Portal/CheckDelivery"));
+
 const TicketCsat = lazy(() => import("./pages/Public/TicketCsat"));
 const SecurityCenterLayout = lazy(() => import("./pages/SecurityCenter/Layout").then(m => ({ default: m.default })));
 const SecurityCenterOverview = lazy(() => import("./pages/SecurityCenter/Layout").then(m => ({ default: m.SecurityCenterOverview })));
