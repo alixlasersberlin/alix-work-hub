@@ -7,7 +7,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, Gavel, ArrowUp, ArrowDown, ChevronsUpDown, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, Scale, Gavel, ArrowUp, ArrowDown, ChevronsUpDown, Undo2, X as LucideXIcon } from 'lucide-react';
 
 function SortableTh({ label, sortKey, colSort, onSort, align = 'left' }: {
   label: string;
@@ -47,6 +47,7 @@ import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { AccountStatementActions } from '@/components/finance/AccountStatementActions';
 import { SofortRechnungDialog } from '@/components/finance/SofortRechnungDialog';
+import { InvoiceReturnDebitDialog } from '@/components/finance/InvoiceReturnDebitDialog';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -232,6 +233,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const { roles, user, profile } = useAuth();
   const { region, setRegion } = useAccountingRegion();
+  const [returnDebitRow, setReturnDebitRow] = useState<Row | null>(null);
 
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
@@ -410,6 +412,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
         </Button>
       )}
+      {isAdmin && r.source !== 'unpaid' && (
+        <Button
+          size="sm"
+          variant="outline"
+          type="button"
+          title="Zahlung stornieren und Rücklastschrift buchen (Gebühren + Gerätesperre)"
+          className="h-8 px-2 gap-1 border-rose-500/50 text-rose-400 hover:bg-rose-500/10"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReturnDebitRow(r); }}
+        >
+          <Undo2 className="w-3.5 h-3.5" /> Rücklastschrift
+        </Button>
+      )}
+
       {canDelete && (
         <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
           <Trash2 className="w-3.5 h-3.5" />
@@ -3188,6 +3203,22 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <InvoiceReturnDebitDialog
+        invoice={returnDebitRow ? {
+          id: returnDebitRow.id,
+          invoice_number: returnDebitRow.invoice_number,
+          customer_id: returnDebitRow.customer_id,
+          customer_name: returnDebitRow.customer_name,
+          total: returnDebitRow.total,
+          balance: returnDebitRow.balance,
+          currency: returnDebitRow.currency,
+          accounting_region: region === 'CH' ? 'CH' : 'EU',
+        } : null}
+        open={!!returnDebitRow}
+        onOpenChange={(v) => { if (!v) setReturnDebitRow(null); }}
+        onDone={() => { setReturnDebitRow(null); void fetchRows(); }}
+      />
 
       {sofortAccount && (
         <SofortRechnungDialog
