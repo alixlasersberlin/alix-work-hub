@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import {
   createManualReturnDebit, confirmReturnDebit, loadReturnRules,
   RETURN_CODES, type ReturnRules,
@@ -72,6 +73,20 @@ export function InvoiceReturnDebitDialog({
     if (!(amount > 0)) { toast.error('Bitte einen Betrag > 0 erfassen.'); return; }
     setBusy(true);
     try {
+      // zoho_invoices.customer_id ist eine Zoho-ID (Text) – die Bank-Tabellen erwarten eine UUID.
+      const isUuid = (v: unknown) =>
+        typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+      let customerUuid: string | null = isUuid(invoice.customer_id) ? (invoice.customer_id as string) : null;
+      if (!customerUuid && invoice.customer_id) {
+        const { data: c } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('external_customer_id', String(invoice.customer_id))
+          .limit(1)
+          .maybeSingle();
+        customerUuid = (c as any)?.id ?? null;
+      }
+
       const { rd, tx } = await createManualReturnDebit({
         area,
         bookingDate,
@@ -82,7 +97,7 @@ export function InvoiceReturnDebitDialog({
         bankFee,
         customerFee,
         chargeCustomer,
-        customerId: invoice.customer_id,
+        customerId: customerUuid,
         customerName: invoice.customer_name,
         invoiceId: invoice.id,
         invoiceNumber: invoice.invoice_number,
@@ -92,7 +107,7 @@ export function InvoiceReturnDebitDialog({
       const res = await confirmReturnDebit({
         rd, tx,
         originalPaymentTxId: null,
-        customerId: invoice.customer_id,
+        customerId: customerUuid,
         allocations: [{
           invoice_id: invoice.id,
           invoice_number: invoice.invoice_number,
@@ -116,7 +131,8 @@ export function InvoiceReturnDebitDialog({
       onOpenChange(false);
       onDone?.();
     } catch (e: any) {
-      toast.error(e?.message ?? 'Rücklastschrift konnte nicht gebucht werden.');
+      console.error('[Ruecklastschrift]', e);
+      toast.error(e?.message || e?.details || e?.hint || 'Rücklastschrift konnte nicht gebucht werden.');
     } finally {
       setBusy(false);
     }
