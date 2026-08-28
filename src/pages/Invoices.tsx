@@ -410,6 +410,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
         </Button>
       )}
+      {isAdmin && r.source !== 'unpaid' && (
+        <Button
+          size="sm"
+          variant="outline"
+          type="button"
+          title="Zahlung stornieren und Rücklastschrift buchen (Gebühren + Gerätesperre)"
+          className="h-8 px-2 gap-1 border-rose-500/50 text-rose-400 hover:bg-rose-500/10"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReturnDebitRow(r); }}
+        >
+          <Undo2 className="w-3.5 h-3.5" /> Rücklastschrift
+        </Button>
+      )}
+
       {canDelete && (
         <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
           <Trash2 className="w-3.5 h-3.5" />
