@@ -111,24 +111,155 @@ export default function Geraetesperren() {
     });
   }, [rows, q, status]);
 
-  // Eine Zeile je Rechnung – weitere Sperren derselben Rechnung zum Aufklappen
+  // Eine Zeile je Kunde – alle Rechnungen/Sperren des Kunden zusammengefasst
   const groups = useMemo(() => {
-    const map = new Map<string, { key: string; items: any[]; total: number }>();
+    const map = new Map<string, { key: string; name: string; customerNumber: string; items: any[]; total: number }>();
     for (const r of filtered) {
-      const key = String(r.invoice_number ?? r.invoice_id ?? r.id);
+      const key = String(r.customer_number ?? r.customer_id ?? r.customer_name ?? r.id);
       let g = map.get(key);
       if (!g) {
-        g = { key, items: [], total: 0 };
+        g = {
+          key,
+          name: r.customer_name ?? '—',
+          customerNumber: String(r.customer_number ?? r.customer_id ?? '—'),
+          items: [],
+          total: 0,
+        };
         map.set(key, g);
       }
       g.items.push(r);
       g.total += Number(r.amount) || 0;
     }
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
   }, [filtered]);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (k: string) => setOpenGroups((s) => ({ ...s, [k]: !s[k] }));
+
+  // Markierung (Auswahl) einzelner Sperren
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const toggleRow = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }));
+  const groupSelected = (g: { items: any[] }) => g.items.every((i) => selected[i.id]);
+  const groupPartial = (g: { items: any[] }) => !groupSelected(g) && g.items.some((i) => selected[i.id]);
+  const toggleGroupSelect = (g: { items: any[] }) => {
+    const on = !groupSelected(g);
+    setSelected((s) => {
+      const n = { ...s };
+      for (const i of g.items) n[i.id] = on;
+      return n;
+    });
+  };
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected[r.id]);
+  const toggleAll = () => {
+    const on = !allSelected;
+    setSelected(() => {
+      const n: Record<string, boolean> = {};
+      if (on) for (const r of filtered) n[r.id] = true;
+      return n;
+    });
+  };
+  const selectedRows = useMemo(() => filtered.filter((r) => selected[r.id]), [filtered, selected]);
+  const exportRows = () => (selectedRows.length ? selectedRows : filtered);
+
+  function exportCsv() {
+    const data = exportRows();
+    if (!data.length) return toast.error('Keine Datensätze zum Export');
+    const head = ['Kd.-Nr.', 'Kunde', 'Rechnung', 'Betrag', 'Status', 'Rückl.-Datum', 'Sperrvermerk'];
+    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = [head.map(esc).join(';')];
+    for (const r of data) {
+      lines.push([
+        r.customer_number ?? r.customer_id ?? '',
+        r.customer_name ?? '',
+        r.invoice_number ?? '',
+        (Number(r.amount) || 0).toFixed(2).replace('.', ','),
+        STATUS_META[(r.status ?? '') as StatusKey]?.label ?? r.status ?? '',
+        r.return_date ?? '',
+        r.lock_note ?? '',
+      ].map(esc).join(';'));
+    }
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `geraetesperren_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} Zeilen als CSV exportiert`);
+  }
+
+  async function exportPdf() {
+    const data = exportRows();
+    if (!data.length) return toast.error('Keine Datensätze zum Export');
+    try {
+      const [{ default: jsPDF }, autoTableMod] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
+      const autoTable: any = (autoTableMod as any).default || (autoTableMod as any).autoTable;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+      const pageW = doc.internal.pageSize.getWidth();
+
+      doc.setFillColor(15, 15, 15);
+      doc.rect(0, 0, pageW, 56, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.text('Gerätesperren', 40, 26);
+      doc.setFontSize(9);
+      doc.setTextColor(200, 200, 200);
+      doc.text(
+        `Stand: ${new Date().toLocaleString('de-DE')} · ${data.length} Sperren${selectedRows.length ? ' (Auswahl)' : ''}`,
+        40,
+        42,
+      );
+
+      // Nach Kunde gruppiert ausgeben
+      const byCustomer = new Map<string, any[]>();
+      for (const r of data) {
+        const k = `${r.customer_number ?? r.customer_id ?? '—'}|${r.customer_name ?? '—'}`;
+        byCustomer.set(k, [...(byCustomer.get(k) ?? []), r]);
+      }
+
+      const body: any[] = [];
+      let grand = 0;
+      for (const [k, items] of byCustomer) {
+        const [num, name] = k.split('|');
+        const sum = items.reduce((s, i) => s + (Number(i.amount) || 0), 0);
+        grand += sum;
+        body.push([
+          { content: `${name}  ·  Kd.-Nr. ${num}  ·  ${items.length} Rechnung(en)`, colSpan: 5, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+          { content: fmt(sum), styles: { fontStyle: 'bold', halign: 'right', fillColor: [240, 240, 240] } },
+        ]);
+        for (const r of items) {
+          body.push([
+            r.invoice_number ?? '—',
+            STATUS_META[(r.status ?? '') as StatusKey]?.label ?? r.status ?? '—',
+            r.return_date ?? '—',
+            String(r.lock_note ?? '').slice(0, 120),
+            '',
+            { content: fmt(Number(r.amount) || 0), styles: { halign: 'right' } },
+          ]);
+        }
+      }
+      body.push([
+        { content: 'Gesamt', colSpan: 5, styles: { fontStyle: 'bold' } },
+        { content: fmt(grand), styles: { fontStyle: 'bold', halign: 'right' } },
+      ]);
+
+      autoTable(doc, {
+        startY: 72,
+        head: [['Rechnung', 'Status', 'Rückl.-Datum', 'Sperrvermerk', '', 'Betrag']],
+        body,
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: [15, 15, 15], textColor: 255 },
+        columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 80 }, 2: { cellWidth: 80 }, 5: { cellWidth: 80 } },
+        margin: { left: 40, right: 40 },
+      });
+
+      doc.save(`geraetesperren_${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success(`${data.length} Sperren als PDF exportiert`);
+    } catch (e: any) {
+      toast.error('PDF-Export fehlgeschlagen: ' + e.message);
+    }
+  }
+
 
 
   return (
