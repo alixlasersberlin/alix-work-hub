@@ -1,0 +1,116 @@
+/* ALIX „Check my delivery" – Premium-Animationen (rein CSS, reduced-motion-sicher) */
+
+@keyframes dc-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dc-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dc-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes dc-pulse-ring {
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45); }
+  70% { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+}
+
+@keyframes dc-line-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes dc-line-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes dc-draw {
+  from { stroke-dashoffset: var(--dc-dash, 900); }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes dc-sweep {
+  0% { transform: translateX(-60%); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateX(160%); opacity: 0; }
+}
+
+@keyframes dc-truck {
+  0% { left: 4%; }
+  100% { left: 78%; }
+}
+
+@keyframes dc-check-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.dc-reveal { animation: dc-fade-up 620ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.dc-fade { animation: dc-fade 500ms ease-out both; }
+.dc-d1 { animation-delay: 120ms; }
+.dc-d2 { animation-delay: 260ms; }
+.dc-d3 { animation-delay: 400ms; }
+.dc-d4 { animation-delay: 540ms; }
+.dc-d5 { animation-delay: 680ms; }
+
+.dc-float { animation: dc-float 6s ease-in-out infinite; }
+.dc-pulse { animation: dc-pulse-ring 2.4s ease-out infinite; }
+.dc-check-pop { animation: dc-check-pop 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.dc-progress-line {
+  transform-origin: left center;
+  animation: dc-line-grow 1100ms cubic-bezier(0.22, 1, 0.36, 1) 320ms both;
+}
+
+.dc-progress-line-v {
+  transform-origin: top center;
+  animation: dc-line-grow-y 1100ms cubic-bezier(0.22, 1, 0.36, 1) 320ms both;
+}
+
+.dc-silhouette path,
+.dc-silhouette line,
+.dc-silhouette rect,
+.dc-silhouette circle {
+  stroke-dasharray: var(--dc-dash, 900);
+  animation: dc-draw 1100ms ease-out both;
+}
+
+.dc-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.22), transparent);
+  animation: dc-sweep 1600ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dc-truck { animation: dc-truck 4.5s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dc-reveal,
+  .dc-fade,
+  .dc-float,
+  .dc-pulse,
+  .dc-check-pop,
+  .dc-progress-line,
+  .dc-progress-line-v,
+  .dc-silhouette path,
+  .dc-silhouette line,
+  .dc-silhouette rect,
+  .dc-silhouette circle,
+  .dc-truck {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+  }
+  .dc-sweep::after { display: none; }
+}
