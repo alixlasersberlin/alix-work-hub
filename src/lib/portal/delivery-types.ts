@@ -44,6 +44,8 @@ export interface DeliveryJourneyPayload {
     delivered_at: string | null;
   };
   confidence: 'confirmed' | 'planning' | 'forecast';
+  eta_state?: 'forecast' | 'planned' | 'confirmed' | 'at_risk' | 'delayed' | 'delivered';
+  eta_state_text?: string;
   delay: { active: boolean; reason: string | null };
   partial_delivery: boolean;
   customer_response?: {
@@ -53,11 +55,26 @@ export interface DeliveryJourneyPayload {
     note: string | null;
     can_confirm: boolean;
   } | null;
+  address?: {
+    company: string | null;
+    street: string | null;
+    zip: string | null;
+    city: string | null;
+    country: string | null;
+    attention: string | null;
+    phone: string | null;
+    confirmed: boolean;
+  } | null;
+  conditions?: Record<string, unknown>;
+  onsite_contact?: { name?: string; phone?: string; email?: string; role?: string };
+  todos?: { key: string; label: string; text: string }[];
+  blocker_notes?: string[];
   devices: { name: string; quantity: number; serial_number: string | null }[];
   tour_steps: DjStep[];
   history: { date: string; title: string; description: string | null }[];
   last_update: string | null;
 }
+
 
 export const PHASE_STEP_LABELS: Record<string, string> = {
   order_received: 'Auftrag',
