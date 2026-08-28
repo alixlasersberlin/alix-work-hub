@@ -41,6 +41,23 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; body: string; enabled
   },
 };
 
+async function sendSms(to: string, text: string) {
+  const sid = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+  const token = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+  const from = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? "";
+  if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: "Basic " + btoa(`${sid}:${token}`),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ To: to, From: from, Body: text.slice(0, 600) }),
+  });
+  if (!res.ok) return { ok: false, error: await res.text() };
+  return { ok: true };
+}
+
 function fill(tpl: string, vars: Record<string, string>) {
   return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, k) => vars[k] ?? "");
 }
@@ -120,17 +137,25 @@ Deno.serve(async (req) => {
       .map((p) => `<p style="margin:0 0 12px 0">${p.replace(/\n/g, "<br/>")}</p>`)
       .join("");
 
+    let smsSent = false;
+    const smsTo = (body?.sms_to as string | undefined) || (status as any)?.notify_phone || null;
+    if (((status as any)?.notify_sms || body?.sms) && smsTo) {
+      const r = await sendSms(String(smsTo), `${subject}\n\n${text.split("\n\n")[0] ?? ""}`);
+      smsSent = r.ok;
+      if (!r.ok) console.error("[delivery-notify] sms", r.error);
+    }
+
     await sendMail(customerEmail, subject, `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">${html}</div>`);
 
     await admin.from("order_delivery_events").insert({
       order_id: orderId,
       event_type: "notification",
       title: `Statusinformation versendet: ${vars.phase}`,
-      description: `E-Mail an ${customerEmail}`,
+      description: `E-Mail an ${customerEmail}${smsSent ? ` · SMS an ${smsTo}` : ""}`,
       visible_to_customer: false,
     }).then(() => {}, () => {});
 
-    return json({ ok: true, to: customerEmail, subject });
+    return json({ ok: true, to: customerEmail, subject, sms: smsSent });
   } catch (e) {
     return json({ error: String((e as Error)?.message ?? e) }, 500);
   }

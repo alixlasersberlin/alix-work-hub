@@ -130,6 +130,8 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
       partial_delivery: !!row.partial_delivery,
       customer_note: row.customer_note || null,
       notify_customer: row.notify_customer !== false,
+      notify_sms: !!row.notify_sms,
+      notify_phone: row.notify_phone || null,
       updated_by: auth?.user?.id ?? null,
     };
     const { error } = await db.from('order_delivery_status').upsert(payload, { onConflict: 'order_id' });
@@ -261,6 +263,38 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
             <Switch checked={row.notify_customer !== false} onCheckedChange={(v) => set('notify_customer', v)} />
             <Label>Kundenbenachrichtigung bei Statusänderung senden</Label>
           </div>
+
+          <div className="flex items-center gap-3">
+            <Switch checked={!!row.notify_sms} onCheckedChange={(v) => set('notify_sms', v)} />
+            <Label>Zusätzlich per SMS informieren</Label>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Mobilnummer für SMS (Format +49…)</Label>
+            <Input value={row.notify_phone ?? ''} onChange={(e) => set('notify_phone', e.target.value)} placeholder="+4917xxxxxxx" />
+          </div>
+
+          {row.customer_response && (
+            <div className="md:col-span-2 rounded-md border p-3 text-sm">
+              <div className="font-medium">
+                {row.customer_response === 'confirmed'
+                  ? 'Kunde hat den Liefertermin bestätigt'
+                  : 'Kunde wünscht einen Alternativtermin'}
+                {row.customer_responded_at && (
+                  <span className="text-muted-foreground font-normal ml-2">
+                    ({new Date(row.customer_responded_at).toLocaleString('de-DE')})
+                  </span>
+                )}
+              </div>
+              {row.customer_alternative_date && (
+                <div className="text-muted-foreground">
+                  Wunschtermin: {new Date(row.customer_alternative_date).toLocaleDateString('de-DE')}
+                </div>
+              )}
+              {row.customer_response_note && (
+                <div className="text-muted-foreground">Nachricht: {row.customer_response_note}</div>
+              )}
+            </div>
+          )}
 
           {row.last_status_change && (
             <p className="text-xs text-muted-foreground md:col-span-2">

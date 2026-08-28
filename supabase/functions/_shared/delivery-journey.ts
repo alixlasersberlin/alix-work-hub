@@ -260,6 +260,17 @@ export function buildJourney(i: JourneyInput) {
       ? { active: true, reason: i.status?.customer_delay_reason || "Wir informieren Sie, sobald ein neuer Termin feststeht." }
       : { active: false, reason: null },
     partial_delivery: Boolean(i.status?.partial_delivery),
+    customer_response: {
+      response: (i.status?.customer_response ?? null) as string | null,
+      responded_at: i.status?.customer_responded_at ?? null,
+      alternative_date: i.status?.customer_alternative_date ?? null,
+      note: i.status?.customer_response_note ?? null,
+      can_confirm: Boolean(
+        (i.status?.eta_planned ?? i.appointment?.planned_date) &&
+        !i.status?.customer_response &&
+        !i.appointment?.delivered_at,
+      ),
+    },
     devices,
     tour_steps: tourSteps,
     history,
