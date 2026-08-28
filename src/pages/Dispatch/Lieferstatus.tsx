@@ -68,6 +68,46 @@ export default function DispatchLieferstatus() {
 
   useEffect(() => { load(); }, []);
 
+  async function resolveRequest(r: Row, action: 'accept' | 'reject') {
+    setBusy(r.order_id);
+    try {
+      const patch: Record<string, unknown> = {
+        customer_response: action === 'accept' ? 'confirmed' : null,
+        customer_responded_at: new Date().toISOString(),
+        last_status_change: new Date().toISOString(),
+      };
+      if (action === 'accept' && r.customer_alternative_date) {
+        patch.eta_planned = r.customer_alternative_date;
+        patch.eta_confirmed = true;
+        patch.customer_alternative_date = null;
+      } else if (action === 'reject') {
+        patch.customer_alternative_date = null;
+        patch.eta_confirmed = false;
+      }
+      const { error } = await db.from('order_delivery_status').update(patch).eq('order_id', r.order_id);
+      if (error) throw error;
+
+      await db.from('order_delivery_events').insert({
+        order_id: r.order_id,
+        event_type: action === 'accept' ? 'customer_request_accepted' : 'customer_request_rejected',
+        title: action === 'accept' ? 'Wunschtermin des Kunden übernommen' : 'Terminwunsch des Kunden abgelehnt',
+        description: r.customer_response_note ?? null,
+      });
+
+      try {
+        await supabase.functions.invoke('delivery-notify', { body: { order_id: r.order_id } });
+      } catch { /* Benachrichtigung ist optional */ }
+
+      toast.success(action === 'accept' ? 'Wunschtermin übernommen' : 'Terminwunsch abgelehnt');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Aktion fehlgeschlagen');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return rows.filter((r) => {
