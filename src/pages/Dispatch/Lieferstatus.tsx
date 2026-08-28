@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { Loader2, Truck, AlertTriangle, CalendarCheck, CalendarClock, ExternalLink, RefreshCw } from 'lucide-react';
 
 const db = supabase as any;
@@ -47,6 +48,7 @@ export default function DispatchLieferstatus() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [phase, setPhase] = useState('all');
+  const [busy, setBusy] = useState<string | null>(null);
   const [view, setView] = useState<'all' | 'delayed' | 'unconfirmed' | 'change_requested'>('all');
 
   async function load() {
@@ -67,6 +69,46 @@ export default function DispatchLieferstatus() {
   }
 
   useEffect(() => { load(); }, []);
+
+  async function resolveRequest(r: Row, action: 'accept' | 'reject') {
+    setBusy(r.order_id);
+    try {
+      const patch: Record<string, unknown> = {
+        customer_response: action === 'accept' ? 'confirmed' : null,
+        customer_responded_at: new Date().toISOString(),
+        last_status_change: new Date().toISOString(),
+      };
+      if (action === 'accept' && r.customer_alternative_date) {
+        patch.eta_planned = r.customer_alternative_date;
+        patch.eta_confirmed = true;
+        patch.customer_alternative_date = null;
+      } else if (action === 'reject') {
+        patch.customer_alternative_date = null;
+        patch.eta_confirmed = false;
+      }
+      const { error } = await db.from('order_delivery_status').update(patch).eq('order_id', r.order_id);
+      if (error) throw error;
+
+      await db.from('order_delivery_events').insert({
+        order_id: r.order_id,
+        event_type: action === 'accept' ? 'customer_request_accepted' : 'customer_request_rejected',
+        title: action === 'accept' ? 'Wunschtermin des Kunden übernommen' : 'Terminwunsch des Kunden abgelehnt',
+        description: r.customer_response_note ?? null,
+      });
+
+      try {
+        await supabase.functions.invoke('delivery-notify', { body: { order_id: r.order_id } });
+      } catch { /* Benachrichtigung ist optional */ }
+
+      toast.success(action === 'accept' ? 'Wunschtermin übernommen' : 'Terminwunsch abgelehnt');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Aktion fehlgeschlagen');
+    } finally {
+      setBusy(null);
+    }
+  }
+
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -174,6 +216,28 @@ export default function DispatchLieferstatus() {
                   </Badge>
                 )}
                 <div className="ml-auto flex items-center gap-2">
+                  {r.customer_response === 'change_requested' && (
+                    <>
+                      {r.customer_alternative_date && (
+                        <Button
+                          size="sm"
+                          disabled={busy === r.order_id}
+                          onClick={() => resolveRequest(r, 'accept')}
+                        >
+                          {busy === r.order_id ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <CalendarCheck className="w-4 h-4 mr-1.5" />}
+                          Wunschtermin übernehmen
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy === r.order_id}
+                        onClick={() => resolveRequest(r, 'reject')}
+                      >
+                        Ablehnen
+                      </Button>
+                    </>
+                  )}
                   <span className="text-xs text-muted-foreground hidden md:inline">
                     {r.last_status_change ? new Date(r.last_status_change).toLocaleString('de-DE') : ''}
                   </span>
@@ -183,6 +247,7 @@ export default function DispatchLieferstatus() {
                     </Link>
                   </Button>
                 </div>
+
                 {r.customer_response_note && (
                   <div className="w-full text-xs text-muted-foreground">Kundennachricht: {r.customer_response_note}</div>
                 )}
