@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -121,10 +121,10 @@ export function DeliveryJourney({
     return raw ? Number(raw) || 0 : 0;
   });
   const newCount = useMemo(
-    () => data.history.filter((h) => {
+    () => (lastSeen ? data.history.filter((h) => {
       const dt = d(h.date);
       return dt ? dt.getTime() > lastSeen : false;
-    }).length,
+    }).length : 0),
     [data.history, lastSeen],
   );
   useEffect(() => {
@@ -375,7 +375,8 @@ export function DeliveryJourney({
             {showHistory && (
               <div className="mt-4 space-y-3 border-l border-border pl-4">
                 {data.history.map((h, i) => {
-                  const isNew = !!lastSeen && d(h.date) ? d(h.date)!.getTime() > lastSeen : !lastSeen;
+                  const hd = d(h.date);
+                  const isNew = !!lastSeen && !!hd && hd.getTime() > lastSeen;
                   return (
                     <div key={`${h.date}-${i}`} className="relative dj-rise" style={{ animationDelay: `${i * 50}ms` }}>
                       <div className="absolute -left-[1.4rem] w-2.5 h-2.5 rounded-full bg-primary mt-1.5" />
