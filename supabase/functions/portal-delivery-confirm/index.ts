@@ -118,6 +118,20 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Web-Push an dieselben internen Empfänger (best effort)
+      if (ids.length) {
+        await supabase.functions.invoke("mobile-push-send", {
+          body: {
+            user_ids: ids,
+            title,
+            body: message.slice(0, 300),
+            url: "/dispatch/lieferstatus",
+            tag: "delivery-customer-response",
+          },
+        }).then(() => {}, () => {});
+      }
+
+
       if (!confirmed) {
         await supabase.functions.invoke("send-transactional-email", {
           body: {
