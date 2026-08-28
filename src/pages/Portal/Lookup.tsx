@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Loader2, Search, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Search, ShieldCheck } from 'lucide-react';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -61,12 +61,25 @@ export default function PortalLookup() {
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Zurück
         </Button>
       </div>
-      <div className="text-center mb-2">
+      <button
+        type="button"
+        onClick={() => navigate('/portal/check')}
+        className="w-full text-left rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:p-6 transition-transform duration-200 hover:scale-[1.01]"
+      >
+        <div className="text-xl sm:text-2xl font-semibold tracking-tight">Wann kommt mein ALIX?</div>
+        <p className="text-sm text-muted-foreground mt-1">Lieferstatus in wenigen Sekunden prüfen.</p>
+        <span className="mt-3 inline-flex items-center text-sm font-medium text-primary">
+          Lieferstatus prüfen <ArrowRight className="w-4 h-4 ml-1.5" />
+        </span>
+      </button>
+
+      <div className="text-center mb-2 mt-6">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Bestellstatus abfragen</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Geben Sie Ihre Auftragsdaten ein, um den aktuellen Bearbeitungsstand einzusehen.
         </p>
       </div>
+
 
       <Card>
         <CardContent className="p-6">

@@ -742,6 +742,8 @@ const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPrevie
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
+const PortalCheckDelivery = lazy(() => import("./pages/Portal/CheckDelivery"));
+
 const TicketCsat = lazy(() => import("./pages/Public/TicketCsat"));
 const SecurityCenterLayout = lazy(() => import("./pages/SecurityCenter/Layout").then(m => ({ default: m.default })));
 const SecurityCenterOverview = lazy(() => import("./pages/SecurityCenter/Layout").then(m => ({ default: m.SecurityCenterOverview })));
@@ -2278,6 +2280,8 @@ function AppRoutes() {
         <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/help" element={<SelfServicePortal />} />
         <Route path="/portal" element={<PortalLookup />} />
+        <Route path="/portal/check" element={<PortalCheckDelivery />} />
+
         <Route path="/zahlung/:token" element={<PortalZahlung />} />
         <Route path="/cmr-portal" element={<CmrPortal />} />
         <Route path="/cmr-portal/:token" element={<CmrPortal />} />
