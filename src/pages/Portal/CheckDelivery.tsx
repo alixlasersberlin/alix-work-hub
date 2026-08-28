@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ export default function CheckDelivery() {
   const [mode, setMode] = useState<Mode>('form');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CheckResult | null>(null);
-  const [pending, setPending] = useState<CheckResult | null>(null);
+  const lookupRef = useRef<Promise<CheckResult | null> | null>(null);
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -33,40 +33,40 @@ export default function CheckDelivery() {
       return;
     }
     setMode('sequence');
-    setPending(null);
-    try {
-      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/customer-portal-lookup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: anonKey,
-          Authorization: `Bearer ${anonKey}`,
-        },
-        body: JSON.stringify({ order_number: orderNumber.trim(), zip: zip.trim(), email: email.trim() }),
-      });
-      const data = await res.json();
-      if (!data?.ok) {
-        setPending(null);
-        return;
+    lookupRef.current = (async (): Promise<CheckResult | null> => {
+      try {
+        const res = await fetch(`https://${projectId}.supabase.co/functions/v1/customer-portal-lookup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+          },
+          body: JSON.stringify({ order_number: orderNumber.trim(), zip: zip.trim(), email: email.trim() }),
+        });
+        const data = await res.json();
+        return data?.ok ? (data as CheckResult) : null;
+      } catch {
+        return null;
       }
-      setPending(data as CheckResult);
-    } catch {
-      setPending(null);
-    }
+    })();
   }
 
-  const finishSequence = useCallback(() => {
-    if (pending) {
-      setResult(pending);
+  // Animation endet erst, wenn die Abfrage abgeschlossen ist – späte Antworten
+  // dürfen nicht verworfen werden ("nicht gefunden" trotz gültigem Auftrag).
+  const finishSequence = useCallback(async () => {
+    const data = await (lookupRef.current ?? Promise.resolve(null));
+    if (data) {
+      setResult(data);
       setMode('result');
     } else {
       setMode('notfound');
     }
-  }, [pending]);
+  }, []);
 
   function reset() {
     setResult(null);
-    setPending(null);
+    lookupRef.current = null;
     setMode('form');
   }
 
