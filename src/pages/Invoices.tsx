@@ -2998,7 +2998,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
 
-      <Dialog open={!!emailRow} onOpenChange={(o) => !o && !emailSending && setEmailRow(null)}>
+      <Dialog open={!!emailRow} onOpenChange={(o) => { if (!o && !emailSending) { setEmailRow(null); setEmailStatusAfter(''); } }}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -3058,7 +3058,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEmailRow(null)} disabled={emailSending}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => { setEmailRow(null); setEmailStatusAfter(''); }} disabled={emailSending}>Abbrechen</Button>
             <Button onClick={sendEmail} disabled={emailSending || emailPreparing} className="gold-gradient text-primary-foreground">
               {emailSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
               {emailSending ? 'Sende…' : 'Senden'}
