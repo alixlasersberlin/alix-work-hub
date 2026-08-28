@@ -71,6 +71,19 @@ function normOrderNumber(v: any): string {
   return String(v ?? "").trim().replace(/-AT$/i, "");
 }
 
+// Kunden tippen die Nummer oft unvollständig: "04350", "2026-04350", "ab 2026-04350".
+// Wir bauen daraus mehrere Kandidaten und suchen zusätzlich per Suffix-Match.
+function orderNumberCandidates(input: string): { exact: string[]; suffix: string | null } {
+  const base = input.replace(/\s+/g, "").toUpperCase();
+  const stripped = base.replace(/^AB-?/, "");
+  const set = new Set<string>([base, stripped, `AB-${stripped}`]);
+  // reiner Ziffernblock am Ende, z.B. "04350"
+  const m = stripped.match(/(\d{3,})$/);
+  const suffix = m ? m[1] : null;
+  return { exact: [...set].filter(Boolean), suffix };
+}
+
+
 // Rate-Limit für öffentlichen Portal-Lookup
 const PORTAL_MAX = 15;
 const PORTAL_WINDOW_SEC = 300; // 5 min
