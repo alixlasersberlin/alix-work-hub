@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, Truck } from 'lucide-react';
+import { Loader2, Save, Truck, Send } from 'lucide-react';
+import DeliveryMailTemplatesDialog from './DeliveryMailTemplatesDialog';
 import { toast } from 'sonner';
 
 const db = supabase as any;
@@ -68,6 +69,8 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
   const [prod, setProd] = useState<StepRow[]>(mergeSteps(PRODUCTION_STEPS, []));
   const [qc, setQc] = useState<StepRow[]>(mergeSteps(QC_STEPS, []));
   const [events, setEvents] = useState<any[]>([]);
+  const [notifying, setNotifying] = useState(false);
+  const initialPhase = useRef<string>('auto');
 
   async function load() {
     setLoading(true);
@@ -77,6 +80,7 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
     ]);
     if (data) {
       setRow(data);
+      initialPhase.current = data.phase ?? 'auto';
       setProd(mergeSteps(PRODUCTION_STEPS, data.production_steps));
       setQc(mergeSteps(QC_STEPS, data.qc_steps));
     }
@@ -88,8 +92,21 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
 
   const set = (k: string, v: any) => setRow((r: any) => ({ ...r, [k]: v }));
 
+  async function notify(force = false) {
+    setNotifying(true);
+    const { data, error } = await supabase.functions.invoke('delivery-notify', {
+      body: { order_id: orderId, phase: row.phase && row.phase !== 'auto' ? row.phase : undefined, force },
+    });
+    setNotifying(false);
+    if (error) { toast.error('Versand fehlgeschlagen: ' + error.message); return; }
+    if ((data as any)?.skipped) { toast.info('Für diese Phase ist keine Vorlage aktiv.'); return; }
+    toast.success('Kunde benachrichtigt: ' + ((data as any)?.to ?? ''));
+    load();
+  }
+
   async function save() {
     setSaving(true);
+    const phaseChanged = row.phase && row.phase !== 'auto' && row.phase !== initialPhase.current;
     const { data: auth } = await supabase.auth.getUser();
     const payload = {
       order_id: orderId,
@@ -119,6 +136,8 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
     setSaving(false);
     if (error) { toast.error('Speichern fehlgeschlagen: ' + error.message); return; }
     toast.success('Lieferstatus gespeichert');
+    initialPhase.current = row.phase;
+    if (phaseChanged && row.notify_customer !== false) await notify(false);
     load();
   }
 
@@ -147,9 +166,15 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="flex items-center gap-2"><Truck className="w-5 h-5" /> Lieferstatus (Kundenportal)</CardTitle>
-          <Button onClick={save} disabled={saving} size="sm">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />} Speichern
-          </Button>
+          <div className="flex items-center gap-2">
+            <DeliveryMailTemplatesDialog />
+            <Button onClick={() => notify(true)} disabled={notifying} variant="outline" size="sm">
+              {notifying ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Send className="w-4 h-4 mr-1" />} Kunde benachrichtigen
+            </Button>
+            <Button onClick={save} disabled={saving} size="sm">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />} Speichern
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
