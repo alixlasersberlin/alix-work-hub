@@ -315,6 +315,11 @@ export default function OrderDeliveryStatusPanel({ orderId }: { orderId: string 
         </Card>
       </div>
 
+      <DeliveryBlockersCard orderId={orderId} />
+
+      <DeliveryOpsCards orderId={orderId} />
+
+
       <Card>
         <CardHeader><CardTitle className="text-base">Lieferhistorie</CardTitle></CardHeader>
         <CardContent className="space-y-2">
