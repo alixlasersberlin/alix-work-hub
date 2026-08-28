@@ -174,6 +174,28 @@ export default function DispatchLieferstatus() {
                   </Badge>
                 )}
                 <div className="ml-auto flex items-center gap-2">
+                  {r.customer_response === 'change_requested' && (
+                    <>
+                      {r.customer_alternative_date && (
+                        <Button
+                          size="sm"
+                          disabled={busy === r.order_id}
+                          onClick={() => resolveRequest(r, 'accept')}
+                        >
+                          {busy === r.order_id ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <CalendarCheck className="w-4 h-4 mr-1.5" />}
+                          Wunschtermin übernehmen
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy === r.order_id}
+                        onClick={() => resolveRequest(r, 'reject')}
+                      >
+                        Ablehnen
+                      </Button>
+                    </>
+                  )}
                   <span className="text-xs text-muted-foreground hidden md:inline">
                     {r.last_status_change ? new Date(r.last_status_change).toLocaleString('de-DE') : ''}
                   </span>
@@ -183,6 +205,7 @@ export default function DispatchLieferstatus() {
                     </Link>
                   </Button>
                 </div>
+
                 {r.customer_response_note && (
                   <div className="w-full text-xs text-muted-foreground">Kundennachricht: {r.customer_response_note}</div>
                 )}
