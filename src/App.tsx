@@ -2278,6 +2278,8 @@ function AppRoutes() {
         <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/help" element={<SelfServicePortal />} />
         <Route path="/portal" element={<PortalLookup />} />
+        <Route path="/portal/check" element={<PortalCheckDelivery />} />
+
         <Route path="/zahlung/:token" element={<PortalZahlung />} />
         <Route path="/cmr-portal" element={<CmrPortal />} />
         <Route path="/cmr-portal/:token" element={<CmrPortal />} />
