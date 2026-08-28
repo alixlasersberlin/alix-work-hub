@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { Loader2, Truck, AlertTriangle, CalendarCheck, CalendarClock, ExternalLink, RefreshCw } from 'lucide-react';
 
 const db = supabase as any;
@@ -47,6 +48,7 @@ export default function DispatchLieferstatus() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [phase, setPhase] = useState('all');
+  const [busy, setBusy] = useState<string | null>(null);
   const [view, setView] = useState<'all' | 'delayed' | 'unconfirmed' | 'change_requested'>('all');
 
   async function load() {
