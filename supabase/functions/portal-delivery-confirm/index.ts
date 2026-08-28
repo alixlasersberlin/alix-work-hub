@@ -91,6 +91,47 @@ Deno.serve(async (req) => {
       visible_to_customer: true,
     }).then(() => {}, () => {});
 
+    // Interne Benachrichtigung an Disposition/Admins
+    try {
+      const title = confirmed
+        ? `Liefertermin bestätigt: ${(order as any).order_number}`
+        : `Terminwunsch Kunde: ${(order as any).order_number}`;
+      const message = confirmed
+        ? `${name} hat den Liefertermin für ${(order as any).order_number} bestätigt.`
+        : `${name} wünscht einen anderen Liefertermin für ${(order as any).order_number}${parsed.data.alternative_date ? ` (Wunsch: ${parsed.data.alternative_date})` : ""}.${parsed.data.note ? ` Hinweis: ${parsed.data.note}` : ""}`;
+
+      const { data: recipients } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["Super Admin", "Admin", "Tourenplanung"]);
+      const ids = [...new Set(((recipients ?? []) as any[]).map((r) => r.user_id).filter(Boolean))];
+      if (ids.length) {
+        await supabase.from("app_notifications").insert(
+          ids.map((uid) => ({
+            user_id: uid,
+            kind: "delivery_customer_response",
+            severity: confirmed ? "info" : "warning",
+            title,
+            message,
+            link: "/dispatch/lieferstatus",
+          })),
+        );
+      }
+
+      if (!confirmed) {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            to: ["k.trinh@alix-operation.de", "jh@alix-operation.de"],
+            subject: title,
+            html: `<p>${message}</p><p><a href="https://app.alixwork.de/dispatch/lieferstatus">Lieferstatus-Cockpit öffnen</a></p>`,
+            category: "delivery_customer_response",
+          },
+        });
+      }
+    } catch (e) {
+      console.error("[portal-delivery-confirm] notify", e);
+    }
+
     return json({ ok: true, response: parsed.data.response });
   } catch (e) {
     console.error("[portal-delivery-confirm]", e);
