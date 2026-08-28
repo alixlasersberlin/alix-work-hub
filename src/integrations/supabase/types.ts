@@ -51861,6 +51861,7 @@ export type Database = {
         }
         Returns: number
       }
+      ods_default_row: { Args: { _order_id: string }; Returns: undefined }
       offboard_user: {
         Args: { _reason: string; _user_id: string }
         Returns: Json
