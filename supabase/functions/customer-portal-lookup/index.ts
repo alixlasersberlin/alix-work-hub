@@ -71,6 +71,19 @@ function normOrderNumber(v: any): string {
   return String(v ?? "").trim().replace(/-AT$/i, "");
 }
 
+// Kunden tippen die Nummer oft unvollständig: "04350", "2026-04350", "ab 2026-04350".
+// Wir bauen daraus mehrere Kandidaten und suchen zusätzlich per Suffix-Match.
+function orderNumberCandidates(input: string): { exact: string[]; suffix: string | null } {
+  const base = input.replace(/\s+/g, "").toUpperCase();
+  const stripped = base.replace(/^AB-?/, "");
+  const set = new Set<string>([base, stripped, `AB-${stripped}`]);
+  // reiner Ziffernblock am Ende, z.B. "04350"
+  const m = stripped.match(/(\d{3,})$/);
+  const suffix = m ? m[1] : null;
+  return { exact: [...set].filter(Boolean), suffix };
+}
+
+
 // Rate-Limit für öffentlichen Portal-Lookup
 const PORTAL_MAX = 15;
 const PORTAL_WINDOW_SEC = 300; // 5 min
@@ -130,17 +143,51 @@ Deno.serve(async (req) => {
       }
     } catch { /* never block on limiter errors */ }
 
-    const { data: order } = await supabase
-      .from("orders")
-      .select("id, order_number, order_status, order_date, updated_at, deposit_ok, expected_shipment_date, billing_address, shipping_address, customer_id, source_system")
-      .eq("order_number", orderNumber)
-      .maybeSingle();
+    const ORDER_COLS =
+      "id, order_number, order_status, order_date, updated_at, deposit_ok, expected_shipment_date, billing_address, shipping_address, customer_id, source_system";
+
+    const { exact, suffix } = orderNumberCandidates(orderNumber);
+
+    let order: any = null;
+    {
+      const { data } = await supabase
+        .from("orders")
+        .select(ORDER_COLS)
+        .in("order_number", exact)
+        .limit(2);
+      if (data && data.length === 1) order = data[0];
+      else if (data && data.length > 1) order = data[0];
+    }
+
+    // Fallback: Kunde hat nur den Zahlenteil eingegeben (z. B. "04350")
+    if (!order && suffix) {
+      const { data } = await supabase
+        .from("orders")
+        .select(ORDER_COLS)
+        .ilike("order_number", `%${suffix}`)
+        .limit(5);
+      if (data && data.length > 0) {
+        // Nur eindeutig zuordenbar, wenn zusätzlich PLZ/E-Mail passen (weiter unten geprüft)
+        order = data.length === 1 ? data[0] : null;
+        if (!order) {
+          // Mehrdeutig: den Treffer nehmen, dessen Kunde die E-Mail trägt
+          const ids = data.map((o: any) => o.customer_id).filter(Boolean);
+          const { data: custs } = await supabase
+            .from("customers")
+            .select("id, email")
+            .in("id", ids);
+          const match = (custs ?? []).find((c: any) => normEmail(c.email) === email);
+          if (match) order = data.find((o: any) => o.customer_id === match.id) ?? null;
+        }
+      }
+    }
 
     if (!order) {
       return new Response(JSON.stringify({ ok: false, error: "not_found" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const { data: customer } = await supabase
       .from("customers")
