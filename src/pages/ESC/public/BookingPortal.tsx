@@ -44,6 +44,7 @@ const TONES = {
   alixsmart: '222 90% 62%',
   anamnese: '340 78% 56%',
   technik: '200 80% 50%',
+  verkauf: '45 90% 50%',
 } as const;
 
 type TileProps = {
