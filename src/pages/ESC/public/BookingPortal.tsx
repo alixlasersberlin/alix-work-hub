@@ -180,6 +180,8 @@ export default function BookingPortal() {
     email: '',
     phone: '',
     company: '',
+    customerNumber: '',
+    orderNumber: '',
     message: '',
     consent: false,
   });
@@ -187,13 +189,17 @@ export default function BookingPortal() {
   const submitQuickTicket = async () => {
     const d = publicDepts.find((x) => x.id === quick.departmentId);
     if (!d) { toast.error('Bitte Abteilung wählen.'); return; }
-    if (!quick.name.trim() || !quick.email.trim() || !quick.message.trim() || !quick.consent) {
-      toast.error('Bitte Name, E-Mail, Nachricht und Datenschutz-Zustimmung ausfüllen.');
+    if (!quick.name.trim() || !quick.email.trim() || !quick.phone.trim() || !quick.message.trim() || !quick.consent) {
+      toast.error('Bitte Name, E-Mail, Telefon, Nachricht und Datenschutz-Zustimmung ausfüllen.');
       return;
     }
     setQuickBusy(true);
     const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const [firstName, ...restName] = quick.name.trim().split(' ');
+    const extra = [
+      quick.customerNumber.trim() ? `Kundennummer: ${quick.customerNumber.trim()}` : '',
+      quick.orderNumber.trim() ? `Auftragsnummer: ${quick.orderNumber.trim()}` : '',
+    ].filter(Boolean).join('\n');
     const { data, error } = await supabase.functions.invoke('public-book-ticket', {
       body: {
         firstName,
@@ -204,7 +210,9 @@ export default function BookingPortal() {
         website: '',
         service: 'Ticket / Anfrage',
         department: d.name,
-        message: quick.message.trim(),
+        message: extra ? `${quick.message.trim()}\n\n${extra}` : quick.message.trim(),
+        customerNumber: quick.customerNumber.trim(),
+        orderNumber: quick.orderNumber.trim(),
         consentMarketing: false,
         bookingNumber,
       },
