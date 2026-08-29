@@ -455,6 +455,68 @@ export default function BookingPortal() {
           />
         </div>
 
+        <div id="quick-ticket">
+          {quickOpen && (
+            <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4 space-y-3" style={{ borderColor: `hsl(${TONES.ticket} / 0.28)` }}>
+              <div className="flex items-center gap-2">
+                <LifeBuoy className="w-4 h-4" style={{ color: `hsl(${TONES.ticket})` }} />
+                <div className="font-semibold text-[14px]">Ticket direkt senden</div>
+              </div>
+              <div>
+                <Label className="text-[12px]">Abteilung *</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1.5">
+                  {publicDepts.map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => setQuick((q) => ({ ...q, departmentId: d.id }))}
+                      className={`text-left rounded-lg border px-3 py-2 text-[12.5px] transition-all ${quick.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card hover:bg-muted/40'}`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span className="inline-block w-2 h-2 rounded-full" style={{ background: d.color }} />
+                        {d.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {publicDepts.length === 0 && <div className="text-[12.5px] text-muted-foreground py-3">{t.cards.no_public}</div>}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[12px]">Name *</Label>
+                  <Input value={quick.name} onChange={(e) => setQuick({ ...quick, name: e.target.value })} placeholder="Vor- und Nachname" />
+                </div>
+                <div>
+                  <Label className="text-[12px]">E-Mail *</Label>
+                  <Input type="email" value={quick.email} onChange={(e) => setQuick({ ...quick, email: e.target.value })} placeholder="name@firma.de" />
+                </div>
+                <div>
+                  <Label className="text-[12px]">Telefon</Label>
+                  <Input value={quick.phone} onChange={(e) => setQuick({ ...quick, phone: e.target.value })} placeholder="+49 …" />
+                </div>
+                <div>
+                  <Label className="text-[12px]">Firma</Label>
+                  <Input value={quick.company} onChange={(e) => setQuick({ ...quick, company: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-[12px]">Ihr Anliegen *</Label>
+                <Textarea rows={4} value={quick.message} onChange={(e) => setQuick({ ...quick, message: e.target.value })} placeholder="Kurze Beschreibung Ihres Anliegens" />
+              </div>
+              <label className="flex items-start gap-2 text-[12px] text-muted-foreground">
+                <Checkbox checked={quick.consent} onCheckedChange={(v) => setQuick({ ...quick, consent: !!v })} />
+                <span>Ich stimme der Verarbeitung meiner Daten zur Bearbeitung der Anfrage zu.</span>
+              </label>
+              <div className="flex justify-end">
+                <Button onClick={submitQuickTicket} disabled={quickBusy}>
+                  {quickBusy ? 'Wird gesendet…' : 'Ticket senden'} <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+
         {salesOpen && (
           <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
