@@ -416,6 +416,8 @@ export default function BookingPortal() {
           <BookTile
             as="a"
             href="/book/technik"
+            target="_blank"
+            rel="noopener noreferrer"
             tone={TONES.technik}
             image={imgTicket.url}
             title={
