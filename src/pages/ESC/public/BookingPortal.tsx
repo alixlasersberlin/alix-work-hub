@@ -417,9 +417,6 @@ export default function BookingPortal() {
           title="Ticket erstellen"
           desc="Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt"
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           as="a"
           href="/book/mediapaket"
