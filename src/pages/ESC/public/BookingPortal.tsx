@@ -319,9 +319,9 @@ export default function BookingPortal() {
           <BookTile
             tone={TONES.offer}
             image={imgOffer.url}
+            as="a"
+            href="/beratung/premium"
 
-            onClick={() => setSalesOpen((v) => !v)}
-            aria-expanded={salesOpen}
             title={
               <span className="relative block pr-16 sm:pr-20">
                 <span>{t.cards.offer_title}</span>
