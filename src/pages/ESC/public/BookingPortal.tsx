@@ -434,7 +434,13 @@ export default function BookingPortal() {
             image={imgTicket.url}
             title={
               <span className="relative block pr-16 sm:pr-20">
-                <span>Technik</span>
+                <span className="inline-flex items-center gap-2">
+                  <span>Technik</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 shrink-0 fill-[hsl(142_70%_45%)]">
+                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.28-1.38a9.9 9.9 0 0 0 4.76 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 1.82c2.16 0 4.19.84 5.72 2.37a8.03 8.03 0 0 1 2.37 5.72c0 4.46-3.63 8.09-8.09 8.09a8.2 8.2 0 0 1-4.13-1.13l-.3-.18-3.13.82.84-3.05-.19-.31a8.05 8.05 0 0 1-1.24-4.31c0-4.46 3.63-8.02 8.15-8.02Zm-2.4 4.32c-.17 0-.45.06-.69.31-.24.24-.9.88-.9 2.15s.92 2.49 1.05 2.66c.13.17 1.8 2.75 4.37 3.75.61.24 1.09.38 1.46.49.61.19 1.17.17 1.61.1.49-.07 1.51-.62 1.72-1.21.21-.6.21-1.11.15-1.21-.06-.11-.24-.17-.5-.3-.26-.13-1.51-.75-1.75-.83-.23-.09-.4-.13-.57.13-.17.25-.65.82-.8.99-.15.17-.29.19-.55.06-.26-.13-1.08-.4-2.06-1.27-.76-.68-1.28-1.52-1.43-1.77-.15-.26-.02-.4.11-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.32-.02-.45-.07-.13-.57-1.39-.79-1.9-.2-.48-.41-.42-.57-.43h-.49Z"/>
+                  </svg>
+                </span>
+
                 <span
                   style={{ transformOrigin: 'right center' }}
                   className="absolute -top-3 sm:-top-4 right-0 inline-flex items-center rounded-full bg-[hsl(0_84%_50%)] text-white px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold shadow-md animate-fade-in rotate-0 sm:-rotate-6
