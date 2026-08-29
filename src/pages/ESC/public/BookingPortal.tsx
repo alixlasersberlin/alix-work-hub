@@ -418,7 +418,18 @@ export default function BookingPortal() {
             href="/book/technik"
             tone={TONES.technik}
             image={imgTicket.url}
-            title="Technik"
+            title={
+              <span className="relative block pr-16 sm:pr-20">
+                <span>Technik</span>
+                <span
+                  style={{ transformOrigin: 'right center' }}
+                  className="absolute -top-3 sm:-top-4 right-0 inline-flex items-center rounded-full bg-[hsl(0_84%_50%)] text-white px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold shadow-md animate-fade-in rotate-0 sm:-rotate-6
+                    before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-[hsl(0_84%_50%)]"
+                >
+                  Notfall
+                </span>
+              </span>
+            }
             desc="Technischer Support rund um Ihr Alix Gerät"
             trailing={<ArrowRight className="w-4 h-4" />}
           />
