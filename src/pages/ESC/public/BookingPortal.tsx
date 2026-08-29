@@ -399,6 +399,17 @@ export default function BookingPortal() {
             trailing={<ArrowRight className="w-4 h-4" />}
           />
           <BookTile
+            tone={TONES.verkauf}
+            image={imgOffer.url}
+            as="a"
+            href="/book/verkauf"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Verkauf"
+            desc="WhatsApp · Angebote · Termine · Kataloge"
+            trailing={<ArrowRight className="w-4 h-4" />}
+          />
+          <BookTile
             tone={TONES.inquiry}
             image={imgInquiry.url}
             onClick={() => { setQuickOpen(true); setTimeout(() => document.getElementById('quick-ticket')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
