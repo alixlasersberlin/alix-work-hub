@@ -338,7 +338,7 @@ export default function BookingPortal() {
             trailing={<ChevronDown className={`w-4 h-4 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />}
           />
           {salesOpen && (
-            <div className="rounded-2xl border bg-card p-4" style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}>
+            <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}>
               <div className="grid grid-cols-1 gap-3">
                 {[
                   { label: t.cards.offer_create, icon: FileText },
@@ -378,7 +378,7 @@ export default function BookingPortal() {
             trailing={<ChevronDown className={`w-4 h-4 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />}
           />
           {deptOpen && (
-            <div className="rounded-2xl border bg-card p-4" style={{ borderColor: `hsl(${TONES.inquiry} / 0.28)` }}>
+            <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.inquiry} / 0.28)` }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {publicDepts.map((d) => (
                   <button
