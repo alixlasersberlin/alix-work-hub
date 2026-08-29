@@ -331,7 +331,7 @@ export default function OrderDetail() {
       }
 
     }
-    loadAll();
+    loadAll({ light: true });
   }
 
 
@@ -375,7 +375,7 @@ export default function OrderDetail() {
       });
     }
 
-    loadAll();
+    loadAll({ light: true });
   }
 
   async function toggleDepositGeleistet(depId: string, value: boolean) {
@@ -413,7 +413,7 @@ export default function OrderDetail() {
     const { error } = await supabase.from('order_additional_deposits' as any).delete().eq('id', depId);
     if (error) { toast.error('Fehler: ' + error.message); return; }
     toast.success('Anzahlung gelöscht');
-    loadAll();
+    loadAll({ light: true });
   }
 
   if (loading) return <SkeletonForm fields={10} />;
@@ -533,7 +533,7 @@ export default function OrderDetail() {
             } as any).eq('id', order.id);
             if (error) { toast.error(error.message); return; }
             toast.success(next ? 'Auftrag nach „In Vermietung" gebucht' : 'Auftrag aus der Vermietung entfernt');
-            loadAll();
+            loadAll({ light: true });
           },
         },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
@@ -588,7 +588,7 @@ export default function OrderDetail() {
                 const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
                 if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
                 sendReviewInvitation(order.id, { manual: false }).catch(() => {});
-                loadAll();
+                loadAll({ light: true });
               },
             }] : []),
             {
