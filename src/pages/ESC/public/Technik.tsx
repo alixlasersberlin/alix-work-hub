@@ -30,7 +30,7 @@ export default function Technik() {
             href={WHATSAPP_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-4 group"
+            className="flex flex-col items-center text-center gap-4 group"
           >
             <span className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[hsl(142_70%_45%)] flex items-center justify-center transition-transform group-hover:scale-105">
               <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 text-white" fill="currentColor" strokeWidth={0} />
@@ -45,7 +45,7 @@ export default function Technik() {
 
           <ul className="mt-6 divide-y divide-border/60 border-t border-border/60">
             {items.map(({ icon: Icon, title, lines }) => (
-              <li key={title} className="flex items-start gap-4 py-5">
+              <li key={title} className="flex flex-col items-center text-center gap-2 py-5">
                 <Icon className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 text-foreground/80" strokeWidth={1.5} />
                 <div>
                   <h2 className="text-base sm:text-lg font-semibold tracking-wide">{title}</h2>
@@ -58,6 +58,7 @@ export default function Technik() {
               </li>
             ))}
           </ul>
+
         </div>
       </section>
     </main>
