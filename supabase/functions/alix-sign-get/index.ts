@@ -60,10 +60,34 @@ Deno.serve(async (req) => {
     status = 'geöffnet'
   }
 
+  // Fallback: ältere Anfragen wurden ohne Positionen gespeichert –
+  // Payload aus dem Angebot nachladen.
+  let payload: any = r.offer_payload || {}
+  if (!Array.isArray(payload?.lines) || payload.lines.length === 0) {
+    const { data: off } = await admin
+      .from('offers')
+      .select('payload, total_net, total_tax, total_gross')
+      .eq('offer_number', r.offer_number)
+      .maybeSingle()
+    const op: any = off?.payload || {}
+    if (Array.isArray(op?.lines) && op.lines.length > 0) {
+      payload = {
+        ...payload,
+        ...op,
+        totals: op.totals || payload.totals || {
+          net: Number(off?.total_net || 0),
+          tax: Number(off?.total_tax || 0),
+          gross: Number(off?.total_gross || 0),
+        },
+      }
+    }
+  }
+
   return new Response(JSON.stringify({
     id: r.id,
     offer_number: r.offer_number,
-    offer_payload: r.offer_payload,
+    offer_payload: payload,
+
     customer_email: r.customer_email,
     customer_name: r.customer_name,
     status,
