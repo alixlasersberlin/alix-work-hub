@@ -448,9 +448,6 @@ export default function BookingPortal() {
           }
           desc={t.cards.nisv_desc}
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           as="a"
           href="https://eanamnese.de"
@@ -461,6 +458,7 @@ export default function BookingPortal() {
           title={t.cards.anamnese_title}
           desc={t.cards.anamnese_desc}
         />
+        </div>
       )}
 
 
