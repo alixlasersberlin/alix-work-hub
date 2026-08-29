@@ -80,24 +80,14 @@ export default function PortalLookup() {
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Zurück
         </Button>
       </div>
-      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:p-6 space-y-3 text-sm text-muted-foreground">
-        <p>Die angezeigten Lieferzeiten und Termine sind Richtwerte auf Basis unseres aktuellen Produktionsablaufs.</p>
-        <p>Alle Systeme von Alix Lasers werden individuell in Handfertigung gefertigt, konfiguriert und vor der Auslieferung geprüft. Dadurch können sich einzelne Produktions- und Liefertermine verschieben.</p>
-        <p>Im Zuge der aktuellen Systemumstellung auf AlixSmart KI kann das derzeit angezeigte Lieferdatum vorübergehend vom tatsächlichen Produktionsstatus Ihres Auftrags abweichen.</p>
-        <p>Aktuell überprüfen wir daher jeden Auftrag manuell, gleichen den jeweiligen Produktionsfortschritt ab und aktualisieren die Liefertermine schrittweise.</p>
-        <p>
-          <span className="font-medium text-foreground">Für Sie bedeutet das:</span> Ihr angezeigter Termin wird derzeit geprüft und bei Bedarf an den tatsächlichen Produktionsstatus angepasst.
-        </p>
-        <p>Vielen Dank für Ihr Verständnis.</p>
-      </div>
-
-
-      <div className="text-center mb-2 mt-6 dc-reveal">
+      <div className="text-center mb-2 dc-reveal">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Bestellstatus abfragen</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Geben Sie Ihre Auftragsdaten ein, um den aktuellen Bearbeitungsstand einzusehen.
         </p>
       </div>
+
+
 
 
       <Card className="dc-reveal dc-d2">
