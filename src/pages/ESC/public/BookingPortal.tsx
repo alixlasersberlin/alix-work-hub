@@ -61,8 +61,11 @@ type TileProps = {
 
 function BookTile({ tone, image, title, desc, trailing, as = 'button', href, target, rel, onClick, id, ...rest }: TileProps) {
   const cls =
-    'group relative w-full text-left overflow-hidden rounded-2xl border p-4 pl-5 flex items-center gap-4 transition-all duration-300 ' +
-    'bg-card hover:-translate-y-0.5 hover:shadow-lg';
+    'group relative w-full text-left overflow-hidden rounded-xl sm:rounded-2xl border ' +
+    'p-3 pl-3.5 sm:p-4 sm:pl-5 flex items-center gap-3 sm:gap-4 min-h-[76px] sm:min-h-[88px] ' +
+    'bg-card transition-all duration-300 motion-reduce:transition-none ' +
+    'hover:shadow-lg md:hover:-translate-y-0.5 active:scale-[0.99] ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
   const style: React.CSSProperties = {
     borderColor: `hsl(${tone} / 0.28)`,
     backgroundImage: `linear-gradient(120deg, hsl(${tone} / 0.10), transparent 55%)`,
@@ -71,20 +74,21 @@ function BookTile({ tone, image, title, desc, trailing, as = 'button', href, tar
   const inner = (
     <>
       <div
-        className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl shrink-0 flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105"
+        className="relative w-12 h-12 sm:w-16 sm:h-16 lg:w-[72px] lg:h-[72px] rounded-lg sm:rounded-xl shrink-0 flex items-center justify-center overflow-hidden transition-transform duration-300 motion-reduce:transition-none md:group-hover:scale-105"
         style={{ background: `radial-gradient(circle at 30% 25%, hsl(${tone} / 0.18), hsl(${tone} / 0.05))`, border: `1px solid hsl(${tone} / 0.25)` }}
       >
-        <img src={image} alt="" loading="lazy" width={512} height={512} className="w-11 h-11 sm:w-12 sm:h-12 object-contain" />
+        <img src={image} alt="" loading="lazy" width={512} height={512} className="w-8 h-8 sm:w-11 sm:h-11 lg:w-12 lg:h-12 object-contain" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-[14.5px] flex items-center gap-2 flex-wrap">{title}</div>
-        <div className="text-[12px] text-muted-foreground mt-0.5">{desc}</div>
+        <div className="font-semibold text-[13.5px] sm:text-[14.5px] leading-snug flex items-center gap-1.5 sm:gap-2 flex-wrap">{title}</div>
+        <div className="text-[11.5px] sm:text-[12px] leading-relaxed text-muted-foreground mt-0.5 line-clamp-3 sm:line-clamp-2">{desc}</div>
       </div>
-      <span className="shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" style={{ color: `hsl(${tone})` }}>
-        {trailing ?? <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />}
+      <span className="shrink-0 self-center transition-colors" style={{ color: `hsl(${tone})` }}>
+        {trailing ?? <ArrowRight className="w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-300 motion-reduce:transition-none md:group-hover:translate-x-1" />}
       </span>
     </>
   );
+
   if (as === 'a') {
     return (
       <a id={id} href={href} target={target} rel={rel} className={cls} style={style}>{inner}</a>
