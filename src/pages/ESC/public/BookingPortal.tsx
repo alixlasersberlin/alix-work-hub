@@ -436,6 +436,8 @@ export default function BookingPortal() {
           <BookTile
             as="a"
             href="/book/mediapaket"
+            target="_blank"
+            rel="noopener noreferrer"
             tone={TONES.mediapaket}
             image={imgMediapaket.url}
             title={t.cards.medipaket_title}
