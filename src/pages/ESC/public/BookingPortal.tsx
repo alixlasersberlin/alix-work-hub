@@ -169,7 +169,7 @@ export default function BookingPortal() {
     turnstileOk: true, // stub: real CAPTCHA plugs in here
   });
   const [waitlistOpen, setWaitlistOpen] = useState(false);
-  const [deptOpen, setDeptOpen] = useState(false);
+  
   const [salesOpen, setSalesOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickBusy, setQuickBusy] = useState(false);
@@ -388,12 +388,12 @@ export default function BookingPortal() {
           <BookTile
             tone={TONES.inquiry}
             image={imgInquiry.url}
-            onClick={() => setDeptOpen((v) => !v)}
-            aria-expanded={deptOpen}
-            title={t.cards.inquiry_title}
-            desc={t.cards.inquiry_desc}
-            trailing={<ChevronDown className={`w-4 h-4 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />}
+            onClick={() => { setQuickOpen(true); setTimeout(() => document.getElementById('quick-ticket')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+            title="Anfrage schnell erledigt"
+            desc="Abteilung wählen, Nachricht schreiben – wir melden uns umgehend"
+            trailing={<ArrowRight className="w-4 h-4" />}
           />
+
           <BookTile
             tone={TONES.orderstatus}
             image={imgOrderstatus.url}
@@ -542,29 +542,8 @@ export default function BookingPortal() {
           </div>
         )}
 
-        <div id="dept-picker">
-          {deptOpen && (
-            <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.inquiry} / 0.28)` }}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {publicDepts.map((d) => (
-                  <button
-                    key={d.id}
-                    onClick={() => { setState({ ...state, departmentId: d.id }); goto('service'); }}
-                    className={`text-left rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md min-h-24 ${state.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
-                      <div className="font-semibold text-[14px]">{d.name}</div>
-                    </div>
-                    <div className="text-[12px] text-muted-foreground mb-2 line-clamp-2">{d.description}</div>
-                    <div className="text-[10.5px] text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> {d.defaultDurationMinutes} min</div>
-                  </button>
-                ))}
-              </div>
-              {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">{t.cards.no_public}</div>}
-            </div>
-          )}
-        </div>
+
+
         </div>
       )}
 
