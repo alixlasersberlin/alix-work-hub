@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, CalendarCheck, CheckCircle2, Clock, Globe, MapPin, Users, ShieldCheck, PackageSearch, Cpu, ChevronDown, Mail, Sparkles, FileText, Banknote, BookOpen, Tag, KeyRound, PenLine, LifeBuoy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppointments } from '@/hooks/esc/useAppointments';
@@ -464,21 +465,22 @@ export default function BookingPortal() {
               </div>
               <div>
                 <Label className="text-[12px]">Abteilung *</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1.5">
-                  {publicDepts.map((d) => (
-                    <button
-                      key={d.id}
-                      type="button"
-                      onClick={() => setQuick((q) => ({ ...q, departmentId: d.id }))}
-                      className={`text-left rounded-lg border px-3 py-2 text-[12.5px] transition-all ${quick.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card hover:bg-muted/40'}`}
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <span className="inline-block w-2 h-2 rounded-full" style={{ background: d.color }} />
-                        {d.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                <Select value={quick.departmentId} onValueChange={(v) => setQuick((q) => ({ ...q, departmentId: v }))}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="Abteilung wählen" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-popover">
+                    {publicDepts.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="inline-block w-2 h-2 rounded-full" style={{ background: d.color }} />
+                          {d.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
                 {publicDepts.length === 0 && <div className="text-[12.5px] text-muted-foreground py-3">{t.cards.no_public}</div>}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
