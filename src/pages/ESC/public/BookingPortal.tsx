@@ -425,9 +425,6 @@ export default function BookingPortal() {
           title={t.cards.medipaket_title}
           desc={t.cards.medipaket_desc}
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           as="a"
           href="https://alixsmart.de"
