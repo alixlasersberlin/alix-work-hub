@@ -367,6 +367,8 @@ export default function BookingPortal() {
             image={imgOffer.url}
             as="a"
             href="/beratung/premium"
+            target="_blank"
+            rel="noopener noreferrer"
 
             title={
               <span className="relative block pr-16 sm:pr-20">
