@@ -44,6 +44,7 @@ const TONES = {
   alixsmart: '222 90% 62%',
   anamnese: '340 78% 56%',
   technik: '200 80% 50%',
+  verkauf: '45 90% 50%',
 } as const;
 
 type TileProps = {
@@ -395,6 +396,17 @@ export default function BookingPortal() {
             }
 
             desc={t.cards.offer_desc}
+            trailing={<ArrowRight className="w-4 h-4" />}
+          />
+          <BookTile
+            tone={TONES.verkauf}
+            image={imgOffer.url}
+            as="a"
+            href="/book/verkauf"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Verkauf"
+            desc="WhatsApp · Angebote · Termine · Kataloge"
             trailing={<ArrowRight className="w-4 h-4" />}
           />
           <BookTile
