@@ -939,6 +939,7 @@ const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscBookingPortalCreme = lazy(() => import("./pages/ESC/public/BookingPortalCreme"));
 const BookRedirect = lazy(() => import("./pages/BookRedirect"));
 const MediapaketWizard = lazy(() => import("./pages/mediapaket/MediapaketWizard"));
+const BookTechnik = lazy(() => import("./pages/ESC/public/Technik"));
 const MediapaketOverview = lazy(() => import("./pages/mediapaket/MediapaketOverview"));
 const MediapaketAdmin = lazy(() => import("./pages/mediapaket/MediapaketAdmin"));
 const MediapaketPrint = lazy(() => import("./pages/mediapaket/MediapaketPrint"));
@@ -1304,6 +1305,7 @@ function AppRoutes() {
         <Route path="/book-creme/:department" element={<EscBookingPortalCreme />} />
         <Route path="/book-creme/:department/:service" element={<EscBookingPortalCreme />} />
         <Route path="/book/mediapaket" element={<MediapaketWizard />} />
+        <Route path="/book/technik" element={<BookTechnik />} />
         <Route path="/preview/mediapaket" element={<MediapaketPreview />} />
         <Route path="/mediapaket/showcase/:token" element={<MediapaketShowcase />} />
         <Route path="/book/confirmation" element={<EscBookingPortal />} />

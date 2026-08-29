@@ -43,6 +43,7 @@ const TONES = {
   mediapaket: '268 72% 60%',
   alixsmart: '222 90% 62%',
   anamnese: '340 78% 56%',
+  technik: '200 80% 50%',
 } as const;
 
 type TileProps = {
