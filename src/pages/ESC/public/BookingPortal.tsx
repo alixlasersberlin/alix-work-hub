@@ -315,9 +315,11 @@ export default function BookingPortal() {
 
       {step === 'department' && (
         <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
           <BookTile
             tone={TONES.offer}
             image={imgOffer.url}
+
             onClick={() => setSalesOpen((v) => !v)}
             aria-expanded={salesOpen}
             title={
@@ -337,37 +339,6 @@ export default function BookingPortal() {
             desc={t.cards.offer_desc}
             trailing={<ChevronDown className={`w-4 h-4 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />}
           />
-          {salesOpen && (
-            <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}>
-              <div className="grid grid-cols-1 gap-3">
-                {[
-                  { label: t.cards.offer_create, icon: FileText },
-                ].map((item) => (
-                  <a
-                    key={item.label}
-                    href="/beratung"
-                    className="text-left rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md bg-card flex items-center gap-3"
-                    style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}
-                  >
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `hsl(${TONES.offer} / 0.12)` }}>
-                      <item.icon className="w-4 h-4" style={{ color: `hsl(${TONES.offer})` }} />
-                    </div>
-                    <div className="font-semibold text-[13.5px]">{item.label}</div>
-                  </a>
-                ))}
-              </div>
-              <div className="mt-3 flex justify-end">
-                <a href="/beratung" className="inline-flex items-center gap-1 text-[12.5px] hover:underline" style={{ color: `hsl(${TONES.offer})` }}>
-                  {t.cards.offer_more} <ArrowRight className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {step === 'department' && (
-        <div id="dept-picker" className="space-y-3">
           <BookTile
             tone={TONES.inquiry}
             image={imgInquiry.url}
@@ -377,6 +348,89 @@ export default function BookingPortal() {
             desc={t.cards.inquiry_desc}
             trailing={<ChevronDown className={`w-4 h-4 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />}
           />
+          <BookTile
+            tone={TONES.orderstatus}
+            image={imgOrderstatus.url}
+            onClick={() => navigate('/portal')}
+            title={t.cards.orderstatus_title}
+            desc={t.cards.orderstatus_desc}
+          />
+          <BookTile
+            tone={TONES.ticket}
+            image={imgTicket.url}
+            onClick={() => { setDeptOpen(true); setTimeout(() => document.getElementById('dept-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+            title="Ticket erstellen"
+            desc="Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt"
+          />
+          <BookTile
+            as="a"
+            href="/book/mediapaket"
+            tone={TONES.mediapaket}
+            image={imgMediapaket.url}
+            title={t.cards.medipaket_title}
+            desc={t.cards.medipaket_desc}
+          />
+          <BookTile
+            as="a"
+            href="https://alixsmart.de"
+            target="_blank"
+            rel="noopener noreferrer"
+            tone={TONES.alixsmart}
+            image={imgAlixsmart.url}
+            title={
+              <>
+                <span>{t.cards.nisv_title}</span>
+                {showAngebotBubble && (
+                  <span
+                    style={{ transformOrigin: 'left center' }}
+                    className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium shadow-md animate-fade-in rotate-0 sm:-rotate-6 sm:-translate-y-2
+                      before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
+                  >
+                    {t.cards.nisv_badge}
+                  </span>
+                )}
+              </>
+            }
+            desc={t.cards.nisv_desc}
+          />
+          <BookTile
+            as="a"
+            href="https://eanamnese.de"
+            target="_blank"
+            rel="noopener noreferrer"
+            tone={TONES.anamnese}
+            image={imgAnamnese.url}
+            title={t.cards.anamnese_title}
+            desc={t.cards.anamnese_desc}
+          />
+        </div>
+
+        {salesOpen && (
+          <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[{ label: t.cards.offer_create, icon: FileText }].map((item) => (
+                <a
+                  key={item.label}
+                  href="/beratung"
+                  className="text-left rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md bg-card flex items-center gap-3"
+                  style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}
+                >
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `hsl(${TONES.offer} / 0.12)` }}>
+                    <item.icon className="w-4 h-4" style={{ color: `hsl(${TONES.offer})` }} />
+                  </div>
+                  <div className="font-semibold text-[13.5px]">{item.label}</div>
+                </a>
+              ))}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <a href="/beratung" className="inline-flex items-center gap-1 text-[12.5px] hover:underline" style={{ color: `hsl(${TONES.offer})` }}>
+                {t.cards.offer_more} <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        )}
+
+        <div id="dept-picker">
           {deptOpen && (
             <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.inquiry} / 0.28)` }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -399,67 +453,9 @@ export default function BookingPortal() {
             </div>
           )}
         </div>
-      )}
-
-      {step === 'department' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
-        <BookTile
-          tone={TONES.orderstatus}
-          image={imgOrderstatus.url}
-          onClick={() => navigate('/portal')}
-          title={t.cards.orderstatus_title}
-          desc={t.cards.orderstatus_desc}
-        />
-        <BookTile
-          tone={TONES.ticket}
-          image={imgTicket.url}
-          onClick={() => { setDeptOpen(true); setTimeout(() => document.getElementById('dept-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
-          title="Ticket erstellen"
-          desc="Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt"
-        />
-        <BookTile
-          as="a"
-          href="/book/mediapaket"
-          tone={TONES.mediapaket}
-          image={imgMediapaket.url}
-          title={t.cards.medipaket_title}
-          desc={t.cards.medipaket_desc}
-        />
-        <BookTile
-          as="a"
-          href="https://alixsmart.de"
-          target="_blank"
-          rel="noopener noreferrer"
-          tone={TONES.alixsmart}
-          image={imgAlixsmart.url}
-          title={
-            <>
-              <span>{t.cards.nisv_title}</span>
-              {showAngebotBubble && (
-                <span
-                  style={{ transformOrigin: 'left center' }}
-                  className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium shadow-md animate-fade-in rotate-0 sm:-rotate-6 sm:-translate-y-2
-                    before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
-                >
-                  {t.cards.nisv_badge}
-                </span>
-              )}
-            </>
-          }
-          desc={t.cards.nisv_desc}
-        />
-        <BookTile
-          as="a"
-          href="https://eanamnese.de"
-          target="_blank"
-          rel="noopener noreferrer"
-          tone={TONES.anamnese}
-          image={imgAnamnese.url}
-          title={t.cards.anamnese_title}
-          desc={t.cards.anamnese_desc}
-        />
         </div>
       )}
+
 
 
 
