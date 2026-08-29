@@ -18,6 +18,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import {
   listOffers,
+  getOffer,
   deleteOffer as deleteOfferDb,
   updateOfferStatus,
   setOfferApproval,
@@ -163,12 +164,16 @@ export default function Angebote() {
         .maybeSingle();
       if (error) throw error;
       if (!data?.token) {
-        const offer = offers.find((o) => o.offerNumber === offerNumber);
+        // Vollständiges Angebot inkl. Positionen/Zahlung laden – die Liste
+        // enthält nur Summenspalten (ohne payload.lines).
+        const full = await getOffer(offerNumber);
+        const offer = full || offers.find((o) => o.offerNumber === offerNumber);
         const customerEmail = offer?.customer?.email;
         if (!offer || !customerEmail) {
           setSignLinkError('Für dieses Angebot wurde noch kein Unterschriftslink erstellt und es fehlt eine Kunden-E-Mail-Adresse.');
           return;
         }
+
 
         const { data: created, error: createError } = await supabase.functions.invoke('alix-sign-create', {
           body: {
