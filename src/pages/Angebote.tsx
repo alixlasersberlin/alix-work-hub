@@ -18,6 +18,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import {
   listOffers,
+  getOffer,
   deleteOffer as deleteOfferDb,
   updateOfferStatus,
   setOfferApproval,
