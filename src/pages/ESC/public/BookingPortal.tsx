@@ -20,11 +20,81 @@ import { supabase } from '@/integrations/supabase/client';
 import type { EscDepartment } from '@/lib/esc/types';
 import type { EscAppointmentKind } from '@/lib/esc/appointment-kinds';
 import { useBookingT } from '@/i18n/booking';
+import imgOffer from '@/assets/book/offer.png.asset.json';
+import imgInquiry from '@/assets/book/inquiry.png.asset.json';
+import imgOrderstatus from '@/assets/book/orderstatus.png.asset.json';
+import imgTicket from '@/assets/book/ticket.png.asset.json';
+import imgMediapaket from '@/assets/book/mediapaket.png.asset.json';
+import imgAlixsmart from '@/assets/book/alixsmart.png.asset.json';
+import imgAnamnese from '@/assets/book/anamnese.png.asset.json';
 
 type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
 const STEPS_FULL: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
 const STEPS_TICKET: StepId[] = ['department', 'service', 'contact', 'summary'];
 const isTicketService = (name: string) => /ticket|anfrage|support|reklamation/i.test(name || '');
+
+/** Accent-Farben (HSL-Werte) je Link – sorgen für unterschiedliche Kachel-Designs. */
+const TONES = {
+  offer: '212 92% 55%',
+  inquiry: '188 88% 46%',
+  orderstatus: '154 62% 42%',
+  ticket: '32 92% 54%',
+  mediapaket: '268 72% 60%',
+  alixsmart: '222 90% 62%',
+  anamnese: '340 78% 56%',
+} as const;
+
+type TileProps = {
+  tone: string;
+  image: string;
+  title: React.ReactNode;
+  desc: React.ReactNode;
+  trailing?: React.ReactNode;
+  as?: 'button' | 'a';
+  href?: string;
+  target?: string;
+  rel?: string;
+  onClick?: () => void;
+  'aria-expanded'?: boolean;
+  id?: string;
+};
+
+function BookTile({ tone, image, title, desc, trailing, as = 'button', href, target, rel, onClick, id, ...rest }: TileProps) {
+  const cls =
+    'group relative w-full text-left overflow-hidden rounded-2xl border p-4 pl-5 flex items-center gap-4 transition-all duration-300 ' +
+    'bg-card hover:-translate-y-0.5 hover:shadow-lg';
+  const style: React.CSSProperties = {
+    borderColor: `hsl(${tone} / 0.28)`,
+    backgroundImage: `linear-gradient(120deg, hsl(${tone} / 0.10), transparent 55%)`,
+    boxShadow: `inset 3px 0 0 0 hsl(${tone})`,
+  };
+  const inner = (
+    <>
+      <div
+        className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl shrink-0 flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105"
+        style={{ background: `radial-gradient(circle at 30% 25%, hsl(${tone} / 0.18), hsl(${tone} / 0.05))`, border: `1px solid hsl(${tone} / 0.25)` }}
+      >
+        <img src={image} alt="" loading="lazy" width={512} height={512} className="w-11 h-11 sm:w-12 sm:h-12 object-contain" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-[14.5px] flex items-center gap-2 flex-wrap">{title}</div>
+        <div className="text-[12px] text-muted-foreground mt-0.5">{desc}</div>
+      </div>
+      <span className="shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" style={{ color: `hsl(${tone})` }}>
+        {trailing ?? <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />}
+      </span>
+    </>
+  );
+  if (as === 'a') {
+    return (
+      <a id={id} href={href} target={target} rel={rel} className={cls} style={style}>{inner}</a>
+    );
+  }
+  return (
+    <button id={id} type="button" onClick={onClick} className={cls} style={style} {...rest}>{inner}</button>
+  );
+}
+
 
 
 export default function BookingPortal() {
@@ -241,17 +311,13 @@ export default function BookingPortal() {
 
       {step === 'department' && (
         <div className="space-y-3">
-          <button
-            type="button"
+          <BookTile
+            tone={TONES.offer}
+            image={imgOffer.url}
             onClick={() => setSalesOpen((v) => !v)}
             aria-expanded={salesOpen}
-            className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
-          >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-[14px] flex items-center gap-2">
+            title={
+              <>
                 <span>{t.cards.offer_title}</span>
                 {showAngebotBubble && (
                   <span
@@ -262,15 +328,13 @@ export default function BookingPortal() {
                     {t.cards.offer_badge}
                   </span>
                 )}
-              </div>
-              <div className="text-[12px] text-muted-foreground mt-0.5">
-                {t.cards.offer_desc}
-              </div>
-            </div>
-            <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />
-          </button>
+              </>
+            }
+            desc={t.cards.offer_desc}
+            trailing={<ChevronDown className={`w-4 h-4 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />}
+          />
           {salesOpen && (
-            <div className="rounded-xl border bg-card p-4">
+            <div className="rounded-2xl border bg-card p-4" style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}>
               <div className="grid grid-cols-1 gap-3">
                 {[
                   { label: t.cards.offer_create, icon: FileText },
@@ -278,20 +342,20 @@ export default function BookingPortal() {
                   <a
                     key={item.label}
                     href="/beratung"
-                    className="text-left rounded-xl border p-4 transition-all hover:border-primary hover:shadow-md bg-card flex items-center gap-3"
+                    className="text-left rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md bg-card flex items-center gap-3"
+                    style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}
                   >
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <item.icon className="w-4 h-4 text-primary" />
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `hsl(${TONES.offer} / 0.12)` }}>
+                      <item.icon className="w-4 h-4" style={{ color: `hsl(${TONES.offer})` }} />
                     </div>
                     <div className="font-semibold text-[13.5px]">{item.label}</div>
                   </a>
                 ))}
               </div>
               <div className="mt-3 flex justify-end">
-                <a href="/beratung" className="inline-flex items-center gap-1 text-[12.5px] text-primary hover:underline">
+                <a href="/beratung" className="inline-flex items-center gap-1 text-[12.5px] hover:underline" style={{ color: `hsl(${TONES.offer})` }}>
                   {t.cards.offer_more} <ArrowRight className="w-3.5 h-3.5" />
                 </a>
-
               </div>
             </div>
           )}
@@ -300,31 +364,23 @@ export default function BookingPortal() {
 
       {step === 'department' && (
         <div id="dept-picker" className="space-y-3">
-          <button
-            type="button"
+          <BookTile
+            tone={TONES.inquiry}
+            image={imgInquiry.url}
             onClick={() => setDeptOpen((v) => !v)}
             aria-expanded={deptOpen}
-            className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
-          >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Mail className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-[14px]">{t.cards.inquiry_title}</div>
-              <div className="text-[12px] text-muted-foreground mt-0.5">
-                {t.cards.inquiry_desc}
-              </div>
-            </div>
-            <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
-          </button>
+            title={t.cards.inquiry_title}
+            desc={t.cards.inquiry_desc}
+            trailing={<ChevronDown className={`w-4 h-4 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />}
+          />
           {deptOpen && (
-            <div className="rounded-xl border bg-card p-4">
+            <div className="rounded-2xl border bg-card p-4" style={{ borderColor: `hsl(${TONES.inquiry} / 0.28)` }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {publicDepts.map((d) => (
                   <button
                     key={d.id}
                     onClick={() => { setState({ ...state, departmentId: d.id }); goto('service'); }}
-                    className={`text-left rounded-xl border p-4 transition-all hover:border-primary hover:shadow-md min-h-24 ${state.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
+                    className={`text-left rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md min-h-24 ${state.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
@@ -342,71 +398,46 @@ export default function BookingPortal() {
       )}
 
       {step === 'department' && (
-        <button
+        <BookTile
+          tone={TONES.orderstatus}
+          image={imgOrderstatus.url}
           onClick={() => navigate('/portal')}
-          className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
-        >
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <PackageSearch className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-[14px]">{t.cards.orderstatus_title}</div>
-            <div className="text-[12px] text-muted-foreground mt-0.5">
-              {t.cards.orderstatus_desc}
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
-        </button>
+          title={t.cards.orderstatus_title}
+          desc={t.cards.orderstatus_desc}
+        />
       )}
 
       {step === 'department' && (
-        <button
+        <BookTile
+          tone={TONES.ticket}
+          image={imgTicket.url}
           onClick={() => { setDeptOpen(true); setTimeout(() => document.getElementById('dept-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
-          className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
-        >
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <LifeBuoy className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-[14px]">Ticket erstellen</div>
-            <div className="text-[12px] text-muted-foreground mt-0.5">
-              Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
-        </button>
+          title="Ticket erstellen"
+          desc="Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt"
+        />
       )}
 
       {step === 'department' && (
-        <a
+        <BookTile
+          as="a"
           href="/book/mediapaket"
-          className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
-        >
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <PackageSearch className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-[14px]">{t.cards.medipaket_title}</div>
-            <div className="text-[12px] text-muted-foreground mt-0.5">
-              {t.cards.medipaket_desc}
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
-        </a>
+          tone={TONES.mediapaket}
+          image={imgMediapaket.url}
+          title={t.cards.medipaket_title}
+          desc={t.cards.medipaket_desc}
+        />
       )}
 
       {step === 'department' && (
-        <a
+        <BookTile
+          as="a"
           href="https://alixsmart.de"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
-        >
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Cpu className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-[14px] flex items-center gap-2">
+          tone={TONES.alixsmart}
+          image={imgAlixsmart.url}
+          title={
+            <>
               <span>{t.cards.nisv_title}</span>
               {showAngebotBubble && (
                 <span
@@ -417,34 +448,25 @@ export default function BookingPortal() {
                   {t.cards.nisv_badge}
                 </span>
               )}
-            </div>
-            <div className="text-[12px] text-muted-foreground mt-0.5">
-              {t.cards.nisv_desc}
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
-        </a>
+            </>
+          }
+          desc={t.cards.nisv_desc}
+        />
       )}
 
       {step === 'department' && (
-        <a
+        <BookTile
+          as="a"
           href="https://eanamnese.de"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
-        >
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Cpu className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-[14px]">{t.cards.anamnese_title}</div>
-            <div className="text-[12px] text-muted-foreground mt-0.5">
-              {t.cards.anamnese_desc}
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
-        </a>
+          tone={TONES.anamnese}
+          image={imgAnamnese.url}
+          title={t.cards.anamnese_title}
+          desc={t.cards.anamnese_desc}
+        />
       )}
+
 
 
       {step === 'service' && dept && (
