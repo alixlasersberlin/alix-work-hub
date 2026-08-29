@@ -404,9 +404,12 @@ export default function BookingPortal() {
           <BookTile
             tone={TONES.ticket}
             image={imgTicket.url}
-            onClick={() => { setDeptOpen(true); setTimeout(() => document.getElementById('dept-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+            onClick={() => { setQuickOpen((v) => !v); setTimeout(() => document.getElementById('quick-ticket')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+            aria-expanded={quickOpen}
             title="Ticket erstellen"
-            desc="Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt"
+            desc="In 30 Sekunden: Abteilung wählen, Nachricht schreiben, absenden"
+            trailing={<ChevronDown className={`w-4 h-4 transition-transform ${quickOpen ? 'rotate-180' : ''}`} />}
+
           />
           <BookTile
             as="a"
