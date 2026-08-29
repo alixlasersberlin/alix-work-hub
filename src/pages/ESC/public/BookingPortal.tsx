@@ -43,6 +43,7 @@ const TONES = {
   mediapaket: '268 72% 60%',
   alixsmart: '222 90% 62%',
   anamnese: '340 78% 56%',
+  technik: '200 80% 50%',
 } as const;
 
 type TileProps = {
@@ -413,6 +414,16 @@ export default function BookingPortal() {
             desc={t.cards.orderstatus_desc}
           />
           <BookTile
+            as="a"
+            href="/book/technik"
+            tone={TONES.technik}
+            image={imgTicket.url}
+            title="Technik"
+            desc="Technischer Support rund um Ihr Alix Gerät"
+            trailing={<ArrowRight className="w-4 h-4" />}
+          />
+          <BookTile
+
             tone={TONES.ticket}
             image={imgTicket.url}
             onClick={() => { setQuickOpen((v) => !v); setTimeout(() => document.getElementById('quick-ticket')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
