@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, ArrowRight, Loader2, Search, ShieldCheck } from 'lucide-react';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { Card, CardContent } from '@/components/ui/card';
+import { CheckSequence } from '@/components/portal/check/CheckSequence';
+import '@/styles/delivery-check.css';
 
 export default function PortalLookup() {
   const navigate = useNavigate();
@@ -13,7 +15,9 @@ export default function PortalLookup() {
   const [zip, setZip] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sequence, setSequence] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lookupRef = useRef<Promise<any | null> | null>(null);
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -26,36 +30,51 @@ export default function PortalLookup() {
       return;
     }
     setLoading(true);
-    try {
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/customer-portal-lookup`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: anonKey,
-            Authorization: `Bearer ${anonKey}`,
+    setSequence(true);
+    lookupRef.current = (async () => {
+      try {
+        const res = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/customer-portal-lookup`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: anonKey,
+              Authorization: `Bearer ${anonKey}`,
+            },
+            body: JSON.stringify({ order_number: orderNumber, zip, email }),
           },
-          body: JSON.stringify({ order_number: orderNumber, zip, email }),
-        },
-      );
-      const data = await res.json();
-      if (!data?.ok) {
-        setError('Die eingegebenen Daten konnten keiner Bestellung zugeordnet werden. Bitte prüfen Sie Ihre Angaben oder kontaktieren Sie unseren Support.');
-        setLoading(false);
-        return;
+        );
+        const data = await res.json();
+        return data?.ok ? data : null;
+      } catch {
+        return 'error';
       }
-      sessionStorage.setItem('alix_portal_status', JSON.stringify(data));
-      sessionStorage.setItem('alix_portal_creds', JSON.stringify({ order_number: orderNumber, zip, email }));
-      navigate('/portal/status');
-    } catch {
-      setError('Verbindung fehlgeschlagen. Bitte versuchen Sie es erneut.');
-      setLoading(false);
-    }
+    })();
   }
+
+  // Ladeanimation wie unter /portal/check – Ergebnis erst nach Abschluss zeigen.
+  const finishSequence = useCallback(async () => {
+    const data = await (lookupRef.current ?? Promise.resolve(null));
+    setSequence(false);
+    setLoading(false);
+    if (data === 'error') {
+      setError('Verbindung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      return;
+    }
+    if (!data) {
+      setError('Die eingegebenen Daten konnten keiner Bestellung zugeordnet werden. Bitte prüfen Sie Ihre Angaben oder kontaktieren Sie unseren Support.');
+      return;
+    }
+    sessionStorage.setItem('alix_portal_status', JSON.stringify(data));
+    sessionStorage.setItem('alix_portal_creds', JSON.stringify({ order_number: orderNumber, zip, email }));
+    navigate('/portal/status');
+  }, [navigate, orderNumber, zip, email]);
 
   return (
     <BookingLayout hideLegalLinks narrow step={1} totalSteps={2}>
+      {sequence && <CheckSequence onDone={finishSequence} />}
+      <div className={sequence ? 'hidden' : undefined}>
       <div className="mb-2">
         <Button variant="ghost" size="sm" onClick={() => navigate('/book')} className="-ml-2">
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Zurück
@@ -73,7 +92,7 @@ export default function PortalLookup() {
         </span>
       </button>
 
-      <div className="text-center mb-2 mt-6">
+      <div className="text-center mb-2 mt-6 dc-reveal">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Bestellstatus abfragen</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Geben Sie Ihre Auftragsdaten ein, um den aktuellen Bearbeitungsstand einzusehen.
@@ -81,7 +100,7 @@ export default function PortalLookup() {
       </div>
 
 
-      <Card>
+      <Card className="dc-reveal dc-d2">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -117,6 +136,7 @@ export default function PortalLookup() {
           Es werden keine Zahlungs- oder Vertragsdetails öffentlich angezeigt. Weitere Informationen finden Sie in unserer{' '}
           <a href="https://alix-lasers.de/datenschutz" className="underline hover:text-primary">Datenschutzerklärung</a>.
         </p>
+      </div>
       </div>
     </BookingLayout>
   );
