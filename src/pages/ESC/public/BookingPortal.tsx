@@ -315,9 +315,11 @@ export default function BookingPortal() {
 
       {step === 'department' && (
         <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
           <BookTile
             tone={TONES.offer}
             image={imgOffer.url}
+
             onClick={() => setSalesOpen((v) => !v)}
             aria-expanded={salesOpen}
             title={
