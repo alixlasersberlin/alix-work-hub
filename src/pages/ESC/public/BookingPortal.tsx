@@ -783,20 +783,22 @@ export default function BookingPortal() {
         </Card>
       )}
 
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => (stepIndex > 0 ? goto(STEPS[stepIndex - 1]) : null)} disabled={stepIndex === 0}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> {t.nav.back}
-        </Button>
-        {step === 'summary' ? (
-          <Button size="lg" onClick={submit} disabled={!canGoNext}>
-            <CalendarCheck className="w-4 h-4 mr-1" /> {t.nav.submit}
+      {step !== 'department' && (
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={() => (stepIndex > 0 ? goto(STEPS[stepIndex - 1]) : null)} disabled={stepIndex === 0}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> {t.nav.back}
           </Button>
-        ) : (
-          <Button onClick={() => goto(STEPS[stepIndex + 1])} disabled={!canGoNext}>
-            {t.nav.next} <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        )}
-      </div>
+          {step === 'summary' ? (
+            <Button size="lg" onClick={submit} disabled={!canGoNext}>
+              <CalendarCheck className="w-4 h-4 mr-1" /> {t.nav.submit}
+            </Button>
+          ) : (
+            <Button onClick={() => goto(STEPS[stepIndex + 1])} disabled={!canGoNext}>
+              {t.nav.next} <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="text-center pt-2">
         <Badge variant="outline" className="text-[10.5px]">{t.footer_badge}</Badge>
