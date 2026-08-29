@@ -1,4 +1,6 @@
-import { Headset, Wrench, Clock, MessageCircle } from 'lucide-react';
+import { Headset, Wrench, Clock, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const items = [
   {
@@ -59,6 +61,15 @@ export default function Technik() {
             ))}
           </ul>
 
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <Button asChild variant="outline" size="lg">
+            <Link to="/book">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Zurück
+            </Link>
+          </Button>
         </div>
       </section>
     </main>
