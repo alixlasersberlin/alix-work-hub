@@ -180,6 +180,8 @@ export default function BookingPortal() {
     email: '',
     phone: '',
     company: '',
+    customerNumber: '',
+    orderNumber: '',
     message: '',
     consent: false,
   });
@@ -187,13 +189,17 @@ export default function BookingPortal() {
   const submitQuickTicket = async () => {
     const d = publicDepts.find((x) => x.id === quick.departmentId);
     if (!d) { toast.error('Bitte Abteilung wählen.'); return; }
-    if (!quick.name.trim() || !quick.email.trim() || !quick.message.trim() || !quick.consent) {
-      toast.error('Bitte Name, E-Mail, Nachricht und Datenschutz-Zustimmung ausfüllen.');
+    if (!quick.name.trim() || !quick.email.trim() || !quick.phone.trim() || !quick.message.trim() || !quick.consent) {
+      toast.error('Bitte Name, E-Mail, Telefon, Nachricht und Datenschutz-Zustimmung ausfüllen.');
       return;
     }
     setQuickBusy(true);
     const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const [firstName, ...restName] = quick.name.trim().split(' ');
+    const extra = [
+      quick.customerNumber.trim() ? `Kundennummer: ${quick.customerNumber.trim()}` : '',
+      quick.orderNumber.trim() ? `Auftragsnummer: ${quick.orderNumber.trim()}` : '',
+    ].filter(Boolean).join('\n');
     const { data, error } = await supabase.functions.invoke('public-book-ticket', {
       body: {
         firstName,
@@ -204,7 +210,9 @@ export default function BookingPortal() {
         website: '',
         service: 'Ticket / Anfrage',
         department: d.name,
-        message: quick.message.trim(),
+        message: extra ? `${quick.message.trim()}\n\n${extra}` : quick.message.trim(),
+        customerNumber: quick.customerNumber.trim(),
+        orderNumber: quick.orderNumber.trim(),
         consentMarketing: false,
         bookingNumber,
       },
@@ -495,14 +503,23 @@ export default function BookingPortal() {
                   <Input type="email" value={quick.email} onChange={(e) => setQuick({ ...quick, email: e.target.value })} placeholder="name@firma.de" />
                 </div>
                 <div>
-                  <Label className="text-[12px]">Telefon</Label>
+                  <Label className="text-[12px]">Telefon *</Label>
                   <Input value={quick.phone} onChange={(e) => setQuick({ ...quick, phone: e.target.value })} placeholder="+49 …" />
                 </div>
                 <div>
                   <Label className="text-[12px]">Firma</Label>
                   <Input value={quick.company} onChange={(e) => setQuick({ ...quick, company: e.target.value })} />
                 </div>
+                <div>
+                  <Label className="text-[12px]">Kundennummer (optional)</Label>
+                  <Input value={quick.customerNumber} onChange={(e) => setQuick({ ...quick, customerNumber: e.target.value })} placeholder="z. B. 10023" />
+                </div>
+                <div>
+                  <Label className="text-[12px]">Auftragsnummer (optional)</Label>
+                  <Input value={quick.orderNumber} onChange={(e) => setQuick({ ...quick, orderNumber: e.target.value })} placeholder="z. B. AB-2026-04350" />
+                </div>
               </div>
+
               <div>
                 <Label className="text-[12px]">Ihr Anliegen *</Label>
                 <Textarea rows={4} value={quick.message} onChange={(e) => setQuick({ ...quick, message: e.target.value })} placeholder="Kurze Beschreibung Ihres Anliegens" />
