@@ -410,9 +410,6 @@ export default function BookingPortal() {
           title={t.cards.orderstatus_title}
           desc={t.cards.orderstatus_desc}
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           tone={TONES.ticket}
           image={imgTicket.url}
