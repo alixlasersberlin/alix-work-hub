@@ -20,11 +20,81 @@ import { supabase } from '@/integrations/supabase/client';
 import type { EscDepartment } from '@/lib/esc/types';
 import type { EscAppointmentKind } from '@/lib/esc/appointment-kinds';
 import { useBookingT } from '@/i18n/booking';
+import imgOffer from '@/assets/book/offer.png.asset.json';
+import imgInquiry from '@/assets/book/inquiry.png.asset.json';
+import imgOrderstatus from '@/assets/book/orderstatus.png.asset.json';
+import imgTicket from '@/assets/book/ticket.png.asset.json';
+import imgMediapaket from '@/assets/book/mediapaket.png.asset.json';
+import imgAlixsmart from '@/assets/book/alixsmart.png.asset.json';
+import imgAnamnese from '@/assets/book/anamnese.png.asset.json';
 
 type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
 const STEPS_FULL: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
 const STEPS_TICKET: StepId[] = ['department', 'service', 'contact', 'summary'];
 const isTicketService = (name: string) => /ticket|anfrage|support|reklamation/i.test(name || '');
+
+/** Accent-Farben (HSL-Werte) je Link – sorgen für unterschiedliche Kachel-Designs. */
+const TONES = {
+  offer: '212 92% 55%',
+  inquiry: '188 88% 46%',
+  orderstatus: '154 62% 42%',
+  ticket: '32 92% 54%',
+  mediapaket: '268 72% 60%',
+  alixsmart: '222 90% 62%',
+  anamnese: '340 78% 56%',
+} as const;
+
+type TileProps = {
+  tone: string;
+  image: string;
+  title: React.ReactNode;
+  desc: React.ReactNode;
+  trailing?: React.ReactNode;
+  as?: 'button' | 'a';
+  href?: string;
+  target?: string;
+  rel?: string;
+  onClick?: () => void;
+  'aria-expanded'?: boolean;
+  id?: string;
+};
+
+function BookTile({ tone, image, title, desc, trailing, as = 'button', href, target, rel, onClick, id, ...rest }: TileProps) {
+  const cls =
+    'group relative w-full text-left overflow-hidden rounded-2xl border p-4 pl-5 flex items-center gap-4 transition-all duration-300 ' +
+    'bg-card hover:-translate-y-0.5 hover:shadow-lg';
+  const style: React.CSSProperties = {
+    borderColor: `hsl(${tone} / 0.28)`,
+    backgroundImage: `linear-gradient(120deg, hsl(${tone} / 0.10), transparent 55%)`,
+    boxShadow: `inset 3px 0 0 0 hsl(${tone})`,
+  };
+  const inner = (
+    <>
+      <div
+        className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl shrink-0 flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105"
+        style={{ background: `radial-gradient(circle at 30% 25%, hsl(${tone} / 0.18), hsl(${tone} / 0.05))`, border: `1px solid hsl(${tone} / 0.25)` }}
+      >
+        <img src={image} alt="" loading="lazy" width={512} height={512} className="w-11 h-11 sm:w-12 sm:h-12 object-contain" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-[14.5px] flex items-center gap-2 flex-wrap">{title}</div>
+        <div className="text-[12px] text-muted-foreground mt-0.5">{desc}</div>
+      </div>
+      <span className="shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" style={{ color: `hsl(${tone})` }}>
+        {trailing ?? <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />}
+      </span>
+    </>
+  );
+  if (as === 'a') {
+    return (
+      <a id={id} href={href} target={target} rel={rel} className={cls} style={style}>{inner}</a>
+    );
+  }
+  return (
+    <button id={id} type="button" onClick={onClick} className={cls} style={style} {...rest}>{inner}</button>
+  );
+}
+
 
 
 export default function BookingPortal() {
