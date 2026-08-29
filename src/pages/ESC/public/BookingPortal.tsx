@@ -171,6 +171,51 @@ export default function BookingPortal() {
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [deptOpen, setDeptOpen] = useState(false);
   const [salesOpen, setSalesOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickBusy, setQuickBusy] = useState(false);
+  const [quick, setQuick] = useState({
+    departmentId: '',
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    message: '',
+    consent: false,
+  });
+
+  const submitQuickTicket = async () => {
+    const d = publicDepts.find((x) => x.id === quick.departmentId);
+    if (!d) { toast.error('Bitte Abteilung wählen.'); return; }
+    if (!quick.name.trim() || !quick.email.trim() || !quick.message.trim() || !quick.consent) {
+      toast.error('Bitte Name, E-Mail, Nachricht und Datenschutz-Zustimmung ausfüllen.');
+      return;
+    }
+    setQuickBusy(true);
+    const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const [firstName, ...restName] = quick.name.trim().split(' ');
+    const { data, error } = await supabase.functions.invoke('public-book-ticket', {
+      body: {
+        firstName,
+        lastName: restName.join(' ') || firstName,
+        email: quick.email.trim(),
+        phone: quick.phone.trim(),
+        company: quick.company.trim(),
+        website: '',
+        service: 'Ticket / Anfrage',
+        department: d.name,
+        message: quick.message.trim(),
+        consentMarketing: false,
+        bookingNumber,
+      },
+    });
+    setQuickBusy(false);
+    if (error || (data as any)?.error) {
+      toast.error(((data as any)?.error) || error?.message || 'Ticket konnte nicht angelegt werden.');
+      return;
+    }
+    setSent({ bookingNumber, token: bookingNumber });
+  };
+
   const showAngebotBubble = true;
   const [sent, setSent] = useState<{ bookingNumber: string; token: string } | null>(null);
 
@@ -359,9 +404,12 @@ export default function BookingPortal() {
           <BookTile
             tone={TONES.ticket}
             image={imgTicket.url}
-            onClick={() => { setDeptOpen(true); setTimeout(() => document.getElementById('dept-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+            onClick={() => { setQuickOpen((v) => !v); setTimeout(() => document.getElementById('quick-ticket')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+            aria-expanded={quickOpen}
             title="Ticket erstellen"
-            desc="Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt"
+            desc="In 30 Sekunden: Abteilung wählen, Nachricht schreiben, absenden"
+            trailing={<ChevronDown className={`w-4 h-4 transition-transform ${quickOpen ? 'rotate-180' : ''}`} />}
+
           />
           <BookTile
             as="a"
@@ -406,6 +454,68 @@ export default function BookingPortal() {
             desc={t.cards.anamnese_desc}
           />
         </div>
+
+        <div id="quick-ticket">
+          {quickOpen && (
+            <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4 space-y-3" style={{ borderColor: `hsl(${TONES.ticket} / 0.28)` }}>
+              <div className="flex items-center gap-2">
+                <LifeBuoy className="w-4 h-4" style={{ color: `hsl(${TONES.ticket})` }} />
+                <div className="font-semibold text-[14px]">Ticket direkt senden</div>
+              </div>
+              <div>
+                <Label className="text-[12px]">Abteilung *</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1.5">
+                  {publicDepts.map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => setQuick((q) => ({ ...q, departmentId: d.id }))}
+                      className={`text-left rounded-lg border px-3 py-2 text-[12.5px] transition-all ${quick.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card hover:bg-muted/40'}`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span className="inline-block w-2 h-2 rounded-full" style={{ background: d.color }} />
+                        {d.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {publicDepts.length === 0 && <div className="text-[12.5px] text-muted-foreground py-3">{t.cards.no_public}</div>}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[12px]">Name *</Label>
+                  <Input value={quick.name} onChange={(e) => setQuick({ ...quick, name: e.target.value })} placeholder="Vor- und Nachname" />
+                </div>
+                <div>
+                  <Label className="text-[12px]">E-Mail *</Label>
+                  <Input type="email" value={quick.email} onChange={(e) => setQuick({ ...quick, email: e.target.value })} placeholder="name@firma.de" />
+                </div>
+                <div>
+                  <Label className="text-[12px]">Telefon</Label>
+                  <Input value={quick.phone} onChange={(e) => setQuick({ ...quick, phone: e.target.value })} placeholder="+49 …" />
+                </div>
+                <div>
+                  <Label className="text-[12px]">Firma</Label>
+                  <Input value={quick.company} onChange={(e) => setQuick({ ...quick, company: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-[12px]">Ihr Anliegen *</Label>
+                <Textarea rows={4} value={quick.message} onChange={(e) => setQuick({ ...quick, message: e.target.value })} placeholder="Kurze Beschreibung Ihres Anliegens" />
+              </div>
+              <label className="flex items-start gap-2 text-[12px] text-muted-foreground">
+                <Checkbox checked={quick.consent} onCheckedChange={(v) => setQuick({ ...quick, consent: !!v })} />
+                <span>Ich stimme der Verarbeitung meiner Daten zur Bearbeitung der Anfrage zu.</span>
+              </label>
+              <div className="flex justify-end">
+                <Button onClick={submitQuickTicket} disabled={quickBusy}>
+                  {quickBusy ? 'Wird gesendet…' : 'Ticket senden'} <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
 
         {salesOpen && (
           <div className="rounded-xl sm:rounded-2xl border bg-card p-3 sm:p-4" style={{ borderColor: `hsl(${TONES.offer} / 0.28)` }}>
