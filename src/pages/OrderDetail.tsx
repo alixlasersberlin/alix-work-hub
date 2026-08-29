@@ -180,8 +180,14 @@ export default function OrderDetail() {
     loadAll();
   }, [id]);
 
-  async function loadAll() {
-    setLoading(true);
+  /**
+   * light = true: nur Auftrag/Positionen/Notizen/Anzahlungen neu laden (schnelles Refresh nach dem Speichern).
+   * Die teuren Zusatzabfragen (Seriennummern, E-Mail-Log, Produktionsbestellungen, Bankdaten) laufen
+   * ausschließlich beim ersten Laden – und dort parallel statt nacheinander.
+   */
+  async function loadAll(opts?: { light?: boolean }) {
+    const light = !!opts?.light;
+    if (!light) setLoading(true);
     const [oRes, nRes, hRes, iRes, adRes] = await Promise.all([
       supabase.from('orders').select('*, customers(*)').eq('id', id!).maybeSingle(),
       supabase.from('order_notes').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
@@ -191,29 +197,10 @@ export default function OrderDetail() {
     ]);
     setOrder(oRes.data);
     const baseCust = oRes.data?.customers as any;
-    if (baseCust?.id) {
-      const { data: bd } = await supabase
-        .from('customer_bank_details')
-        .select('iban, bic, bank_name')
-        .eq('customer_id', baseCust.id)
-        .maybeSingle();
-      setCustomer({ ...baseCust, ...(bd ?? { iban: null, bic: null, bank_name: null }) });
-    } else {
-      setCustomer(baseCust);
-    }
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
     setAdditionalDeposits((adRes as any).data ?? []);
-    // Anzahlungsrechnung (falls vorhanden) verlinken
-    supabase
-      .from('order_documents')
-      .select('download_token, file_path, file_name, created_at')
-      .eq('order_id', id!)
-      .eq('document_type', 'Anzahlungsrechnung')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .then(({ data }) => setAzInvoiceDoc(data?.[0] ?? null));
 
     setDepositOk(!!oRes.data?.deposit_ok);
     setDepositBy(oRes.data?.deposit_ok_by || '');
@@ -221,42 +208,52 @@ export default function OrderDetail() {
     setDepositAdditional(oRes.data?.deposit_additional != null ? String(oRes.data.deposit_additional) : '');
     setDepositBookingDate((oRes.data as any)?.deposit_booking_date || '');
 
-    // Anzahl Produktionsbestellungen f\u00fcr diese order_number
-    if (oRes.data?.order_number) {
-      const { count } = await supabase
-        .from('production_orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('order_number', oRes.data.order_number);
-      setPoCount(count || 0);
-    } else {
-      setPoCount(0);
+    if (light) {
+      if (baseCust) setCustomer((prev: any) => ({ ...(prev ?? {}), ...baseCust }));
+      return;
     }
 
-    // Seriennummern: alle Lager-Geräte, die diesem Auftrag (aktuell oder historisch) zugeordnet sind/waren
-    const { data: serialsData } = await supabase
-      .from('lager_devices')
-      .select('id, serial_number, model_name, notes, updated_at, reserved_order_id, delivered_order_id')
-      .or(`reserved_order_id.eq.${id},delivered_order_id.eq.${id}`)
-      .order('updated_at', { ascending: false });
-    setSerialDevices((serialsData as any) ?? []);
+    const custEmail = (baseCust?.email || '').trim();
+    const emailFilters: string[] = [`metadata->>idempotency_key.ilike.%${id}%`];
+    if (custEmail) emailFilters.push(`recipient_email.ilike.${custEmail}`);
 
-    // E-Mail Send-Log (letzte 90 Tage): via Idempotency-Key (enthält order.id) oder Empfänger-E-Mail
-    try {
-      const filters: string[] = [`metadata->>idempotency_key.ilike.%${id}%`];
-      const custEmail = (baseCust?.email || '').trim();
-      if (custEmail) filters.push(`recipient_email.ilike.${custEmail}`);
-      const { data: logs } = await supabase
+    const [bdRes, azRes, poRes, serialsRes, logsRes] = await Promise.all([
+      baseCust?.id
+        ? supabase.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', baseCust.id).maybeSingle()
+        : Promise.resolve({ data: null } as any),
+      supabase
+        .from('order_documents')
+        .select('download_token, file_path, file_name, created_at')
+        .eq('order_id', id!)
+        .eq('document_type', 'Anzahlungsrechnung')
+        .order('created_at', { ascending: false })
+        .limit(1),
+      oRes.data?.order_number
+        ? supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('order_number', oRes.data.order_number)
+        : Promise.resolve({ count: 0 } as any),
+      supabase
+        .from('lager_devices')
+        .select('id, serial_number, model_name, notes, updated_at, reserved_order_id, delivered_order_id')
+        .or(`reserved_order_id.eq.${id},delivered_order_id.eq.${id}`)
+        .order('updated_at', { ascending: false }),
+      supabase
         .from('email_send_log')
         .select('id, recipient_email, subject, template, status, provider_message_id, sent_at, created_at, metadata')
-        .or(filters.join(','))
+        .or(emailFilters.join(','))
         .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
-        .limit(100);
-      setEmailLogs((logs as any) ?? []);
-    } catch { setEmailLogs([]); }
+        .limit(100),
+    ]);
+
+    setCustomer(baseCust ? { ...baseCust, ...((bdRes as any)?.data ?? { iban: null, bic: null, bank_name: null }) } : baseCust);
+    setAzInvoiceDoc((azRes as any)?.data?.[0] ?? null);
+    setPoCount((poRes as any)?.count || 0);
+    setSerialDevices(((serialsRes as any)?.data as any) ?? []);
+    setEmailLogs(((logsRes as any)?.data as any) ?? []);
 
     setLoading(false);
   }
+
 
   // Anzeige: originale Zoho-Auftragsnummer + "-AT" Suffix für Alix Austria
   const displayOrderNumbers = order?.order_number ? [withAt(order.order_number, order.source_system)] : [];
@@ -334,7 +331,7 @@ export default function OrderDetail() {
       }
 
     }
-    loadAll();
+    loadAll({ light: true });
   }
 
 
@@ -378,7 +375,7 @@ export default function OrderDetail() {
       });
     }
 
-    loadAll();
+    loadAll({ light: true });
   }
 
   async function toggleDepositGeleistet(depId: string, value: boolean) {
@@ -416,7 +413,7 @@ export default function OrderDetail() {
     const { error } = await supabase.from('order_additional_deposits' as any).delete().eq('id', depId);
     if (error) { toast.error('Fehler: ' + error.message); return; }
     toast.success('Anzahlung gelöscht');
-    loadAll();
+    loadAll({ light: true });
   }
 
   if (loading) return <SkeletonForm fields={10} />;
@@ -536,7 +533,7 @@ export default function OrderDetail() {
             } as any).eq('id', order.id);
             if (error) { toast.error(error.message); return; }
             toast.success(next ? 'Auftrag nach „In Vermietung" gebucht' : 'Auftrag aus der Vermietung entfernt');
-            loadAll();
+            loadAll({ light: true });
           },
         },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
@@ -591,7 +588,7 @@ export default function OrderDetail() {
                 const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
                 if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
                 sendReviewInvitation(order.id, { manual: false }).catch(() => {});
-                loadAll();
+                loadAll({ light: true });
               },
             }] : []),
             {
