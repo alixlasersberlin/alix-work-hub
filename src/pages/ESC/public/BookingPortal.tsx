@@ -171,6 +171,51 @@ export default function BookingPortal() {
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [deptOpen, setDeptOpen] = useState(false);
   const [salesOpen, setSalesOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickBusy, setQuickBusy] = useState(false);
+  const [quick, setQuick] = useState({
+    departmentId: '',
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    message: '',
+    consent: false,
+  });
+
+  const submitQuickTicket = async () => {
+    const d = publicDepts.find((x) => x.id === quick.departmentId);
+    if (!d) { toast.error('Bitte Abteilung wählen.'); return; }
+    if (!quick.name.trim() || !quick.email.trim() || !quick.message.trim() || !quick.consent) {
+      toast.error('Bitte Name, E-Mail, Nachricht und Datenschutz-Zustimmung ausfüllen.');
+      return;
+    }
+    setQuickBusy(true);
+    const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const [firstName, ...restName] = quick.name.trim().split(' ');
+    const { data, error } = await supabase.functions.invoke('public-book-ticket', {
+      body: {
+        firstName,
+        lastName: restName.join(' ') || firstName,
+        email: quick.email.trim(),
+        phone: quick.phone.trim(),
+        company: quick.company.trim(),
+        website: '',
+        service: 'Ticket / Anfrage',
+        department: d.name,
+        message: quick.message.trim(),
+        consentMarketing: false,
+        bookingNumber,
+      },
+    });
+    setQuickBusy(false);
+    if (error || (data as any)?.error) {
+      toast.error(((data as any)?.error) || error?.message || 'Ticket konnte nicht angelegt werden.');
+      return;
+    }
+    setSent({ bookingNumber, token: bookingNumber });
+  };
+
   const showAngebotBubble = true;
   const [sent, setSent] = useState<{ bookingNumber: string; token: string } | null>(null);
 
