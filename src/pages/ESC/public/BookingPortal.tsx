@@ -328,7 +328,7 @@ export default function BookingPortal() {
                 {showAngebotBubble && (
                   <span
                     style={{ transformOrigin: 'left center' }}
-                    className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium shadow-md animate-fade-in rotate-0 sm:-rotate-6 sm:-translate-y-2
+                    className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium shadow-md animate-fade-in rotate-0 sm:-rotate-6 translate-x-6 sm:translate-x-10 -translate-y-2 sm:-translate-y-4
                       before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
                   >
                     {t.cards.offer_badge}
@@ -383,7 +383,7 @@ export default function BookingPortal() {
                 {showAngebotBubble && (
                   <span
                     style={{ transformOrigin: 'left center' }}
-                    className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium shadow-md animate-fade-in rotate-0 sm:-rotate-6 sm:-translate-y-2
+                    className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium shadow-md animate-fade-in rotate-0 sm:-rotate-6 translate-x-6 sm:translate-x-10 -translate-y-2 sm:-translate-y-4
                       before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
                   >
                     {t.cards.nisv_badge}
