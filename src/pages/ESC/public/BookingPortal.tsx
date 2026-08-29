@@ -319,9 +319,9 @@ export default function BookingPortal() {
           <BookTile
             tone={TONES.offer}
             image={imgOffer.url}
+            as="a"
+            href="/beratung/premium"
 
-            onClick={() => setSalesOpen((v) => !v)}
-            aria-expanded={salesOpen}
             title={
               <span className="relative block pr-16 sm:pr-20">
                 <span>{t.cards.offer_title}</span>
@@ -338,7 +338,7 @@ export default function BookingPortal() {
             }
 
             desc={t.cards.offer_desc}
-            trailing={<ChevronDown className={`w-4 h-4 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />}
+            trailing={<ArrowRight className="w-4 h-4" />}
           />
           <BookTile
             tone={TONES.inquiry}
