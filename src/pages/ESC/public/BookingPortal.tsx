@@ -169,7 +169,7 @@ export default function BookingPortal() {
     turnstileOk: true, // stub: real CAPTCHA plugs in here
   });
   const [waitlistOpen, setWaitlistOpen] = useState(false);
-  const [deptOpen, setDeptOpen] = useState(false);
+  
   const [salesOpen, setSalesOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickBusy, setQuickBusy] = useState(false);
