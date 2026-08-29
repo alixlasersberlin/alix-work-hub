@@ -402,6 +402,7 @@ export default function BookingPortal() {
       )}
 
       {step === 'department' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
         <BookTile
           tone={TONES.orderstatus}
           image={imgOrderstatus.url}
@@ -409,9 +410,6 @@ export default function BookingPortal() {
           title={t.cards.orderstatus_title}
           desc={t.cards.orderstatus_desc}
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           tone={TONES.ticket}
           image={imgTicket.url}
@@ -419,9 +417,6 @@ export default function BookingPortal() {
           title="Ticket erstellen"
           desc="Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt"
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           as="a"
           href="/book/mediapaket"
@@ -430,9 +425,6 @@ export default function BookingPortal() {
           title={t.cards.medipaket_title}
           desc={t.cards.medipaket_desc}
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           as="a"
           href="https://alixsmart.de"
@@ -456,9 +448,6 @@ export default function BookingPortal() {
           }
           desc={t.cards.nisv_desc}
         />
-      )}
-
-      {step === 'department' && (
         <BookTile
           as="a"
           href="https://eanamnese.de"
@@ -469,6 +458,7 @@ export default function BookingPortal() {
           title={t.cards.anamnese_title}
           desc={t.cards.anamnese_desc}
         />
+        </div>
       )}
 
 
