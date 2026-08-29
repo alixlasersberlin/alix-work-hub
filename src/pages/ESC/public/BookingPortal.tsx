@@ -338,7 +338,7 @@ export default function BookingPortal() {
             }
 
             desc={t.cards.offer_desc}
-            trailing={<ChevronDown className={`w-4 h-4 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />}
+            trailing={<ArrowRight className="w-4 h-4" />}
           />
           <BookTile
             tone={TONES.inquiry}
