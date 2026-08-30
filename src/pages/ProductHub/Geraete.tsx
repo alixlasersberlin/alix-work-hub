@@ -195,6 +195,7 @@ export default function ProductHubGeraete() {
                     {canWrite && (
                       <TableCell className="text-center" onClick={e => e.stopPropagation()}>
                         <EnrichProductButton productId={p.id} productName={p.name} variant="icon" onDone={load} />
+                        <WebPreviewButton productId={p.id} product={p} variant="icon" />
                       </TableCell>
                     )}
                   </TableRow>
