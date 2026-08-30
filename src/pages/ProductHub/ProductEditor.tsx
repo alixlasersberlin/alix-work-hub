@@ -21,6 +21,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 import { SmartKiEditor } from '@/components/producthub/SmartKiEditor';
+import { SeoAiButton } from '@/components/producthub/SeoAiButton';
+import { AiFieldButton } from '@/components/producthub/AiFieldButton';
+
 
 
 const db = supabase as any;
