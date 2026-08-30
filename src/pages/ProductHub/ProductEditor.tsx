@@ -18,6 +18,7 @@ import {
 } from '@/lib/producthub/config';
 import { phGetProduct, phUpdateProduct, phChannelRows, phUpsertChannel } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
+import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 
 const db = supabase as any;
 
@@ -89,6 +90,7 @@ export default function ProductHubEditor() {
         actions={
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => nav('/product-hub/geraete')}><ArrowLeft className="w-4 h-4 mr-1" /> Zurück</Button>
+            {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
             {canWrite && <Button size="sm" onClick={save} disabled={saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />} Speichern</Button>}
           </div>
         } />

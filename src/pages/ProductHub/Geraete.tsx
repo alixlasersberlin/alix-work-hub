@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { phTone, phToneClass, PH_STATUS, PH_APPLICATIONS, phSlug } from '@/lib/producthub/config';
 import { phCreateProduct } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
+import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 
 const db = supabase as any;
 
@@ -166,8 +167,8 @@ export default function ProductHubGeraete() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && <TableRow><TableCell colSpan={11} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
-              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Keine Geräte. Import unter „Einstellungen“ starten.</TableCell></TableRow>}
+              {loading && <TableRow><TableCell colSpan={12} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
+              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">Keine Geräte. Import unter „Einstellungen“ starten.</TableCell></TableRow>}
               {filtered.map(p => {
                 const t = phTone(p, { conflicts: conf[p.id], media: media[p.id], documents: docs[p.id], pending: pendingFor(p.id) });
                 return (
