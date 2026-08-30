@@ -10,19 +10,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Boxes, Copy, Loader2, Plus, Search } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Boxes, Copy, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useCanDelete } from '@/hooks/useCanDelete';
 import { PM_CATEGORIES, PM_STATUS, pmQuality, pmScoreTone, pmStatusLabel, pmComplianceLabel, pmComplianceTone } from '@/lib/produktmaster/config';
 import { pmDuplicate } from '@/lib/produktmaster/api';
 
 const db = supabase as any;
 
+const PM_CHILD_TABLES = [
+  'ph_prices', 'ph_price_history', 'ph_compliance', 'ph_seo', 'ph_marketing',
+  'ph_attribute_values', 'ph_variants', 'ph_scope_items', 'ph_workflow_steps',
+  'ph_media', 'ph_documents',
+];
+
 export default function ArtikelListe() {
   const nav = useNavigate();
   const { roles } = useAuth();
+  const canDelete = useCanDelete();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin', 'Marketing', 'Produktion'].includes(r));
+
 
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
