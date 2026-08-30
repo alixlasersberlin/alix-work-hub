@@ -54,6 +54,8 @@ export default function ProductHubEditor() {
   const [media, setMedia] = useState<any[]>([]);
   const [docs, setDocs] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
+
 
   const load = async () => {
     if (!id) return;
