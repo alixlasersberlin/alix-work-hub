@@ -49,7 +49,7 @@ function toFeatures(value: any): SmartKiFeature[] {
   return [];
 }
 
-export function SmartKiEditor({ value, onChange, disabled }: Props) {
+export function SmartKiEditor({ value, onChange, disabled, productId, productName }: Props) {
   const [raw, setRaw] = useState(false);
   const [jsonText, setJsonText] = useState<string>(() => JSON.stringify(value ?? {}, null, 2));
   const features = useMemo(() => toFeatures(value), [value]);
