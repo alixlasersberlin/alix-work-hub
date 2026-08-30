@@ -42,8 +42,8 @@ export default function ProductHubMedien() {
         {filtered.map(m => (
           <Card key={m.id}><CardContent className="p-2 space-y-1">
             {m.media_type === 'image'
-              ? <img src={m.url} alt={m.alt_text || m.title || m.ph_products?.name || 'Produktbild'} loading="lazy" className="w-full h-28 object-cover rounded" />
-              : <div className="h-28 flex items-center justify-center text-xs text-muted-foreground border rounded">Video</div>}
+              ? <div className="w-full aspect-square rounded bg-white flex items-center justify-center overflow-hidden"><img src={m.url} alt={m.alt_text || m.title || m.ph_products?.name || 'Produktbild'} loading="lazy" className="max-w-full max-h-full object-contain" /></div>
+              : <div className="aspect-square flex items-center justify-center text-xs text-muted-foreground border rounded">Video</div>}
             <div className="text-[11px] font-medium truncate">{m.ph_products?.name}</div>
             <div className="flex gap-1 flex-wrap">
               <Badge variant="outline" className="text-[10px]">{m.kind}</Badge>
