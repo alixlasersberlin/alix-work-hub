@@ -186,19 +186,40 @@ export default function ArtikelListe() {
         <Badge variant="outline">{filtered.length} Artikel</Badge>
       </CardContent></Card>
 
+      {canDelete && selIds.length > 0 && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="p-3 flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium">{selIds.length} Artikel markiert</span>
+            <div className="ml-auto flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setSelected({})}>Auswahl aufheben</Button>
+              <Button variant="destructive" size="sm" disabled={busy} onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-4 w-4 mr-1" />Löschen
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card><CardContent className="p-0">
         {loading ? <div className="p-10 flex justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div> : (
           <Table>
             <TableHeader><TableRow>
+              {canDelete && <TableHead className="w-10"><Checkbox checked={allChecked} onCheckedChange={v => toggleAll(!!v)} aria-label="Alle markieren" /></TableHead>}
               <TableHead>Artikel</TableHead><TableHead>SKU</TableHead><TableHead>Kategorie</TableHead>
               <TableHead>Status</TableHead><TableHead>Compliance</TableHead><TableHead className="text-right">Qualität</TableHead>
               <TableHead className="w-10" />
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Keine Artikel gefunden.</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={canDelete ? 8 : 7} className="text-center py-10 text-muted-foreground">Keine Artikel gefunden.</TableCell></TableRow>}
               {filtered.map(({ p, bundle, quality }) => (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} data-state={selected[p.id] ? 'selected' : undefined}>
+                  {canDelete && (
+                    <TableCell>
+                      <Checkbox checked={!!selected[p.id]} onCheckedChange={v => setSelected(s => ({ ...s, [p.id]: !!v }))} aria-label={`${p.name} markieren`} />
+                    </TableCell>
+                  )}
                   <TableCell>
+
                     <Link to={`/artikel/${p.id}`} className="font-medium text-primary hover:underline">{p.name}</Link>
                     <div className="text-[11px] text-muted-foreground">{p.model || '—'} · {p.brand || 'ALIX'}</div>
                   </TableCell>
