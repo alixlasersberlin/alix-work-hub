@@ -250,9 +250,18 @@ export default function ProductHubEditor() {
             ))}
             <div className="md:col-span-3 space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5">Normen <ShieldAlert className="w-3 h-3 text-amber-500" /></Label>
-              <Input value={(form.standards || []).join(', ')} disabled={!canWrite}
-                onChange={e => set('standards', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
+              <div className="flex items-end gap-1">
+                <Input className="flex-1" value={(form.standards || []).join(', ')} disabled={!canWrite}
+                  onChange={e => set('standards', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
+                <AiFieldButton fieldLabel="Angewandte Normen"
+                  hint="Nur zutreffende Normen als kommagetrennte Liste, z. B. IEC 60601-1, IEC 60825-1, ISO 14971, ISO 13485. Keine Erklärtexte."
+                  current={(form.standards || []).join(', ')} maxChars={200} productId={id}
+                  context={{ name: form.name, laser_class: form.laser_class, intended_use: form.intended_use }}
+                  disabled={!canWrite}
+                  onGenerated={v => set('standards', v.split(',').map(s => s.trim()).filter(Boolean))} />
+              </div>
             </div>
+
           </CardContent></Card>
         </TabsContent>
 
