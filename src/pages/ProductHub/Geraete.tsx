@@ -33,6 +33,29 @@ export default function ProductHubGeraete() {
   const [fStatus, setFStatus] = useState('all');
   const [fSite, setFSite] = useState('all');
   const [fFlag, setFFlag] = useState('all');
+  const [enrichOpen, setEnrichOpen] = useState(false);
+  const [enrichBusy, setEnrichBusy] = useState(false);
+  const [enrichRes, setEnrichRes] = useState<any>(null);
+
+  const ENRICH_FIELDS = ['short_description', 'long_description', 'wavelengths', 'power', 'fluence',
+    'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class', 'intended_use',
+    'manufacturer', 'seo_title', 'seo_description'];
+
+  const runEnrich = async (mode: 'preview' | 'apply') => {
+    setEnrichBusy(true);
+    try {
+      const ids = filtered.filter(p => ENRICH_FIELDS.some(f => !String(p[f] ?? '').trim())).map(p => p.id);
+      const { data, error } = await supabase.functions.invoke('product-hub-enrich', {
+        body: { mode, productIds: ids, limit: 40 },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setEnrichRes(data);
+      if (mode === 'apply') { toast.success(`${(data as any).filled} Geräte ergänzt`); await load(); }
+    } catch (e: any) { toast.error(e.message || 'Anreicherung fehlgeschlagen'); }
+    finally { setEnrichBusy(false); }
+  };
+
 
   const load = async () => {
     setLoading(true);
