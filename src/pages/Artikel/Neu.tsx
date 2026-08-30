@@ -16,6 +16,13 @@ import { phSlug } from '@/lib/producthub/config';
 
 const db = supabase as any;
 
+function NeuField({ k, label, f, setF }: any) {
+  return (
+    <div><Label className="text-xs">{label}</Label>
+      <Input value={f[k] ?? ''} onChange={e => setF({ ...f, [k]: e.target.value })} /></div>
+  );
+}
+
 export default function ArtikelNeu() {
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -45,10 +52,6 @@ export default function ArtikelNeu() {
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
-  const Field = ({ k, label }: { k: string; label: string }) => (
-    <div><Label className="text-xs">{label}</Label>
-      <Input value={f[k] ?? ''} onChange={e => setF({ ...f, [k]: e.target.value })} /></div>
-  );
 
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-4xl">
@@ -60,15 +63,15 @@ export default function ArtikelNeu() {
             <Input value={f.sku} onChange={e => setF({ ...f, sku: e.target.value })} /></div>
           <div><Label className="text-xs">Produktname *</Label>
             <Input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></div>
-          <Field k="model" label="Modellbezeichnung" />
-          <Field k="product_family" label="Produktfamilie" />
-          <Field k="brand" label="Marke" />
-          <Field k="manufacturer" label="Hersteller" />
-          <Field k="manufacturer_sku" label="Hersteller-Artikelnummer" />
-          <Field k="ean" label="EAN" />
-          <Field k="revision" label="Revision / Version" />
-          <Field k="series" label="Serie" />
-          <Field k="product_group" label="Produktgruppe" />
+          <NeuField f={f} setF={setF} k="model" label="Modellbezeichnung" />
+          <NeuField f={f} setF={setF} k="product_family" label="Produktfamilie" />
+          <NeuField f={f} setF={setF} k="brand" label="Marke" />
+          <NeuField f={f} setF={setF} k="manufacturer" label="Hersteller" />
+          <NeuField f={f} setF={setF} k="manufacturer_sku" label="Hersteller-Artikelnummer" />
+          <NeuField f={f} setF={setF} k="ean" label="EAN" />
+          <NeuField f={f} setF={setF} k="revision" label="Revision / Version" />
+          <NeuField f={f} setF={setF} k="series" label="Serie" />
+          <NeuField f={f} setF={setF} k="product_group" label="Produktgruppe" />
           <div><Label className="text-xs">Segment</Label>
             <Select value={f.segment} onValueChange={v => setF({ ...f, segment: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>

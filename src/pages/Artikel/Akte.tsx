@@ -27,6 +27,21 @@ import { pmAddWorkflowStep, pmLoadProduct, pmSetAttributeValue, pmUpsertSection 
 const db = supabase as any;
 const n = (v: any) => (v === '' || v === null || v === undefined ? null : Number(v));
 
+function PMField({ k, label, obj, set, type = 'text', disabled }: any) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type={type}
+        value={obj?.[k] ?? ''}
+        disabled={disabled}
+        onChange={e => set({ ...obj, [k]: e.target.value })}
+      />
+    </div>
+  );
+}
+
+
 export default function ArtikelAkte() {
   const { id = '' } = useParams();
   const { roles } = useAuth();
@@ -96,11 +111,6 @@ export default function ArtikelAkte() {
   if (loading) return <div className="p-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!data?.product) return <div className="p-10 text-muted-foreground">Artikel nicht gefunden.</div>;
 
-  const F = ({ k, label, obj, set, type = 'text' }: any) => (
-    <div><Label className="text-xs">{label}</Label>
-      <Input type={type} value={obj[k] ?? ''} disabled={!canWrite}
-        onChange={e => set({ ...obj, [k]: type === 'number' ? e.target.value : e.target.value })} /></div>
-  );
 
   const toggleArr = (obj: any, set: any, key: string, v: string) => {
     const cur: string[] = obj[key] || [];
@@ -215,17 +225,17 @@ export default function ArtikelAkte() {
         {/* STAMMDATEN */}
         <TabsContent value="stammdaten" className="pt-4">
           <Card><CardContent className="p-4 grid gap-3 md:grid-cols-3">
-            <F k="name" label="Produktname *" obj={p} set={setP} />
-            <F k="sku" label="Artikelnummer / SKU *" obj={p} set={setP} />
-            <F k="model" label="Modellbezeichnung" obj={p} set={setP} />
-            <F k="product_family" label="Produktfamilie" obj={p} set={setP} />
-            <F k="brand" label="Marke" obj={p} set={setP} />
-            <F k="manufacturer" label="Hersteller" obj={p} set={setP} />
-            <F k="manufacturer_sku" label="Hersteller-Artikelnummer" obj={p} set={setP} />
-            <F k="ean" label="EAN" obj={p} set={setP} />
-            <F k="revision" label="Revision / Version" obj={p} set={setP} />
-            <F k="product_group" label="Produktgruppe" obj={p} set={setP} />
-            <F k="series" label="Serie" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="name" label="Produktname *" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="sku" label="Artikelnummer / SKU *" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="model" label="Modellbezeichnung" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="product_family" label="Produktfamilie" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="brand" label="Marke" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="manufacturer" label="Hersteller" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="manufacturer_sku" label="Hersteller-Artikelnummer" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="ean" label="EAN" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="revision" label="Revision / Version" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="product_group" label="Produktgruppe" obj={p} set={setP} />
+            <PMField disabled={!canWrite} k="series" label="Serie" obj={p} set={setP} />
             <div><Label className="text-xs">Segment</Label>
               <Select value={p.segment || ''} onValueChange={v => setP({ ...p, segment: v })} disabled={!canWrite}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -255,14 +265,14 @@ export default function ArtikelAkte() {
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Kerndaten</CardTitle></CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-3">
-              <F k="wavelengths" label="Wellenlängen" obj={p} set={setP} />
-              <F k="power" label="Laserleistung" obj={p} set={setP} />
-              <F k="fluence" label="Energiedichte J/cm²" obj={p} set={setP} />
-              <F k="pulse_duration" label="Pulsbreite" obj={p} set={setP} />
-              <F k="frequency" label="Frequenz" obj={p} set={setP} />
-              <F k="spot_sizes" label="Spotgrößen / Aufsätze" obj={p} set={setP} />
-              <F k="cooling" label="Kühltechnologie" obj={p} set={setP} />
-              <F k="laser_class" label="Laserklasse" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="wavelengths" label="Wellenlängen" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="power" label="Laserleistung" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="fluence" label="Energiedichte J/cm²" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="pulse_duration" label="Pulsbreite" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="frequency" label="Frequenz" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="spot_sizes" label="Spotgrößen / Aufsätze" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="cooling" label="Kühltechnologie" obj={p} set={setP} />
+              <PMField disabled={!canWrite} k="laser_class" label="Laserklasse" obj={p} set={setP} />
               <div className="md:col-span-3"><Label className="text-xs">Zweckbestimmung</Label>
                 <Textarea rows={2} value={p.intended_use ?? ''} disabled={!canWrite} onChange={e => setP({ ...p, intended_use: e.target.value })} /></div>
             </CardContent>
@@ -307,22 +317,22 @@ export default function ArtikelAkte() {
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Verkauf & Preise</CardTitle></CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-4">
-              {isAdmin && <F k="purchase_price" label="Einkaufspreis" obj={prices} set={setPrices} type="number" />}
-              {isAdmin && <F k="production_cost" label="Herstellkosten" obj={prices} set={setPrices} type="number" />}
-              <F k="rrp_net" label="UVP netto" obj={prices} set={setPrices} type="number" />
-              <F k="sale_price_net" label="Verkaufspreis netto" obj={prices} set={setPrices} type="number" />
-              <F k="promo_price_net" label="Aktionspreis" obj={prices} set={setPrices} type="number" />
-              <F k="promo_from" label="Aktionsbeginn" obj={prices} set={setPrices} type="date" />
-              <F k="promo_to" label="Aktionsende" obj={prices} set={setPrices} type="date" />
-              <F k="vat_rate" label="MwSt. %" obj={prices} set={setPrices} type="number" />
+              {isAdmin && <PMField disabled={!canWrite} k="purchase_price" label="Einkaufspreis" obj={prices} set={setPrices} type="number" />}
+              {isAdmin && <PMField disabled={!canWrite} k="production_cost" label="Herstellkosten" obj={prices} set={setPrices} type="number" />}
+              <PMField disabled={!canWrite} k="rrp_net" label="UVP netto" obj={prices} set={setPrices} type="number" />
+              <PMField disabled={!canWrite} k="sale_price_net" label="Verkaufspreis netto" obj={prices} set={setPrices} type="number" />
+              <PMField disabled={!canWrite} k="promo_price_net" label="Aktionspreis" obj={prices} set={setPrices} type="number" />
+              <PMField disabled={!canWrite} k="promo_from" label="Aktionsbeginn" obj={prices} set={setPrices} type="date" />
+              <PMField disabled={!canWrite} k="promo_to" label="Aktionsende" obj={prices} set={setPrices} type="date" />
+              <PMField disabled={!canWrite} k="vat_rate" label="MwSt. %" obj={prices} set={setPrices} type="number" />
               <div><Label className="text-xs">Bruttopreis</Label>
                 <Input readOnly value={prices.sale_price_net ? (Number(prices.sale_price_net) * (1 + Number(prices.vat_rate ?? 19) / 100)).toFixed(2) : ''} /></div>
-              <F k="down_payment" label="Anzahlung" obj={prices} set={setPrices} type="number" />
-              <F k="monthly_rate" label="Monatliche Rate" obj={prices} set={setPrices} type="number" />
-              <F k="delivery_time" label="Lieferzeit" obj={prices} set={setPrices} />
-              <F k="stock_status" label="Lagerstatus" obj={prices} set={setPrices} />
-              <F k="min_stock" label="Mindestbestand" obj={prices} set={setPrices} type="number" />
-              <F k="warranty" label="Garantie" obj={prices} set={setPrices} />
+              <PMField disabled={!canWrite} k="down_payment" label="Anzahlung" obj={prices} set={setPrices} type="number" />
+              <PMField disabled={!canWrite} k="monthly_rate" label="Monatliche Rate" obj={prices} set={setPrices} type="number" />
+              <PMField disabled={!canWrite} k="delivery_time" label="Lieferzeit" obj={prices} set={setPrices} />
+              <PMField disabled={!canWrite} k="stock_status" label="Lagerstatus" obj={prices} set={setPrices} />
+              <PMField disabled={!canWrite} k="min_stock" label="Mindestbestand" obj={prices} set={setPrices} type="number" />
+              <PMField disabled={!canWrite} k="warranty" label="Garantie" obj={prices} set={setPrices} />
               <div className="md:col-span-4 grid gap-2 md:grid-cols-3 pt-1">
                 {([['price_from', 'Preis „ab"'], ['financing_available', 'Finanzierung möglich'], ['leasing_available', 'Leasing möglich'],
                    ['training_included', 'Schulung inklusive'], ['briefing_included', 'Einweisung inklusive'],
@@ -416,17 +426,17 @@ export default function ArtikelAkte() {
                   <Switch checked={!!comp[k]} disabled={!canCompliance} onCheckedChange={v => setComp({ ...comp, [k]: v })} />{l}
                 </label>
               ))}
-              <F k="ce_status" label="CE Status" obj={comp} set={setComp} />
-              <F k="mdr_status" label="MDR Status" obj={comp} set={setComp} />
-              <F k="risk_class" label="Risikoklasse" obj={comp} set={setComp} />
-              <F k="laser_class" label="Laserklasse" obj={comp} set={setComp} />
-              <F k="udi_di" label="UDI-DI" obj={comp} set={setComp} />
-              <F k="basic_udi_di" label="Basic UDI-DI" obj={comp} set={setComp} />
-              <F k="manufacturer" label="Hersteller" obj={comp} set={setComp} />
-              <F k="eu_representative" label="EU Representative" obj={comp} set={setComp} />
-              <F k="importer" label="Importeur" obj={comp} set={setComp} />
-              <F k="country_of_origin" label="Ursprungsland" obj={comp} set={setComp} />
-              <F k="country_of_manufacture" label="Herstellungsland" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="ce_status" label="CE Status" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="mdr_status" label="MDR Status" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="risk_class" label="Risikoklasse" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="laser_class" label="Laserklasse" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="udi_di" label="UDI-DI" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="basic_udi_di" label="Basic UDI-DI" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="manufacturer" label="Hersteller" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="eu_representative" label="EU Representative" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="importer" label="Importeur" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="country_of_origin" label="Ursprungsland" obj={comp} set={setComp} />
+              <PMField disabled={!canWrite} k="country_of_manufacture" label="Herstellungsland" obj={comp} set={setComp} />
               <div className="md:col-span-3"><Label className="text-xs">Weitere regulatorische Hinweise</Label>
                 <Textarea rows={3} value={comp.notes ?? ''} disabled={!canCompliance} onChange={e => setComp({ ...comp, notes: e.target.value })} /></div>
             </CardContent>
@@ -476,8 +486,8 @@ export default function ArtikelAkte() {
         {/* MARKETING */}
         <TabsContent value="marketing" className="pt-4 space-y-4">
           <Card><CardContent className="p-4 grid gap-3 md:grid-cols-2">
-            <F k="headline" label="Produktheadline" obj={mkt} set={setMkt} />
-            <F k="slogan" label="Slogan" obj={mkt} set={setMkt} />
+            <PMField disabled={!canWrite} k="headline" label="Produktheadline" obj={mkt} set={setMkt} />
+            <PMField disabled={!canWrite} k="slogan" label="Slogan" obj={mkt} set={setMkt} />
             <div className="md:col-span-2"><Label className="text-xs">Kurzbeschreibung</Label>
               <Textarea rows={2} value={mkt.short_text ?? ''} disabled={!canWrite} onChange={e => setMkt({ ...mkt, short_text: e.target.value })} /></div>
             <div className="md:col-span-2"><Label className="text-xs">Langbeschreibung</Label>
@@ -489,7 +499,7 @@ export default function ArtikelAkte() {
             ))}
             <div className="md:col-span-2"><Label className="text-xs">Warum dieses Gerät?</Label>
               <Textarea rows={3} value={mkt.why_this_device ?? ''} disabled={!canWrite} onChange={e => setMkt({ ...mkt, why_this_device: e.target.value })} /></div>
-            <F k="target_group" label="Zielgruppe" obj={mkt} set={setMkt} />
+            <PMField disabled={!canWrite} k="target_group" label="Zielgruppe" obj={mkt} set={setMkt} />
             <div><Label className="text-xs">CTA</Label>
               <Select value={mkt.cta || ''} onValueChange={v => setMkt({ ...mkt, cta: v })} disabled={!canWrite}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -524,20 +534,20 @@ export default function ArtikelAkte() {
               <span>SEO</span><span className={pmScoreTone(pmSeoScore(seo, p))}>SEO Score {pmSeoScore(seo, p)} / 100</span>
             </CardTitle></CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2">
-              <F k="seo_title" label="SEO Titel" obj={seo} set={setSeo} />
-              <F k="url_slug" label="URL Slug" obj={seo} set={setSeo} />
+              <PMField disabled={!canWrite} k="seo_title" label="SEO Titel" obj={seo} set={setSeo} />
+              <PMField disabled={!canWrite} k="url_slug" label="URL Slug" obj={seo} set={setSeo} />
               <div className="md:col-span-2"><Label className="text-xs">Meta Description</Label>
                 <Textarea rows={2} value={seo.meta_description ?? ''} disabled={!canWrite} onChange={e => setSeo({ ...seo, meta_description: e.target.value })} /></div>
-              <F k="h1" label="H1" obj={seo} set={setSeo} />
-              <F k="main_keyword" label="Hauptkeyword" obj={seo} set={setSeo} />
+              <PMField disabled={!canWrite} k="h1" label="H1" obj={seo} set={setSeo} />
+              <PMField disabled={!canWrite} k="main_keyword" label="Hauptkeyword" obj={seo} set={setSeo} />
               <div className="md:col-span-2"><Label className="text-xs">Nebenkeywords (Komma-getrennt)</Label>
                 <Input value={(seo.secondary_keywords || []).join(', ')} disabled={!canWrite}
                   onChange={e => setSeo({ ...seo, secondary_keywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} /></div>
-              <F k="canonical_url" label="Canonical URL" obj={seo} set={setSeo} />
+              <PMField disabled={!canWrite} k="canonical_url" label="Canonical URL" obj={seo} set={setSeo} />
               <label className="flex items-center gap-2 text-sm pt-5"><Switch checked={!!seo.noindex} disabled={!canWrite}
                 onCheckedChange={v => setSeo({ ...seo, noindex: v })} />Noindex</label>
-              <F k="og_title" label="OpenGraph Titel" obj={seo} set={setSeo} />
-              <F k="og_image" label="OpenGraph Bild (URL)" obj={seo} set={setSeo} />
+              <PMField disabled={!canWrite} k="og_title" label="OpenGraph Titel" obj={seo} set={setSeo} />
+              <PMField disabled={!canWrite} k="og_image" label="OpenGraph Bild (URL)" obj={seo} set={setSeo} />
               <div className="md:col-span-2"><Label className="text-xs">OpenGraph Beschreibung</Label>
                 <Textarea rows={2} value={seo.og_description ?? ''} disabled={!canWrite} onChange={e => setSeo({ ...seo, og_description: e.target.value })} /></div>
               <div className="md:col-span-2"><Label className="text-xs">Landingpage-Zuordnung</Label>
