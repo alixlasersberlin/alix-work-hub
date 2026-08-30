@@ -1363,6 +1363,8 @@ export default function AppLayout() {
             <AiDiensteMenu roles={roles} />
 
             <TenantSwitcher />
+            <SecurityStatusLamp />
+
 
 
 
