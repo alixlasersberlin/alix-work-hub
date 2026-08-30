@@ -319,18 +319,13 @@ export default function ProductHubEditor() {
               )}
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-end gap-1">
-                <div className="flex-1"><Field k="seo_title" form={form} set={set} productId={id} disabled={!canWrite} /></div>
-                <AiFieldButton fieldLabel="SEO Titel (max. 60 Zeichen, inkl. Hauptkeyword)" current={form.seo_title}
-                  maxChars={60} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_title', v)} />
-              </div>
+              <Field k="seo_title" form={form} set={set} productId={id} disabled={!canWrite} />
               <Field k="slug" form={form} set={set} productId={id} disabled={!canWrite} />
-              <div className="md:col-span-2 flex items-end gap-1">
-                <div className="flex-1"><Field k="seo_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
-                <AiFieldButton fieldLabel="SEO Meta-Description (140–158 Zeichen)" current={form.seo_description}
-                  maxChars={158} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_description', v)} />
+              <div className="md:col-span-2">
+                <Field k="seo_description" form={form} set={set} productId={id} disabled={!canWrite} area />
               </div>
             </div>
+
             {keywords.length > 0 && (
               <div className="space-y-1.5">
                 <Label className="text-xs">KI-Keyword-Vorschläge</Label>
