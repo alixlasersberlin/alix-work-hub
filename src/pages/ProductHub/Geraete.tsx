@@ -190,6 +190,11 @@ export default function ProductHubGeraete() {
                     <TableCell className="text-center">{docs[p.id] || 0}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{new Date(p.updated_at).toLocaleDateString('de-DE')}</TableCell>
                     <TableCell className="text-xs">{t.label}</TableCell>
+                    {canWrite && (
+                      <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                        <EnrichProductButton productId={p.id} productName={p.name} variant="icon" onDone={load} />
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
