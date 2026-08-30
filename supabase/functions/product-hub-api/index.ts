@@ -5,6 +5,8 @@
 //   GET /product-hub-api/products/{alix_product_id}
 //   GET /product-hub-api/products/{alix_product_id}/media
 //   GET /product-hub-api/products/{alix_product_id}/documents
+//   GET /product-hub-api/content?channel=website          → alle freigegebenen Content-Hub-Releases
+//   GET /product-hub-api/products/{alix_product_id}/content?channel=website
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
