@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Code2, ListChecks, Sparkles } from 'lucide-react';
+import { AiFieldButton } from './AiFieldButton';
 
 export interface SmartKiFeature {
   name: string;
