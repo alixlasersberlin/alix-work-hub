@@ -676,6 +676,8 @@ const PhComCanary = lazy(() => import("./pages/ProductHub/ComCanary"));
 const PhVeroeffentlichungen = lazy(() => import("./pages/ProductHub/Veroeffentlichungen"));
 const PmDashboard = lazy(() => import("./pages/Artikel/Dashboard"));
 const PmListe = lazy(() => import("./pages/Artikel/Liste"));
+const ChCockpit = lazy(() => import("./pages/ContentHub/Cockpit"));
+const ChFreigabe = lazy(() => import("./pages/ContentHub/Freigabe"));
 const PmNeu = lazy(() => import("./pages/Artikel/Neu"));
 const PmAttribute = lazy(() => import("./pages/Artikel/Attribute"));
 const PmAkte = lazy(() => import("./pages/Artikel/Akte"));
