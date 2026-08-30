@@ -28,20 +28,70 @@ import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 
 const db = supabase as any;
 
-function Field({ k, form, set, disabled, area }: any) {
+/** Feld-spezifische Hinweise für die KI-Erzeugung */
+const AI_HINTS: Record<string, string> = {
+  name: 'Marketingtauglicher Produktname des Lasergeräts, kurz und ohne Heilversprechen.',
+  internal_name: 'Kurze interne Bezeichnung für die Verwaltung, kein Marketing.',
+  model: 'Modellbezeichnung des Geräts, kurz (z. B. "ALIX BlueIce Smart KI").',
+  sku: 'Kurze technische Artikelnummer in Großbuchstaben/Ziffern, keine Sonderzeichen außer Bindestrich.',
+  slug: 'URL-Slug in Kleinbuchstaben, nur a-z, 0-9 und Bindestriche.',
+  product_group: 'Produktgruppe, z. B. Diodenlaser, Alexandrit, HIFU, Kombisystem.',
+  short_description: 'Kurzbeschreibung des Geräts, 1–2 Sätze, sachlich, MDR-konform, keine Heilversprechen.',
+  long_description: 'Ausführliche Produktbeschreibung mit Nutzen, Technik und Einsatzbereichen, sachlich und MDR-konform.',
+  wavelengths: 'Wellenlängen in nm, z. B. "755 / 808 / 1064 nm". Nur plausible Angaben, keine Erfindungen.',
+  power: 'Maximale Ausgangsleistung inkl. Einheit, z. B. "1200 W".',
+  fluence: 'Fluence-Bereich inkl. Einheit, z. B. "1–60 J/cm²".',
+  pulse_duration: 'Pulsdauer-Bereich inkl. Einheit, z. B. "10–400 ms".',
+  frequency: 'Frequenzbereich inkl. Einheit, z. B. "1–10 Hz".',
+  spot_sizes: 'Verfügbare Spotgrößen, z. B. "12x12 mm, 15x25 mm".',
+  cooling: 'Kühlsystem kurz beschrieben, z. B. "Kontaktkühlung bis -5 °C, Peltier + Wasser".',
+  laser_class: 'Laserklasse nach IEC 60825-1, z. B. "Klasse 4".',
+  mdr_status: 'MDR-Status kurz, z. B. "MDR-konform, Klasse IIb".',
+  ce_status: 'CE-Status kurz, z. B. "CE 0123 vorhanden".',
+  iso_status: 'ISO-Status kurz, z. B. "ISO 13485 zertifiziert".',
+  intended_use: 'Zweckbestimmung im regulatorischen Stil (MDR), präzise, ohne Werbesprache und ohne Heilversprechen.',
+  manufacturer: 'Name des Herstellers (Legal Manufacturer).',
+  production_site: 'Produktionsstandort (Ort, Land).',
+  hero_image_url: 'Nicht erfinden – nur formatieren, wenn bereits ein Wert vorhanden ist.',
+};
+
+const AI_LONG = new Set(['short_description', 'long_description', 'intended_use']);
+
+function Field({ k, form, set, disabled, area, ai = true, productId }: any) {
   const critical = PH_CRITICAL_FIELDS.includes(k);
+  const showAi = ai && k !== 'alix_product_id' && k !== 'hero_image_url';
+  const input = area
+    ? <Textarea rows={5} value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />
+    : <Input value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />;
   return (
     <div className="space-y-1.5">
       <Label className="text-xs flex items-center gap-1.5">
         {phLabel(k)}
         {critical && <span title="Kritisches Feld – Änderung wird protokolliert"><ShieldAlert className="w-3 h-3 text-amber-500" /></span>}
       </Label>
-      {area
-        ? <Textarea rows={5} value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />
-        : <Input value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />}
+      {showAi ? (
+        <div className="flex items-end gap-1">
+          <div className="flex-1">{input}</div>
+          <AiFieldButton
+            fieldLabel={phLabel(k)}
+            hint={AI_HINTS[k]}
+            current={form[k] ?? ''}
+            maxChars={AI_LONG.has(k) ? (k === 'long_description' ? 1200 : 400) : 120}
+            productId={productId}
+            context={{
+              name: form.name, model: form.model, product_group: form.product_group,
+              wavelengths: form.wavelengths, power: form.power, laser_class: form.laser_class,
+              applications: form.applications, manufacturer: form.manufacturer,
+            }}
+            disabled={disabled}
+            onGenerated={v => set(k, v)}
+          />
+        </div>
+      ) : input}
     </div>
   );
 }
+
 
 export default function ProductHubEditor() {
   const { id } = useParams();
@@ -114,7 +164,7 @@ export default function ProductHubEditor() {
         <TabsContent value="allgemein">
           <Card><CardContent className="p-4 grid md:grid-cols-3 gap-4">
             {['name', 'internal_name', 'model', 'sku', 'slug', 'alix_product_id', 'product_group'].map(k => (
-              <Field key={k} k={k} form={form} set={set} disabled={!canWrite} />
+              <Field key={k} k={k} form={form} set={set} productId={id} disabled={!canWrite} />
             ))}
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
@@ -125,27 +175,46 @@ export default function ProductHubEditor() {
             </div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.featured} disabled={!canWrite} onCheckedChange={v => set('featured', v)} /><Label className="text-xs">Featured</Label></div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.protected} disabled={!canWrite} onCheckedChange={v => set('protected', v)} /><Label className="text-xs">Geschützt</Label></div>
-            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} disabled={!canWrite} area /></div>
-            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} disabled={!canWrite} area /></div>
+            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
+            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
           </CardContent></Card>
         </TabsContent>
 
         <TabsContent value="technik">
           <Card><CardContent className="p-4 grid md:grid-cols-3 gap-4">
             {['wavelengths', 'power', 'fluence', 'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class'].map(k => (
-              <Field key={k} k={k} form={form} set={set} disabled={!canWrite} />
+              <Field key={k} k={k} form={form} set={set} productId={id} disabled={!canWrite} />
             ))}
           </CardContent></Card>
         </TabsContent>
 
         <TabsContent value="anwendungen">
-          <Card><CardContent className="p-4 flex flex-wrap gap-2">
-            {PH_APPLICATIONS.map(a => (
-              <Badge key={a} variant={(form.applications || []).includes(a) ? 'default' : 'outline'}
-                className="cursor-pointer" onClick={() => canWrite && toggleApp(a)}>{a}</Badge>
-            ))}
+          <Card><CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">Passende Anwendungen wählen – oder per KI vorschlagen lassen.</p>
+              {canWrite && (
+                <AiFieldButton
+                  fieldLabel="Passende Anwendungsbereiche"
+                  hint={`Wähle ausschließlich aus dieser Liste und gib sie kommagetrennt zurück: ${PH_APPLICATIONS.join(', ')}`}
+                  current={(form.applications || []).join(', ')} maxChars={160} productId={id}
+                  context={{ name: form.name, wavelengths: form.wavelengths, power: form.power, short_description: form.short_description }}
+                  onGenerated={v => {
+                    const picked = v.split(',').map(s => s.trim().toLowerCase());
+                    const next = PH_APPLICATIONS.filter(a => picked.some(p => p === a.toLowerCase()));
+                    if (next.length) set('applications', next);
+                  }}
+                />
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {PH_APPLICATIONS.map(a => (
+                <Badge key={a} variant={(form.applications || []).includes(a) ? 'default' : 'outline'}
+                  className="cursor-pointer" onClick={() => canWrite && toggleApp(a)}>{a}</Badge>
+              ))}
+            </div>
           </CardContent></Card>
         </TabsContent>
+
 
         <TabsContent value="smartki">
           <Card><CardContent className="p-4">
@@ -162,7 +231,7 @@ export default function ProductHubEditor() {
 
         <TabsContent value="medien">
           <Card><CardContent className="p-4 space-y-3">
-            <Field k="hero_image_url" form={form} set={set} disabled={!canWrite} />
+            <Field k="hero_image_url" form={form} set={set} productId={id} disabled={!canWrite} />
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {media.map(m => (
                 <div key={m.id} className="border border-border rounded-md p-2 space-y-1">
@@ -196,13 +265,22 @@ export default function ProductHubEditor() {
         <TabsContent value="regulatory">
           <Card><CardContent className="p-4 grid md:grid-cols-3 gap-4">
             {['mdr_status', 'ce_status', 'iso_status', 'intended_use', 'manufacturer', 'production_site'].map(k => (
-              <Field key={k} k={k} form={form} set={set} disabled={!canWrite} area={k === 'intended_use'} />
+              <Field key={k} k={k} form={form} set={set} productId={id} disabled={!canWrite} area={k === 'intended_use'} />
             ))}
             <div className="md:col-span-3 space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5">Normen <ShieldAlert className="w-3 h-3 text-amber-500" /></Label>
-              <Input value={(form.standards || []).join(', ')} disabled={!canWrite}
-                onChange={e => set('standards', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
+              <div className="flex items-end gap-1">
+                <Input className="flex-1" value={(form.standards || []).join(', ')} disabled={!canWrite}
+                  onChange={e => set('standards', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
+                <AiFieldButton fieldLabel="Angewandte Normen"
+                  hint="Nur zutreffende Normen als kommagetrennte Liste, z. B. IEC 60601-1, IEC 60825-1, ISO 14971, ISO 13485. Keine Erklärtexte."
+                  current={(form.standards || []).join(', ')} maxChars={200} productId={id}
+                  context={{ name: form.name, laser_class: form.laser_class, intended_use: form.intended_use }}
+                  disabled={!canWrite}
+                  onGenerated={v => set('standards', v.split(',').map(s => s.trim()).filter(Boolean))} />
+              </div>
             </div>
+
           </CardContent></Card>
         </TabsContent>
 
@@ -269,18 +347,13 @@ export default function ProductHubEditor() {
               )}
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-end gap-1">
-                <div className="flex-1"><Field k="seo_title" form={form} set={set} disabled={!canWrite} /></div>
-                <AiFieldButton fieldLabel="SEO Titel (max. 60 Zeichen, inkl. Hauptkeyword)" current={form.seo_title}
-                  maxChars={60} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_title', v)} />
-              </div>
-              <Field k="slug" form={form} set={set} disabled={!canWrite} />
-              <div className="md:col-span-2 flex items-end gap-1">
-                <div className="flex-1"><Field k="seo_description" form={form} set={set} disabled={!canWrite} area /></div>
-                <AiFieldButton fieldLabel="SEO Meta-Description (140–158 Zeichen)" current={form.seo_description}
-                  maxChars={158} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_description', v)} />
+              <Field k="seo_title" form={form} set={set} productId={id} disabled={!canWrite} />
+              <Field k="slug" form={form} set={set} productId={id} disabled={!canWrite} />
+              <div className="md:col-span-2">
+                <Field k="seo_description" form={form} set={set} productId={id} disabled={!canWrite} area />
               </div>
             </div>
+
             {keywords.length > 0 && (
               <div className="space-y-1.5">
                 <Label className="text-xs">KI-Keyword-Vorschläge</Label>
