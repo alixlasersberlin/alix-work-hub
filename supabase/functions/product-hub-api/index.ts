@@ -37,7 +37,38 @@ Deno.serve(async (req) => {
 
   const activeCol: Record<string, string> = { com: "active_com", de: "active_de", at: "active_at", usa: "active_usa", dubai: "active_dubai" };
 
+  // Content Hub: nur freigegebene, veröffentlichte Snapshots ausliefern (EDIT ONCE · PUBLISH EVERYWHERE)
+  const CH_ALLOWED = ["website", "offer", "datasheet", "comparison", "portal", "social"];
+
   try {
+    if (parts.includes("content") && !productId) {
+      const ch = CH_ALLOWED.includes(channel || "") ? channel! : "website";
+      const { data, error } = await supabase
+        .from("ch_channel_state")
+        .select("product_id,channel,published_version,published_at,published_hash,payload")
+        .eq("channel", ch)
+        .not("published_at", "is", null);
+      if (error) throw error;
+      const ids = (data || []).map((r: any) => r.product_id);
+      const { data: prods } = ids.length
+        ? await supabase.from("ph_products").select("id,alix_product_id,slug,status").in("id", ids)
+        : { data: [] as any[] };
+      const byId = Object.fromEntries((prods || []).map((p: any) => [p.id, p]));
+      return json(200, {
+        channel: ch,
+        items: (data || [])
+          .filter((r: any) => byId[r.product_id]?.status === "published")
+          .map((r: any) => ({
+            alix_product_id: byId[r.product_id]?.alix_product_id,
+            slug: byId[r.product_id]?.slug,
+            version: r.published_version,
+            published_at: r.published_at,
+            content_hash: r.published_hash,
+            content: r.payload,
+          })),
+      });
+    }
+
     if (!productId) {
       let q = supabase.from("ph_products").select(PUBLIC_FIELDS).eq("status", "published").order("sort_order");
       if (channel && activeCol[channel]) q = q.eq(activeCol[channel], true);
