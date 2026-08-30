@@ -26,7 +26,15 @@ export function EnrichProductButton({ productId, productName, onDone, variant = 
       const { data, error } = await supabase.functions.invoke('product-hub-enrich', {
         body: { mode, productIds: [productId], limit: 1 },
       });
-      if (error) throw error;
+      if (error) {
+        let msg = error.message || 'Anreicherung fehlgeschlagen';
+        try {
+          const ctx: any = (error as any).context;
+          const body = ctx && typeof ctx.json === 'function' ? await ctx.json() : null;
+          if (body?.error) msg = body.error;
+        } catch { /* ignore */ }
+        throw new Error(msg);
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       setRes(data);
       if (mode === 'apply') {
@@ -38,6 +46,7 @@ export function EnrichProductButton({ productId, productName, onDone, variant = 
     } finally {
       setBusy(false);
     }
+
   };
 
   const openDialog = (e?: React.MouseEvent) => {
