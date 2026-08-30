@@ -11226,6 +11226,150 @@ export type Database = {
           },
         ]
       }
+      ch_channel_state: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          is_stale: boolean
+          last_error: string | null
+          payload: Json | null
+          product_id: string
+          published_at: string | null
+          published_hash: string | null
+          published_version: number | null
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: string
+          is_stale?: boolean
+          last_error?: string | null
+          payload?: Json | null
+          product_id: string
+          published_at?: string | null
+          published_hash?: string | null
+          published_version?: number | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          is_stale?: boolean
+          last_error?: string | null
+          payload?: Json | null
+          product_id?: string
+          published_at?: string | null
+          published_hash?: string | null
+          published_version?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ch_channel_state_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ch_releases: {
+        Row: {
+          approved_at: string
+          approved_by: string | null
+          compliance_approved_at: string | null
+          compliance_approved_by: string | null
+          compliance_required: boolean
+          content_hash: string
+          created_at: string
+          id: string
+          note: string | null
+          product_id: string
+          snapshot: Json
+          status: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string
+          approved_by?: string | null
+          compliance_approved_at?: string | null
+          compliance_approved_by?: string | null
+          compliance_required?: boolean
+          content_hash: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id: string
+          snapshot?: Json
+          status?: string
+          version: number
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string | null
+          compliance_approved_at?: string | null
+          compliance_approved_by?: string | null
+          compliance_required?: boolean
+          content_hash?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id?: string
+          snapshot?: Json
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ch_releases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ch_render_cache: {
+        Row: {
+          channel: string
+          content_hash: string
+          created_at: string
+          id: string
+          product_id: string
+          rendered: Json
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          content_hash: string
+          created_at?: string
+          id?: string
+          product_id: string
+          rendered?: Json
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          content_hash?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          rendered?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ch_render_cache_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cmr_bank_lines: {
         Row: {
           amount: number
