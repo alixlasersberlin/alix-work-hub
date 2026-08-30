@@ -54,6 +54,22 @@ export default function ArtikelListe() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const runWebImport = async () => {
+    setImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('import-alix-lasers-de', { body: {} });
+      if (error) throw error;
+      const r: any = data;
+      toast.success(`Import fertig: ${r?.created ?? 0} neu, ${r?.updated ?? 0} aktualisiert, ${r?.media ?? 0} Bilder`);
+      if (r?.errors?.length) toast.error(`${r.errors.length} Artikel mit Fehlern`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || 'Import fehlgeschlagen');
+    } finally { setImporting(false); }
+  };
+
 
 
   const load = async () => {
