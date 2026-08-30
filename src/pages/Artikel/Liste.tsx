@@ -150,7 +150,15 @@ export default function ArtikelListe() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Alle Artikel" subtitle="Zentrale Artikelübersicht des ALIX Product Master" icon={Boxes}
-        actions={canWrite ? <Button onClick={createNew}><Plus className="h-4 w-4 mr-1" />Neuer Artikel</Button> : undefined} />
+        actions={canWrite ? (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={runWebImport} disabled={importing}>
+              {importing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+              Import alix-lasers.de
+            </Button>
+            <Button onClick={createNew}><Plus className="h-4 w-4 mr-1" />Neuer Artikel</Button>
+          </div>
+        ) : undefined} />
 
       <Card><CardContent className="p-3 flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[220px]">
