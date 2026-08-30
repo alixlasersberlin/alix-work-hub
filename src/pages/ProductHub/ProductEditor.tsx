@@ -164,7 +164,7 @@ export default function ProductHubEditor() {
         <TabsContent value="allgemein">
           <Card><CardContent className="p-4 grid md:grid-cols-3 gap-4">
             {['name', 'internal_name', 'model', 'sku', 'slug', 'alix_product_id', 'product_group'].map(k => (
-              <Field key={k} k={k} form={form} set={set} disabled={!canWrite} />
+              <Field key={k} k={k} form={form} set={set} productId={id} disabled={!canWrite} />
             ))}
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
@@ -175,15 +175,15 @@ export default function ProductHubEditor() {
             </div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.featured} disabled={!canWrite} onCheckedChange={v => set('featured', v)} /><Label className="text-xs">Featured</Label></div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.protected} disabled={!canWrite} onCheckedChange={v => set('protected', v)} /><Label className="text-xs">Geschützt</Label></div>
-            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} disabled={!canWrite} area /></div>
-            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} disabled={!canWrite} area /></div>
+            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
+            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
           </CardContent></Card>
         </TabsContent>
 
         <TabsContent value="technik">
           <Card><CardContent className="p-4 grid md:grid-cols-3 gap-4">
             {['wavelengths', 'power', 'fluence', 'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class'].map(k => (
-              <Field key={k} k={k} form={form} set={set} disabled={!canWrite} />
+              <Field key={k} k={k} form={form} set={set} productId={id} disabled={!canWrite} />
             ))}
           </CardContent></Card>
         </TabsContent>
@@ -212,7 +212,7 @@ export default function ProductHubEditor() {
 
         <TabsContent value="medien">
           <Card><CardContent className="p-4 space-y-3">
-            <Field k="hero_image_url" form={form} set={set} disabled={!canWrite} />
+            <Field k="hero_image_url" form={form} set={set} productId={id} disabled={!canWrite} />
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {media.map(m => (
                 <div key={m.id} className="border border-border rounded-md p-2 space-y-1">
@@ -246,7 +246,7 @@ export default function ProductHubEditor() {
         <TabsContent value="regulatory">
           <Card><CardContent className="p-4 grid md:grid-cols-3 gap-4">
             {['mdr_status', 'ce_status', 'iso_status', 'intended_use', 'manufacturer', 'production_site'].map(k => (
-              <Field key={k} k={k} form={form} set={set} disabled={!canWrite} area={k === 'intended_use'} />
+              <Field key={k} k={k} form={form} set={set} productId={id} disabled={!canWrite} area={k === 'intended_use'} />
             ))}
             <div className="md:col-span-3 space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5">Normen <ShieldAlert className="w-3 h-3 text-amber-500" /></Label>
@@ -320,13 +320,13 @@ export default function ProductHubEditor() {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex items-end gap-1">
-                <div className="flex-1"><Field k="seo_title" form={form} set={set} disabled={!canWrite} /></div>
+                <div className="flex-1"><Field k="seo_title" form={form} set={set} productId={id} disabled={!canWrite} /></div>
                 <AiFieldButton fieldLabel="SEO Titel (max. 60 Zeichen, inkl. Hauptkeyword)" current={form.seo_title}
                   maxChars={60} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_title', v)} />
               </div>
-              <Field k="slug" form={form} set={set} disabled={!canWrite} />
+              <Field k="slug" form={form} set={set} productId={id} disabled={!canWrite} />
               <div className="md:col-span-2 flex items-end gap-1">
-                <div className="flex-1"><Field k="seo_description" form={form} set={set} disabled={!canWrite} area /></div>
+                <div className="flex-1"><Field k="seo_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
                 <AiFieldButton fieldLabel="SEO Meta-Description (140–158 Zeichen)" current={form.seo_description}
                   maxChars={158} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_description', v)} />
               </div>
