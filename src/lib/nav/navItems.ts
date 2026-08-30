@@ -679,6 +679,17 @@ export const navItems: NavItem[] = [
     ],
   },
 
+  {
+    path: '/artikel', label: 'ARTIKEL & PRODUKTE', icon: Boxes,
+    roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM', 'Marketing', 'Vertrieb', 'Vertriebsleitung'],
+    children: [
+      { path: '/artikel', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      { path: '/artikel/liste', label: 'Artikelliste', icon: Cpu, roles: null },
+      { path: '/artikel/neu', label: 'Neuer Artikel', icon: Boxes, roles: ['Super Admin', 'Admin', 'Marketing', 'Produktion', 'Vertriebsleitung'] },
+      { path: '/artikel/attribute', label: 'Attribute & Merkmale', icon: Settings, roles: ['Super Admin', 'Admin'] },
+    ],
+  },
+
 
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],

@@ -674,6 +674,11 @@ const PhMasterReview = lazy(() => import("./pages/ProductHub/MasterReview"));
 const PhCanary = lazy(() => import("./pages/ProductHub/Canary"));
 const PhComCanary = lazy(() => import("./pages/ProductHub/ComCanary"));
 const PhVeroeffentlichungen = lazy(() => import("./pages/ProductHub/Veroeffentlichungen"));
+const PmDashboard = lazy(() => import("./pages/Artikel/Dashboard"));
+const PmListe = lazy(() => import("./pages/Artikel/Liste"));
+const PmNeu = lazy(() => import("./pages/Artikel/Neu"));
+const PmAttribute = lazy(() => import("./pages/Artikel/Attribute"));
+const PmAkte = lazy(() => import("./pages/Artikel/Akte"));
 const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
 const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
 const PlmEinzelteile = lazy(() => import("./pages/PLM/Einzelteile"));
@@ -2194,6 +2199,14 @@ function AppRoutes() {
           <Route path="/product-hub/master-review" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/master-review/:id" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/veroeffentlichungen" element={<ProtectedRoute><PhVeroeffentlichungen /></ProtectedRoute>} />
+
+          {/* ALIX PRODUCT MASTER – Artikel & Produkte */}
+          <Route path="/artikel" element={<ProtectedRoute><PmDashboard /></ProtectedRoute>} />
+          <Route path="/artikel/liste" element={<ProtectedRoute><PmListe /></ProtectedRoute>} />
+          <Route path="/artikel/neu" element={<ProtectedRoute><PmNeu /></ProtectedRoute>} />
+          <Route path="/artikel/attribute" element={<ProtectedRoute><PmAttribute /></ProtectedRoute>} />
+          <Route path="/artikel/:id" element={<ProtectedRoute><PmAkte /></ProtectedRoute>} />
+
 
 
           {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
