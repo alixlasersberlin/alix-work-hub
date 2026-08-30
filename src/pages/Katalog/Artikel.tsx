@@ -209,9 +209,12 @@ export default function KatalogArtikel() {
             <Button variant="outline" size="sm" disabled={busy} onClick={() => bulkStatus('archiviert', 'archiviert')}>
               <Archive className="h-4 w-4 mr-1" />Archivieren
             </Button>
-            <Button variant="outline" size="sm" disabled={busy} onClick={bulkDelete} className="text-red-500 hover:text-red-600">
-              <Trash2 className="h-4 w-4 mr-1" />Löschen
-            </Button>
+            {canDelete && (
+              <Button variant="outline" size="sm" disabled={busy} onClick={bulkDelete} className="text-red-500 hover:text-red-600">
+                <Trash2 className="h-4 w-4 mr-1" />Löschen
+              </Button>
+            )}
+
             <Button variant="ghost" size="sm" onClick={() => setSelected({})}>Auswahl aufheben</Button>
           </div>
         </Card>
