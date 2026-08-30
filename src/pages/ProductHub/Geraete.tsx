@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { phTone, phToneClass, PH_STATUS, PH_APPLICATIONS, phSlug } from '@/lib/producthub/config';
 import { phCreateProduct } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
+import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 
 const db = supabase as any;
 
@@ -162,11 +163,12 @@ export default function ProductHubGeraete() {
                 <TableHead>Status</TableHead><TableHead>MDR</TableHead>
                 <TableHead className="text-center">Bilder</TableHead><TableHead className="text-center">Dok.</TableHead>
                 <TableHead>Letzte Änderung</TableHead><TableHead>Sync</TableHead>
+                {canWrite && <TableHead className="text-center">KI</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && <TableRow><TableCell colSpan={11} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
-              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Keine Geräte. Import unter „Einstellungen“ starten.</TableCell></TableRow>}
+              {loading && <TableRow><TableCell colSpan={12} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
+              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">Keine Geräte. Import unter „Einstellungen“ starten.</TableCell></TableRow>}
               {filtered.map(p => {
                 const t = phTone(p, { conflicts: conf[p.id], media: media[p.id], documents: docs[p.id], pending: pendingFor(p.id) });
                 return (
@@ -189,6 +191,11 @@ export default function ProductHubGeraete() {
                     <TableCell className="text-center">{docs[p.id] || 0}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{new Date(p.updated_at).toLocaleDateString('de-DE')}</TableCell>
                     <TableCell className="text-xs">{t.label}</TableCell>
+                    {canWrite && (
+                      <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                        <EnrichProductButton productId={p.id} productName={p.name} variant="icon" onDone={load} />
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
