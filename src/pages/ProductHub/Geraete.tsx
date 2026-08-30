@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Cpu, Plus, Star, Lock, Loader2, Search } from 'lucide-react';
+import { Cpu, Plus, Star, Lock, Loader2, Search, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { phTone, phToneClass, PH_STATUS, PH_APPLICATIONS, phSlug } from '@/lib/producthub/config';
@@ -31,6 +33,29 @@ export default function ProductHubGeraete() {
   const [fStatus, setFStatus] = useState('all');
   const [fSite, setFSite] = useState('all');
   const [fFlag, setFFlag] = useState('all');
+  const [enrichOpen, setEnrichOpen] = useState(false);
+  const [enrichBusy, setEnrichBusy] = useState(false);
+  const [enrichRes, setEnrichRes] = useState<any>(null);
+
+  const ENRICH_FIELDS = ['short_description', 'long_description', 'wavelengths', 'power', 'fluence',
+    'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class', 'intended_use',
+    'manufacturer', 'seo_title', 'seo_description'];
+
+  const runEnrich = async (mode: 'preview' | 'apply') => {
+    setEnrichBusy(true);
+    try {
+      const ids = filtered.filter(p => ENRICH_FIELDS.some(f => !String(p[f] ?? '').trim())).map(p => p.id);
+      const { data, error } = await supabase.functions.invoke('product-hub-enrich', {
+        body: { mode, productIds: ids, limit: 40 },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setEnrichRes(data);
+      if (mode === 'apply') { toast.success(`${(data as any).filled} Geräte ergänzt`); await load(); }
+    } catch (e: any) { toast.error(e.message || 'Anreicherung fehlgeschlagen'); }
+    finally { setEnrichBusy(false); }
+  };
+
 
   const load = async () => {
     setLoading(true);
@@ -82,7 +107,14 @@ export default function ProductHubGeraete() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Geräte" subtitle="Zentraler Gerätestamm (Master)" icon={Cpu}
-        actions={canWrite ? <Button size="sm" onClick={createNew}><Plus className="w-4 h-4 mr-1" /> Neues Gerät</Button> : undefined} />
+        actions={canWrite ? (
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => { setEnrichRes(null); setEnrichOpen(true); }}>
+              <Sparkles className="w-4 h-4 mr-1" /> Daten anreichern
+            </Button>
+            <Button size="sm" onClick={createNew}><Plus className="w-4 h-4 mr-1" /> Neues Gerät</Button>
+          </div>
+        ) : undefined} />
 
       <Card>
         <CardContent className="p-3 flex flex-wrap gap-2 items-center">
@@ -165,6 +197,45 @@ export default function ProductHubGeraete() {
         </CardContent>
       </Card>
       <div className="text-xs text-muted-foreground">🟢 vollständig · 🟡 Review · 🔴 Konflikt · 🔵 Änderung wartet · ⭐ Featured · 🔒 geschützt</div>
+
+      <Dialog open={enrichOpen} onOpenChange={setEnrichOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Fehlende Gerätedaten anreichern</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>Quellen: alix-lasers.de · alix-lasers.com · alix-laser.ae</p>
+            <p>Es werden <strong>ausschließlich leere Felder</strong> gefüllt (Beschreibung, Wellenlängen, Leistung, Fluence, Pulsdauer, Frequenz, Spotgröße, Kühlung, Laserklasse, Zweckbestimmung, Hersteller, SEO). Bestehende Angaben bleiben unverändert, jede Änderung wird protokolliert.</p>
+            <p>Betroffen (aktuelle Filterauswahl): <strong>{filtered.filter(p => ENRICH_FIELDS.some(f => !String(p[f] ?? '').trim())).length}</strong> Geräte.</p>
+          </div>
+          {enrichRes && (
+            <ScrollArea className="h-[320px] border rounded-md p-2">
+              <div className="space-y-2 text-xs">
+                {(enrichRes.results || []).map((r: any) => (
+                  <div key={r.id} className="border-b pb-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{r.name}</span>
+                      <Badge variant="outline">{r.status}</Badge>
+                    </div>
+                    {r.filled?.length > 0 && <div className="text-muted-foreground">Felder: {r.filled.join(', ')}</div>}
+                    {r.error && <div className="text-destructive">{r.error}</div>}
+                    {r.sources?.length > 0 && <div className="text-muted-foreground truncate">Quelle: {r.sources.join(', ')}</div>}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" disabled={enrichBusy} onClick={() => runEnrich('preview')}>
+              {enrichBusy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Vorschau
+            </Button>
+            <Button disabled={enrichBusy} onClick={() => runEnrich('apply')}>
+              {enrichBusy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Übernehmen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
