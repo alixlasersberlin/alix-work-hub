@@ -189,13 +189,32 @@ export default function ProductHubEditor() {
         </TabsContent>
 
         <TabsContent value="anwendungen">
-          <Card><CardContent className="p-4 flex flex-wrap gap-2">
-            {PH_APPLICATIONS.map(a => (
-              <Badge key={a} variant={(form.applications || []).includes(a) ? 'default' : 'outline'}
-                className="cursor-pointer" onClick={() => canWrite && toggleApp(a)}>{a}</Badge>
-            ))}
+          <Card><CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">Passende Anwendungen wählen – oder per KI vorschlagen lassen.</p>
+              {canWrite && (
+                <AiFieldButton
+                  fieldLabel="Passende Anwendungsbereiche"
+                  hint={`Wähle ausschließlich aus dieser Liste und gib sie kommagetrennt zurück: ${PH_APPLICATIONS.join(', ')}`}
+                  current={(form.applications || []).join(', ')} maxChars={160} productId={id}
+                  context={{ name: form.name, wavelengths: form.wavelengths, power: form.power, short_description: form.short_description }}
+                  onGenerated={v => {
+                    const picked = v.split(',').map(s => s.trim().toLowerCase());
+                    const next = PH_APPLICATIONS.filter(a => picked.some(p => p === a.toLowerCase()));
+                    if (next.length) set('applications', next);
+                  }}
+                />
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {PH_APPLICATIONS.map(a => (
+                <Badge key={a} variant={(form.applications || []).includes(a) ? 'default' : 'outline'}
+                  className="cursor-pointer" onClick={() => canWrite && toggleApp(a)}>{a}</Badge>
+              ))}
+            </div>
           </CardContent></Card>
         </TabsContent>
+
 
         <TabsContent value="smartki">
           <Card><CardContent className="p-4">
