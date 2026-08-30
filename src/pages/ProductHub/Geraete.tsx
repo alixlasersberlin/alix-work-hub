@@ -162,6 +162,7 @@ export default function ProductHubGeraete() {
                 <TableHead>Status</TableHead><TableHead>MDR</TableHead>
                 <TableHead className="text-center">Bilder</TableHead><TableHead className="text-center">Dok.</TableHead>
                 <TableHead>Letzte Änderung</TableHead><TableHead>Sync</TableHead>
+                {canWrite && <TableHead className="text-center">KI</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
