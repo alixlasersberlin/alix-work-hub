@@ -9,6 +9,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useComplianceProfile } from "@/hooks/useComplianceProfile";
 import { useSyncRevenueMaskGlobal } from "@/lib/revenue-mask";
 import { useRadixBodyPointerEventsFix } from "@/hooks/useRadixBodyPointerEventsFix";
 import { TenantProvider } from "@/contexts/TenantContext";
@@ -1151,6 +1152,18 @@ const LicenseIntercompany = lazy(() => import("./pages/License/Intercompany"));
 const LicenseAuswertungen = lazy(() => import("./pages/License/Auswertungen"));
 const LicenseLaufzeiten = lazy(() => import("./pages/License/Laufzeiten"));
 const LicenseEinstellungen = lazy(() => import("./pages/License/Einstellungen"));
+
+// ALIXWORK · SOFTWARE & COMPLIANCE (abgeschotteter Workspace)
+const ComplianceLogin = lazy(() => import("./pages/Compliance/ComplianceLogin"));
+const ComplianceShell = lazy(() => import("./components/compliance/ComplianceShell"));
+const ComplianceDashboard = lazy(() => import("./pages/Compliance/Dashboard"));
+const ComplianceMyTasks = lazy(() => import("./pages/Compliance/MyTasks"));
+const ComplianceTaskDetail = lazy(() => import("./pages/Compliance/TaskDetail"));
+const ComplianceReviews = lazy(() => import("./pages/Compliance/Reviews"));
+const ComplianceProjects = lazy(() => import("./pages/Compliance/Projects"));
+const ComplianceSupplierRequests = lazy(() => import("./pages/Compliance/SupplierRequests"));
+const ComplianceUsers = lazy(() => import("./pages/Compliance/Users"));
+const ComplianceAuditTrail = lazy(() => import("./pages/Compliance/AuditTrail"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import BackupWarningGate from "./components/BackupWarningGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
@@ -1200,9 +1213,19 @@ function FullscreenLoader() {
 
 function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: React.ReactNode; requiredRoles?: string[]; allowEmails?: string[] }) {
   const { user, profile, roles, loading, blockReason, mfaState } = useAuth();
+  const compliance = useComplianceProfile();
   const location = useLocation();
 
   if (loading) return <FullscreenLoader />;
+
+  // Compliance-Only-Nutzer dürfen ausschließlich in den Compliance-Workspace.
+  if (user && !compliance.loading && compliance.complianceOnly) {
+    const allowedPrefixes = ['/software-compliance', '/compliance-login', '/account', '/logout', '/passwort-setzen'];
+    if (!allowedPrefixes.some((pfx) => location.pathname === pfx || location.pathname.startsWith(pfx + '/'))) {
+      return <Navigate to="/software-compliance" replace />;
+    }
+  }
+
   if (!user) return <Navigate to="/alix-control" replace />;
   if (blockReason) return <AccountBlocked />;
 
@@ -1344,6 +1367,20 @@ function AppRoutes() {
         <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />
         <Route path="/umfrage/:token" element={<SurveyPublic />} />
+
+        {/* SOFTWARE & COMPLIANCE – eigener Login, eigene Shell, kein AppLayout */}
+        <Route path="/compliance-login" element={<ComplianceLogin />} />
+        <Route path="/software-compliance" element={<ComplianceShell />}>
+          <Route index element={<ComplianceDashboard />} />
+          <Route path="aufgaben" element={<ComplianceMyTasks />} />
+          <Route path="aufgaben/:taskId" element={<ComplianceTaskDetail />} />
+          <Route path="tasks/:taskId" element={<ComplianceTaskDetail />} />
+          <Route path="projekte" element={<ComplianceProjects />} />
+          <Route path="reviews" element={<ComplianceReviews />} />
+          <Route path="lieferanten" element={<ComplianceSupplierRequests />} />
+          <Route path="benutzer" element={<ComplianceUsers />} />
+          <Route path="audit" element={<ComplianceAuditTrail />} />
+        </Route>
 
         <Route element={<ProtectedRoute><ForceWelcomeGate><AppLayout /></ForceWelcomeGate></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
