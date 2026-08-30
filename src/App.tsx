@@ -2209,6 +2209,11 @@ function AppRoutes() {
           <Route path="/artikel/attribute" element={<ProtectedRoute><PmAttribute /></ProtectedRoute>} />
           <Route path="/artikel/:id" element={<ProtectedRoute><PmAkte /></ProtectedRoute>} />
 
+          {/* ALIX CONTENT HUB – Edit once, publish everywhere */}
+          <Route path="/content-hub" element={<ProtectedRoute><ChCockpit /></ProtectedRoute>} />
+          <Route path="/content-hub/:id" element={<ProtectedRoute><ChFreigabe /></ProtectedRoute>} />
+
+
 
 
           {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
