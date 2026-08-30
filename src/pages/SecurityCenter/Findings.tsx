@@ -58,13 +58,20 @@ export default function SecurityFindings() {
   };
 
   const resolveFinding = async (id: string) => {
-    try {
-      const { error } = await supabase.functions.invoke('security-remediate', { body: { action: 'mark_finding_resolved', finding_id: id } });
-      if (error) throw error;
-      toast.success('Finding geschlossen');
-      await load();
-    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+    // Direktes Update (RLS-geschützt); Edge Function nur als Fallback
+    const { error } = await (supabase as any).from('security_audit_findings').update({ status: 'resolved' }).eq('id', id);
+    if (error) {
+      try {
+        const { error: fnErr } = await supabase.functions.invoke('security-remediate', { body: { action: 'mark_finding_resolved', finding_id: id } });
+        if (fnErr) throw fnErr;
+      } catch (e: any) {
+        return toast.error(e?.message ?? error.message ?? 'Fehler');
+      }
+    }
+    toast.success('Finding geschlossen');
+    await load();
   };
+
 
   const setStatus = async (id: string, status: string) => {
     const { error } = await (supabase as any).from('security_audit_findings').update({ status }).eq('id', id);
