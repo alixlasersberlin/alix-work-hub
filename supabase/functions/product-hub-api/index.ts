@@ -5,6 +5,8 @@
 //   GET /product-hub-api/products/{alix_product_id}
 //   GET /product-hub-api/products/{alix_product_id}/media
 //   GET /product-hub-api/products/{alix_product_id}/documents
+//   GET /product-hub-api/content?channel=website          → alle freigegebenen Content-Hub-Releases
+//   GET /product-hub-api/products/{alix_product_id}/content?channel=website
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -35,7 +37,38 @@ Deno.serve(async (req) => {
 
   const activeCol: Record<string, string> = { com: "active_com", de: "active_de", at: "active_at", usa: "active_usa", dubai: "active_dubai" };
 
+  // Content Hub: nur freigegebene, veröffentlichte Snapshots ausliefern (EDIT ONCE · PUBLISH EVERYWHERE)
+  const CH_ALLOWED = ["website", "offer", "datasheet", "comparison", "portal", "social"];
+
   try {
+    if (parts.includes("content") && !productId) {
+      const ch = CH_ALLOWED.includes(channel || "") ? channel! : "website";
+      const { data, error } = await supabase
+        .from("ch_channel_state")
+        .select("product_id,channel,published_version,published_at,published_hash,payload")
+        .eq("channel", ch)
+        .not("published_at", "is", null);
+      if (error) throw error;
+      const ids = (data || []).map((r: any) => r.product_id);
+      const { data: prods } = ids.length
+        ? await supabase.from("ph_products").select("id,alix_product_id,slug,status").in("id", ids)
+        : { data: [] as any[] };
+      const byId = Object.fromEntries((prods || []).map((p: any) => [p.id, p]));
+      return json(200, {
+        channel: ch,
+        items: (data || [])
+          .filter((r: any) => byId[r.product_id]?.status === "published")
+          .map((r: any) => ({
+            alix_product_id: byId[r.product_id]?.alix_product_id,
+            slug: byId[r.product_id]?.slug,
+            version: r.published_version,
+            published_at: r.published_at,
+            content_hash: r.published_hash,
+            content: r.payload,
+          })),
+      });
+    }
+
     if (!productId) {
       let q = supabase.from("ph_products").select(PUBLIC_FIELDS).eq("status", "published").order("sort_order");
       if (channel && activeCol[channel]) q = q.eq(activeCol[channel], true);
@@ -60,6 +93,17 @@ Deno.serve(async (req) => {
         .select("title,doc_type,visibility,language,version,url,channels")
         .eq("product_id", (prod as any).id).eq("visibility", "website");
       return json(200, { documents: (data || []).filter(d => !channel || (d.channels || []).length === 0 || d.channels.includes(channel)) });
+    }
+    if (sub === "content") {
+      const ch = CH_ALLOWED.includes(channel || "") ? channel! : "website";
+      const { data } = await supabase.from("ch_channel_state")
+        .select("published_version,published_at,published_hash,payload")
+        .eq("product_id", (prod as any).id).eq("channel", ch).maybeSingle();
+      if (!data?.published_at) return json(404, { error: "not_published" });
+      return json(200, {
+        channel: ch, version: data.published_version, published_at: data.published_at,
+        content_hash: data.published_hash, content: data.payload,
+      });
     }
 
     const { id, ...pub } = prod as any;

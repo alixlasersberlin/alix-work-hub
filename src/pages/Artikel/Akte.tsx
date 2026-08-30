@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  AlertTriangle, ArrowLeft, Check, Loader2, Plus, Save, Trash2, X,
+  AlertTriangle, ArrowLeft, Check, Layers, Loader2, Plus, Save, Trash2, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -139,6 +139,9 @@ export default function ArtikelAkte() {
           <div className="text-[11px] text-muted-foreground ml-auto">
             Zuletzt geändert {new Date(p.updated_at).toLocaleString('de-DE')}
           </div>
+          <Button size="sm" variant="outline" asChild>
+            <Link to={`/content-hub/${p.id}`}><Layers className="h-4 w-4 mr-1" />Content Hub</Link>
+          </Button>
           {canWrite && <Button size="sm" onClick={() => saveProduct()} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}Speichern</Button>}
         </div>
