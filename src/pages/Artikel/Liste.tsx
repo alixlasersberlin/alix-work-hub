@@ -109,6 +109,33 @@ export default function ArtikelListe() {
 
   const createNew = () => nav('/artikel/neu');
 
+  const selIds = useMemo(() => Object.entries(selected).filter(([, v]) => v).map(([k]) => k), [selected]);
+  const allChecked = filtered.length > 0 && filtered.every(({ p }) => selected[p.id]);
+  const toggleAll = (v: boolean) => {
+    const next: Record<string, boolean> = {};
+    if (v) filtered.forEach(({ p }) => { next[p.id] = true; });
+    setSelected(next);
+  };
+
+  const runDelete = async () => {
+    if (selIds.length === 0) return;
+    setBusy(true);
+    try {
+      for (const t of PM_CHILD_TABLES) {
+        await db.from(t).delete().in('product_id', selIds);
+      }
+      const { error } = await db.from('ph_products').delete().in('id', selIds);
+      if (error) throw error;
+      toast.success(`${selIds.length} Artikel gelöscht`);
+      setSelected({});
+      setConfirmDelete(false);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || 'Löschen fehlgeschlagen');
+    } finally { setBusy(false); }
+  };
+
+
   const runDuplicate = async () => {
     if (!dup.sku.trim() || !dup.name.trim()) { toast.error('Neue SKU und Name sind erforderlich'); return; }
     setBusy(true);
