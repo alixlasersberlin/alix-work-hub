@@ -21,6 +21,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 import { SmartKiEditor } from '@/components/producthub/SmartKiEditor';
+import { SeoAiButton } from '@/components/producthub/SeoAiButton';
+import { AiFieldButton } from '@/components/producthub/AiFieldButton';
+
 
 
 const db = supabase as any;
@@ -51,6 +54,8 @@ export default function ProductHubEditor() {
   const [media, setMedia] = useState<any[]>([]);
   const [docs, setDocs] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
+
 
   const load = async () => {
     if (!id) return;
@@ -245,12 +250,52 @@ export default function ProductHubEditor() {
         </TabsContent>
 
         <TabsContent value="seo">
-          <Card><CardContent className="p-4 grid md:grid-cols-2 gap-4">
-            <Field k="seo_title" form={form} set={set} disabled={!canWrite} />
-            <Field k="slug" form={form} set={set} disabled={!canWrite} />
-            <div className="md:col-span-2"><Field k="seo_description" form={form} set={set} disabled={!canWrite} area /></div>
+          <Card><CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-xs text-muted-foreground">
+                KI erzeugt Titel, Beschreibung und Keywords aus den Gerätedaten – bitte vor dem Speichern prüfen.
+              </p>
+              {canWrite && (
+                <SeoAiButton
+                  productId={form.id}
+                  current={{ seo_title: form.seo_title, meta_description: form.seo_description, url_slug: form.slug, main_keyword: form.seo_keywords }}
+                  onApply={r => {
+                    if (r.seo_title) set('seo_title', r.seo_title);
+                    if (r.meta_description) set('seo_description', r.meta_description);
+                    if (!form.slug && r.url_slug) set('slug', r.url_slug);
+                    setKeywords([r.main_keyword, ...(r.secondary_keywords || [])].filter(Boolean));
+                  }}
+                />
+              )}
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex items-end gap-1">
+                <div className="flex-1"><Field k="seo_title" form={form} set={set} disabled={!canWrite} /></div>
+                <AiFieldButton fieldLabel="SEO Titel (max. 60 Zeichen, inkl. Hauptkeyword)" current={form.seo_title}
+                  maxChars={60} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_title', v)} />
+              </div>
+              <Field k="slug" form={form} set={set} disabled={!canWrite} />
+              <div className="md:col-span-2 flex items-end gap-1">
+                <div className="flex-1"><Field k="seo_description" form={form} set={set} disabled={!canWrite} area /></div>
+                <AiFieldButton fieldLabel="SEO Meta-Description (140–158 Zeichen)" current={form.seo_description}
+                  maxChars={158} productId={form.id} disabled={!canWrite} onGenerated={v => set('seo_description', v)} />
+              </div>
+            </div>
+            {keywords.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">KI-Keyword-Vorschläge</Label>
+                <div className="flex flex-wrap gap-1">
+                  {keywords.map(k => (
+                    <Badge key={k} variant="outline" className="text-[10px] cursor-pointer"
+                      onClick={() => navigator.clipboard?.writeText(k)}>{k}</Badge>
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Klick kopiert das Keyword. Dauerhaft pflegen: Artikel &gt; Produktakte &gt; SEO.</p>
+              </div>
+            )}
           </CardContent></Card>
         </TabsContent>
+
 
         <TabsContent value="historie">
           <Card><CardContent className="p-0">
