@@ -60,15 +60,14 @@ Deno.serve(async (req) => {
           source_product_id: slug,
           source_name: raw.source_name ?? name,
           brand: 'Alix Lasers',
-          status: 'aktiv',
-          lifecycle_status: 'aktiv',
+          lifecycle_status: 'active',
           product_group: d.subcategory ?? raw.category ?? null,
           categories: [TARGET_CATEGORY],
           applications: Array.isArray(d.application_categories) ? d.application_categories : [],
           short_description: d.brief ?? null,
           long_description: d.body_markdown ?? null,
-          features: feats.length ? feats : null,
-          tech_specs: d.specs ?? null,
+          features: feats,
+          tech_specs: d.specs && typeof d.specs === 'object' ? d.specs : {},
           hero_image_url: d.hero_image ?? null,
           seo_title: d.title ?? null,
           seo_description: d.description ?? null,
@@ -81,7 +80,10 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
         };
 
-        const { data: existing } = await db.from('ph_products').select('id').eq('slug', slug).maybeSingle();
+        const { data: existing } = await db.from('ph_products').select('id, status').eq('slug', slug).maybeSingle();
+        // Status-Vokabular der App: draft | review | approved | published | archived.
+        // Import legt neue Artikel als Entwurf an und überschreibt bestehende Freigaben nie.
+        if (!existing?.id) payload.status = 'draft';
         let productId: string;
         if (existing?.id) {
           const { error } = await db.from('ph_products').update(payload).eq('id', existing.id);

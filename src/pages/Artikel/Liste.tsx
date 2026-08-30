@@ -63,7 +63,10 @@ export default function ArtikelListe() {
       if (error) throw error;
       const r: any = data;
       toast.success(`Import fertig: ${r?.created ?? 0} neu, ${r?.updated ?? 0} aktualisiert, ${r?.media ?? 0} Bilder`);
-      if (r?.errors?.length) toast.error(`${r.errors.length} Artikel mit Fehlern`);
+      if (r?.errors?.length) {
+        console.error('Import-Fehler', r.errors);
+        toast.error(`${r.errors.length} Artikel mit Fehlern`, { description: String(r.errors[0]).slice(0, 180) });
+      }
       load();
     } catch (e: any) {
       toast.error(e.message || 'Import fehlgeschlagen');
