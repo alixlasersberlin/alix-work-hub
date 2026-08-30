@@ -125,17 +125,39 @@ export function SmartKiEditor({ value, onChange, disabled, productId, productNam
                   {f.enabled !== false ? 'Aktiv' : 'Inaktiv'}
                 </span>
               </div>
+              <AiFieldButton
+                fieldLabel="Name einer Smart-KI-Funktion des Geräts"
+                hint="Kurzer, prägnanter Funktionsname (max. 6 Wörter), passend zu bereits vorhandenen Funktionen."
+                current={f.name ?? ''}
+                maxChars={60}
+                productId={productId}
+                context={{ productName, vorhandeneFunktionen: features.map(x => x.name).filter(Boolean) }}
+                disabled={disabled}
+                onGenerated={(t) => update(i, { name: t.replace(/\n/g, ' ').trim() })}
+              />
               <Button size="icon" variant="ghost" className="h-8 w-8" disabled={disabled} onClick={() => remove(i)}>
                 <Trash2 className="w-4 h-4 text-destructive" />
               </Button>
             </div>
-            <Textarea
-              rows={2}
-              placeholder="Kurzbeschreibung (erscheint auf Website / im Kundenportal)"
-              value={f.description ?? ''}
-              disabled={disabled}
-              onChange={(e) => update(i, { description: e.target.value })}
-            />
+            <div className="flex items-start gap-2">
+              <Textarea
+                rows={2}
+                placeholder="Kurzbeschreibung (erscheint auf Website / im Kundenportal)"
+                value={f.description ?? ''}
+                disabled={disabled}
+                onChange={(e) => update(i, { description: e.target.value })}
+              />
+              <AiFieldButton
+                fieldLabel={`Kurzbeschreibung der Smart-KI-Funktion "${f.name || 'unbenannt'}"`}
+                hint="1–2 Sätze, kundenverständlich, für Website und Kundenportal."
+                current={f.description ?? ''}
+                maxChars={280}
+                productId={productId}
+                context={{ productName, funktion: f.name }}
+                disabled={disabled}
+                onGenerated={(t) => update(i, { description: t })}
+              />
+            </div>
           </div>
         ))}
         {features.length === 0 && (
