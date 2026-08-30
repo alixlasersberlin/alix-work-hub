@@ -15553,6 +15553,320 @@ export type Database = {
           },
         ]
       }
+      compliance_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          detail: Json | null
+          id: string
+          project_id: string | null
+          task_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      compliance_project_members: {
+        Row: {
+          active: boolean
+          can_approve: boolean
+          can_review: boolean
+          created_at: string
+          id: string
+          project_id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          can_approve?: boolean
+          can_review?: boolean
+          created_at?: string
+          id?: string
+          project_id: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          can_approve?: boolean
+          can_review?: boolean
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_projects: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          device_id: string | null
+          id: string
+          name: string
+          safety_class: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          name: string
+          safety_class?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          name?: string
+          safety_class?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      compliance_supplier_requests: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          created_at: string
+          file_url: string | null
+          id: string
+          na_reason: string | null
+          na_requested: boolean
+          project_id: string
+          request_code: string
+          requirement: string | null
+          status: string
+          supplier_user_id: string | null
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          na_reason?: string | null
+          na_requested?: boolean
+          project_id: string
+          request_code: string
+          requirement?: string | null
+          status?: string
+          supplier_user_id?: string | null
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          na_reason?: string | null
+          na_requested?: boolean
+          project_id?: string
+          request_code?: string
+          requirement?: string | null
+          status?: string
+          supplier_user_id?: string | null
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_supplier_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_task_steps: {
+        Row: {
+          created_at: string
+          done: boolean
+          file_url: string | null
+          hint: string | null
+          id: string
+          input_type: string
+          label: string
+          required: boolean
+          step_no: number
+          task_id: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          file_url?: string | null
+          hint?: string | null
+          id?: string
+          input_type?: string
+          label: string
+          required?: boolean
+          step_no?: number
+          task_id: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          file_url?: string | null
+          hint?: string | null
+          id?: string
+          input_type?: string
+          label?: string
+          required?: boolean
+          step_no?: number
+          task_id?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_task_steps_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_tasks: {
+        Row: {
+          assignee_id: string | null
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          defer_comment: string | null
+          defer_reason: string | null
+          defer_until: string | null
+          due_date: string | null
+          id: string
+          last_saved_at: string | null
+          mandatory: boolean
+          priority: string
+          progress: number
+          project_id: string
+          purpose: string | null
+          ref_codes: string[]
+          review_comment: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          status: string
+          submitted_at: string | null
+          task_no: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          defer_comment?: string | null
+          defer_reason?: string | null
+          defer_until?: string | null
+          due_date?: string | null
+          id?: string
+          last_saved_at?: string | null
+          mandatory?: boolean
+          priority?: string
+          progress?: number
+          project_id: string
+          purpose?: string | null
+          ref_codes?: string[]
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          task_no?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          defer_comment?: string | null
+          defer_reason?: string | null
+          defer_until?: string | null
+          due_date?: string | null
+          id?: string
+          last_saved_at?: string | null
+          mandatory?: boolean
+          priority?: string
+          progress?: number
+          project_id?: string
+          purpose?: string | null
+          ref_codes?: string[]
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          task_no?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_audit_log: {
         Row: {
           action: string
@@ -49129,6 +49443,10 @@ export type Database = {
       user_profiles: {
         Row: {
           account_status: string
+          compliance_access: boolean
+          compliance_default_project_id: string | null
+          compliance_only_user: boolean
+          compliance_role: string | null
           created_at: string
           department_id: string | null
           email: string | null
@@ -49150,6 +49468,10 @@ export type Database = {
         }
         Insert: {
           account_status?: string
+          compliance_access?: boolean
+          compliance_default_project_id?: string | null
+          compliance_only_user?: boolean
+          compliance_role?: string | null
           created_at?: string
           department_id?: string | null
           email?: string | null
@@ -49171,6 +49493,10 @@ export type Database = {
         }
         Update: {
           account_status?: string
+          compliance_access?: boolean
+          compliance_default_project_id?: string | null
+          compliance_only_user?: boolean
+          compliance_role?: string | null
           created_at?: string
           department_id?: string | null
           email?: string | null
@@ -52221,6 +52547,10 @@ export type Database = {
       comm_can_manage: { Args: { _uid: string }; Returns: boolean }
       comm_can_read: { Args: { _uid: string }; Returns: boolean }
       complete_password_setup: { Args: never; Returns: undefined }
+      compliance_can_write: { Args: { _project_id: string }; Returns: boolean }
+      compliance_has_access: { Args: never; Returns: boolean }
+      compliance_is_admin: { Args: never; Returns: boolean }
+      compliance_is_member: { Args: { _project_id: string }; Returns: boolean }
       create_finance_stakeholder: {
         Args: {
           p_allowed_reports?: Json
