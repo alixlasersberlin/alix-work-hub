@@ -28,20 +28,70 @@ import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 
 const db = supabase as any;
 
-function Field({ k, form, set, disabled, area }: any) {
+/** Feld-spezifische Hinweise für die KI-Erzeugung */
+const AI_HINTS: Record<string, string> = {
+  name: 'Marketingtauglicher Produktname des Lasergeräts, kurz und ohne Heilversprechen.',
+  internal_name: 'Kurze interne Bezeichnung für die Verwaltung, kein Marketing.',
+  model: 'Modellbezeichnung des Geräts, kurz (z. B. "ALIX BlueIce Smart KI").',
+  sku: 'Kurze technische Artikelnummer in Großbuchstaben/Ziffern, keine Sonderzeichen außer Bindestrich.',
+  slug: 'URL-Slug in Kleinbuchstaben, nur a-z, 0-9 und Bindestriche.',
+  product_group: 'Produktgruppe, z. B. Diodenlaser, Alexandrit, HIFU, Kombisystem.',
+  short_description: 'Kurzbeschreibung des Geräts, 1–2 Sätze, sachlich, MDR-konform, keine Heilversprechen.',
+  long_description: 'Ausführliche Produktbeschreibung mit Nutzen, Technik und Einsatzbereichen, sachlich und MDR-konform.',
+  wavelengths: 'Wellenlängen in nm, z. B. "755 / 808 / 1064 nm". Nur plausible Angaben, keine Erfindungen.',
+  power: 'Maximale Ausgangsleistung inkl. Einheit, z. B. "1200 W".',
+  fluence: 'Fluence-Bereich inkl. Einheit, z. B. "1–60 J/cm²".',
+  pulse_duration: 'Pulsdauer-Bereich inkl. Einheit, z. B. "10–400 ms".',
+  frequency: 'Frequenzbereich inkl. Einheit, z. B. "1–10 Hz".',
+  spot_sizes: 'Verfügbare Spotgrößen, z. B. "12x12 mm, 15x25 mm".',
+  cooling: 'Kühlsystem kurz beschrieben, z. B. "Kontaktkühlung bis -5 °C, Peltier + Wasser".',
+  laser_class: 'Laserklasse nach IEC 60825-1, z. B. "Klasse 4".',
+  mdr_status: 'MDR-Status kurz, z. B. "MDR-konform, Klasse IIb".',
+  ce_status: 'CE-Status kurz, z. B. "CE 0123 vorhanden".',
+  iso_status: 'ISO-Status kurz, z. B. "ISO 13485 zertifiziert".',
+  intended_use: 'Zweckbestimmung im regulatorischen Stil (MDR), präzise, ohne Werbesprache und ohne Heilversprechen.',
+  manufacturer: 'Name des Herstellers (Legal Manufacturer).',
+  production_site: 'Produktionsstandort (Ort, Land).',
+  hero_image_url: 'Nicht erfinden – nur formatieren, wenn bereits ein Wert vorhanden ist.',
+};
+
+const AI_LONG = new Set(['short_description', 'long_description', 'intended_use']);
+
+function Field({ k, form, set, disabled, area, ai = true, productId }: any) {
   const critical = PH_CRITICAL_FIELDS.includes(k);
+  const showAi = ai && k !== 'alix_product_id' && k !== 'hero_image_url';
+  const input = area
+    ? <Textarea rows={5} value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />
+    : <Input value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />;
   return (
     <div className="space-y-1.5">
       <Label className="text-xs flex items-center gap-1.5">
         {phLabel(k)}
         {critical && <span title="Kritisches Feld – Änderung wird protokolliert"><ShieldAlert className="w-3 h-3 text-amber-500" /></span>}
       </Label>
-      {area
-        ? <Textarea rows={5} value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />
-        : <Input value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />}
+      {showAi ? (
+        <div className="flex items-end gap-1">
+          <div className="flex-1">{input}</div>
+          <AiFieldButton
+            fieldLabel={phLabel(k)}
+            hint={AI_HINTS[k]}
+            current={form[k] ?? ''}
+            maxChars={AI_LONG.has(k) ? (k === 'long_description' ? 1200 : 400) : 120}
+            productId={productId}
+            context={{
+              name: form.name, model: form.model, product_group: form.product_group,
+              wavelengths: form.wavelengths, power: form.power, laser_class: form.laser_class,
+              applications: form.applications, manufacturer: form.manufacturer,
+            }}
+            disabled={disabled}
+            onGenerated={v => set(k, v)}
+          />
+        </div>
+      ) : input}
     </div>
   );
 }
+
 
 export default function ProductHubEditor() {
   const { id } = useParams();
