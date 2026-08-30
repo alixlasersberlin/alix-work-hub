@@ -94,18 +94,34 @@ Deno.serve(async (req) => {
     const url = Deno.env.get("SUPABASE_URL")!;
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Auth: nur Super Admin / Admin
+    // Auth: Admin / Super Admin (RPC is_admin) oder Product-Hub-Rolle
     const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
     if (!token) return json(401, { error: "Nicht angemeldet" });
     const { data: userRes } = await admin.auth.getUser(token);
     const uid = userRes?.user?.id;
     if (!uid) return json(401, { error: "Ungültige Sitzung" });
-    const { data: roleRows } = await admin.from("user_roles").select("role").eq("user_id", uid);
-    const roles = (roleRows ?? []).map((r: any) => String(r.role));
-    if (!roles.some((r) => ["Super Admin", "Admin"].includes(r))) {
-      return json(403, { error: "Keine Berechtigung" });
+
+    let allowed = false;
+    const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    try {
+      const { data: isAdmin } = await userClient.rpc("is_admin");
+      allowed = !!isAdmin;
+    } catch { /* ignore */ }
+    if (!allowed) {
+      const { data: roleRows } = await admin.from("user_roles").select("role").eq("user_id", uid);
+      const roles = (roleRows ?? []).map((r: any) => String(r.role).toLowerCase());
+      allowed = roles.some((r) => ["super admin", "admin"].includes(r));
     }
+    if (!allowed) {
+      const { data: phRows } = await admin.from("ph_roles").select("role").eq("user_id", uid);
+      allowed = (phRows ?? []).length > 0;
+    }
+    if (!allowed) return json(403, { error: "Keine Berechtigung" });
+
 
     const { mode = "preview", productIds = [], limit = 10 } = await req.json().catch(() => ({}));
 
