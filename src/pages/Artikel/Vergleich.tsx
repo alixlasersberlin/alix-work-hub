@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,7 +35,7 @@ export default function ArtikelVergleich() {
         db.from('ph_products').select('*').order('name'),
         db.from('ph_prices').select('*').is('variant_id', null),
         db.from('ph_compliance').select('*'),
-        db.from('ph_attributes').select('*').eq('active', true).order('group_name').order('sort_order'),
+        db.from('ph_attributes').select('*').eq('active', true).eq('is_comparable', true).order('group_name').order('sort_order'),
         db.from('ph_attribute_values').select('*').is('variant_id', null),
       ]);
       setProducts(p.data || []); setPrices(pr.data || []); setComp(c.data || []);
@@ -50,11 +50,9 @@ export default function ArtikelVergleich() {
   const attrValue = (productId: string, attributeId: string) => {
     const row = values.find(v => v.product_id === productId && v.attribute_id === attributeId);
     if (!row) return '';
-    const raw = row.value_text ?? row.value_number ?? row.value_boolean ?? row.value_json;
-    if (raw === null || raw === undefined) return '';
-    if (typeof raw === 'boolean') return raw ? 'Ja' : 'Nein';
-    if (Array.isArray(raw)) return raw.join(', ');
-    if (typeof raw === 'object') return JSON.stringify(raw);
+    if (Array.isArray(row.value_list) && row.value_list.length) return row.value_list.join(', ');
+    const raw = row.value_text ?? row.value_number;
+    if (raw === null || raw === undefined || raw === '') return '';
     return String(raw);
   };
 
@@ -86,7 +84,7 @@ export default function ArtikelVergleich() {
     attrs.forEach(a => {
       out.push({
         group: `Merkmale · ${a.group_name || 'Sonstiges'}`,
-        label: `${a.label || a.name}${a.unit ? ` (${a.unit})` : ''}`,
+        label: `${a.label || a.code}${a.unit ? ` (${a.unit})` : ''}`,
         cells: cols.map(p => (p ? attrValue(p.id, a.id) : '')),
       });
     });
@@ -191,8 +189,8 @@ export default function ArtikelVergleich() {
                 </TableHeader>
                 <TableBody>
                   {Object.entries(groups).map(([group, gr]) => (
-                    <>
-                      <TableRow key={group} className="bg-muted/40">
+                    <Fragment key={group}>
+                      <TableRow className="bg-muted/40">
                         <TableCell colSpan={4} className="font-semibold text-xs uppercase tracking-wide">{group}</TableCell>
                       </TableRow>
                       {gr.map(r => (
@@ -203,7 +201,7 @@ export default function ArtikelVergleich() {
                           ))}
                         </TableRow>
                       ))}
-                    </>
+                    </Fragment>
                   ))}
                   {!visible.length && (
                     <TableRow><TableCell colSpan={4} className="text-center py-10 text-muted-foreground">Keine Unterschiede gefunden</TableCell></TableRow>
