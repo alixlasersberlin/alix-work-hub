@@ -184,12 +184,24 @@ export function SmartKiEditor({ value, onChange, disabled, productId, productNam
 
       <div className="space-y-1.5">
         <Label className="text-xs">Interne Notiz</Label>
-        <Textarea
-          rows={2}
-          value={notes}
-          disabled={disabled}
-          onChange={(e) => commit(features, e.target.value)}
-        />
+        <div className="flex items-start gap-2">
+          <Textarea
+            rows={2}
+            value={notes}
+            disabled={disabled}
+            onChange={(e) => commit(features, e.target.value)}
+          />
+          <AiFieldButton
+            fieldLabel="Interne Notiz zu den Smart-KI-Funktionen des Geräts"
+            hint="Interne Zusammenfassung für Mitarbeiter (nicht kundensichtbar), max. 3 Sätze."
+            current={notes}
+            maxChars={400}
+            productId={productId}
+            context={{ productName, funktionen: features }}
+            disabled={disabled}
+            onGenerated={(t) => commit(features, t)}
+          />
+        </div>
       </div>
     </div>
   );
