@@ -533,9 +533,34 @@ export default function ArtikelAkte() {
         {/* SEO */}
         <TabsContent value="seo" className="pt-4 space-y-4">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center justify-between">
-              <span>SEO</span><span className={pmScoreTone(pmSeoScore(seo, p))}>SEO Score {pmSeoScore(seo, p)} / 100</span>
+            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center justify-between gap-2 flex-wrap">
+              <span>SEO</span>
+              <span className="flex items-center gap-2">
+                {canWrite && (
+                  <SeoAiButton
+                    productId={p.id}
+                    current={{
+                      seo_title: seo.seo_title, meta_description: seo.meta_description, h1: seo.h1,
+                      main_keyword: seo.main_keyword, secondary_keywords: seo.secondary_keywords,
+                      url_slug: seo.url_slug, og_title: seo.og_title, og_description: seo.og_description,
+                    }}
+                    onApply={r => setSeo({
+                      ...seo,
+                      seo_title: r.seo_title || seo.seo_title,
+                      meta_description: r.meta_description || seo.meta_description,
+                      h1: r.h1 || seo.h1,
+                      main_keyword: r.main_keyword || seo.main_keyword,
+                      secondary_keywords: r.secondary_keywords?.length ? r.secondary_keywords : seo.secondary_keywords,
+                      url_slug: seo.url_slug || r.url_slug,
+                      og_title: r.og_title || seo.og_title,
+                      og_description: r.og_description || seo.og_description,
+                    })}
+                  />
+                )}
+                <span className={pmScoreTone(pmSeoScore(seo, p))}>SEO Score {pmSeoScore(seo, p)} / 100</span>
+              </span>
             </CardTitle></CardHeader>
+
             <CardContent className="grid gap-3 md:grid-cols-2">
               <PMField disabled={!canWrite} k="seo_title" label="SEO Titel" obj={seo} set={setSeo} />
               <PMField disabled={!canWrite} k="url_slug" label="URL Slug" obj={seo} set={setSeo} />
