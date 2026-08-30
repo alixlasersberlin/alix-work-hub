@@ -52,6 +52,9 @@ export default function ArtikelListe() {
   const [dupSource, setDupSource] = useState<any>(null);
   const [dup, setDup] = useState({ sku: '', name: '', master: true, tech: true, media: false, documents: false, scope: true, prices: false });
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
