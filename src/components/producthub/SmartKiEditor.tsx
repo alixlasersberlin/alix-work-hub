@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Code2, ListChecks, Sparkles } from 'lucide-react';
+import { AiFieldButton } from './AiFieldButton';
 
 export interface SmartKiFeature {
   name: string;
@@ -17,6 +18,9 @@ interface Props {
   value: any;
   onChange: (next: any) => void;
   disabled?: boolean;
+  /** Für KI-Kontext (Gerätedaten) */
+  productId?: string;
+  productName?: string;
 }
 
 /** Vorschläge für typische AlixSmart-Funktionen */
@@ -45,7 +49,7 @@ function toFeatures(value: any): SmartKiFeature[] {
   return [];
 }
 
-export function SmartKiEditor({ value, onChange, disabled }: Props) {
+export function SmartKiEditor({ value, onChange, disabled, productId, productName }: Props) {
   const [raw, setRaw] = useState(false);
   const [jsonText, setJsonText] = useState<string>(() => JSON.stringify(value ?? {}, null, 2));
   const features = useMemo(() => toFeatures(value), [value]);
@@ -121,17 +125,39 @@ export function SmartKiEditor({ value, onChange, disabled }: Props) {
                   {f.enabled !== false ? 'Aktiv' : 'Inaktiv'}
                 </span>
               </div>
+              <AiFieldButton
+                fieldLabel="Name einer Smart-KI-Funktion des Geräts"
+                hint="Kurzer, prägnanter Funktionsname (max. 6 Wörter), passend zu bereits vorhandenen Funktionen."
+                current={f.name ?? ''}
+                maxChars={60}
+                productId={productId}
+                context={{ productName, vorhandeneFunktionen: features.map(x => x.name).filter(Boolean) }}
+                disabled={disabled}
+                onGenerated={(t) => update(i, { name: t.replace(/\n/g, ' ').trim() })}
+              />
               <Button size="icon" variant="ghost" className="h-8 w-8" disabled={disabled} onClick={() => remove(i)}>
                 <Trash2 className="w-4 h-4 text-destructive" />
               </Button>
             </div>
-            <Textarea
-              rows={2}
-              placeholder="Kurzbeschreibung (erscheint auf Website / im Kundenportal)"
-              value={f.description ?? ''}
-              disabled={disabled}
-              onChange={(e) => update(i, { description: e.target.value })}
-            />
+            <div className="flex items-start gap-2">
+              <Textarea
+                rows={2}
+                placeholder="Kurzbeschreibung (erscheint auf Website / im Kundenportal)"
+                value={f.description ?? ''}
+                disabled={disabled}
+                onChange={(e) => update(i, { description: e.target.value })}
+              />
+              <AiFieldButton
+                fieldLabel={`Kurzbeschreibung der Smart-KI-Funktion "${f.name || 'unbenannt'}"`}
+                hint="1–2 Sätze, kundenverständlich, für Website und Kundenportal."
+                current={f.description ?? ''}
+                maxChars={280}
+                productId={productId}
+                context={{ productName, funktion: f.name }}
+                disabled={disabled}
+                onGenerated={(t) => update(i, { description: t })}
+              />
+            </div>
           </div>
         ))}
         {features.length === 0 && (
@@ -158,12 +184,24 @@ export function SmartKiEditor({ value, onChange, disabled }: Props) {
 
       <div className="space-y-1.5">
         <Label className="text-xs">Interne Notiz</Label>
-        <Textarea
-          rows={2}
-          value={notes}
-          disabled={disabled}
-          onChange={(e) => commit(features, e.target.value)}
-        />
+        <div className="flex items-start gap-2">
+          <Textarea
+            rows={2}
+            value={notes}
+            disabled={disabled}
+            onChange={(e) => commit(features, e.target.value)}
+          />
+          <AiFieldButton
+            fieldLabel="Interne Notiz zu den Smart-KI-Funktionen des Geräts"
+            hint="Interne Zusammenfassung für Mitarbeiter (nicht kundensichtbar), max. 3 Sätze."
+            current={notes}
+            maxChars={400}
+            productId={productId}
+            context={{ productName, funktionen: features }}
+            disabled={disabled}
+            onGenerated={(t) => commit(features, t)}
+          />
+        </div>
       </div>
     </div>
   );
