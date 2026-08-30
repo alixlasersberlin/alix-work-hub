@@ -132,7 +132,7 @@ export default function ArtikelVergleich() {
     <div className="space-y-6">
       <PageHeader
         title="Produktvergleich"
-        description="Bis zu drei Artikel aus dem Product Master direkt gegenüberstellen."
+        subtitle="Bis zu drei Artikel aus dem Product Master direkt gegenüberstellen."
         icon={Columns3}
         actions={
           <Button variant="outline" onClick={exportCsv} disabled={!active.length}>

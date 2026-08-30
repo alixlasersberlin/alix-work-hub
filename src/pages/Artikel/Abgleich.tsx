@@ -208,7 +208,7 @@ export default function ArtikelAbgleich() {
     <div className="space-y-6">
       <PageHeader
         title="Import- & Mapping-Assistent"
-        description="Abgleich Katalog und PLM-Geräte gegen den ALIX PRODUCT MASTER – nichts wird automatisch überschrieben."
+        subtitle="Abgleich Katalog und PLM-Geräte gegen den ALIX PRODUCT MASTER – nichts wird automatisch überschrieben."
         icon={ArrowRightLeft}
         actions={
           <Button variant="outline" onClick={load} disabled={loading}>
