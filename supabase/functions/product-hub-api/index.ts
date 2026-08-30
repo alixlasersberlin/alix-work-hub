@@ -94,6 +94,17 @@ Deno.serve(async (req) => {
         .eq("product_id", (prod as any).id).eq("visibility", "website");
       return json(200, { documents: (data || []).filter(d => !channel || (d.channels || []).length === 0 || d.channels.includes(channel)) });
     }
+    if (sub === "content") {
+      const ch = CH_ALLOWED.includes(channel || "") ? channel! : "website";
+      const { data } = await supabase.from("ch_channel_state")
+        .select("published_version,published_at,published_hash,payload")
+        .eq("product_id", (prod as any).id).eq("channel", ch).maybeSingle();
+      if (!data?.published_at) return json(404, { error: "not_published" });
+      return json(200, {
+        channel: ch, version: data.published_version, published_at: data.published_at,
+        content_hash: data.published_hash, content: data.payload,
+      });
+    }
 
     const { id, ...pub } = prod as any;
     return json(200, { product: pub });
