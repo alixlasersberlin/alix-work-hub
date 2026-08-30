@@ -20,6 +20,8 @@ import { phGetProduct, phUpdateProduct, phChannelRows, phUpsertChannel } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
+import { SmartKiEditor } from '@/components/producthub/SmartKiEditor';
+
 
 const db = supabase as any;
 
@@ -141,12 +143,11 @@ export default function ProductHubEditor() {
         </TabsContent>
 
         <TabsContent value="smartki">
-          <Card><CardContent className="p-4 space-y-2">
-            <Label className="text-xs">Smart-KI-Funktionen (JSON)</Label>
-            <Textarea rows={10} disabled={!canWrite} value={JSON.stringify(form.smart_ki ?? {}, null, 2)}
-              onChange={e => { try { set('smart_ki', JSON.parse(e.target.value || '{}')); } catch { /* live typing */ } }} />
+          <Card><CardContent className="p-4">
+            <SmartKiEditor value={form.smart_ki} disabled={!canWrite} onChange={v => set('smart_ki', v)} />
           </CardContent></Card>
         </TabsContent>
+
 
         <TabsContent value="medien">
           <Card><CardContent className="p-4 space-y-3">
