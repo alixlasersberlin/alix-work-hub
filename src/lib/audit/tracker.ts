@@ -27,6 +27,9 @@ class AuditTracker {
 
   async start(attempt = 0) {
     if (this.started) return;
+    // Ohne echte User-Session würde nur der Anon-Key gesendet -> 401.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
     this.started = true;
     try {
       const info = collectDeviceInfo();
@@ -39,12 +42,15 @@ class AuditTracker {
       // for transient edge-runtime issues (503 / service degraded).
       console.warn("[audit] session start failed", e);
       this.started = false;
-      if (attempt < 3) {
+      const msg = String((e as any)?.message ?? e ?? "");
+      const unauthorized = msg.includes("401") || msg.toLowerCase().includes("unauthorized");
+      if (!unauthorized && attempt < 3) {
         const delay = 15_000 * Math.pow(2, attempt);
         window.setTimeout(() => { if (!this.started) this.start(attempt + 1); }, delay);
       }
       return;
     }
+
     this.attachListeners();
     this.heartbeatTimer = window.setInterval(() => this.sendHeartbeat(), 30_000);
     this.flushTimer = window.setInterval(() => this.flush(), 15_000);
