@@ -197,6 +197,45 @@ export default function ProductHubGeraete() {
         </CardContent>
       </Card>
       <div className="text-xs text-muted-foreground">🟢 vollständig · 🟡 Review · 🔴 Konflikt · 🔵 Änderung wartet · ⭐ Featured · 🔒 geschützt</div>
+
+      <Dialog open={enrichOpen} onOpenChange={setEnrichOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Fehlende Gerätedaten anreichern</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>Quellen: alix-lasers.de · alix-lasers.com · alix-laser.ae</p>
+            <p>Es werden <strong>ausschließlich leere Felder</strong> gefüllt (Beschreibung, Wellenlängen, Leistung, Fluence, Pulsdauer, Frequenz, Spotgröße, Kühlung, Laserklasse, Zweckbestimmung, Hersteller, SEO). Bestehende Angaben bleiben unverändert, jede Änderung wird protokolliert.</p>
+            <p>Betroffen (aktuelle Filterauswahl): <strong>{filtered.filter(p => ENRICH_FIELDS.some(f => !String(p[f] ?? '').trim())).length}</strong> Geräte.</p>
+          </div>
+          {enrichRes && (
+            <ScrollArea className="h-[320px] border rounded-md p-2">
+              <div className="space-y-2 text-xs">
+                {(enrichRes.results || []).map((r: any) => (
+                  <div key={r.id} className="border-b pb-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{r.name}</span>
+                      <Badge variant="outline">{r.status}</Badge>
+                    </div>
+                    {r.filled?.length > 0 && <div className="text-muted-foreground">Felder: {r.filled.join(', ')}</div>}
+                    {r.error && <div className="text-destructive">{r.error}</div>}
+                    {r.sources?.length > 0 && <div className="text-muted-foreground truncate">Quelle: {r.sources.join(', ')}</div>}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" disabled={enrichBusy} onClick={() => runEnrich('preview')}>
+              {enrichBusy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Vorschau
+            </Button>
+            <Button disabled={enrichBusy} onClick={() => runEnrich('apply')}>
+              {enrichBusy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Übernehmen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
