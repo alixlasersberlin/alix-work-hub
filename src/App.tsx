@@ -2195,6 +2195,14 @@ function AppRoutes() {
           <Route path="/product-hub/master-review/:id" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/veroeffentlichungen" element={<ProtectedRoute><PhVeroeffentlichungen /></ProtectedRoute>} />
 
+          {/* ALIX PRODUCT MASTER – Artikel & Produkte */}
+          <Route path="/artikel" element={<ProtectedRoute><PmDashboard /></ProtectedRoute>} />
+          <Route path="/artikel/liste" element={<ProtectedRoute><PmListe /></ProtectedRoute>} />
+          <Route path="/artikel/neu" element={<ProtectedRoute><PmNeu /></ProtectedRoute>} />
+          <Route path="/artikel/attribute" element={<ProtectedRoute><PmAttribute /></ProtectedRoute>} />
+          <Route path="/artikel/:id" element={<ProtectedRoute><PmAkte /></ProtectedRoute>} />
+
+
 
           {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
           <Route path="/produktion" element={<ProtectedRoute><PlmDashboard /></ProtectedRoute>} />
