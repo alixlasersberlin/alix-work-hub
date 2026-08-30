@@ -18,6 +18,9 @@ interface Props {
   value: any;
   onChange: (next: any) => void;
   disabled?: boolean;
+  /** Für KI-Kontext (Gerätedaten) */
+  productId?: string;
+  productName?: string;
 }
 
 /** Vorschläge für typische AlixSmart-Funktionen */
