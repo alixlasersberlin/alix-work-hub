@@ -23,6 +23,8 @@ import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 import { SmartKiEditor } from '@/components/producthub/SmartKiEditor';
 import { SeoAiButton } from '@/components/producthub/SeoAiButton';
 import { AiFieldButton } from '@/components/producthub/AiFieldButton';
+import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
+
 
 
 
@@ -91,6 +93,36 @@ function Field({ k, form, set, disabled, area, ai = true, productId }: any) {
     </div>
   );
 }
+
+/** Hauptbild: zeigt niemals die Supabase-Domain, sondern eine alixwork.de-Adresse. */
+function HeroImageField({ form, set, disabled }: any) {
+  const [edit, setEdit] = useState(false);
+  const raw = form.hero_image_url ?? '';
+  const masked = displayMediaUrl(raw);
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Hauptbild</Label>
+        {!disabled && (
+          <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground underline"
+            onClick={() => setEdit(v => !v)}>
+            {edit ? 'Fertig' : 'Bearbeiten'}
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        {raw && <img src={raw} alt={form.name || 'Hauptbild'} loading="lazy" className="w-16 h-16 object-cover rounded border border-border" />}
+        <div className="flex-1">
+          {edit
+            ? <Input value={raw} disabled={disabled} onChange={e => set('hero_image_url', e.target.value)} />
+            : <Input value={masked} readOnly title={masked} className="text-muted-foreground" />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 
 
 export default function ProductHubEditor() {
@@ -231,7 +263,7 @@ export default function ProductHubEditor() {
 
         <TabsContent value="medien">
           <Card><CardContent className="p-4 space-y-3">
-            <Field k="hero_image_url" form={form} set={set} productId={id} disabled={!canWrite} />
+            <HeroImageField form={form} set={set} disabled={!canWrite} />
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {media.map(m => (
                 <div key={m.id} className="border border-border rounded-md p-2 space-y-1">
@@ -239,6 +271,7 @@ export default function ProductHubEditor() {
                     ? <img src={m.url} alt={m.alt_text || m.title || ''} loading="lazy" className="w-full h-24 object-cover rounded" />
                     : <div className="h-24 flex items-center justify-center text-xs text-muted-foreground">Video</div>}
                   <div className="text-[11px] truncate">{m.title || m.kind}</div>
+                  <div className="text-[10px] text-muted-foreground truncate" title={displayMediaUrl(m.url)}>{displayMediaFileName(m.url)}</div>
                   <Badge variant="outline" className="text-[10px]">{m.kind}</Badge>
                 </div>
               ))}
@@ -246,6 +279,7 @@ export default function ProductHubEditor() {
             </div>
           </CardContent></Card>
         </TabsContent>
+
 
         <TabsContent value="dokumente">
           <Card><CardContent className="p-0">
