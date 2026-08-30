@@ -111,7 +111,11 @@ function HeroImageField({ form, set, disabled }: any) {
         )}
       </div>
       <div className="flex items-center gap-3">
-        {raw && <img src={raw} alt={form.name || 'Hauptbild'} loading="lazy" className="w-16 h-16 object-cover rounded border border-border" />}
+        {raw && (
+          <div className="w-24 h-24 shrink-0 rounded border border-border bg-white p-1 flex items-center justify-center overflow-hidden">
+            <img src={raw} alt={form.name || 'Hauptbild'} loading="lazy" className="w-full h-full object-contain" />
+          </div>
+        )}
         <div className="flex-1">
           {edit
             ? <Input value={raw} disabled={disabled} onChange={e => set('hero_image_url', e.target.value)} />
@@ -268,7 +272,7 @@ export default function ProductHubEditor() {
               {media.map(m => (
                 <div key={m.id} className="border border-border rounded-md p-2 space-y-1">
                   {m.media_type === 'image'
-                    ? <div className="w-full aspect-square rounded bg-white flex items-center justify-center overflow-hidden"><img src={m.url} alt={m.alt_text || m.title || ''} loading="lazy" className="max-w-full max-h-full object-contain" /></div>
+                    ? <div className="w-full aspect-square rounded bg-white p-2 flex items-center justify-center overflow-hidden"><img src={m.url} alt={m.alt_text || m.title || ''} loading="lazy" className="w-full h-full object-contain" /></div>
                     : <div className="aspect-square flex items-center justify-center text-xs text-muted-foreground">Video</div>}
                   <div className="text-[11px] truncate">{m.title || m.kind}</div>
                   <div className="text-[10px] text-muted-foreground truncate" title={displayMediaUrl(m.url)}>{displayMediaFileName(m.url)}</div>

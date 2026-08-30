@@ -385,7 +385,7 @@ export default function ArtikelAkte() {
             {data.media.map((m: any) => (
               <Card key={m.id}><CardContent className="p-2 space-y-1">
                 {m.media_type === 'image'
-                  ? <div className="w-full aspect-square rounded bg-white flex items-center justify-center overflow-hidden"><img src={m.url} alt={m.alt_text || m.title || p.name} loading="lazy" className="max-w-full max-h-full object-contain" /></div>
+                  ? <div className="w-full aspect-square rounded bg-white p-2 flex items-center justify-center overflow-hidden"><img src={m.url} alt={m.alt_text || m.title || p.name} loading="lazy" className="w-full h-full object-contain" /></div>
                   : <div className="aspect-square flex items-center justify-center text-xs text-muted-foreground border rounded">Video</div>}
                 <div className="text-[11px] truncate">{m.title || m.kind}</div>
                 <Badge variant="outline" className="text-[10px]">{m.kind}</Badge>
