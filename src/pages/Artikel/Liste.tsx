@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Boxes, Copy, Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { Boxes, Copy, Download, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -54,6 +54,22 @@ export default function ArtikelListe() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const runWebImport = async () => {
+    setImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('import-alix-lasers-de', { body: {} });
+      if (error) throw error;
+      const r: any = data;
+      toast.success(`Import fertig: ${r?.created ?? 0} neu, ${r?.updated ?? 0} aktualisiert, ${r?.media ?? 0} Bilder`);
+      if (r?.errors?.length) toast.error(`${r.errors.length} Artikel mit Fehlern`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || 'Import fehlgeschlagen');
+    } finally { setImporting(false); }
+  };
+
 
 
   const load = async () => {
@@ -150,7 +166,15 @@ export default function ArtikelListe() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Alle Artikel" subtitle="Zentrale Artikelübersicht des ALIX Product Master" icon={Boxes}
-        actions={canWrite ? <Button onClick={createNew}><Plus className="h-4 w-4 mr-1" />Neuer Artikel</Button> : undefined} />
+        actions={canWrite ? (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={runWebImport} disabled={importing}>
+              {importing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+              Import alix-lasers.de
+            </Button>
+            <Button onClick={createNew}><Plus className="h-4 w-4 mr-1" />Neuer Artikel</Button>
+          </div>
+        ) : undefined} />
 
       <Card><CardContent className="p-3 flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[220px]">
