@@ -16,6 +16,7 @@ import { phTone, phToneClass, PH_STATUS, PH_APPLICATIONS, phSlug } from '@/lib/p
 import { phCreateProduct } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
+import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 
 const db = supabase as any;
 
@@ -194,6 +195,7 @@ export default function ProductHubGeraete() {
                     {canWrite && (
                       <TableCell className="text-center" onClick={e => e.stopPropagation()}>
                         <EnrichProductButton productId={p.id} productName={p.name} variant="icon" onDone={load} />
+                        <WebPreviewButton productId={p.id} product={p} variant="icon" />
                       </TableCell>
                     )}
                   </TableRow>
