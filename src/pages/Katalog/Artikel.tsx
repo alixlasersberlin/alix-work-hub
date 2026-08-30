@@ -38,7 +38,9 @@ const STATUS_TONES: Record<string, string> = {
 
 export default function KatalogArtikel() {
   const { toast } = useToast();
+  const canDelete = useCanDelete();
   const client = supabase as any;
+
   const [rows, setRows] = useState<Item[]>([]);
   const [assignments, setAssignments] = useState<Record<string, string[]>>({});
   const [cats, setCats] = useState<Cat[]>([]);
