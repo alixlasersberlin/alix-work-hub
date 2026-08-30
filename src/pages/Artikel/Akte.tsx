@@ -111,7 +111,6 @@ export default function ArtikelAkte() {
   if (loading) return <div className="p-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!data?.product) return <div className="p-10 text-muted-foreground">Artikel nicht gefunden.</div>;
 
-  const F = (props: any) => <PMField {...props} disabled={!canWrite} />;
 
   const toggleArr = (obj: any, set: any, key: string, v: string) => {
     const cur: string[] = obj[key] || [];
