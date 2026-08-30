@@ -27,6 +27,21 @@ import { pmAddWorkflowStep, pmLoadProduct, pmSetAttributeValue, pmUpsertSection 
 const db = supabase as any;
 const n = (v: any) => (v === '' || v === null || v === undefined ? null : Number(v));
 
+function PMField({ k, label, obj, set, type = 'text', disabled }: any) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type={type}
+        value={obj?.[k] ?? ''}
+        disabled={disabled}
+        onChange={e => set({ ...obj, [k]: e.target.value })}
+      />
+    </div>
+  );
+}
+
+
 export default function ArtikelAkte() {
   const { id = '' } = useParams();
   const { roles } = useAuth();
