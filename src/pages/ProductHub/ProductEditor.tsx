@@ -19,6 +19,7 @@ import {
 import { phGetProduct, phUpdateProduct, phChannelRows, phUpsertChannel } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
+import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 
 const db = supabase as any;
 
