@@ -144,7 +144,13 @@ export default function ProductHubEditor() {
 
         <TabsContent value="smartki">
           <Card><CardContent className="p-4">
-            <SmartKiEditor value={form.smart_ki} disabled={!canWrite} onChange={v => set('smart_ki', v)} />
+            <SmartKiEditor
+              value={form.smart_ki}
+              disabled={!canWrite}
+              productId={id}
+              productName={form.name}
+              onChange={v => set('smart_ki', v)}
+            />
           </CardContent></Card>
         </TabsContent>
 
