@@ -107,7 +107,14 @@ export default function ProductHubGeraete() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Geräte" subtitle="Zentraler Gerätestamm (Master)" icon={Cpu}
-        actions={canWrite ? <Button size="sm" onClick={createNew}><Plus className="w-4 h-4 mr-1" /> Neues Gerät</Button> : undefined} />
+        actions={canWrite ? (
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => { setEnrichRes(null); setEnrichOpen(true); }}>
+              <Sparkles className="w-4 h-4 mr-1" /> Daten anreichern
+            </Button>
+            <Button size="sm" onClick={createNew}><Plus className="w-4 h-4 mr-1" /> Neues Gerät</Button>
+          </div>
+        ) : undefined} />
 
       <Card>
         <CardContent className="p-3 flex flex-wrap gap-2 items-center">
