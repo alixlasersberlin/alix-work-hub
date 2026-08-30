@@ -744,6 +744,7 @@ export const navItems: NavItem[] = [
         roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'],
         children: [
           { path: '/produktion/software', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+          { path: '/software-compliance', label: 'Compliance Workspace', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
           { path: '/produktion/software/traceability', label: 'Traceability Matrix', icon: ListTree, roles: null },
           { path: '/produktion/software/requirements', label: 'Requirements', icon: ListChecks, roles: null },
           { path: '/produktion/software/units', label: 'Software Architecture', icon: Boxes, roles: null },
