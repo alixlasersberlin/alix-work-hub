@@ -16,6 +16,7 @@ import { phTone, phToneClass, PH_STATUS, PH_APPLICATIONS, phSlug } from '@/lib/p
 import { phCreateProduct } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
+import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 
 const db = supabase as any;
 
