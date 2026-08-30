@@ -23,6 +23,8 @@ import {
   pmScoreTone, pmSeoScore, pmStatusLabel, pmWarnings,
 } from '@/lib/produktmaster/config';
 import { pmAddWorkflowStep, pmLoadProduct, pmSetAttributeValue, pmUpsertSection } from '@/lib/produktmaster/api';
+import { SeoAiButton } from '@/components/producthub/SeoAiButton';
+
 
 const db = supabase as any;
 const n = (v: any) => (v === '' || v === null || v === undefined ? null : Number(v));
