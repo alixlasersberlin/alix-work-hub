@@ -680,6 +680,8 @@ const ChCockpit = lazy(() => import("./pages/ContentHub/Cockpit"));
 const ChFreigabe = lazy(() => import("./pages/ContentHub/Freigabe"));
 const PmNeu = lazy(() => import("./pages/Artikel/Neu"));
 const PmAttribute = lazy(() => import("./pages/Artikel/Attribute"));
+const PmAbgleich = lazy(() => import("./pages/Artikel/Abgleich"));
+const PmVergleich = lazy(() => import("./pages/Artikel/Vergleich"));
 const PmAkte = lazy(() => import("./pages/Artikel/Akte"));
 const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
 const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
@@ -2207,6 +2209,8 @@ function AppRoutes() {
           <Route path="/artikel/liste" element={<ProtectedRoute><PmListe /></ProtectedRoute>} />
           <Route path="/artikel/neu" element={<ProtectedRoute><PmNeu /></ProtectedRoute>} />
           <Route path="/artikel/attribute" element={<ProtectedRoute><PmAttribute /></ProtectedRoute>} />
+          <Route path="/artikel/abgleich" element={<ProtectedRoute><PmAbgleich /></ProtectedRoute>} />
+          <Route path="/artikel/vergleich" element={<ProtectedRoute><PmVergleich /></ProtectedRoute>} />
           <Route path="/artikel/:id" element={<ProtectedRoute><PmAkte /></ProtectedRoute>} />
 
           {/* ALIX CONTENT HUB – Edit once, publish everywhere */}

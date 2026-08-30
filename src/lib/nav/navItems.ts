@@ -687,6 +687,8 @@ export const navItems: NavItem[] = [
       { path: '/artikel/liste', label: 'Artikelliste', icon: Cpu, roles: null },
       { path: '/artikel/neu', label: 'Neuer Artikel', icon: Boxes, roles: ['Super Admin', 'Admin', 'Marketing', 'Produktion', 'Vertriebsleitung'] },
       { path: '/artikel/attribute', label: 'Attribute & Merkmale', icon: Settings, roles: ['Super Admin', 'Admin'] },
+      { path: '/artikel/vergleich', label: 'Produktvergleich', icon: Layers, roles: null },
+      { path: '/artikel/abgleich', label: 'Import & Abgleich', icon: Activity, roles: ['Super Admin', 'Admin', 'Marketing', 'Produktion'] },
       { path: '/content-hub', label: 'Content Hub', icon: Layers, roles: ['Super Admin', 'Admin', 'Marketing', 'QM', 'Vertriebsleitung'] },
     ],
   },
