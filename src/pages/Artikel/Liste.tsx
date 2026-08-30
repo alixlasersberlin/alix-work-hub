@@ -10,19 +10,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Boxes, Copy, Loader2, Plus, Search } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Boxes, Copy, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useCanDelete } from '@/hooks/useCanDelete';
 import { PM_CATEGORIES, PM_STATUS, pmQuality, pmScoreTone, pmStatusLabel, pmComplianceLabel, pmComplianceTone } from '@/lib/produktmaster/config';
 import { pmDuplicate } from '@/lib/produktmaster/api';
 
 const db = supabase as any;
 
+const PM_CHILD_TABLES = [
+  'ph_prices', 'ph_price_history', 'ph_compliance', 'ph_seo', 'ph_marketing',
+  'ph_attribute_values', 'ph_variants', 'ph_scope_items', 'ph_workflow_steps',
+  'ph_media', 'ph_documents',
+];
+
 export default function ArtikelListe() {
   const nav = useNavigate();
   const { roles } = useAuth();
+  const canDelete = useCanDelete();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin', 'Marketing', 'Produktion'].includes(r));
+
 
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
@@ -42,6 +52,9 @@ export default function ArtikelListe() {
   const [dupSource, setDupSource] = useState<any>(null);
   const [dup, setDup] = useState({ sku: '', name: '', master: true, tech: true, media: false, documents: false, scope: true, prices: false });
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
@@ -96,6 +109,33 @@ export default function ArtikelListe() {
 
   const createNew = () => nav('/artikel/neu');
 
+  const selIds = useMemo(() => Object.entries(selected).filter(([, v]) => v).map(([k]) => k), [selected]);
+  const allChecked = filtered.length > 0 && filtered.every(({ p }) => selected[p.id]);
+  const toggleAll = (v: boolean) => {
+    const next: Record<string, boolean> = {};
+    if (v) filtered.forEach(({ p }) => { next[p.id] = true; });
+    setSelected(next);
+  };
+
+  const runDelete = async () => {
+    if (selIds.length === 0) return;
+    setBusy(true);
+    try {
+      for (const t of PM_CHILD_TABLES) {
+        await db.from(t).delete().in('product_id', selIds);
+      }
+      const { error } = await db.from('ph_products').delete().in('id', selIds);
+      if (error) throw error;
+      toast.success(`${selIds.length} Artikel gelöscht`);
+      setSelected({});
+      setConfirmDelete(false);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || 'Löschen fehlgeschlagen');
+    } finally { setBusy(false); }
+  };
+
+
   const runDuplicate = async () => {
     if (!dup.sku.trim() || !dup.name.trim()) { toast.error('Neue SKU und Name sind erforderlich'); return; }
     setBusy(true);
@@ -146,19 +186,40 @@ export default function ArtikelListe() {
         <Badge variant="outline">{filtered.length} Artikel</Badge>
       </CardContent></Card>
 
+      {canDelete && selIds.length > 0 && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="p-3 flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium">{selIds.length} Artikel markiert</span>
+            <div className="ml-auto flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setSelected({})}>Auswahl aufheben</Button>
+              <Button variant="destructive" size="sm" disabled={busy} onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-4 w-4 mr-1" />Löschen
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card><CardContent className="p-0">
         {loading ? <div className="p-10 flex justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div> : (
           <Table>
             <TableHeader><TableRow>
+              {canDelete && <TableHead className="w-10"><Checkbox checked={allChecked} onCheckedChange={v => toggleAll(!!v)} aria-label="Alle markieren" /></TableHead>}
               <TableHead>Artikel</TableHead><TableHead>SKU</TableHead><TableHead>Kategorie</TableHead>
               <TableHead>Status</TableHead><TableHead>Compliance</TableHead><TableHead className="text-right">Qualität</TableHead>
               <TableHead className="w-10" />
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Keine Artikel gefunden.</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={canDelete ? 8 : 7} className="text-center py-10 text-muted-foreground">Keine Artikel gefunden.</TableCell></TableRow>}
               {filtered.map(({ p, bundle, quality }) => (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} data-state={selected[p.id] ? 'selected' : undefined}>
+                  {canDelete && (
+                    <TableCell>
+                      <Checkbox checked={!!selected[p.id]} onCheckedChange={v => setSelected(s => ({ ...s, [p.id]: !!v }))} aria-label={`${p.name} markieren`} />
+                    </TableCell>
+                  )}
                   <TableCell>
+
                     <Link to={`/artikel/${p.id}`} className="font-medium text-primary hover:underline">{p.name}</Link>
                     <div className="text-[11px] text-muted-foreground">{p.model || '—'} · {p.brand || 'ALIX'}</div>
                   </TableCell>
@@ -204,6 +265,26 @@ export default function ArtikelListe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDelete} onOpenChange={o => !o && setConfirmDelete(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{selIds.length} Artikel endgültig löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die markierten Artikel werden inklusive Technik-, Preis-, Compliance-, SEO-, Medien- und Dokumentdaten
+              unwiderruflich entfernt. Diese Aktion ist ausschließlich Super Admins vorbehalten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={e => { e.preventDefault(); runDelete(); }} disabled={busy}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {busy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }

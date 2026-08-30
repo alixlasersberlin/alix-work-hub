@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useCanDelete } from '@/hooks/useCanDelete';
+
 import { Plus, Search, Eye, CheckCircle2, Archive, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -38,7 +40,9 @@ const STATUS_TONES: Record<string, string> = {
 
 export default function KatalogArtikel() {
   const { toast } = useToast();
+  const canDelete = useCanDelete();
   const client = supabase as any;
+
   const [rows, setRows] = useState<Item[]>([]);
   const [assignments, setAssignments] = useState<Record<string, string[]>>({});
   const [cats, setCats] = useState<Cat[]>([]);
@@ -209,9 +213,12 @@ export default function KatalogArtikel() {
             <Button variant="outline" size="sm" disabled={busy} onClick={() => bulkStatus('archiviert', 'archiviert')}>
               <Archive className="h-4 w-4 mr-1" />Archivieren
             </Button>
-            <Button variant="outline" size="sm" disabled={busy} onClick={bulkDelete} className="text-red-500 hover:text-red-600">
-              <Trash2 className="h-4 w-4 mr-1" />Löschen
-            </Button>
+            {canDelete && (
+              <Button variant="outline" size="sm" disabled={busy} onClick={bulkDelete} className="text-red-500 hover:text-red-600">
+                <Trash2 className="h-4 w-4 mr-1" />Löschen
+              </Button>
+            )}
+
             <Button variant="ghost" size="sm" onClick={() => setSelected({})}>Auswahl aufheben</Button>
           </div>
         </Card>
