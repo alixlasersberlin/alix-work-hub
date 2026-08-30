@@ -92,6 +92,36 @@ function Field({ k, form, set, disabled, area, ai = true, productId }: any) {
   );
 }
 
+/** Hauptbild: zeigt niemals die Supabase-Domain, sondern eine alixwork.de-Adresse. */
+function HeroImageField({ form, set, disabled }: any) {
+  const [edit, setEdit] = useState(false);
+  const raw = form.hero_image_url ?? '';
+  const masked = displayMediaUrl(raw);
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Hauptbild</Label>
+        {!disabled && (
+          <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground underline"
+            onClick={() => setEdit(v => !v)}>
+            {edit ? 'Fertig' : 'Bearbeiten'}
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        {raw && <img src={raw} alt={form.name || 'Hauptbild'} loading="lazy" className="w-16 h-16 object-cover rounded border border-border" />}
+        <div className="flex-1">
+          {edit
+            ? <Input value={raw} disabled={disabled} onChange={e => set('hero_image_url', e.target.value)} />
+            : <Input value={masked} readOnly title={masked} className="text-muted-foreground" />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
 
 export default function ProductHubEditor() {
   const { id } = useParams();
