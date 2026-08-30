@@ -265,6 +265,26 @@ export default function ArtikelListe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDelete} onOpenChange={o => !o && setConfirmDelete(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{selIds.length} Artikel endgültig löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die markierten Artikel werden inklusive Technik-, Preis-, Compliance-, SEO-, Medien- und Dokumentdaten
+              unwiderruflich entfernt. Diese Aktion ist ausschließlich Super Admins vorbehalten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={e => { e.preventDefault(); runDelete(); }} disabled={busy}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {busy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }
