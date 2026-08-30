@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  AlertTriangle, ArrowLeft, Check, Loader2, Plus, Save, Trash2, X,
+  AlertTriangle, ArrowLeft, Check, Layers, Loader2, Plus, Save, Trash2, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
