@@ -97,9 +97,14 @@ export default function ComplianceSupplierRequests() {
             {current.requirement && <div className="text-[12px] text-muted-foreground whitespace-pre-wrap">{current.requirement}</div>}
           </CardHeader>
           <CardContent className="space-y-3">
-            <div>
+            <div className="space-y-2">
               <Label>Antwort</Label>
               <Textarea rows={5} value={answer} onChange={(e) => setAnswer(e.target.value)} />
+              <AiAssistField
+                value={answer}
+                onChange={setAnswer}
+                hint={`Lieferantenanfrage ${current.request_code}: ${current.topic}. Anforderung: ${current.requirement ?? '—'}`}
+              />
             </div>
             <div>
               <Label>Datei-Link</Label>
