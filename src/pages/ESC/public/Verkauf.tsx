@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, MessageCircle, Phone, Copy, Check } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Copy, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -108,12 +108,7 @@ export default function Verkauf() {
                     WhatsApp Chat starten
                   </a>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="hover-scale">
-                  <a href={`tel:${RAW}`}>
-                    <Phone className="mr-2 h-4 w-4" />
-                    Anrufen
-                  </a>
-                </Button>
+                
                 <Button variant="ghost" size="lg" onClick={copy}>
                   {copied ? (
                     <Check className="mr-2 h-4 w-4 text-primary" />
