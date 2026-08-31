@@ -64,7 +64,7 @@ type TileProps = {
 
 function BookTile({ tone, image, title, desc, trailing, as = 'button', href, target, rel, onClick, id, ...rest }: TileProps) {
   const cls =
-    'group relative w-full text-left overflow-hidden rounded-xl sm:rounded-2xl border ' +
+    'book-tile group relative w-full text-left overflow-hidden rounded-xl sm:rounded-2xl border ' +
     'p-3 pl-3.5 sm:p-4 sm:pl-5 flex items-center gap-3 sm:gap-4 min-h-[76px] sm:min-h-[88px] ' +
     'bg-card transition-all duration-300 motion-reduce:transition-none ' +
     'hover:shadow-lg md:hover:-translate-y-0.5 active:scale-[0.99] ' +
