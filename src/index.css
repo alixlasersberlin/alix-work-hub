@@ -2397,23 +2397,56 @@ html[data-booking-alix] body {
 }
 
 
-/* Kacheln im Alix-Look: monochrom weiß/blau, flach */
+/* Kacheln im Alix-Look: ruhige, abgestufte Blau-Skala statt bunt */
 .theme-alix .book-tile {
+  background-color: #ffffff !important;
   background-image: none !important;
-  border-color: hsl(210 18% 88%) !important;
-  box-shadow: inset 2px 0 0 0 hsl(200 82% 44%) !important;
+  border: 1px solid hsl(210 18% 91%) !important;
+  box-shadow: inset 3px 0 0 0 hsl(200 82% 44% / 0.35) !important;
   border-radius: 2px !important;
+  transition: box-shadow .2s ease, border-color .2s ease, background-color .2s ease;
 }
 .theme-alix .book-tile:hover {
-  border-color: hsl(200 82% 44% / 0.5) !important;
+  border-color: hsl(200 82% 44% / 0.35) !important;
+  background-color: hsl(200 60% 99%) !important;
+  box-shadow: inset 3px 0 0 0 hsl(200 82% 44%) !important;
 }
+/* Icon-Fläche: zarter Blauton, kein hartes Weiß-in-Weiß */
 .theme-alix .book-tile > div:first-child {
-  background: #ffffff !important;
-  border: 1px solid hsl(210 18% 90%) !important;
+  background: hsl(200 60% 98%) !important;
+  border: 1px solid hsl(200 40% 92%) !important;
   border-radius: 2px !important;
+}
+.theme-alix .book-tile:hover > div:first-child {
+  background: hsl(200 65% 96%) !important;
+  border-color: hsl(200 55% 86%) !important;
+}
+/* Titel dunkel, Beschreibung ruhig grau, Pfeil blau */
+.theme-alix .book-tile [class*="text-lg"],
+.theme-alix .book-tile [class*="font-"] {
+  color: hsl(210 22% 18%) !important;
+}
+.theme-alix .book-tile [class*="text-xs"],
+.theme-alix .book-tile [class*="text-sm"] {
+  color: hsl(210 10% 48%) !important;
 }
 .theme-alix .book-tile > span:last-child {
   color: hsl(200 82% 44%) !important;
+}
+
+/* Badges: einheitlich blau, nur echte Warnungen rot */
+.theme-alix .book-tile [class*="rounded-full"][class*="text-"] {
+  background-color: hsl(200 82% 44%) !important;
+  color: #ffffff !important;
+  letter-spacing: 0.08em;
+  font-weight: 400 !important;
+  border-radius: 999px !important;
+}
+.theme-alix .book-tile [class*="bg-red"],
+.theme-alix .book-tile [class*="bg-rose"],
+.theme-alix .book-tile [class*="bg-destructive"] {
+  background-color: hsl(2 68% 48%) !important;
+  color: #ffffff !important;
 }
 
 /* Kein blauer/getönter Flächen-Hintergrund im Alix-Look */
@@ -2432,4 +2465,5 @@ html[data-booking-alix] body {
   background-color: #ffffff !important;
   background-image: none !important;
 }
+
 
