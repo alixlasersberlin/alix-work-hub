@@ -290,9 +290,16 @@ export default function ComplianceTaskDetail() {
                 <SelectContent>{DEFER_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>Kommentar (Pflicht)</Label>
               <Textarea rows={3} value={deferComment} onChange={(e) => setDeferComment(e.target.value)} />
+              <AiAssistField
+                value={deferComment}
+                onChange={setDeferComment}
+                taskId={task.id}
+                hint={`Begründung für die Zurückstellung. Grund: ${deferReason}`}
+                modes={['draft', 'improve', 'shorten']}
+              />
             </div>
             <div>
               <Label>Wiedervorlage (optional)</Label>
