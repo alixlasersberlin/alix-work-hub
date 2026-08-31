@@ -2326,144 +2326,165 @@ html[data-booking-creme] body {
 }
 
 /* ============================================================
-   BOOKING ALIX — Design im Look von alix-lasers.de
-   Scope: .theme-alix (Route /book-alix). Beeinflusst /book nicht.
+   BOOKING ALIX — Dunkles Premium-Design (Route /book-alix)
+   Scope: .theme-alix. Beeinflusst /book nicht.
    ============================================================ */
 html[data-booking-alix] body {
-  background: hsl(0 0% 100%) !important;
+  background: hsl(212 34% 8%) !important;
 }
 
 .theme-alix {
-  --background: 0 0% 100%;
-  --foreground: 210 20% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 210 20% 12%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 210 20% 12%;
-  --primary: 200 82% 44%;             /* Alix Blau */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 205 30% 96%;
-  --secondary-foreground: 210 20% 16%;
-  --muted: 210 20% 96.5%;
-  --muted-foreground: 210 10% 45%;
-  --accent: 200 70% 95%;
-  --accent-foreground: 200 60% 24%;
-  --destructive: 0 65% 46%;
+  --background: 212 34% 8%;
+  --foreground: 205 30% 94%;
+  --card: 212 30% 11%;
+  --card-foreground: 205 30% 94%;
+  --popover: 212 30% 11%;
+  --popover-foreground: 205 30% 94%;
+  --primary: 195 90% 52%;             /* Alix Blau, leuchtend */
+  --primary-foreground: 212 40% 8%;
+  --secondary: 212 26% 15%;
+  --secondary-foreground: 205 30% 92%;
+  --muted: 212 24% 14%;
+  --muted-foreground: 205 14% 66%;
+  --accent: 195 60% 18%;
+  --accent-foreground: 195 90% 78%;
+  --destructive: 2 72% 52%;
   --destructive-foreground: 0 0% 100%;
-  --border: 210 18% 90%;
-  --input: 210 18% 90%;
-  --ring: 200 82% 48%;
-  --radius: 0.25rem;
+  --border: 210 20% 22%;
+  --input: 210 20% 22%;
+  --ring: 195 90% 55%;
+  --radius: 0.5rem;
+  position: relative;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-weight: 300;
   letter-spacing: 0.01em;
+  isolation: isolate;
 }
 
-/* Feine, weit gesperrte Typografie wie auf alix-lasers.de */
+/* Atmosphäre: weicher Verlauf + feines Raster + Cursor-Spotlight (JS setzt --mx/--my) */
+.theme-alix::before,
+.theme-alix::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.theme-alix::before {
+  background:
+    radial-gradient(900px 520px at 12% -8%, hsl(195 90% 52% / 0.16), transparent 70%),
+    radial-gradient(760px 480px at 92% 6%, hsl(215 90% 55% / 0.13), transparent 70%),
+    linear-gradient(180deg, hsl(212 34% 9%), hsl(212 36% 6%));
+}
+.theme-alix::after {
+  background:
+    radial-gradient(420px 420px at var(--mx, 50%) var(--my, 30%), hsl(195 95% 60% / 0.10), transparent 65%),
+    repeating-linear-gradient(0deg, hsl(0 0% 100% / 0.028) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(90deg, hsl(0 0% 100% / 0.028) 0 1px, transparent 1px 64px);
+  transition: background-position .2s ease;
+}
+.theme-alix > * { position: relative; z-index: 1; }
+
+/* Typografie */
 .theme-alix h1,
 .theme-alix h2,
-.theme-alix h3,
-.theme-alix .font-semibold,
-.theme-alix .font-bold {
+.theme-alix h3 {
   font-weight: 300 !important;
   letter-spacing: 0.02em;
+  color: hsl(205 40% 97%);
 }
-
-.theme-alix [class*="uppercase"] {
-  letter-spacing: 0.22em;
-}
-
-/* Flache, klare Flächen statt Schatten */
-.theme-alix .shadow-sm,
-.theme-alix .shadow,
-.theme-alix .shadow-md,
-.theme-alix .shadow-lg,
-.theme-alix .shadow-xl,
-.theme-alix .shadow-2xl {
-  box-shadow: none !important;
-}
-
-.theme-alix [data-slot="card"],
-.theme-alix .rounded-2xl,
-.theme-alix .rounded-xl,
-.theme-alix .rounded-lg {
-  border-radius: 2px;
-}
-
+.theme-alix [class*="uppercase"] { letter-spacing: 0.22em; }
 .theme-alix button,
-.theme-alix a[role="button"] {
-  letter-spacing: 0.08em;
+.theme-alix a[role="button"] { letter-spacing: 0.08em; }
+
+/* Glas-Flächen statt Weiß */
+.theme-alix [data-slot="card"] {
+  background: linear-gradient(180deg, hsl(212 28% 14% / 0.85), hsl(212 30% 11% / 0.85)) !important;
+  border: 1px solid hsl(205 30% 100% / 0.08) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
 }
 
-
-/* Kacheln im Alix-Look: ruhige, abgestufte Blau-Skala statt bunt */
+/* Kacheln: dunkles Glas, blauer Glow beim Hover */
 .theme-alix .book-tile {
-  background-color: #ffffff !important;
-  background-image: none !important;
-  border: 1px solid hsl(210 18% 91%) !important;
-  box-shadow: inset 3px 0 0 0 hsl(200 82% 44% / 0.35) !important;
-  border-radius: 2px !important;
-  transition: box-shadow .2s ease, border-color .2s ease, background-color .2s ease;
+  background: linear-gradient(180deg, hsl(212 28% 15% / 0.9), hsl(212 30% 11% / 0.9)) !important;
+  background-image: linear-gradient(180deg, hsl(212 28% 15% / 0.9), hsl(212 30% 11% / 0.9)) !important;
+  border: 1px solid hsl(205 40% 100% / 0.09) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.04) inset;
+  backdrop-filter: blur(8px);
+  transform: translateZ(0);
+  transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s ease,
+              border-color .28s ease, background-color .28s ease;
 }
 .theme-alix .book-tile:hover {
-  border-color: hsl(200 82% 44% / 0.35) !important;
-  background-color: hsl(200 60% 99%) !important;
-  box-shadow: inset 3px 0 0 0 hsl(200 82% 44%) !important;
+  transform: translateY(-4px);
+  border-color: hsl(195 90% 60% / 0.45) !important;
+  box-shadow:
+    0 18px 40px -18px hsl(195 90% 50% / 0.45),
+    0 0 0 1px hsl(195 90% 60% / 0.18);
 }
-/* Icon-Fläche: zarter Blauton, kein hartes Weiß-in-Weiß */
 .theme-alix .book-tile > div:first-child {
-  background: hsl(200 60% 98%) !important;
-  border: 1px solid hsl(200 40% 92%) !important;
-  border-radius: 2px !important;
+  background: linear-gradient(140deg, hsl(195 90% 52% / 0.20), hsl(215 90% 55% / 0.10)) !important;
+  border: 1px solid hsl(195 90% 60% / 0.22) !important;
+  border-radius: 10px !important;
+  color: hsl(195 95% 72%) !important;
+  transition: transform .28s ease, box-shadow .28s ease;
 }
 .theme-alix .book-tile:hover > div:first-child {
-  background: hsl(200 65% 96%) !important;
-  border-color: hsl(200 55% 86%) !important;
+  transform: scale(1.06);
+  box-shadow: 0 0 22px -6px hsl(195 95% 60% / 0.6);
 }
-/* Titel dunkel, Beschreibung ruhig grau, Pfeil blau */
+.theme-alix .book-tile svg { color: hsl(195 95% 72%) !important; }
 .theme-alix .book-tile [class*="text-lg"],
-.theme-alix .book-tile [class*="font-"] {
-  color: hsl(210 22% 18%) !important;
-}
+.theme-alix .book-tile [class*="font-"] { color: hsl(205 35% 96%) !important; }
 .theme-alix .book-tile [class*="text-xs"],
-.theme-alix .book-tile [class*="text-sm"] {
-  color: hsl(210 10% 48%) !important;
-}
+.theme-alix .book-tile [class*="text-sm"] { color: hsl(205 16% 70%) !important; }
 .theme-alix .book-tile > span:last-child {
-  color: hsl(200 82% 44%) !important;
+  color: hsl(195 95% 68%) !important;
+  transition: transform .28s ease;
 }
+.theme-alix .book-tile:hover > span:last-child { transform: translateX(4px); }
 
-/* Badges: einheitlich blau, nur echte Warnungen rot */
+/* Badges */
 .theme-alix .book-tile [class*="rounded-full"][class*="text-"] {
-  background-color: hsl(200 82% 44%) !important;
-  color: #ffffff !important;
+  background: linear-gradient(90deg, hsl(195 90% 52%), hsl(210 90% 58%)) !important;
+  color: hsl(212 40% 8%) !important;
   letter-spacing: 0.08em;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
   border-radius: 999px !important;
 }
 .theme-alix .book-tile [class*="bg-red"],
 .theme-alix .book-tile [class*="bg-rose"],
 .theme-alix .book-tile [class*="bg-destructive"] {
-  background-color: hsl(2 68% 48%) !important;
-  color: #ffffff !important;
+  background: linear-gradient(90deg, hsl(2 78% 55%), hsl(14 84% 55%)) !important;
+  color: #fff !important;
 }
 
-/* Kein blauer/getönter Flächen-Hintergrund im Alix-Look */
-.theme-alix,
-.theme-alix [class*="bg-gradient"],
+/* Helle Tailwind-Flächen im dunklen Theme neutralisieren */
+.theme-alix [class*="bg-white"],
 .theme-alix [class*="bg-muted"],
 .theme-alix [class*="bg-card"],
 .theme-alix [class*="bg-background"],
-.theme-alix [class*="bg-primary/"],
-.theme-alix [class*="bg-accent"],
-.theme-alix [class*="bg-secondary"],
-.theme-alix [class*="bg-blue"],
-.theme-alix [class*="bg-sky"],
-.theme-alix [class*="bg-cyan"],
-.theme-alix [class*="bg-indigo"] {
-  background-color: #ffffff !important;
+.theme-alix [class*="bg-secondary"] {
+  background-color: hsl(212 28% 13% / 0.7) !important;
   background-image: none !important;
 }
+
+/* Scroll-Reveal (JS vergibt data-reveal) */
+.theme-alix [data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.2,1);
+}
+.theme-alix [data-reveal="in"] { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-alix *,
+  .theme-alix [data-reveal] { transition: none !important; }
+  .theme-alix [data-reveal] { opacity: 1; transform: none; }
+}
+
 
 
