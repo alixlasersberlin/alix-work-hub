@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ComplianceTask, ComplianceTaskStep, DEFER_REASONS, TASK_STATUS_CLASS, TASK_STATUS_LABEL,
 } from '@/lib/compliance/tasks';
+import AiAssistField from '@/components/compliance/AiAssistField';
 
 export default function ComplianceTaskDetail() {
   const { taskId } = useParams();
