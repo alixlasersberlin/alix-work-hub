@@ -947,6 +947,7 @@ const EchHistory = lazy(() => import("./pages/ESC/ech/History"));
 const EchSettingsPage = lazy(() => import("./pages/ESC/ech/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscBookingPortalCreme = lazy(() => import("./pages/ESC/public/BookingPortalCreme"));
+const EscBookingPortalAlix = lazy(() => import("./pages/ESC/public/BookingPortalAlix"));
 const BookRedirect = lazy(() => import("./pages/BookRedirect"));
 const MediapaketWizard = lazy(() => import("./pages/mediapaket/MediapaketWizard"));
 const BookTechnik = lazy(() => import("./pages/ESC/public/Technik"));
@@ -1337,6 +1338,10 @@ function AppRoutes() {
         <Route path="/book-creme" element={<EscBookingPortalCreme />} />
         <Route path="/book-creme/:department" element={<EscBookingPortalCreme />} />
         <Route path="/book-creme/:department/:service" element={<EscBookingPortalCreme />} />
+        {/* Alix-Lasers-Design-Variante (weiß / Alix-Blau) für die Einbindung auf alix-lasers.de */}
+        <Route path="/book-alix" element={<EscBookingPortalAlix />} />
+        <Route path="/book-alix/:department" element={<EscBookingPortalAlix />} />
+        <Route path="/book-alix/:department/:service" element={<EscBookingPortalAlix />} />
         <Route path="/book/mediapaket" element={<MediapaketWizard />} />
         <Route path="/book/technik" element={<BookTechnik />} />
         <Route path="/book/verkauf" element={<BookVerkauf />} />
