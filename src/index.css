@@ -2396,3 +2396,22 @@ html[data-booking-alix] body {
   letter-spacing: 0.08em;
 }
 
+
+/* Kacheln im Alix-Look: monochrom weiß/blau, flach */
+.theme-alix .book-tile {
+  background-image: none !important;
+  border-color: hsl(210 18% 88%) !important;
+  box-shadow: inset 2px 0 0 0 hsl(200 82% 44%) !important;
+  border-radius: 2px !important;
+}
+.theme-alix .book-tile:hover {
+  border-color: hsl(200 82% 44% / 0.5) !important;
+}
+.theme-alix .book-tile > div:first-child {
+  background: hsl(200 70% 97%) !important;
+  border: 1px solid hsl(210 18% 90%) !important;
+  border-radius: 2px !important;
+}
+.theme-alix .book-tile > span:last-child {
+  color: hsl(200 82% 44%) !important;
+}
