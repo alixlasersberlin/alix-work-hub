@@ -23,7 +23,9 @@ export default function ComplianceMyTasks() {
     (async () => {
       setLoading(true);
       const [{ data: t }, { data: p }] = await Promise.all([
-        (supabase as any).from('compliance_tasks').select('*').eq('assignee_id', user.id).order('task_no', { ascending: true }),
+        (supabase as any).from('compliance_tasks').select('*')
+          .or(`assignee_id.eq.${user.id},co_assignee_ids.cs.{${user.id}}`)
+          .order('task_no', { ascending: true }),
         (supabase as any).from('compliance_projects').select('id, code, name'),
       ]);
       setTasks((t as ComplianceTask[]) || []);
