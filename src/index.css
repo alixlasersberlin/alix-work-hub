@@ -2330,39 +2330,40 @@ html[data-booking-creme] body {
    Scope: .theme-alix. Beeinflusst /book nicht.
    ============================================================ */
 html[data-booking-alix] body {
-  background: hsl(212 34% 8%) !important;
+  background: hsl(30 33% 99%) !important;
 }
 
 .theme-alix {
-  --background: 212 34% 8%;
-  --foreground: 205 30% 94%;
-  --card: 212 30% 11%;
-  --card-foreground: 205 30% 94%;
-  --popover: 212 30% 11%;
-  --popover-foreground: 205 30% 94%;
-  --primary: 195 90% 52%;             /* Alix Blau, leuchtend */
-  --primary-foreground: 212 40% 8%;
-  --secondary: 212 26% 15%;
-  --secondary-foreground: 205 30% 92%;
-  --muted: 212 24% 14%;
-  --muted-foreground: 205 14% 66%;
-  --accent: 195 60% 18%;
-  --accent-foreground: 195 90% 78%;
-  --destructive: 2 72% 52%;
+  --background: 30 33% 99%;            /* Pearl #FDFCFB */
+  --foreground: 217 33% 17%;           /* slate-800 */
+  --card: 0 0% 100%;
+  --card-foreground: 217 33% 17%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 217 33% 17%;
+  --primary: 224 64% 33%;              /* Navy #1E3A8A */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 30 25% 96%;
+  --secondary-foreground: 217 33% 17%;
+  --muted: 30 25% 97%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 38 44% 92%;
+  --accent-foreground: 38 47% 40%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --border: 210 20% 22%;
-  --input: 210 20% 22%;
-  --ring: 195 90% 55%;
-  --radius: 0.5rem;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 38 47% 56%;                  /* Gold #C5A059 */
+  --gold: 38 47% 56%;
+  --radius: 1rem;
   position: relative;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-weight: 300;
-  letter-spacing: 0.01em;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
   isolation: isolate;
 }
 
-/* Atmosphäre: weicher Verlauf + feines Raster + Cursor-Spotlight (JS setzt --mx/--my) */
+/* Atmosphäre: sehr helle Perlflächen + zarter Cursor-Schimmer */
 .theme-alix::before,
 .theme-alix::after {
   content: '';
@@ -2373,102 +2374,120 @@ html[data-booking-alix] body {
 }
 .theme-alix::before {
   background:
-    radial-gradient(900px 520px at 12% -8%, hsl(195 90% 52% / 0.16), transparent 70%),
-    radial-gradient(760px 480px at 92% 6%, hsl(215 90% 55% / 0.13), transparent 70%),
-    linear-gradient(180deg, hsl(212 34% 9%), hsl(212 36% 6%));
+    radial-gradient(900px 560px at 10% -10%, hsl(38 60% 88% / 0.55), transparent 70%),
+    radial-gradient(760px 500px at 95% 0%, hsl(224 64% 60% / 0.10), transparent 70%),
+    linear-gradient(180deg, hsl(30 40% 100%), hsl(30 25% 97%));
 }
 .theme-alix::after {
-  background:
-    radial-gradient(420px 420px at var(--mx, 50%) var(--my, 30%), hsl(195 95% 60% / 0.10), transparent 65%),
-    repeating-linear-gradient(0deg, hsl(0 0% 100% / 0.028) 0 1px, transparent 1px 64px),
-    repeating-linear-gradient(90deg, hsl(0 0% 100% / 0.028) 0 1px, transparent 1px 64px);
-  transition: background-position .2s ease;
+  background: radial-gradient(460px 460px at var(--mx, 50%) var(--my, 30%), hsl(38 60% 60% / 0.10), transparent 65%);
 }
 .theme-alix > * { position: relative; z-index: 1; }
 
-/* Typografie */
+/* Typografie: Playfair für Überschriften */
 .theme-alix h1,
 .theme-alix h2,
 .theme-alix h3 {
-  font-weight: 300 !important;
-  letter-spacing: 0.02em;
-  color: hsl(205 40% 97%);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600 !important;
+  letter-spacing: 0;
+  color: hsl(222 47% 11%);
 }
-.theme-alix [class*="uppercase"] { letter-spacing: 0.22em; }
-.theme-alix button,
-.theme-alix a[role="button"] { letter-spacing: 0.08em; }
+.theme-alix [class*="uppercase"] { letter-spacing: 0.18em; }
 
-/* Glas-Flächen statt Weiß */
+/* Karten: reines Weiß, weiche Schatten */
 .theme-alix [data-slot="card"] {
-  background: linear-gradient(180deg, hsl(212 28% 14% / 0.85), hsl(212 30% 11% / 0.85)) !important;
-  border: 1px solid hsl(205 30% 100% / 0.08) !important;
-  backdrop-filter: blur(10px);
-  border-radius: 10px;
+  background: #fff !important;
+  border: 1px solid hsl(214 32% 94%) !important;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px hsl(215 25% 27% / 0.05);
 }
 
-/* Kacheln: dunkles Glas, blauer Glow beim Hover */
+/* Kacheln: weiß, goldener Akzentbalken links, sanftes Anheben */
 .theme-alix .book-tile {
-  background: linear-gradient(180deg, hsl(212 28% 15% / 0.9), hsl(212 30% 11% / 0.9)) !important;
-  background-image: linear-gradient(180deg, hsl(212 28% 15% / 0.9), hsl(212 30% 11% / 0.9)) !important;
-  border: 1px solid hsl(205 40% 100% / 0.09) !important;
-  border-radius: 10px !important;
-  box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.04) inset;
-  backdrop-filter: blur(8px);
-  transform: translateZ(0);
-  transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s ease,
-              border-color .28s ease, background-color .28s ease;
+  position: relative;
+  overflow: hidden;
+  background: #fff !important;
+  background-image: none !important;
+  border: 1px solid hsl(214 32% 94%) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 1px 2px hsl(215 25% 27% / 0.05);
+  transition: transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s ease, border-color .3s ease;
 }
+.theme-alix .book-tile::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 6px;
+  background: hsl(var(--gold));
+  transition: background-color .3s ease;
+}
+.theme-alix .book-tile:nth-child(even)::before { background: hsl(var(--primary)); }
 .theme-alix .book-tile:hover {
-  transform: translateY(-4px);
-  border-color: hsl(195 90% 60% / 0.45) !important;
-  box-shadow:
-    0 18px 40px -18px hsl(195 90% 50% / 0.45),
-    0 0 0 1px hsl(195 90% 60% / 0.18);
+  transform: translateY(-3px);
+  border-color: hsl(214 32% 90%) !important;
+  box-shadow: 0 18px 40px -18px hsl(215 25% 27% / 0.28);
 }
+
+/* Icon-Fläche */
 .theme-alix .book-tile > div:first-child {
-  background: linear-gradient(140deg, hsl(195 90% 52% / 0.20), hsl(215 90% 55% / 0.10)) !important;
-  border: 1px solid hsl(195 90% 60% / 0.22) !important;
-  border-radius: 10px !important;
-  color: hsl(195 95% 72%) !important;
-  transition: transform .28s ease, box-shadow .28s ease;
+  background: hsl(36 33% 97%) !important;
+  border: 1px solid hsl(36 30% 92%) !important;
+  border-radius: 0.85rem !important;
+  color: hsl(var(--gold)) !important;
+  transition: background-color .3s ease, color .3s ease;
 }
+.theme-alix .book-tile:nth-child(even) > div:first-child { color: hsl(var(--primary)) !important; }
 .theme-alix .book-tile:hover > div:first-child {
-  transform: scale(1.06);
-  box-shadow: 0 0 22px -6px hsl(195 95% 60% / 0.6);
+  background: hsl(var(--gold)) !important;
+  border-color: hsl(var(--gold)) !important;
+  color: #fff !important;
 }
-.theme-alix .book-tile svg { color: hsl(195 95% 72%) !important; }
+.theme-alix .book-tile:nth-child(even):hover > div:first-child {
+  background: hsl(var(--primary)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+.theme-alix .book-tile svg { color: inherit !important; }
 .theme-alix .book-tile [class*="text-lg"],
-.theme-alix .book-tile [class*="font-"] { color: hsl(205 35% 96%) !important; }
+.theme-alix .book-tile [class*="font-"] {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: hsl(222 47% 11%) !important;
+}
 .theme-alix .book-tile [class*="text-xs"],
-.theme-alix .book-tile [class*="text-sm"] { color: hsl(205 16% 70%) !important; }
+.theme-alix .book-tile [class*="text-sm"] {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: hsl(215 16% 47%) !important;
+}
 .theme-alix .book-tile > span:last-child {
-  color: hsl(195 95% 68%) !important;
-  transition: transform .28s ease;
+  color: hsl(var(--gold)) !important;
+  transition: transform .3s ease;
 }
 .theme-alix .book-tile:hover > span:last-child { transform: translateX(4px); }
 
-/* Badges */
+/* Badges: dezent, nur Warnungen rot */
 .theme-alix .book-tile [class*="rounded-full"][class*="text-"] {
-  background: linear-gradient(90deg, hsl(195 90% 52%), hsl(210 90% 58%)) !important;
-  color: hsl(212 40% 8%) !important;
-  letter-spacing: 0.08em;
-  font-weight: 500 !important;
+  background: hsl(224 64% 33% / 0.07) !important;
+  color: hsl(var(--primary)) !important;
+  letter-spacing: 0.10em;
+  font-weight: 600 !important;
   border-radius: 999px !important;
 }
 .theme-alix .book-tile [class*="bg-red"],
 .theme-alix .book-tile [class*="bg-rose"],
 .theme-alix .book-tile [class*="bg-destructive"] {
-  background: linear-gradient(90deg, hsl(2 78% 55%), hsl(14 84% 55%)) !important;
-  color: #fff !important;
+  background: hsl(0 72% 51% / 0.10) !important;
+  color: hsl(0 72% 45%) !important;
 }
 
-/* Helle Tailwind-Flächen im dunklen Theme neutralisieren */
+/* Helle Tailwind-Flächen sauber halten */
 .theme-alix [class*="bg-white"],
-.theme-alix [class*="bg-muted"],
 .theme-alix [class*="bg-card"],
-.theme-alix [class*="bg-background"],
+.theme-alix [class*="bg-background"] {
+  background-color: #fff !important;
+  background-image: none !important;
+}
+.theme-alix [class*="bg-muted"],
 .theme-alix [class*="bg-secondary"] {
-  background-color: hsl(212 28% 13% / 0.7) !important;
+  background-color: hsl(30 25% 97%) !important;
   background-image: none !important;
 }
 
@@ -2485,6 +2504,7 @@ html[data-booking-alix] body {
   .theme-alix [data-reveal] { transition: none !important; }
   .theme-alix [data-reveal] { opacity: 1; transform: none; }
 }
+
 
 
 
