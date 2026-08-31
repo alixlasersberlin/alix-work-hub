@@ -20,6 +20,7 @@ export interface ComplianceTask {
   priority: string;
   progress: number;
   assignee_id: string | null;
+  co_assignee_ids?: string[] | null;
   reviewer_id: string | null;
   due_date: string | null;
   defer_reason: string | null;
