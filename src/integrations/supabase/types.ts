@@ -15782,6 +15782,7 @@ export type Database = {
         Row: {
           assignee_id: string | null
           category: string | null
+          co_assignee_ids: string[]
           completed_at: string | null
           created_at: string
           defer_comment: string | null
@@ -15808,6 +15809,7 @@ export type Database = {
         Insert: {
           assignee_id?: string | null
           category?: string | null
+          co_assignee_ids?: string[]
           completed_at?: string | null
           created_at?: string
           defer_comment?: string | null
@@ -15834,6 +15836,7 @@ export type Database = {
         Update: {
           assignee_id?: string | null
           category?: string | null
+          co_assignee_ids?: string[]
           completed_at?: string | null
           created_at?: string
           defer_comment?: string | null
