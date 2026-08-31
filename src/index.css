@@ -2156,7 +2156,9 @@ html [data-radix-popper-content-wrapper] *::after {
    sonst landen Select/Popover-Dropdowns außerhalb des Viewports und
    Dialog-Animationen (zoom-in/slide) werden überschrieben. */
 html :is([data-radix-portal], [data-radix-popper-content-wrapper]) {
-  z-index: 2147483646 !important;
+  /* Muss >= Dialog-Ebene sein, sonst liegen Select/Popover-Dropdowns
+     hinter einem geöffneten Dialog und wirken "nicht bedienbar". */
+  z-index: 2147483647 !important;
   pointer-events: auto !important;
 }
 
