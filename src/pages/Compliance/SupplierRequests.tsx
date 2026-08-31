@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import AiAssistField from '@/components/compliance/AiAssistField';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 
