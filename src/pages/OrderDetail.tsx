@@ -291,15 +291,30 @@ export default function OrderDetail() {
     setSavingDeposit(true);
     const depositChanged = !!order?.deposit_ok !== depositOk || (order?.deposit_ok_by || '') !== depositBy.trim();
     const depositJustConfirmed = depositOk && !order?.deposit_ok;
-    const parsedAmount = depositAmount.trim() ? parseFloat(depositAmount.replace(',', '.')) : null;
+    // Schutz: ein leeres Betragsfeld darf einen bereits hinterlegten Betrag NICHT löschen
+    // (z. B. wenn die Seite den Wert nicht geladen hatte). Löschen nur bewusst mit "0".
+    const storedAmount = order?.deposit_amount != null ? Number(order.deposit_amount) : null;
+    let parsedAmount = depositAmount.trim() ? parseFloat(depositAmount.replace(',', '.')) : null;
+    if (parsedAmount == null && storedAmount != null && storedAmount > 0) {
+      parsedAmount = storedAmount;
+      setDepositAmount(String(storedAmount));
+      toast.info(`Hinterlegte Anzahlung ${storedAmount.toLocaleString('de-DE')} € beibehalten (Feld war leer).`);
+    }
+    const storedAdditional = order?.deposit_additional != null ? Number(order.deposit_additional) : null;
+    let parsedAdditional = depositAdditional.trim() ? parseFloat(depositAdditional.replace(',', '.')) : null;
+    if (parsedAdditional == null && storedAdditional != null && storedAdditional > 0) {
+      parsedAdditional = storedAdditional;
+      setDepositAdditional(String(storedAdditional));
+    }
     const { error } = await supabase.from('orders').update({
       deposit_ok: depositOk,
       deposit_ok_by: depositOk ? depositBy.trim() : null,
       deposit_ok_at: depositOk ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
       deposit_amount: parsedAmount,
-      deposit_additional: depositAdditional.trim() ? parseFloat(depositAdditional.replace(',', '.')) : null,
+      deposit_additional: parsedAdditional,
       deposit_booking_date: depositOk && depositBookingDate ? depositBookingDate : null,
     } as any).eq('id', id!);
+
     setSavingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
     toast.success('Anzahlung gespeichert');
