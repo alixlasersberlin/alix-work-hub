@@ -175,6 +175,29 @@ export default function OrderDetail() {
     }
   }, [activeTab]);
 
+  // Beim Öffnen des Anzahlungs-Tabs die Werte immer frisch aus der Datenbank holen,
+  // damit nie mit veralteten/leeren Feldern gespeichert wird.
+  useEffect(() => {
+    if (!id || activeTab !== 'deposit') return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('deposit_amount, deposit_additional, deposit_ok, deposit_ok_by, deposit_booking_date')
+        .eq('id', id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setOrder((prev: any) => (prev ? { ...prev, ...data } : prev));
+      setDepositOk(!!(data as any).deposit_ok);
+      setDepositBy((data as any).deposit_ok_by || '');
+      setDepositAmount((data as any).deposit_amount != null ? String((data as any).deposit_amount) : '');
+      setDepositAdditional((data as any).deposit_additional != null ? String((data as any).deposit_additional) : '');
+      setDepositBookingDate((data as any).deposit_booking_date || '');
+    })();
+    return () => { cancelled = true; };
+  }, [id, activeTab]);
+
+
   useEffect(() => {
     if (!id) return;
     loadAll();
