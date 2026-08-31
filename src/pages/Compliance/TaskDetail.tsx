@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ComplianceTask, ComplianceTaskStep, DEFER_REASONS, TASK_STATUS_CLASS, TASK_STATUS_LABEL,
 } from '@/lib/compliance/tasks';
+import AiAssistField from '@/components/compliance/AiAssistField';
 
 export default function ComplianceTaskDetail() {
   const { taskId } = useParams();
@@ -207,12 +208,21 @@ export default function ComplianceTaskDetail() {
           </CardHeader>
           <CardContent className="space-y-2">
             {s.input_type === 'file' ? (
-              <Input
-                placeholder="Link zum Nachweis (URL)"
-                value={s.file_url || ''}
-                disabled={readOnly}
-                onChange={(e) => setStepFile(s.id, e.target.value)}
-              />
+              <>
+                <Input
+                  placeholder="Link zum Nachweis (URL)"
+                  value={s.file_url || ''}
+                  disabled={readOnly}
+                  onChange={(e) => setStepFile(s.id, e.target.value)}
+                />
+                <Textarea
+                  rows={3}
+                  placeholder="Beschreibung / Kommentar zum Nachweis"
+                  value={s.value || ''}
+                  disabled={readOnly}
+                  onChange={(e) => setStepValue(s.id, e.target.value)}
+                />
+              </>
             ) : s.input_type === 'number' ? (
               <Input
                 type="number"
@@ -226,6 +236,16 @@ export default function ComplianceTaskDetail() {
                 value={s.value || ''}
                 disabled={readOnly}
                 onChange={(e) => setStepValue(s.id, e.target.value)}
+              />
+            )}
+            {s.input_type !== 'number' && (
+              <AiAssistField
+                value={s.value || ''}
+                onChange={(v) => setStepValue(s.id, v)}
+                taskId={task.id}
+                stepId={s.id}
+                hint={`${s.label}${s.hint ? ` – ${s.hint}` : ''}`}
+                disabled={readOnly}
               />
             )}
           </CardContent>
@@ -270,9 +290,16 @@ export default function ComplianceTaskDetail() {
                 <SelectContent>{DEFER_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>Kommentar (Pflicht)</Label>
               <Textarea rows={3} value={deferComment} onChange={(e) => setDeferComment(e.target.value)} />
+              <AiAssistField
+                value={deferComment}
+                onChange={setDeferComment}
+                taskId={task.id}
+                hint={`Begründung für die Zurückstellung. Grund: ${deferReason}`}
+                modes={['draft', 'improve', 'shorten']}
+              />
             </div>
             <div>
               <Label>Wiedervorlage (optional)</Label>

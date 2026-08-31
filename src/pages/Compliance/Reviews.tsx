@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import AiAssistField from '@/components/compliance/AiAssistField';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ComplianceTask, ComplianceTaskStep } from '@/lib/compliance/tasks';
 
@@ -92,9 +93,16 @@ export default function ComplianceReviews() {
                 {s.file_url && <a href={s.file_url} target="_blank" rel="noreferrer" className="text-[11px] text-primary underline">Nachweis öffnen</a>}
               </div>
             ))}
-            <div>
+            <div className="space-y-2">
               <div className="text-[12px] mb-1">Kommentar (Pflicht bei Ablehnung)</div>
               <Textarea rows={3} value={comment} onChange={(e) => setComment(e.target.value)} />
+              <AiAssistField
+                value={comment}
+                onChange={setComment}
+                taskId={active?.id}
+                hint="Review-Kommentar des Prüfers zu dieser Compliance-Aufgabe"
+                modes={['draft', 'improve', 'shorten', 'check']}
+              />
             </div>
           </div>
           <DialogFooter className="gap-2">
