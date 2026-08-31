@@ -139,12 +139,16 @@ export default function ComplianceTaskDetail() {
   const defer = async () => {
     if (!task) return;
     if (!deferComment.trim()) { toast.error('Bitte einen Kommentar angeben.'); return; }
-    await (supabase as any).from('compliance_tasks').update({
+    const { data, error } = await (supabase as any).from('compliance_tasks').update({
       status: 'deferred',
       defer_reason: deferReason,
       defer_comment: deferComment,
       defer_until: deferUntil || null,
-    }).eq('id', task.id);
+    }).eq('id', task.id).select('id');
+    if (error || !data || data.length === 0) {
+      toast.error(`Zurückstellen fehlgeschlagen: ${error?.message || 'Keine Berechtigung.'}`);
+      return;
+    }
     await logCompliance('task_deferred', { reason: deferReason }, { projectId: task.project_id, taskId: task.id });
     setDeferOpen(false);
     toast.success('Aufgabe zurückgestellt – sie bleibt offen.');
