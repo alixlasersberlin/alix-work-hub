@@ -59,8 +59,8 @@ export default function ComplianceTaskDetail() {
   const doneSteps = steps.filter((s) => s.done || (s.value && s.value.trim())).length;
   const pct = totalSteps ? Math.round((doneSteps / totalSteps) * 100) : task?.progress ?? 0;
 
-  const persist = useCallback(async (silent = true) => {
-    if (!task || readOnly) return;
+  const persist = useCallback(async (silent = true): Promise<boolean> => {
+    if (!task || readOnly) return false;
     setSaving(true);
     const updates = steps.map((s) => ({
       id: s.id,
@@ -68,19 +68,34 @@ export default function ComplianceTaskDetail() {
       file_url: s.file_url,
       done: !!(s.value && s.value.trim()) || s.done,
     }));
-    for (const u of updates) {
-      await (supabase as any).from('compliance_task_steps').update({ value: u.value, file_url: u.file_url, done: u.done }).eq('id', u.id);
+    try {
+      for (const u of updates) {
+        const { data, error } = await (supabase as any)
+          .from('compliance_task_steps')
+          .update({ value: u.value, file_url: u.file_url, done: u.done })
+          .eq('id', u.id)
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Keine Berechtigung zum Speichern dieser Aufgabe.');
+      }
+      const { data: td, error: te } = await (supabase as any).from('compliance_tasks').update({
+        progress: pct,
+        status: task.status === 'ready' || task.status === 'rejected' ? 'in_progress' : task.status,
+        last_saved_at: new Date().toISOString(),
+      }).eq('id', task.id).select('id');
+      if (te) throw te;
+      if (!td || td.length === 0) throw new Error('Keine Berechtigung zum Speichern dieser Aufgabe.');
+    } catch (e: any) {
+      setSaving(false);
+      toast.error(`Speichern fehlgeschlagen: ${e?.message || 'Unbekannter Fehler'}`);
+      return false;
     }
-    await (supabase as any).from('compliance_tasks').update({
-      progress: pct,
-      status: task.status === 'ready' || task.status === 'rejected' ? 'in_progress' : task.status,
-      last_saved_at: new Date().toISOString(),
-    }).eq('id', task.id);
     setSaving(false);
     setSavedAt(new Date());
     dirty.current = false;
     if (!silent) toast.success('Zwischengespeichert');
     await logCompliance('task_saved', { progress: pct }, { projectId: task.project_id, taskId: task.id });
+    return true;
   }, [task, steps, pct, readOnly]);
 
   // Autosave nach Feldänderung / Schrittwechsel
@@ -106,24 +121,34 @@ export default function ComplianceTaskDetail() {
       toast.error(`Bitte alle Pflichtangaben ausfüllen (${missing.length} offen).`);
       return;
     }
-    await persist(true);
-    await (supabase as any).from('compliance_tasks').update({
+    const ok = await persist(true);
+    if (!ok) return;
+    const { data, error } = await (supabase as any).from('compliance_tasks').update({
       status: 'in_review', submitted_at: new Date().toISOString(), progress: 100,
-    }).eq('id', task.id);
+    }).eq('id', task.id).select('id');
+    if (error || !data || data.length === 0) {
+      toast.error(`Einreichen fehlgeschlagen: ${error?.message || 'Keine Berechtigung.'}`);
+      return;
+    }
     await logCompliance('task_submitted', {}, { projectId: task.project_id, taskId: task.id });
     toast.success('Aufgabe zur Prüfung eingereicht');
     navigate('/software-compliance/aufgaben');
   };
 
+
   const defer = async () => {
     if (!task) return;
     if (!deferComment.trim()) { toast.error('Bitte einen Kommentar angeben.'); return; }
-    await (supabase as any).from('compliance_tasks').update({
+    const { data, error } = await (supabase as any).from('compliance_tasks').update({
       status: 'deferred',
       defer_reason: deferReason,
       defer_comment: deferComment,
       defer_until: deferUntil || null,
-    }).eq('id', task.id);
+    }).eq('id', task.id).select('id');
+    if (error || !data || data.length === 0) {
+      toast.error(`Zurückstellen fehlgeschlagen: ${error?.message || 'Keine Berechtigung.'}`);
+      return;
+    }
     await logCompliance('task_deferred', { reason: deferReason }, { projectId: task.project_id, taskId: task.id });
     setDeferOpen(false);
     toast.success('Aufgabe zurückgestellt – sie bleibt offen.');
