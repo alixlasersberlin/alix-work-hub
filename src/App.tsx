@@ -1338,6 +1338,10 @@ function AppRoutes() {
         <Route path="/book-creme" element={<EscBookingPortalCreme />} />
         <Route path="/book-creme/:department" element={<EscBookingPortalCreme />} />
         <Route path="/book-creme/:department/:service" element={<EscBookingPortalCreme />} />
+        {/* Alix-Lasers-Design-Variante (weiß / Alix-Blau) für die Einbindung auf alix-lasers.de */}
+        <Route path="/book-alix" element={<EscBookingPortalAlix />} />
+        <Route path="/book-alix/:department" element={<EscBookingPortalAlix />} />
+        <Route path="/book-alix/:department/:service" element={<EscBookingPortalAlix />} />
         <Route path="/book/mediapaket" element={<MediapaketWizard />} />
         <Route path="/book/technik" element={<BookTechnik />} />
         <Route path="/book/verkauf" element={<BookVerkauf />} />
