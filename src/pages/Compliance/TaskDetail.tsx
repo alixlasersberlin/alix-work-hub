@@ -207,12 +207,21 @@ export default function ComplianceTaskDetail() {
           </CardHeader>
           <CardContent className="space-y-2">
             {s.input_type === 'file' ? (
-              <Input
-                placeholder="Link zum Nachweis (URL)"
-                value={s.file_url || ''}
-                disabled={readOnly}
-                onChange={(e) => setStepFile(s.id, e.target.value)}
-              />
+              <>
+                <Input
+                  placeholder="Link zum Nachweis (URL)"
+                  value={s.file_url || ''}
+                  disabled={readOnly}
+                  onChange={(e) => setStepFile(s.id, e.target.value)}
+                />
+                <Textarea
+                  rows={3}
+                  placeholder="Beschreibung / Kommentar zum Nachweis"
+                  value={s.value || ''}
+                  disabled={readOnly}
+                  onChange={(e) => setStepValue(s.id, e.target.value)}
+                />
+              </>
             ) : s.input_type === 'number' ? (
               <Input
                 type="number"
@@ -226,6 +235,16 @@ export default function ComplianceTaskDetail() {
                 value={s.value || ''}
                 disabled={readOnly}
                 onChange={(e) => setStepValue(s.id, e.target.value)}
+              />
+            )}
+            {s.input_type !== 'number' && (
+              <AiAssistField
+                value={s.value || ''}
+                onChange={(v) => setStepValue(s.id, v)}
+                taskId={task.id}
+                stepId={s.id}
+                hint={`${s.label}${s.hint ? ` – ${s.hint}` : ''}`}
+                disabled={readOnly}
               />
             )}
           </CardContent>
