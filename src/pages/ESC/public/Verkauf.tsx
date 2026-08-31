@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, MessageCircle, Phone, Copy, Check } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Copy, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
