@@ -2324,3 +2324,75 @@ html[data-booking-creme] body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+/* ============================================================
+   BOOKING ALIX — Design im Look von alix-lasers.de
+   Scope: .theme-alix (Route /book-alix). Beeinflusst /book nicht.
+   ============================================================ */
+html[data-booking-alix] body {
+  background: hsl(0 0% 100%) !important;
+}
+
+.theme-alix {
+  --background: 0 0% 100%;
+  --foreground: 210 20% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 20% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 20% 12%;
+  --primary: 200 82% 44%;             /* Alix Blau */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 205 30% 96%;
+  --secondary-foreground: 210 20% 16%;
+  --muted: 210 20% 96.5%;
+  --muted-foreground: 210 10% 45%;
+  --accent: 200 70% 95%;
+  --accent-foreground: 200 60% 24%;
+  --destructive: 0 65% 46%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 18% 90%;
+  --input: 210 18% 90%;
+  --ring: 200 82% 48%;
+  --radius: 0.25rem;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+/* Feine, weit gesperrte Typografie wie auf alix-lasers.de */
+.theme-alix h1,
+.theme-alix h2,
+.theme-alix h3,
+.theme-alix .font-semibold,
+.theme-alix .font-bold {
+  font-weight: 300 !important;
+  letter-spacing: 0.02em;
+}
+
+.theme-alix [class*="uppercase"] {
+  letter-spacing: 0.22em;
+}
+
+/* Flache, klare Flächen statt Schatten */
+.theme-alix .shadow-sm,
+.theme-alix .shadow,
+.theme-alix .shadow-md,
+.theme-alix .shadow-lg,
+.theme-alix .shadow-xl,
+.theme-alix .shadow-2xl {
+  box-shadow: none !important;
+}
+
+.theme-alix [data-slot="card"],
+.theme-alix .rounded-2xl,
+.theme-alix .rounded-xl,
+.theme-alix .rounded-lg {
+  border-radius: 2px;
+}
+
+.theme-alix button,
+.theme-alix a[role="button"] {
+  letter-spacing: 0.08em;
+}
+
