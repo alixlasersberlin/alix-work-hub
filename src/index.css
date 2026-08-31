@@ -2408,10 +2408,28 @@ html[data-booking-alix] body {
   border-color: hsl(200 82% 44% / 0.5) !important;
 }
 .theme-alix .book-tile > div:first-child {
-  background: hsl(200 70% 97%) !important;
+  background: #ffffff !important;
   border: 1px solid hsl(210 18% 90%) !important;
   border-radius: 2px !important;
 }
 .theme-alix .book-tile > span:last-child {
   color: hsl(200 82% 44%) !important;
 }
+
+/* Kein blauer/getönter Flächen-Hintergrund im Alix-Look */
+.theme-alix,
+.theme-alix [class*="bg-gradient"],
+.theme-alix [class*="bg-muted"],
+.theme-alix [class*="bg-card"],
+.theme-alix [class*="bg-background"],
+.theme-alix [class*="bg-primary/"],
+.theme-alix [class*="bg-accent"],
+.theme-alix [class*="bg-secondary"],
+.theme-alix [class*="bg-blue"],
+.theme-alix [class*="bg-sky"],
+.theme-alix [class*="bg-cyan"],
+.theme-alix [class*="bg-indigo"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
