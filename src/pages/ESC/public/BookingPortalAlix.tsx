@@ -1,12 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import BookingPortal from './BookingPortal';
 
 /**
  * Alix-Lasers-Design-Variante des öffentlichen Buchungsportals (/book-alix).
- * Rein visuelle Kopie im Look von alix-lasers.de (Weiß / Alix-Blau, feine Typografie).
+ * Dunkles Premium-Design mit Cursor-Spotlight und Scroll-Reveal.
  * Die Originalseiten /book und /book-creme bleiben unverändert.
  */
 export default function BookingPortalAlix() {
+  const rootRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const html = document.documentElement;
     const prevTheme = html.getAttribute('data-theme');
@@ -32,9 +34,66 @@ export default function BookingPortalAlix() {
     };
   }, []);
 
+  // Cursor-Spotlight
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    let raf = 0;
+    const onMove = (e: PointerEvent) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        el.style.setProperty('--mx', `${e.clientX}px`);
+        el.style.setProperty('--my', `${e.clientY}px`);
+      });
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  // Scroll-Reveal für Kacheln/Karten (auch bei Navigation im Wizard)
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).dataset.reveal = 'in';
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08 },
+    );
+
+    const scan = () => {
+      el.querySelectorAll<HTMLElement>('.book-tile, [data-slot="card"]').forEach((node, i) => {
+        if (node.dataset.reveal) return;
+        node.dataset.reveal = 'out';
+        node.style.transitionDelay = `${Math.min(i, 10) * 45}ms`;
+        io.observe(node);
+      });
+    };
+
+    scan();
+    const mo = new MutationObserver(() => scan());
+    mo.observe(el, { childList: true, subtree: true });
+    return () => {
+      mo.disconnect();
+      io.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="theme-alix min-h-dvh">
+    <div ref={rootRef} className="theme-alix min-h-dvh">
       <BookingPortal />
     </div>
   );
 }
+
