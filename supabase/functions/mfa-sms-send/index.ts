@@ -92,9 +92,11 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .gte("created_at", hourAgo)
       .order("created_at", { ascending: false });
-    if ((recent?.length ?? 0) >= 6) return json({ error: "rate_limited" }, 429);
+    // Hinweis statt HTTP-Fehler: der Client zeigt nur einen Hinweistext,
+    // ein 429 würde im Browser als App-Fehler auftauchen.
+    if ((recent?.length ?? 0) >= 6) return json({ error: "rate_limited" }, 200);
     if (recent?.[0] && Date.now() - new Date(recent[0].created_at).getTime() < 60_000) {
-      return json({ error: "cooldown" }, 429);
+      return json({ error: "cooldown" }, 200);
     }
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
