@@ -38,6 +38,7 @@ import AccessDenied from "./pages/AccessDenied";
 import MfaSetup from "./pages/MfaSetup";
 import MfaChallenge from "./pages/MfaChallenge";
 import MfaRecovery from "./pages/MfaRecovery";
+import SelTest from "./pages/SelTest";
 import AppLayout from "./components/AppLayout";
 import { AccountingRegionProvider } from "./contexts/AccountingRegionContext";
 import NotFound from "./pages/NotFound";
@@ -1317,6 +1318,7 @@ function AppRoutes() {
       <Routes>
         {/* Öffentliche Landing-Page: / und /login zeigen IMMER nur Landing, niemals Redirect */}
         <Route path="/" element={<Landing />} />
+        <Route path="/__seltest" element={<SelTest />} />
         <Route path="/login" element={<Landing />} />
         {/* Verdeckte Login-Aliasse (nicht im Menü, nicht in Sitemap, noindex) */}
         <Route path="/alix-control" element={user ? <Navigate to={postLoginTarget()} replace /> : <CovertLogin />} />
