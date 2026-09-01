@@ -283,13 +283,17 @@ Deno.serve(async (req) => {
     const perPage = Math.min(Math.max(body.per_page ?? 200, 1), 200);
     const maxPages = Math.min(Math.max(body.max_pages ?? 15, 1), 40);
 
+    const dryRun = body.dry_run === true;
     const startedAt = new Date();
-    const { data: runRow } = await admin
-      .from("zoho_auto_import_runs")
-      .insert({ trigger_type: triggerType, status: "running", sources, created_by: userId })
-      .select("id")
-      .single();
-    runId = runRow?.id ?? null;
+    if (!dryRun) {
+      const { data: runRow } = await admin
+        .from("zoho_auto_import_runs")
+        .insert({ trigger_type: triggerType, status: "running", sources, created_by: userId })
+        .select("id")
+        .single();
+      runId = runRow?.id ?? null;
+    }
+
 
     let newCount = 0, changedCount = 0, unchanged = 0, failed = 0, processed = 0;
     const changes: ChangeEntry[] = [];
