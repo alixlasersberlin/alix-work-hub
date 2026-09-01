@@ -11,12 +11,15 @@ type Payload = {
   /** Quellsysteme, standardmässig beide Mandanten */
   sources?: string[];
   date_from?: string;
+  date_to?: string;
   per_page?: number;
   max_pages?: number;
   /** 'cron' | 'manual' */
   trigger_type?: string;
   /** true = nur Test-Mail mit Beispielinhalt senden, kein Import */
   test_email?: boolean;
+  /** true = nur zählen, nichts schreiben, keine Mail */
+  dry_run?: boolean;
   /** Empfänger überschreiben (optional) */
   to?: string;
   cc?: string;
@@ -281,13 +284,17 @@ Deno.serve(async (req) => {
     const perPage = Math.min(Math.max(body.per_page ?? 200, 1), 200);
     const maxPages = Math.min(Math.max(body.max_pages ?? 15, 1), 40);
 
+    const dryRun = body.dry_run === true;
     const startedAt = new Date();
-    const { data: runRow } = await admin
-      .from("zoho_auto_import_runs")
-      .insert({ trigger_type: triggerType, status: "running", sources, created_by: userId })
-      .select("id")
-      .single();
-    runId = runRow?.id ?? null;
+    if (!dryRun) {
+      const { data: runRow } = await admin
+        .from("zoho_auto_import_runs")
+        .insert({ trigger_type: triggerType, status: "running", sources, created_by: userId })
+        .select("id")
+        .single();
+      runId = runRow?.id ?? null;
+    }
+
 
     let newCount = 0, changedCount = 0, unchanged = 0, failed = 0, processed = 0;
     const changes: ChangeEntry[] = [];
@@ -302,9 +309,11 @@ Deno.serve(async (req) => {
       let page = 1, hasMore = true;
       while (hasMore && page <= maxPages) {
         if (Date.now() - startedAt.getTime() > SOFT_DEADLINE_MS) { hasMore = false; break; }
+        const desc = !!body.date_to;
         const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
-          `&page=${page}&per_page=${perPage}&date_after=${dateFrom}` +
-          `&filter_by=Status.All&sort_column=date&sort_order=A`;
+          `&page=${page}&per_page=${perPage}&date_start=${dateFrom}` +
+          (body.date_to ? `&date_end=${body.date_to}` : "") +
+          `&filter_by=Status.All&sort_column=date&sort_order=${desc ? "D" : "A"}`;
         const r = await fetch(url, { headers: authH });
         if (!r.ok) { failed++; break; }
         const d = await r.json();
@@ -312,9 +321,14 @@ Deno.serve(async (req) => {
         hasMore = d.page_context?.has_more_page === true;
 
         for (const inv of invoices) {
+          // Sicherheitsnetz: Zoho ignoriert die Datumsfilter teilweise -> hier hart filtern
+          const invDate = (inv.date ?? "") as string;
+          if (invDate && invDate < dateFrom) { if (desc) { hasMore = false; break; } continue; }
+          if (body.date_to && invDate && invDate > body.date_to) continue;
           processed++;
           try {
             const invId = String(inv.invoice_id);
+
             const region = detectInvoiceRegion(inv);
             const billing = inv.billing_address ?? null;
             const payload = {
@@ -356,8 +370,10 @@ Deno.serve(async (req) => {
                   .limit(1).maybeSingle();
                 if (dupNum) { unchanged++; continue; }
               }
-              const { error: insErr } = await admin.from("zoho_invoices").insert(payload);
-              if (insErr) throw insErr;
+              if (!dryRun) {
+                const { error: insErr } = await admin.from("zoho_invoices").insert(payload);
+                if (insErr) throw insErr;
+              }
               newCount++;
               changes.push({
                 kind: "new", source_system: sourceSystem,
@@ -386,6 +402,10 @@ Deno.serve(async (req) => {
         }
         page++;
       }
+    }
+
+    if (dryRun) {
+      return json({ success: true, dry_run: true, sources, date_from: dateFrom, would_import: newCount, changed: changedCount, unchanged, failed, processed, preview: changes.slice(0, 100) });
     }
 
     // Benachrichtigung
