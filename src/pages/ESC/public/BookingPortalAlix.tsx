@@ -92,10 +92,53 @@ export default function BookingPortalAlix() {
     };
   }, []);
 
+  const scrollToPortal = () => {
+    const target = rootRef.current?.querySelector('#book-alix-portal');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div ref={rootRef} className="theme-alix min-h-dvh">
-      <BookingPortal />
+      {showHero && (
+        <section className="alix-hero">
+          <div className="mx-auto w-full max-w-5xl px-5 py-14 sm:py-20 text-center">
+            <span className="alix-hero-eyebrow">
+              <Sparkles className="w-3.5 h-3.5" aria-hidden />
+              Alix Lasers · Service &amp; Beratung
+            </span>
+            <h1 className="alix-hero-title">Ihr Termin bei Alix – in unter 60 Sekunden gebucht</h1>
+            <p className="alix-hero-sub">
+              Beratung, Technik-Support, Angebote und Auftragsstatus: Wählen Sie Ihr Anliegen und
+              erhalten Sie sofort eine Bestätigung – persönlich betreut von unserem Team.
+            </p>
+            <div className="alix-hero-cta">
+              <button type="button" onClick={scrollToPortal} className="alix-btn-primary">
+                <CalendarCheck className="w-[18px] h-[18px]" aria-hidden />
+                Termin jetzt buchen
+                <ArrowRight className="w-4 h-4 alix-btn-arrow" aria-hidden />
+              </button>
+              <a
+                href="https://wa.me/491711651000"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="alix-btn-secondary"
+              >
+                <MessageCircle className="w-[18px] h-[18px]" aria-hidden />
+                Direkt per WhatsApp
+              </a>
+            </div>
+            <p className="alix-hero-trust">
+              <ShieldCheck className="w-3.5 h-3.5" aria-hidden />
+              Kostenlos &amp; unverbindlich · Antwort meist innerhalb weniger Minuten
+            </p>
+          </div>
+        </section>
+      )}
+      <div id="book-alix-portal" className="scroll-mt-4">
+        <BookingPortal />
+      </div>
     </div>
   );
 }
+
 
