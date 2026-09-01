@@ -60,12 +60,15 @@
             document.documentElement.removeAttribute('data-aurora');
           }
           // Öffentliche Beratungsstrecken: heller, neutraler Hintergrund ohne Aurora/Weltkarte.
-          if (/^\/(beratung|angebot|beratung-alix|book-creme)(\/|$)/.test(location.pathname)) {
+          if (/^\/(beratung|angebot|beratung-alix|book-creme|book-alix)(\/|$)/.test(location.pathname)) {
             document.documentElement.setAttribute('data-public-wizard', '1');
             document.documentElement.removeAttribute('data-aurora');
             document.documentElement.classList.remove('dark');
             document.documentElement.classList.add('light');
             document.documentElement.setAttribute('data-theme', 'light');
+          }
+          if (/^\/book-alix(\/|$)/.test(location.pathname)) {
+            document.documentElement.setAttribute('data-booking-alix', '1');
           }
 
         } catch (e) { /* ignore */ }
