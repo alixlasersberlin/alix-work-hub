@@ -75,6 +75,10 @@ function StageCard({
   };
 
   const onApprove = async () => {
+    if (!unlocked) { toast.error('Vorherige Freigabestufe ist noch nicht abgeschlossen.'); return; }
+    if (!mayApprove) { toast.error(`Freigabe nur durch: ${def.roles.join(', ')}`); return; }
+    if (missing.length > 0) { toast.error(`Fehlende Pflichtprüfpunkte: ${missing.join(', ')}`); return; }
+    if (!signature) { toast.error('Bitte zuerst digital unterschreiben.'); return; }
     setBusy(true);
     try {
       const updated = await approveStage({ approval, stage, checks, comment, signature, userId: user?.id ?? null, userName, orderNumber });
@@ -85,9 +89,10 @@ function StageCard({
         void autoFinalizeRelease(updated);
       }
       reload();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(e?.message ?? 'Freigabe fehlgeschlagen'); }
     finally { setBusy(false); }
   };
+
 
 
   return (
