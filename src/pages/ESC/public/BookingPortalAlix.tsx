@@ -199,7 +199,7 @@ export default function BookingPortalAlix() {
                 <Sparkles className="w-3.5 h-3.5" aria-hidden />
                 Alix Lasers · Service &amp; Beratung
               </span>
-              <h1 className="alix-hero-title">Ihr Termin bei Alix – in unter 60 Sekunden gebucht</h1>
+              <h1 className="alix-hero-title">Ihr Termin bei Alix</h1>
               <p className="alix-hero-sub">
                 Beratung, Technik-Support, Angebote und Auftragsstatus: Wählen Sie Ihr Anliegen und
                 erhalten Sie sofort eine Bestätigung – persönlich betreut von unserem Team.
