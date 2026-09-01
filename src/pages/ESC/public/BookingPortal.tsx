@@ -104,7 +104,7 @@ function BookTile({ tone, image, title, desc, trailing, as = 'button', href, tar
 
 
 
-export default function BookingPortal() {
+export default function BookingPortal({ intro }: { intro?: React.ReactNode } = {}) {
   const { department: deptParam, service: serviceParam } = useParams();
   const navigate = useNavigate();
   const { departments } = useDepartments();
@@ -375,6 +375,7 @@ export default function BookingPortal() {
 
   return (
     <BookingLayout step={stepIndex + 1} totalSteps={STEPS.length} hideLegalLinks>
+      {intro}
       <div className="hidden md:flex items-center gap-2 text-[11.5px] text-muted-foreground">
         {STEPS.map((s, i) => (
           <div key={s} className={`flex items-center gap-1 ${i === stepIndex ? 'text-primary font-medium' : ''}`}>
