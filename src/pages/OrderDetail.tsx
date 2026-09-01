@@ -551,6 +551,18 @@ export default function OrderDetail() {
             else toast.error(r.message);
           },
         },
+        {
+          key: 'email-transfer', label: 'Status TRANSFER senden', icon: Truck,
+          disabled: sendingEmail || !customer?.email,
+          title: !customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Transportstatus an Kunde senden',
+          onClick: async () => {
+            setSendingEmail(true);
+            const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_in_transit');
+            setSendingEmail(false);
+            if (r.ok) { toast.success(r.message); loadAll(); }
+            else toast.error(r.message);
+          },
+        },
         ...(hasRole('Super Admin') ? [{
           key: 'auftragsbestaetigung-email', label: 'Auftragsbestätigung Email', icon: Mail,
           onClick: () => setSearchParams({ tab: 'confirmation' }),
