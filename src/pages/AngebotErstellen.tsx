@@ -75,6 +75,7 @@ export default function AngebotErstellen() {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [itemSearch, setItemSearch] = useState('');
+  const [itemListOpen, setItemListOpen] = useState(false);
   const [offerNumber, setOfferNumber] = useState(`${sofortMode ? 'AUF' : 'ANG'}-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
   // Synchroner Spiegel der Vorgangs-Stammnummer: State-Updates sind innerhalb
