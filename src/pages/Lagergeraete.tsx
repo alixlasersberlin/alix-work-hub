@@ -1768,43 +1768,60 @@ export default function Lagergeraete({
             ) : (
               <RadioGroup value={pickedTemplate} onValueChange={setPickedTemplate} className="space-y-2">
                 {allTemplates.map((t) => (
-                  <label
+                  <div
                     key={t.template_key}
-                    htmlFor={`tpl-${t.template_key}`}
-                    className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer hover:bg-accent/50"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setPickedTemplate(t.template_key)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPickedTemplate(t.template_key); } }}
+                    className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-accent/50 ${pickedTemplate === t.template_key ? 'border-primary bg-accent/40' : 'border-border'}`}
                   >
-                    <RadioGroupItem id={`tpl-${t.template_key}`} value={t.template_key} className="mt-1" />
+                    <RadioGroupItem id={`tpl-${t.template_key}`} value={t.template_key} className="mt-1 pointer-events-none" />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm">{t.display_name}</div>
                       <div className="text-xs text-muted-foreground truncate">{t.subject}</div>
                       <div className="text-[10px] text-muted-foreground/70 mt-0.5"><code>{t.template_key}</code></div>
                     </div>
-                  </label>
+                  </div>
                 ))}
               </RadioGroup>
             )}
           </div>
+          {(!pickedTemplate || !reservedOrderId) && (
+            <p className="text-xs text-muted-foreground">
+              {!reservedOrderId
+                ? 'Kein Auftrag zugeordnet – bitte zuerst einen Auftrag zum Gerät reservieren.'
+                : 'Bitte zuerst eine Vorlage auswählen.'}
+            </p>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setTemplatePickerOpen(false)}>Abbrechen</Button>
             <Button
-              disabled={!pickedTemplate || sendingManualEmail || !reservedOrderId}
+              disabled={sendingManualEmail}
               onClick={async () => {
-                if (!reservedOrderId || !pickedTemplate) return;
+                if (!reservedOrderId) { toast.warning('Kein Auftrag zugeordnet – bitte zuerst einen Auftrag reservieren.'); return; }
+                if (!pickedTemplate) { toast.warning('Bitte eine Vorlage auswählen.'); return; }
                 setSendingManualEmail(true);
-                const res = await sendCustomerShippingNotice(
-                  reservedOrderId,
-                  editingId ?? undefined,
-                  'manuell',
-                  pickedTemplate as any,
-                );
-                setSendingManualEmail(false);
-                if (res.ok) { toast.success('Kunden-E-Mail versendet'); setTemplatePickerOpen(false); }
-                else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
+                try {
+                  const res = await sendCustomerShippingNotice(
+                    reservedOrderId,
+                    editingId ?? undefined,
+                    'manuell',
+                    pickedTemplate as any,
+                  );
+                  if (res.ok) { toast.success('Kunden-E-Mail versendet'); setTemplatePickerOpen(false); }
+                  else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
+                } catch (e: any) {
+                  toast.error('Fehler beim Versand: ' + (e?.message ?? 'unbekannt'));
+                } finally {
+                  setSendingManualEmail(false);
+                }
               }}
             >
               {sendingManualEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
               Jetzt senden
             </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
