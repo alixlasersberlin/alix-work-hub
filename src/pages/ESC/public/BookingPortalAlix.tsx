@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { ArrowRight, CalendarCheck, MessageCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import BookingPortal from './BookingPortal';
 
 /**
