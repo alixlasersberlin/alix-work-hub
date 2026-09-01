@@ -1841,30 +1841,37 @@ export default function AngebotErstellen() {
           }}
         />
 
-        <div className="relative z-20">
+        <div
+          className="relative z-20"
+          onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setItemListOpen(false); }}
+        >
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Artikel aus Katalog hinzufügen (Name, SKU)..."
             value={itemSearch}
-            onChange={e => setItemSearch(e.target.value)}
+            onFocus={() => setItemListOpen(true)}
+            onClick={() => setItemListOpen(true)}
+            onChange={e => { setItemSearch(e.target.value); setItemListOpen(true); }}
             className="pl-10 bg-secondary border-border"
           />
-          {itemSearch && (
+          {(itemListOpen || itemSearch) && (
             <div
               className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
               onWheel={e => e.stopPropagation()}
             >
               <div className="bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border flex items-center justify-between">
-                <span>{filteredItems.length} Treffer</span>
+                <span>{itemSearch ? `${filteredItems.length} Treffer` : `Vorauswahl · ${filteredItems.length} von ${items.length} Artikeln`}</span>
                 <button
                   type="button"
-                  onClick={() => setItemSearch('')}
+                  onClick={() => { setItemSearch(''); setItemListOpen(false); }}
                   className="text-muted-foreground hover:text-foreground"
                 >Schließen</button>
               </div>
               <ScrollArea className="h-80">
                 {filteredItems.length === 0 ? (
-                  <p className="p-3 text-sm text-muted-foreground text-center">Keine Artikel gefunden.</p>
+                  <p className="p-3 text-sm text-muted-foreground text-center">
+                    {items.length === 0 ? 'Katalog wird geladen…' : 'Keine Artikel gefunden.'}
+                  </p>
                 ) : filteredItems.map(i => (
                   <button
                     key={i.id}
@@ -1879,6 +1886,7 @@ export default function AngebotErstellen() {
             </div>
           )}
         </div>
+
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
