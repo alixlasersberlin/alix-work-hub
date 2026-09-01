@@ -362,8 +362,10 @@ Deno.serve(async (req) => {
                   .limit(1).maybeSingle();
                 if (dupNum) { unchanged++; continue; }
               }
-              const { error: insErr } = await admin.from("zoho_invoices").insert(payload);
-              if (insErr) throw insErr;
+              if (!dryRun) {
+                const { error: insErr } = await admin.from("zoho_invoices").insert(payload);
+                if (insErr) throw insErr;
+              }
               newCount++;
               changes.push({
                 kind: "new", source_system: sourceSystem,
