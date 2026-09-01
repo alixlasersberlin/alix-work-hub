@@ -104,39 +104,45 @@ export default function BookingPortalAlix() {
     <div ref={rootRef} className="theme-alix min-h-dvh">
       {showHero && (
         <section className="alix-hero">
-          <div className="mx-auto w-full max-w-5xl px-5 py-14 sm:py-20 text-center">
-            <span className="alix-hero-eyebrow">
-              <Sparkles className="w-3.5 h-3.5" aria-hidden />
-              Alix Lasers · Service &amp; Beratung
-            </span>
-            <h1 className="alix-hero-title">Ihr Termin bei Alix – in unter 60 Sekunden gebucht</h1>
-            <p className="alix-hero-sub">
-              Beratung, Technik-Support, Angebote und Auftragsstatus: Wählen Sie Ihr Anliegen und
-              erhalten Sie sofort eine Bestätigung – persönlich betreut von unserem Team.
-            </p>
-            <div className="alix-hero-cta">
-              <button type="button" onClick={scrollToPortal} className="alix-btn-primary">
-                <CalendarCheck className="w-[18px] h-[18px]" aria-hidden />
-                Termin jetzt buchen
-                <ArrowRight className="w-4 h-4 alix-btn-arrow" aria-hidden />
-              </button>
-              <a
-                href="https://wa.me/491711651000"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="alix-btn-secondary"
-              >
-                <MessageCircle className="w-[18px] h-[18px]" aria-hidden />
-                Direkt per WhatsApp
-              </a>
+          <div className="alix-hero-inner mx-auto w-full max-w-6xl px-5 py-14 sm:py-20 grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div className="text-center lg:text-left">
+              <img src={alixLogo} alt="Alix Lasers" className="alix-hero-logo" width={320} height={96} />
+              <span className="alix-hero-eyebrow">
+                <Sparkles className="w-3.5 h-3.5" aria-hidden />
+                Alix Lasers · Service &amp; Beratung
+              </span>
+              <h1 className="alix-hero-title">Ihr Termin bei Alix – in unter 60 Sekunden gebucht</h1>
+              <p className="alix-hero-sub">
+                Beratung, Technik-Support, Angebote und Auftragsstatus: Wählen Sie Ihr Anliegen und
+                erhalten Sie sofort eine Bestätigung – persönlich betreut von unserem Team.
+              </p>
+              <div className="alix-hero-cta">
+                <button type="button" onClick={scrollToPortal} className="alix-btn-primary">
+                  <CalendarCheck className="w-[18px] h-[18px]" aria-hidden />
+                  Termin jetzt buchen
+                  <ArrowRight className="w-4 h-4 alix-btn-arrow" aria-hidden />
+                </button>
+                <a
+                  href="https://wa.me/491711651000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="alix-btn-secondary"
+                >
+                  <MessageCircle className="w-[18px] h-[18px]" aria-hidden />
+                  Direkt per WhatsApp
+                </a>
+              </div>
+              <p className="alix-hero-trust">
+                <ShieldCheck className="w-3.5 h-3.5" aria-hidden />
+                Kostenlos &amp; unverbindlich · Antwort meist innerhalb weniger Minuten
+              </p>
             </div>
-            <p className="alix-hero-trust">
-              <ShieldCheck className="w-3.5 h-3.5" aria-hidden />
-              Kostenlos &amp; unverbindlich · Antwort meist innerhalb weniger Minuten
-            </p>
+
+            <HeroScheduler onConfirm={scrollToPortal} />
           </div>
         </section>
       )}
+
       <div id="book-alix-portal" className="scroll-mt-4">
         <BookingPortal />
       </div>
