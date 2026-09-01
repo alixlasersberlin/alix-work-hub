@@ -396,6 +396,10 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (dryRun) {
+      return json({ success: true, dry_run: true, sources, date_from: dateFrom, would_import: newCount, changed: changedCount, unchanged, failed, processed, preview: changes.slice(0, 100) });
+    }
+
     // Benachrichtigung
     let emailSent = false, emailError: string | null = null;
     try {
