@@ -1,9 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { MessageCircle, ArrowRight, Clock } from 'lucide-react';
 import BookingPortal from './BookingPortal';
 
-const WA_NUMBER = '491711651000';
 
 /**
  * Alix-Lasers-Design-Variante des öffentlichen Buchungsportals (/book-alix).
@@ -110,32 +108,6 @@ export default function BookingPortalAlix() {
               automatisch ein Ticket erstellt.
             </p>
           </header>
-          <div className="alix-wa-card">
-
-            <span className="alix-wa-eyebrow">
-              <MessageCircle className="w-3.5 h-3.5" aria-hidden />
-              Verkauf
-            </span>
-            <h2 className="alix-wa-title">Direkt mit dem Verkauf per WhatsApp</h2>
-            <p className="alix-wa-sub">
-              Angebote, Preise, Verfügbarkeiten und Beratung – schreiben Sie uns direkt. Wir
-              antworten meist innerhalb weniger Minuten.
-            </p>
-            <a
-              href={`https://wa.me/${WA_NUMBER}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="alix-wa-cta"
-            >
-              <MessageCircle className="w-[18px] h-[18px]" aria-hidden />
-              +49 171 1651000
-              <ArrowRight className="w-4 h-4" aria-hidden />
-            </a>
-            <p className="alix-wa-hint">
-              <Clock className="w-3.5 h-3.5" aria-hidden />
-              Mo–Fr 08:00–17:00 Uhr · kostenlos &amp; unverbindlich
-            </p>
-          </div>
         </section>
       )}
 
