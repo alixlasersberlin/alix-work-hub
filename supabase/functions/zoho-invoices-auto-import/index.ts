@@ -315,9 +315,10 @@ Deno.serve(async (req) => {
           (body.date_to ? `&date_end=${body.date_to}` : "") +
           `&filter_by=Status.All&sort_column=date&sort_order=${desc ? "D" : "A"}`;
         const r = await fetch(url, { headers: authH });
-        if (!r.ok) { failed++; break; }
+        if (!r.ok) { failed++; console.error("zoho http", r.status, (await r.text()).slice(0, 500)); break; }
         const d = await r.json();
         const invoices: any[] = d.invoices ?? [];
+        if (page === 1) console.log("zoho page1", sourceSystem, "code=", d.code, "msg=", d.message, "count=", invoices.length);
         hasMore = d.page_context?.has_more_page === true;
 
         for (const inv of invoices) {
