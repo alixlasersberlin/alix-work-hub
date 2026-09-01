@@ -99,8 +99,19 @@ export default function BookingPortalAlix() {
   return (
     <div ref={rootRef} className="theme-alix min-h-dvh">
       {showWa && (
-        <section className="alix-wa-wrap">
+        <section className="alix-wa-wrap flex-col items-center gap-5">
+          <header className="alix-intro">
+            <h1 className="alix-intro-title">Willkommen im Supportbereich</h1>
+            <p className="alix-intro-sub">
+              Sie können hier alle Aufgaben mit wenigen Klicks erfüllen.
+            </p>
+            <p className="alix-intro-sub">
+              Ab sofort können Sie Technikanfragen über WhatsApp einfach senden – es wird
+              automatisch ein Ticket erstellt.
+            </p>
+          </header>
           <div className="alix-wa-card">
+
             <span className="alix-wa-eyebrow">
               <MessageCircle className="w-3.5 h-3.5" aria-hidden />
               Verkauf
