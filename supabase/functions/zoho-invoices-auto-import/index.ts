@@ -315,9 +315,10 @@ Deno.serve(async (req) => {
           (body.date_to ? `&date_end=${body.date_to}` : "") +
           `&filter_by=Status.All&sort_column=date&sort_order=${desc ? "D" : "A"}`;
         const r = await fetch(url, { headers: authH });
-        if (!r.ok) { failed++; break; }
+        if (!r.ok) { failed++; console.error("zoho http", r.status, (await r.text()).slice(0, 500)); break; }
         const d = await r.json();
         const invoices: any[] = d.invoices ?? [];
+        if (page === 1) console.log("zoho page1", sourceSystem, "code=", d.code, "msg=", d.message, "count=", invoices.length);
         hasMore = d.page_context?.has_more_page === true;
 
         for (const inv of invoices) {
@@ -340,14 +341,14 @@ Deno.serve(async (req) => {
               customer_id: inv.customer_id?.toString() ?? null,
               city: billing?.city ?? inv.billing_city ?? null,
               billing_address: billing,
-              invoice_date: inv.date ?? null,
-              due_date: inv.due_date ?? null,
+              invoice_date: (inv.date || null),
+              due_date: (inv.due_date || null),
               currency: inv.currency_code ?? null,
               total: Number(inv.total ?? 0),
               balance: Number(inv.balance ?? 0),
               status: inv.status ?? null,
               payment_status: payStatusFromInvoice(inv),
-              last_payment_date: inv.last_payment_date ?? null,
+              last_payment_date: (inv.last_payment_date || null),
               raw_data: inv,
               accounting_region: region,
               synced_at: new Date().toISOString(),
