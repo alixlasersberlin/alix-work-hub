@@ -11,6 +11,7 @@ type Payload = {
   /** Quellsysteme, standardmässig beide Mandanten */
   sources?: string[];
   date_from?: string;
+  date_to?: string;
   per_page?: number;
   max_pages?: number;
   /** 'cron' | 'manual' */
