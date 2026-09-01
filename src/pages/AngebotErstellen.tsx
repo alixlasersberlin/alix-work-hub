@@ -75,7 +75,10 @@ export default function AngebotErstellen() {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [itemSearch, setItemSearch] = useState('');
+  const [remoteItems, setRemoteItems] = useState<any[]>([]);
+  const [itemSearching, setItemSearching] = useState(false);
   const [itemListOpen, setItemListOpen] = useState(false);
+
   const [offerNumber, setOfferNumber] = useState(`${sofortMode ? 'AUF' : 'ANG'}-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
   // Synchroner Spiegel der Vorgangs-Stammnummer: State-Updates sind innerhalb
@@ -391,15 +394,41 @@ export default function AngebotErstellen() {
   }, [customers, customerSearch]);
 
 
+  // Serverseitige Live-Suche (unabhängig davon, ob der komplette Katalog schon geladen ist)
+  useEffect(() => {
+    const q = itemSearch.trim();
+    let cancelled = false;
+    if (q.length < 2) { setRemoteItems([]); setItemSearching(false); return; }
+    setItemSearching(true);
+    const t = setTimeout(async () => {
+      const esc = q.replace(/[%,()]/g, ' ');
+      const { data } = await supabase
+        .from('zoho_items')
+        .select('id, name, sku, description, rate, tax_percentage, unit')
+        .eq('status', 'active')
+        .or(`name.ilike.%${esc}%,sku.ilike.%${esc}%`)
+        .order('name')
+        .limit(50);
+      if (cancelled) return;
+      setRemoteItems(data ?? []);
+      setItemSearching(false);
+    }, 250);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [itemSearch]);
+
   const filteredItems = useMemo(() => {
     const q = itemSearch.toLowerCase().trim();
     if (!q) return items.slice(0, 30);
-    return items.filter(i =>
+    const local = items.filter(i =>
       i.name?.toLowerCase().includes(q) ||
       i.sku?.toLowerCase().includes(q) ||
       i.description?.toLowerCase().includes(q)
     );
-  }, [items, itemSearch]);
+    const map = new Map<string, any>();
+    for (const i of [...local, ...remoteItems]) map.set(i.id, i);
+    return Array.from(map.values()).slice(0, 100);
+  }, [items, itemSearch, remoteItems]);
+
 
   const baseCustomer = customers.find(c => c.id === customerId);
   const [customerOverride, setCustomerOverride] = useState<Record<string, any>>({});
@@ -1870,7 +1899,7 @@ export default function AngebotErstellen() {
               <ScrollArea className="h-80">
                 {filteredItems.length === 0 ? (
                   <p className="p-3 text-sm text-muted-foreground text-center">
-                    {items.length === 0 ? 'Katalog wird geladen…' : 'Keine Artikel gefunden.'}
+                    {itemSearching ? 'Suche läuft…' : items.length === 0 ? 'Katalog wird geladen…' : 'Keine Artikel gefunden.'}
                   </p>
                 ) : filteredItems.map(i => (
                   <button
