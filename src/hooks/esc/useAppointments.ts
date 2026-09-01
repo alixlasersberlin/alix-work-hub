@@ -84,12 +84,14 @@ export function useAppointments() {
   useEffect(() => { loadEvents(); }, [loadEvents]);
 
   useEffect(() => {
+    // Eindeutiger Kanalname: der Hook kann mehrfach gleichzeitig gemountet sein.
     const channel = (supabase as any)
-      .channel('esc-calendar-events-merge')
+      .channel(`esc-calendar-events-merge-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'esc_events' }, () => loadEvents())
       .subscribe();
     return () => { (supabase as any).removeChannel(channel); };
   }, [loadEvents]);
+
 
   const createAppointment = useCallback(async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();

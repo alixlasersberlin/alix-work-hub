@@ -249,6 +249,22 @@ export default function BookingPortal() {
     () => nextAvailableDays(new Date(), 14, DEFAULT_BOOKING_SETTINGS),
     [],
   );
+
+  // Optionale Vorauswahl aus dem Hero-Terminplaner (/book-alix).
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('alix-book-prefill');
+      if (!raw) return;
+      sessionStorage.removeItem('alix-book-prefill');
+      const pre = JSON.parse(raw) as { dayIso?: string; slotIso?: string };
+      if (pre?.dayIso && pre?.slotIso) {
+        setState((s) => ({ ...s, dayIso: pre.dayIso!, slotIso: pre.slotIso! }));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const slotsForDay = useMemo(() => {
     if (!state.dayIso) return [];
     return generateSlots(new Date(state.dayIso), duration, appointments, DEFAULT_BOOKING_SETTINGS);
