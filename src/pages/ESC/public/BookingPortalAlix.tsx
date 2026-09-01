@@ -10,6 +10,9 @@ import BookingPortal from './BookingPortal';
  */
 export default function BookingPortalAlix() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const { department, service } = useParams();
+  const showHero = !department && !service;
+
 
   useEffect(() => {
     const html = document.documentElement;
