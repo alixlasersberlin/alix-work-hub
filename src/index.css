@@ -2481,10 +2481,12 @@ html[data-booking-alix] body {
   transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 .theme-alix .alix-btn-primary {
-  color: hsl(224 70% 10%);
-  background: linear-gradient(135deg, hsl(38 62% 72%), hsl(38 47% 56%));
-  box-shadow: 0 16px 36px -14px hsl(38 60% 50% / 0.7);
+  color: hsl(0 0% 100%) !important;
+  background: linear-gradient(135deg, hsl(222 68% 30%), hsl(224 74% 18%));
+  border: 1px solid hsl(38 55% 60% / 0.55);
+  box-shadow: 0 16px 36px -14px hsl(224 70% 12% / 0.75);
 }
+.theme-alix .alix-btn-primary svg { color: hsl(38 62% 74%); }
 .theme-alix .alix-btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 22px 44px -16px hsl(38 60% 50% / 0.85);
@@ -2508,7 +2510,7 @@ html[data-booking-alix] body {
   align-items: center;
   gap: 0.45rem;
   font-size: 12px;
-  color: hsl(214 32% 72%);
+  color: hsl(214 30% 88%);
 }
 
 /* Terminplaner im Hero */
