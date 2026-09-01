@@ -94,25 +94,23 @@ export default function BookingPortalAlix() {
     };
   }, []);
 
+  const intro = showWa ? (
+    <div className="alix-intro">
+      <h1 className="alix-intro-title">Willkommen im Supportbereich</h1>
+      <p className="alix-intro-sub">
+        Sie können hier alle Aufgaben mit wenigen Klicks erfüllen.
+      </p>
+      <p className="alix-intro-sub">
+        Ab sofort können Sie Technikanfragen über WhatsApp einfach senden – es wird
+        automatisch ein Ticket erstellt.
+      </p>
+    </div>
+  ) : null;
+
   return (
     <div ref={rootRef} className="theme-alix min-h-dvh">
-      {showWa && (
-        <section className="alix-wa-wrap flex-col items-center gap-5">
-          <header className="alix-intro">
-            <h1 className="alix-intro-title">Willkommen im Supportbereich</h1>
-            <p className="alix-intro-sub">
-              Sie können hier alle Aufgaben mit wenigen Klicks erfüllen.
-            </p>
-            <p className="alix-intro-sub">
-              Ab sofort können Sie Technikanfragen über WhatsApp einfach senden – es wird
-              automatisch ein Ticket erstellt.
-            </p>
-          </header>
-        </section>
-      )}
-
       <div id="book-alix-portal" className="scroll-mt-4">
-        <BookingPortal />
+        <BookingPortal intro={intro} />
       </div>
     </div>
   );
