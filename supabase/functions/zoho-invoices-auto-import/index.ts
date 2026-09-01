@@ -309,10 +309,11 @@ Deno.serve(async (req) => {
       let page = 1, hasMore = true;
       while (hasMore && page <= maxPages) {
         if (Date.now() - startedAt.getTime() > SOFT_DEADLINE_MS) { hasMore = false; break; }
+        const desc = !!body.date_to;
         const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
           `&page=${page}&per_page=${perPage}&date_start=${dateFrom}` +
           (body.date_to ? `&date_end=${body.date_to}` : "") +
-          `&filter_by=Status.All&sort_column=date&sort_order=A`;
+          `&filter_by=Status.All&sort_column=date&sort_order=${desc ? "D" : "A"}`;
         const r = await fetch(url, { headers: authH });
         if (!r.ok) { failed++; break; }
         const d = await r.json();
@@ -320,9 +321,14 @@ Deno.serve(async (req) => {
         hasMore = d.page_context?.has_more_page === true;
 
         for (const inv of invoices) {
+          // Sicherheitsnetz: Zoho ignoriert die Datumsfilter teilweise -> hier hart filtern
+          const invDate = (inv.date ?? "") as string;
+          if (invDate && invDate < dateFrom) { if (desc) { hasMore = false; break; } continue; }
+          if (body.date_to && invDate && invDate > body.date_to) continue;
           processed++;
           try {
             const invId = String(inv.invoice_id);
+
             const region = detectInvoiceRegion(inv);
             const billing = inv.billing_address ?? null;
             const payload = {
