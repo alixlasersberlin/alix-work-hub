@@ -1597,21 +1597,39 @@ export default function OrderDetail() {
               <div className="text-sm text-muted-foreground">
                 Sendet die Voravisierungs-E-Mail an <span className="font-medium text-foreground">{customer?.email || '— keine Kunden-E-Mail —'}</span>. Inhalt unter Operation → E-Mail Vorlagen anpassbar.
               </div>
-              <Button
-                size="sm"
-                disabled={sendingEmail || !customer?.email}
-                onClick={async () => {
-                  setSendingEmail(true);
-                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
-                  setSendingEmail(false);
-                  if (r.ok) { toast.success(r.message); loadAll(); }
-                  else toast.error(r.message);
-                }}
-                className="gold-gradient text-primary-foreground"
-              >
-                {sendingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-                E-Mail an Kunde senden
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={sendingEmail || !customer?.email}
+                  onClick={async () => {
+                    setSendingEmail(true);
+                    const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_in_transit');
+                    setSendingEmail(false);
+                    if (r.ok) { toast.success(r.message); loadAll(); }
+                    else toast.error(r.message);
+                  }}
+                >
+                  {sendingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Truck className="w-4 h-4 mr-2" />}
+                  Status TRANSFER senden
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={sendingEmail || !customer?.email}
+                  onClick={async () => {
+                    setSendingEmail(true);
+                    const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
+                    setSendingEmail(false);
+                    if (r.ok) { toast.success(r.message); loadAll(); }
+                    else toast.error(r.message);
+                  }}
+                  className="gold-gradient text-primary-foreground"
+                >
+                  {sendingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                  E-Mail an Kunde senden
+                </Button>
+              </div>
+
             </div>
           )}
 
