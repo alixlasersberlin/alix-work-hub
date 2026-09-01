@@ -75,6 +75,10 @@ function StageCard({
   };
 
   const onApprove = async () => {
+    if (!unlocked) { toast.error('Vorherige Freigabestufe ist noch nicht abgeschlossen.'); return; }
+    if (!mayApprove) { toast.error(`Freigabe nur durch: ${def.roles.join(', ')}`); return; }
+    if (missing.length > 0) { toast.error(`Fehlende Pflichtprüfpunkte: ${missing.join(', ')}`); return; }
+    if (!signature) { toast.error('Bitte zuerst digital unterschreiben.'); return; }
     setBusy(true);
     try {
       const updated = await approveStage({ approval, stage, checks, comment, signature, userId: user?.id ?? null, userName, orderNumber });
@@ -85,9 +89,10 @@ function StageCard({
         void autoFinalizeRelease(updated);
       }
       reload();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(e?.message ?? 'Freigabe fehlgeschlagen'); }
     finally { setBusy(false); }
   };
+
 
 
   return (
@@ -134,8 +139,9 @@ function StageCard({
           </div>
         </div>
       ) : (
-        <div className={!unlocked || !mayApprove ? 'opacity-60 pointer-events-none' : ''}>
+        <div className={!unlocked || !mayApprove ? 'opacity-70' : ''}>
           <div className="space-y-3">
+
             {groups.map(([g, list]) => (
               <div key={g}>
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{g}</div>
@@ -172,14 +178,18 @@ function StageCard({
                 Fehlende Pflichtprüfpunkte: {missing.join(', ')}
               </div>
             )}
+            {missing.length === 0 && !signature && (
+              <div className="text-xs text-amber-400">Bitte noch digital unterschreiben.</div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={onSave} disabled={busy}>Zwischenstand speichern</Button>
-              <Button onClick={onApprove} disabled={busy || missing.length > 0 || !signature}>
+              <Button onClick={onApprove} disabled={busy}>
                 <ShieldCheck className="h-4 w-4 mr-1" />
                 {def.title} genehmigen
               </Button>
             </div>
+
           </div>
         </div>
       )}
