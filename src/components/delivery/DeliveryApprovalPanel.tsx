@@ -178,14 +178,18 @@ function StageCard({
                 Fehlende Pflichtprüfpunkte: {missing.join(', ')}
               </div>
             )}
+            {missing.length === 0 && !signature && (
+              <div className="text-xs text-amber-400">Bitte noch digital unterschreiben.</div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={onSave} disabled={busy}>Zwischenstand speichern</Button>
-              <Button onClick={onApprove} disabled={busy || missing.length > 0 || !signature}>
+              <Button onClick={onApprove} disabled={busy}>
                 <ShieldCheck className="h-4 w-4 mr-1" />
                 {def.title} genehmigen
               </Button>
             </div>
+
           </div>
         </div>
       )}
