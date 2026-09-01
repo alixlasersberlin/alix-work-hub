@@ -1,9 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { MessageCircle, ArrowRight, Clock } from 'lucide-react';
 import BookingPortal from './BookingPortal';
 
-const WA_NUMBER = '491711651000';
 
 /**
  * Alix-Lasers-Design-Variante des öffentlichen Buchungsportals (/book-alix).
