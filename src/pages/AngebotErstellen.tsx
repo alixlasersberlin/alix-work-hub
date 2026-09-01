@@ -1899,7 +1899,7 @@ export default function AngebotErstellen() {
               <ScrollArea className="h-80">
                 {filteredItems.length === 0 ? (
                   <p className="p-3 text-sm text-muted-foreground text-center">
-                    {items.length === 0 ? 'Katalog wird geladen…' : 'Keine Artikel gefunden.'}
+                    {itemSearching ? 'Suche läuft…' : items.length === 0 ? 'Katalog wird geladen…' : 'Keine Artikel gefunden.'}
                   </p>
                 ) : filteredItems.map(i => (
                   <button
