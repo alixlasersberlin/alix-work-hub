@@ -309,7 +309,8 @@ Deno.serve(async (req) => {
       while (hasMore && page <= maxPages) {
         if (Date.now() - startedAt.getTime() > SOFT_DEADLINE_MS) { hasMore = false; break; }
         const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
-          `&page=${page}&per_page=${perPage}&date_after=${dateFrom}` +
+          `&page=${page}&per_page=${perPage}&date_start=${dateFrom}` +
+          (body.date_to ? `&date_end=${body.date_to}` : "") +
           `&filter_by=Status.All&sort_column=date&sort_order=A`;
         const r = await fetch(url, { headers: authH });
         if (!r.ok) { failed++; break; }
