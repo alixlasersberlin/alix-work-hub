@@ -139,8 +139,9 @@ function StageCard({
           </div>
         </div>
       ) : (
-        <div className={!unlocked || !mayApprove ? 'opacity-60 pointer-events-none' : ''}>
+        <div className={!unlocked || !mayApprove ? 'opacity-70' : ''}>
           <div className="space-y-3">
+
             {groups.map(([g, list]) => (
               <div key={g}>
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{g}</div>
