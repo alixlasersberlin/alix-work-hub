@@ -2549,7 +2549,7 @@ html[data-booking-alix] body {
   border-radius: 0.85rem;
   border: 1px solid hsl(210 40% 96% / 0.14);
   background: hsl(210 40% 96% / 0.04);
-  color: hsl(214 32% 82%);
+  color: hsl(214 32% 90%);
   transition: all 0.2s ease;
 }
 .theme-alix .alix-day:hover { border-color: hsl(var(--hero-blue) / 0.5); color: hsl(210 40% 96%); }
@@ -2558,9 +2558,9 @@ html[data-booking-alix] body {
   border-color: hsl(var(--gold) / 0.55);
   color: hsl(40 60% 96%);
 }
-.theme-alix .alix-day-wd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.8; }
+.theme-alix .alix-day-wd { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.95; }
 .theme-alix .alix-day-num { font-size: 17px; font-weight: 700; line-height: 1.1; }
-.theme-alix .alix-day-mo { font-size: 10px; opacity: 0.7; }
+.theme-alix .alix-day-mo { font-size: 10px; opacity: 0.9; }
 .theme-alix .alix-planner-label {
   margin: 1.1rem 0 0.55rem;
   display: flex;
@@ -2583,7 +2583,7 @@ html[data-booking-alix] body {
   font-weight: 600;
   border: 1px solid hsl(210 40% 96% / 0.14);
   background: hsl(210 40% 96% / 0.04);
-  color: hsl(214 32% 84%);
+  color: hsl(214 32% 92%);
   transition: all 0.2s ease;
 }
 .theme-alix .alix-slot:hover { border-color: hsl(var(--hero-blue) / 0.55); color: hsl(210 40% 97%); }
