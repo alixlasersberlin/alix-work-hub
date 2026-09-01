@@ -17,6 +17,8 @@ type Payload = {
   trigger_type?: string;
   /** true = nur Test-Mail mit Beispielinhalt senden, kein Import */
   test_email?: boolean;
+  /** true = nur zählen, nichts schreiben, keine Mail */
+  dry_run?: boolean;
   /** Empfänger überschreiben (optional) */
   to?: string;
   cc?: string;
