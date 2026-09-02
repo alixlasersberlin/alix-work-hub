@@ -317,10 +317,11 @@ export function canUseSupplyStage(stage: SupplyStageDef, roles: string[]): boole
 export async function setSupplyStage(
   d: MagicDossier,
   stageKey: SupplyStage,
-  opts: { reason?: string } = {},
+  opts: { reason?: string; notifyCustomer?: boolean } = {},
 ): Promise<MagicResult> {
   const stage = SUPPLY_STAGE_BY_KEY[stageKey];
   if (!stage) return { ok: false, executed: [], failed: ['Unbekannte Lieferkettenstufe'] };
+
 
   const executed: string[] = [];
   const failed: string[] = [];
