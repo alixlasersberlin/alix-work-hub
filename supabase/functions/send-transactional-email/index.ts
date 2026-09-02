@@ -113,15 +113,21 @@ Deno.serve(async (req) => {
     })
   }
 
-  // Globalen Archiv-BCC immer mit aufnehmen (Duplikate vermeiden)
-  for (const archive of GLOBAL_ARCHIVE_BCC) {
-    const norm = archive.trim().toLowerCase()
-    if (!bccEmails.some(e => e.trim().toLowerCase() === norm)) bccEmails.push(archive)
+  const isDunning = /mahn|dunning|reminder|collect/i.test(templateName ?? '')
+
+  // Globalen Archiv-BCC mit aufnehmen (bei Mahnungen NICHT)
+  if (!isDunning) {
+    for (const archive of GLOBAL_ARCHIVE_BCC) {
+      const norm = archive.trim().toLowerCase()
+      if (!bccEmails.some(e => e.trim().toLowerCase() === norm)) bccEmails.push(archive)
+    }
   }
 
-  // Systemweit: alle Mahnungen zusätzlich in BCC an k.trinh
-  if (/mahn|dunning|reminder|collect/i.test(templateName ?? '')) {
+  // Systemweit: alle Mahnungen ausschliesslich in BCC an k.trinh
+  if (isDunning) {
     const dunningBcc = 'k.trinh@alix-operation.de'
+    bccEmails = bccEmails.filter(e => !/service@alix-lasers\.com|buchhaltung@alix-lasers\.com|rde@alix-lasers\.com/i.test(e))
+    extraCc = extraCc.filter(e => !/service@alix-lasers\.com|buchhaltung@alix-lasers\.com/i.test(e))
     if (!bccEmails.some(e => e.trim().toLowerCase() === dunningBcc)) bccEmails.push(dunningBcc)
   }
 
@@ -201,7 +207,7 @@ Deno.serve(async (req) => {
             {
               to: r.email,
               from: "Alix Lasers ® <noreply@alixlasers.ai>",
-              bcc: ["service@alix-lasers.com"],
+              bcc: isDunning ? [] : ["service@alix-lasers.com"],
               sender_domain: SENDER_DOMAIN,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
               html,
