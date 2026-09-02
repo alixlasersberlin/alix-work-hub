@@ -456,6 +456,7 @@ export const navItems: NavItem[] = [
         path: '/finance/rechnungen', label: 'RECHNUNGEN', icon: FileText, roles: ['Admin', 'Super Admin'],
         children: [
           { path: '/finance/rechnungen', label: 'Rechnungen', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/stornos', label: 'Stornos', icon: Undo2, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/vermietung', label: 'Mietkauf Geräte', icon: Repeat, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/rechnungsvorschlaege', label: 'Rechnungsvorschläge (Reparaturen)', icon: Banknote, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/offene-posten', label: 'Offene Posten', icon: FileText, roles: ['Admin', 'Super Admin'] },

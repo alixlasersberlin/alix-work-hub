@@ -149,6 +149,7 @@ const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 // const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices")); // deaktiviert
 const FinanceDetail = lazy(() => import("./pages/FinanceDetail"));
 const Rechnungsvorschlaege = lazy(() => import("./pages/Rechnungsvorschlaege"));
+const FinanceStornos = lazy(() => import("./pages/Finance/Stornos"));
 const ServiceCockpit = lazy(() => import("./pages/ServiceCockpit"));
 const FinanceForm = lazy(() => import("./pages/FinanceForm"));
 const FinanceDashboardPhase1 = lazy(() => import("./pages/Finance/Dashboard"));
@@ -1681,6 +1682,8 @@ function AppRoutes() {
           <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
           {/* /finance/unpaid-zoho deaktiviert – Daten bleiben in DB für andere Übersichten */}
           <Route path="/finance/rechnungsvorschlaege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Rechnungsvorschlaege /></ProtectedRoute>} />
+          <Route path="/finance/stornos" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceStornos /></ProtectedRoute>} />
+
           <Route path="/finance/dashboard" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDashboardPhase1 /></ProtectedRoute>} />
           <Route path="/finance/finance-controlling" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceControllingCenter /></ProtectedRoute>} />
           <Route path="/finance/anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnzahlungen /></ProtectedRoute>} />
