@@ -461,6 +461,11 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
             )}
           </div>
 
+          <label className="flex items-center gap-2 text-[12.5px] cursor-pointer">
+            <input type="checkbox" checked={notifyCustomer} onChange={(e) => setNotifyCustomer(e.target.checked)} className="accent-primary" />
+            Kunden-E-Mail zur Stufe versenden
+          </label>
+
           <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Änderungsgrund (optional, revisionssicher protokolliert)" rows={2} />
 
           <DialogFooter>
