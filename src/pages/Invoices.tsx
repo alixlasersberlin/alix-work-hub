@@ -171,9 +171,16 @@ function matchesDocStatus(r: Row, docStatus: string) {
   const s = String(r.status ?? '').toLowerCase();
   if (docStatus === 'draft') return isDraftInvoice(r);
   if (docStatus === 'void') return s === 'void' || s === 'storniert' || s === 'cancelled';
+  if (docStatus === 'anwalt') return isAnwaltRow(r);
+  if (docStatus === 'inkasso') return isInkassoRow(r);
+  if (docStatus === 'bezahlt' || docStatus === 'offen' || docStatus === 'teilweise bezahlt' || docStatus === 'überfällig') {
+    if (s === 'void' || s === 'storniert' || s === 'cancelled') return false;
+    return matchesPayStatus(r, docStatus);
+  }
   // sent = alles andere (verschickt/offen/bezahlt)
   return !isDraftInvoice(r) && !(s === 'void' || s === 'storniert' || s === 'cancelled');
 }
+
 
 // "Offen" umfasst auch teilweise bezahlte / überfällige Rechnungen mit Restsaldo
 export function matchesPayStatus(r: Row, statusFilter: string): boolean {
@@ -1003,8 +1010,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return ps.includes('bezahlt') && !ps.includes('teilweise') && !ps.includes('unbezahlt') && !ps.includes('nicht');
     };
     let res =
-      extra.anwalt || extra.inkasso
-        ? rows.filter((r) => (extra.anwalt && isAnwaltRow(r)) || (extra.inkasso && isInkassoRow(r)))
+      extra.anwalt || extra.inkasso || docStatusFilter === 'anwalt' || docStatusFilter === 'inkasso'
+        ? rows.filter(
+            (r) =>
+              ((extra.anwalt || docStatusFilter === 'anwalt') && isAnwaltRow(r)) ||
+              ((extra.inkasso || docStatusFilter === 'inkasso') && isInkassoRow(r)),
+          )
         : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r));
     if (extra.overdue) {
       res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
@@ -1013,7 +1024,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       res = res.filter((r) => matchesDateRange(r));
     }
     return res;
-  }, [rows, extra, dateFrom, dateTo]);
+  }, [rows, extra, dateFrom, dateTo, docStatusFilter]);
+
 
 
   const accounts = useMemo<Account[]>(() => {
@@ -2383,14 +2395,21 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
           <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
-            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Alle</SelectItem>
               <SelectItem value="draft">Entwurf</SelectItem>
               <SelectItem value="sent">Versendet</SelectItem>
+              <SelectItem value="offen">Offen</SelectItem>
+              <SelectItem value="teilweise bezahlt">Teilweise bezahlt</SelectItem>
+              <SelectItem value="bezahlt">Bezahlt</SelectItem>
+              <SelectItem value="überfällig">Überfällig</SelectItem>
+              <SelectItem value="anwalt">Anwalt</SelectItem>
+              <SelectItem value="inkasso">Inkasso Intern</SelectItem>
               <SelectItem value="void">Storniert</SelectItem>
             </SelectContent>
           </Select>
+
 
         </div>
 
