@@ -53317,6 +53317,10 @@ export type Database = {
       }
       sv_can_read: { Args: never; Returns: boolean }
       sv_can_write: { Args: never; Returns: boolean }
+      sync_order_deposit_to_finance: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
       sys_cron_recent_failures: {
         Args: never
         Returns: {
