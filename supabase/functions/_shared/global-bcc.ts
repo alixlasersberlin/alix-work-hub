@@ -36,6 +36,9 @@ if (!g.__alixGlobalBccInstalled) {
         const payload = JSON.parse(init.body);
         const apply = (obj: any) => {
           if (!obj || typeof obj !== "object") return;
+          // Mahnungen: keine System-Kopien (service@/buchhaltung@/Archiv)
+          const subj = String(obj.subject ?? "");
+          if (/mahn|zahlungserinnerung|dunning/i.test(subj)) return;
           const to = Array.isArray(obj.to) ? obj.to : obj.to ? [obj.to] : [];
           // Nicht doppelt an denselben Empfänger senden
           if (to.some((t: unknown) => norm(t).includes(GLOBAL_BCC))) return;
