@@ -94,6 +94,21 @@ export default function MagicStatusPage() {
     setParams({ order: id }, { replace: true });
   };
 
+  const [hitRows, setHitRows] = useState<{ label: string; rows: ListRow[] } | null>(null);
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const handleHit = useCallback(async (h: MagicHit) => {
+    if (h.orderId) { openOrder(h.orderId); return; }
+    setResolving(`${h.kind}-${h.id}`);
+    try {
+      const found = await resolveHitOrders(h);
+      if (found.length === 1) { setHitRows(null); openOrder(found[0].id); return; }
+      setHitRows({ label: `AUFTRÄGE ZU ${h.title}`, rows: found as ListRow[] });
+      if (found.length === 0) toast.info('Keine verknüpften Aufträge gefunden.');
+    } finally { setResolving(null); }
+  }, []);
+
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       <div>
