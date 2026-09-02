@@ -2367,10 +2367,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
         searchBelow
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-[200px] sm:flex-none">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Zahlungsstatus:</span>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Alle</SelectItem>
               <SelectItem value="Bezahlt">Bezahlt</SelectItem>
@@ -2392,11 +2392,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </label>
         )}
 
-        <div className="basis-full w-full flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
+        <div className="basis-full w-full flex flex-wrap items-center gap-x-4 gap-y-3">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px] sm:flex-none">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
             <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
-              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle</SelectItem>
                 <SelectItem value="draft">Entwurf</SelectItem>
@@ -2412,13 +2412,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             </Select>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px] sm:flex-none">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Zeitraum:</span>
             <Input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-9 w-[150px]"
+              className="h-9 w-full sm:w-[150px]"
               aria-label="Rechnungsdatum von"
             />
             <span className="text-xs text-muted-foreground">bis</span>
@@ -2426,7 +2426,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-9 w-[150px]"
+              className="h-9 w-full sm:w-[150px]"
               aria-label="Rechnungsdatum bis"
             />
             {(dateFrom || dateTo) && (

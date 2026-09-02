@@ -35,7 +35,7 @@ export function ListToolbar({
   searchBelow = false,
 }: Props) {
   const searchField = (
-    <div className="relative flex-1">
+    <div className="relative flex-1 min-w-[220px]">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
       <Input
         value={search}
@@ -48,7 +48,7 @@ export function ListToolbar({
 
   return (
     <div className={`rounded-xl border border-border bg-card p-4 mb-4 ${className ?? ''}`}>
-      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-stretch sm:items-center">
+      <div className="flex flex-wrap gap-x-4 gap-y-3 items-stretch sm:items-center [&>*]:min-w-0">
         {!searchBelow && searchField}
         {children}
         <div className="flex items-center gap-2">
