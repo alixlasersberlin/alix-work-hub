@@ -1010,8 +1010,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return ps.includes('bezahlt') && !ps.includes('teilweise') && !ps.includes('unbezahlt') && !ps.includes('nicht');
     };
     let res =
-      extra.anwalt || extra.inkasso
-        ? rows.filter((r) => (extra.anwalt && isAnwaltRow(r)) || (extra.inkasso && isInkassoRow(r)))
+      extra.anwalt || extra.inkasso || docStatusFilter === 'anwalt' || docStatusFilter === 'inkasso'
+        ? rows.filter(
+            (r) =>
+              ((extra.anwalt || docStatusFilter === 'anwalt') && isAnwaltRow(r)) ||
+              ((extra.inkasso || docStatusFilter === 'inkasso') && isInkassoRow(r)),
+          )
         : rows.filter((r) => !isAnwaltRow(r) && !isInkassoRow(r));
     if (extra.overdue) {
       res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
@@ -1020,7 +1024,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       res = res.filter((r) => matchesDateRange(r));
     }
     return res;
-  }, [rows, extra, dateFrom, dateTo]);
+  }, [rows, extra, dateFrom, dateTo, docStatusFilter]);
+
 
 
   const accounts = useMemo<Account[]>(() => {
