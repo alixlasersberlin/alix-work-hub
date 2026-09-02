@@ -176,9 +176,42 @@ export default function MagicStatusPage() {
             </div>
           ))}
 
-          {q.trim().length >= 2 && !loading && hits.length === 0 && (
+          {nl && (
+            <div className="space-y-1.5">
+              <Card className="p-3 border-primary/40 bg-primary/5">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold">{nl.intent} · {nl.rows.length}</div>
+                    <div className="text-[11.5px] text-muted-foreground">{nl.explanation}</div>
+                  </div>
+                </div>
+              </Card>
+              {nl.rows.map((r) => (
+                <Card key={r.id} className="p-3 hover:border-primary/50 transition cursor-pointer" onClick={() => openOrder(r.id)}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{r.order_number}{r.source_system === 'zoho_eu_2' ? '-AT' : ''}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {r.customers?.company_name || r.customers?.contact_name || '—'}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={TONE_CLASS[statusTone(r.magic_status)]}>
+                      {statusLabel(r.magic_status)}
+                    </Badge>
+                  </div>
+                </Card>
+              ))}
+              {nl.rows.length === 0 && (
+                <Card className="p-6 text-center text-sm text-muted-foreground">Keine Aufträge zu dieser Frage.</Card>
+              )}
+            </div>
+          )}
+
+          {q.trim().length >= 2 && !loading && !nl && hits.length === 0 && (
             <Card className="p-6 text-center text-sm text-muted-foreground">Keine Treffer.</Card>
           )}
+
 
           {q.trim().length < 2 && rows.length > 0 && (
             <div className="space-y-1.5">
