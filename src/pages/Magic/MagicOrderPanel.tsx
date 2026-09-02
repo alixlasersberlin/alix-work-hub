@@ -436,6 +436,43 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
         </DialogContent>
       </Dialog>
 
+      {/* Dialog: Lieferkette */}
+      <Dialog open={!!stageTarget} onOpenChange={(v) => { if (!v) setStageTarget(null); }}>
+        <DialogContent className="z-[70]">
+          <DialogHeader>
+            <DialogTitle>LIEFERKETTE · {stageDef?.label}</DialogTitle>
+            <DialogDescription>
+              Auftrag {o.order_number} wird auf die Stufe <b>{stageDef?.label}</b> gesetzt.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="text-[12.5px] space-y-1">
+            <div className="text-muted-foreground">Folgende Schritte werden automatisch ausgelöst:</div>
+            {stageDef?.steps.map((s) => (
+              <div key={s} className="flex items-center gap-1.5 text-emerald-500">✓ {s}</div>
+            ))}
+            {!currentSerial && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2 text-amber-500 mt-2">
+                Keine Seriennummer vorhanden – die Geräteakte kann nicht gesetzt werden.
+                <Button size="sm" variant="outline" className="ml-2" onClick={() => { setStageTarget(null); setSerialOpen(true); }}>
+                  SERIENNUMMER VERGEBEN
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Änderungsgrund (optional, revisionssicher protokolliert)" rows={2} />
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStageTarget(null)}>Abbrechen</Button>
+            <Button disabled={busy} onClick={doStage}>
+              {busy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} STUFE SETZEN & AUSLÖSEN
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Ergebnis */}
       <Dialog open={!!result} onOpenChange={() => setResult(null)}>
         <DialogContent className="z-[70]">
