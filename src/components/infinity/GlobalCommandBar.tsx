@@ -145,7 +145,7 @@ export function GlobalCommandBar() {
                   value={`${h.kind}-${h.label}-${h.id}`}
                   onSelect={() => {
                     if (h.kind === "customer") go(`/kunden/${h.id}`);
-                    else if (h.kind === "order") go(`/auftraege/${h.id}`);
+                    else if (h.kind === "order") go(`/magic?order=${h.id}`);
                     else if (h.kind === "repair") go(`/reparatur/${h.id}`);
                     else if (h.kind === "invoice") go(`/finance/belege?invoice=${h.id}`);
                     else go(`/tickets/${h.id}`);
