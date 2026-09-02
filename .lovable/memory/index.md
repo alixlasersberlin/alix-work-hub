@@ -16,6 +16,7 @@
 - Versionierung: `APP_VERSION` in `src/components/AppLayout.tsx` bei jedem Publish um 0.01 erhöhen (Start 5.0 → 5.01 → 5.02 …). Details: [App Versioning](mem://features/app-versioning)
 
 ## Memories
+- [MAGIC STATUS](mem://features/magic-status) — /magic: globale Suche, Statusmotor mit Voraussetzungen, Seriennummern-Zuweisung, WORM-Log (magic_status_log)
 - [Private interne App](mem://constraints/private-internal-app) — Zero-Trust, kein Public-Signup, keine öffentlichen Kalenderlinks, noindex, Publish=private, private PWA, kein Store-Release ohne Enterprise-Verteilung
 - [Access Control](mem://auth/access-control) — Internal login system without public registration, strict status checks
 - [Role Permissions](mem://auth/role-permissions) — RBAC definitions for Admins and specialized roles
