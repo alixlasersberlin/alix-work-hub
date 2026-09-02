@@ -37,16 +37,28 @@ export default function MagicStatusPage() {
   const [filter, setFilter] = useState<string | null>(null);
   const [rows, setRows] = useState<ListRow[]>([]);
   const [kpis, setKpis] = useState<Record<string, number>>({});
+  const [nl, setNl] = useState<{ intent: string; explanation: string; rows: MagicNlRow[] } | null>(null);
 
   useEffect(() => {
     const term = q.trim();
-    if (term.length < 2) { setHits([]); return; }
+    if (term.length < 2) { setHits([]); setNl(null); return; }
     setLoading(true);
     const t = setTimeout(async () => {
-      try { setHits(await magicSearch(term)); } finally { setLoading(false); }
-    }, 250);
+      try {
+        const nlQuery = parseMagicQuery(term);
+        if (nlQuery) {
+          const r = await nlQuery.run();
+          setNl({ intent: nlQuery.intent, explanation: nlQuery.explanation, rows: r });
+          setHits([]);
+        } else {
+          setNl(null);
+          setHits(await magicSearch(term));
+        }
+      } finally { setLoading(false); }
+    }, 300);
     return () => clearTimeout(t);
   }, [q]);
+
 
   // KPI-Kacheln
   useEffect(() => {
