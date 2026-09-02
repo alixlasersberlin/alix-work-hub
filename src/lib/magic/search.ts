@@ -151,3 +151,49 @@ export function groupHits(hits: MagicHit[]) {
     .map((k) => [k, hits.filter((h) => h.kind === k)] as const)
     .filter(([, arr]) => arr.length > 0);
 }
+
+const ORDER_COLS =
+  'id, order_number, source_system, magic_status, order_status, total_amount, currency, customers(company_name, contact_name)';
+
+/** Für Treffer ohne direkte Auftragsverknüpfung: passende Aufträge nachschlagen. */
+export async function resolveHitOrders(hit: MagicHit): Promise<any[]> {
+  if (hit.kind === 'kunde') {
+    const { data } = await supabase.from('orders').select(ORDER_COLS)
+      .eq('customer_id', hit.id).order('created_at', { ascending: false }).limit(50);
+    return data ?? [];
+  }
+
+  if (hit.kind === 'rechnung') {
+    const { data: inv } = await supabase.from('zoho_invoices')
+      .select('reference_number, customer_name').eq('id', hit.id).maybeSingle();
+    const ref = (inv as any)?.reference_number?.trim();
+    if (ref) {
+      const { data } = await supabase.from('orders').select(ORDER_COLS)
+        .or(`order_number.ilike.%${esc(ref)}%,internal_number.ilike.%${esc(ref)}%,case_number.ilike.%${esc(ref)}%`)
+        .limit(50);
+      if (data?.length) return data;
+    }
+    const name = ((inv as any)?.customer_name || hit.subtitle || '').trim();
+    if (name) {
+      const { data: cust } = await supabase.from('customers').select('id')
+        .or(`company_name.ilike.%${esc(name)}%,contact_name.ilike.%${esc(name)}%`).limit(10);
+      const ids = (cust ?? []).map((c: any) => c.id);
+      if (ids.length) {
+        const { data } = await supabase.from('orders').select(ORDER_COLS)
+          .in('customer_id', ids).order('created_at', { ascending: false }).limit(50);
+        return data ?? [];
+      }
+    }
+    return [];
+  }
+
+  if (hit.kind === 'geraet' || hit.kind === 'seriennummer') {
+    const term = esc(hit.title);
+    const { data } = await supabase.from('orders').select(ORDER_COLS)
+      .or(`order_number.ilike.%${term}%,internal_number.ilike.%${term}%`).limit(50);
+    return data ?? [];
+  }
+
+  return [];
+}
+

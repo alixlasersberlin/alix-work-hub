@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search, Sparkles, Wand2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { magicSearch, groupHits, MAGIC_KIND_LABEL, type MagicHit } from '@/lib/magic/search';
+import { magicSearch, groupHits, resolveHitOrders, MAGIC_KIND_LABEL, type MagicHit } from '@/lib/magic/search';
+import { toast } from 'sonner';
+
 import { statusLabel, statusTone, TONE_CLASS } from '@/lib/magic/statuses';
 import { parseMagicQuery, MAGIC_NL_EXAMPLES, type MagicNlRow } from '@/lib/magic/nlSearch';
 import MagicOrderPanel from './MagicOrderPanel';
@@ -94,6 +96,21 @@ export default function MagicStatusPage() {
     setParams({ order: id }, { replace: true });
   };
 
+  const [hitRows, setHitRows] = useState<{ label: string; rows: ListRow[] } | null>(null);
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const handleHit = useCallback(async (h: MagicHit) => {
+    if (h.orderId) { openOrder(h.orderId); return; }
+    setResolving(`${h.kind}-${h.id}`);
+    try {
+      const found = await resolveHitOrders(h);
+      if (found.length === 1) { setHitRows(null); openOrder(found[0].id); return; }
+      setHitRows({ label: `AUFTRÄGE ZU ${h.title}`, rows: found as ListRow[] });
+      if (found.length === 0) toast.info('Keine verknüpften Aufträge gefunden.');
+    } finally { setResolving(null); }
+  }, []);
+
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       <div>
@@ -167,7 +184,7 @@ export default function MagicStatusPage() {
               <div className="text-[10.5px] uppercase tracking-widest text-muted-foreground">{MAGIC_KIND_LABEL[kind]}</div>
               {arr.map((h) => (
                 <Card key={`${h.kind}-${h.id}`} className="p-3 hover:border-primary/50 transition cursor-pointer"
-                  onClick={() => h.orderId ? openOrder(h.orderId) : undefined}>
+                  onClick={() => handleHit(h)}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold truncate">{h.title}</div>
@@ -175,15 +192,47 @@ export default function MagicStatusPage() {
                     </div>
                     <div className="text-right shrink-0">
                       {h.meta && <div className="text-[11px] text-muted-foreground">{h.meta}</div>}
-                      {h.orderId
-                        ? <span className="text-[10.5px] text-primary">MAGIC STATUS ÖFFNEN</span>
-                        : <span className="text-[10.5px] text-muted-foreground">kein Auftrag verknüpft</span>}
+                      {resolving === `${h.kind}-${h.id}`
+                        ? <span className="text-[10.5px] text-muted-foreground inline-flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> SUCHE AUFTRÄGE …</span>
+                        : h.orderId
+                          ? <span className="text-[10.5px] text-primary">MAGIC STATUS ÖFFNEN</span>
+                          : <span className="text-[10.5px] text-primary">AUFTRÄGE ANZEIGEN</span>}
                     </div>
                   </div>
                 </Card>
               ))}
             </div>
           ))}
+
+          {hitRows && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="text-[10.5px] uppercase tracking-widest text-muted-foreground">
+                  {hitRows.label} · {hitRows.rows.length}
+                </div>
+                <Button variant="ghost" size="sm" className="h-6 text-[10.5px]" onClick={() => setHitRows(null)}>SCHLIESSEN</Button>
+              </div>
+              {hitRows.rows.map((r) => (
+                <Card key={r.id} className="p-3 hover:border-primary/50 transition cursor-pointer" onClick={() => openOrder(r.id)}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{r.order_number}{r.source_system === 'zoho_eu_2' ? '-AT' : ''}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {(r.customers as any)?.company_name || (r.customers as any)?.contact_name || '—'}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={TONE_CLASS[statusTone(r.magic_status)]}>
+                      {statusLabel(r.magic_status)}
+                    </Badge>
+                  </div>
+                </Card>
+              ))}
+              {hitRows.rows.length === 0 && (
+                <Card className="p-4 text-center text-sm text-muted-foreground">Keine verknüpften Aufträge.</Card>
+              )}
+            </div>
+          )}
+
 
           {nl && (
             <div className="space-y-1.5">
