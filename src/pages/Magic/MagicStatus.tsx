@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search, Sparkles, Wand2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { magicSearch, groupHits, MAGIC_KIND_LABEL, type MagicHit } from '@/lib/magic/search';
+import { magicSearch, groupHits, resolveHitOrders, MAGIC_KIND_LABEL, type MagicHit } from '@/lib/magic/search';
+import { toast } from 'sonner';
+
 import { statusLabel, statusTone, TONE_CLASS } from '@/lib/magic/statuses';
 import { parseMagicQuery, MAGIC_NL_EXAMPLES, type MagicNlRow } from '@/lib/magic/nlSearch';
 import MagicOrderPanel from './MagicOrderPanel';
