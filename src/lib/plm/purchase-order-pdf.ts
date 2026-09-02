@@ -75,7 +75,7 @@ export function buildPurchaseOrderPdf(po: PoPdfData) {
   [
     ['Bestell-Nr.', po.po_number || '—'],
     ['Bestelldatum', d(po.order_date)],
-    ['Liefertermin', d(po.expected_date)],
+    ['Voraussichtl. Liefertermin', d(po.expected_date)],
     ['Lieferantennr.', s.supplier_number || '—'],
   ].forEach(([k, v]) => {
     doc.setTextColor(110); doc.text(String(k), 130, ry);

@@ -730,7 +730,7 @@ export default function AngebotErstellen() {
     if (deliveryWeek) {
       const wkMatch = deliveryWeek.match(/^(\d{4})-W(\d{2})$/);
       const wkLabel = wkMatch ? `KW ${wkMatch[2]} / ${wkMatch[1]}` : deliveryWeek;
-      doc.text(`Vorauss. Liefertermin:`, metaX, my); doc.text(wkLabel, RIGHT, my, { align: 'right' }); my += 5;
+      doc.text(`Voraussichtl. Liefertermin:`, metaX, my); doc.text(wkLabel, RIGHT, my, { align: 'right' }); my += 5;
     }
 
     // Customer block
