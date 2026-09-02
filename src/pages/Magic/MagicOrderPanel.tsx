@@ -11,16 +11,18 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  AlertTriangle, ArrowRight, Check, ChevronRight, Loader2, Package, ScanLine, ShieldCheck, Truck, User, Wand2, X,
+  AlertTriangle, ArrowRight, Check, ChevronRight, Factory, Loader2, Package, ScanLine, ShieldCheck, Truck, User, Wand2, Warehouse, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import {
   loadDossier, evaluateRequirements, missingFor, readinessScore, nextStepFor, magicWarnings,
-  executeMagicStatus, assignSerial, findSerialConflict, serialOf, canUseStatus, type MagicDossier, type MagicResult,
+  executeMagicStatus, assignSerial, findSerialConflict, serialOf, canUseStatus,
+  currentSupplyStage, canUseSupplyStage, setSupplyStage, type MagicDossier, type MagicResult,
 } from '@/lib/magic/engine';
-import { MAGIC_STATUSES, STATUS_BY_KEY, statusLabel, statusTone, TONE_CLASS } from '@/lib/magic/statuses';
+import { MAGIC_STATUSES, STATUS_BY_KEY, statusLabel, statusTone, TONE_CLASS, SUPPLY_STAGES, SUPPLY_STAGE_BY_KEY, type SupplyStage } from '@/lib/magic/statuses';
+
 
 const fmtMoney = (v: any, c = 'EUR') => v == null ? '—' : `${Number(v).toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${c}`;
 const fmtDate = (v: any) => v ? new Date(v).toLocaleDateString('de-DE') : '—';
