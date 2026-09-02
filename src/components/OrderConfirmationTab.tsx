@@ -276,7 +276,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       meta.push(['Bestelldatum', fmtDate(order?.order_date)]);
       
       meta.push(['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')]);
-      if (deliveryWeek) meta.push(['Liefertermin', deliveryWeek]);
+      if (deliveryWeek) meta.push(['Voraussichtl. Liefertermin', deliveryWeek]);
       for (const [k, v] of meta) {
         doc.setFont('helvetica', 'bold');
         doc.text(k, metaX, metaY);
@@ -604,7 +604,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           <Input type="date" value={confirmDate} onChange={e => setConfirmDate(e.target.value)} className="bg-secondary border-border mt-1" />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Liefertermin / KW (optional)</Label>
+          <Label className="text-xs text-muted-foreground">Voraussichtlicher Liefertermin / KW (optional)</Label>
           <div className="flex gap-2 mt-1">
             <Input value={deliveryWeek} onChange={e => setDeliveryWeek(e.target.value)} placeholder="z. B. KW 32 / 2026" className="bg-secondary border-border" />
             <Popover>
