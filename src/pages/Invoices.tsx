@@ -1785,7 +1785,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     let ok = 0;
     let failed = 0;
     try {
+      const isStorno = bulkStatusValue === 'Storniert';
       for (const t of targets) {
+        if (isStorno) {
+          try { await bookStorno(t); ok++; } catch { failed++; }
+          continue;
+        }
         const { error } = await (supabase as any)
           .from(tableFor(t.source))
           .update({ payment_status: bulkStatusValue })
@@ -1793,7 +1798,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         if (error) failed++; else ok++;
       }
       const ids = new Set(targets.map((t) => t.id));
-      setRows((prev) => prev.map((x) => (ids.has(x.id) ? { ...x, payment_status: bulkStatusValue } : x)));
+      setRows((prev) => prev.map((x) => (ids.has(x.id)
+        ? { ...x, payment_status: bulkStatusValue, ...(isStorno ? { status: 'void', balance: 0 } : {}) }
+        : x)));
       toast({
         title: 'Status geändert',
         description: `${ok} Rechnung(en) auf „${bulkStatusValue}" gesetzt${failed ? `, ${failed} fehlgeschlagen` : ''}.`,
