@@ -1008,8 +1008,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     if (extra.overdue) {
       res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
     }
+    if (dateFrom || dateTo) {
+      res = res.filter((r) => matchesDateRange(r));
+    }
     return res;
-  }, [rows, extra]);
+  }, [rows, extra, dateFrom, dateTo]);
 
 
   const accounts = useMemo<Account[]>(() => {
