@@ -149,6 +149,7 @@ const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 // const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices")); // deaktiviert
 const FinanceDetail = lazy(() => import("./pages/FinanceDetail"));
 const Rechnungsvorschlaege = lazy(() => import("./pages/Rechnungsvorschlaege"));
+const FinanceStornos = lazy(() => import("./pages/Finance/Stornos"));
 const ServiceCockpit = lazy(() => import("./pages/ServiceCockpit"));
 const FinanceForm = lazy(() => import("./pages/FinanceForm"));
 const FinanceDashboardPhase1 = lazy(() => import("./pages/Finance/Dashboard"));
