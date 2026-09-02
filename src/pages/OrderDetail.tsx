@@ -925,6 +925,26 @@ export default function OrderDetail() {
                 ['Status', order.order_status || 'offen'],
                 ['Betrag', order.total_amount != null ? `${Number(applyMode(Number(order.total_amount), totalTax)).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) })} ${priceLabel}` : '—'],
                 ['Vereinbarte Anzahlung', order.deposit_amount != null ? Number(order.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'],
+                ['Anzahlung bezahlt', (() => {
+                  const cur = normalizeCurrency(order.currency);
+                  const fromFinance = financeDeposits.reduce((s, d) => s + (Number(d.paid_amount) || 0), 0);
+                  const fromAdditional = additionalDeposits.filter((d: any) => d.geleistet).reduce((s: number, d: any) => s + (Number(d.amount) || 0), 0);
+                  const fromOrder = order.deposit_ok ? (Number(order.deposit_amount) || 0) : 0;
+                  const paid = fromFinance > 0 ? fromFinance : (fromAdditional + fromOrder);
+                  if (!paid) return '—';
+                  return paid.toLocaleString('de-DE', { style: 'currency', currency: cur });
+                })()],
+                ['Anzahlung offen', (() => {
+                  const cur = normalizeCurrency(order.currency);
+                  const agreed = (Number(order.deposit_amount) || 0) + (Number(order.deposit_additional) || 0);
+                  const fromFinance = financeDeposits.reduce((s, d) => s + (Number(d.paid_amount) || 0), 0);
+                  const fromAdditional = additionalDeposits.filter((d: any) => d.geleistet).reduce((s: number, d: any) => s + (Number(d.amount) || 0), 0);
+                  const fromOrder = order.deposit_ok ? (Number(order.deposit_amount) || 0) : 0;
+                  const paid = fromFinance > 0 ? fromFinance : (fromAdditional + fromOrder);
+                  if (!agreed) return '—';
+                  const open = Math.max(agreed - paid, 0);
+                  return open.toLocaleString('de-DE', { style: 'currency', currency: cur });
+                })()],
                 ['Anzahlung geleistet am', order.deposit_booking_date ? new Date(order.deposit_booking_date).toLocaleDateString('de-DE') : (order.deposit_ok && order.deposit_ok_at ? new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : '—')],
                 ['Währung', order.currency],
                 ['Bestelldatum', order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE') : '—'],
