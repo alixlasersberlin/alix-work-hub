@@ -193,7 +193,23 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
+// Reihenfolge für die Sortierung nach Status (Gruppen von "aktiv" nach "erledigt")
+export function statusRank(r: Row): number {
+  const s = String(r.status ?? '').toLowerCase();
+  if (s === 'void' || s === 'storniert' || s === 'cancelled') return 90;
+  if (isDraftInvoice(r)) return 10;
+  const ps = String(r.payment_status ?? '').trim().toLowerCase();
+  if (ps === 'anwalt') return 70;
+  if (ps === 'inkasso intern') return 60;
+  if (ps === 'überfällig') return 20;
+  if (ps === 'teilweise bezahlt') return 30;
+  if (ps === 'offen' || Number(r.balance ?? 0) > 0) return 40;
+  if (ps === 'bezahlt' || ps === 'paid') return 80;
+  return 50;
+}
+
 type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue' | 'anwalt' | 'inkasso';
+
 
 // Rechnungen im Status "Anwalt" werden aus allen normalen Ansichten ausgeblendet
 export function isAnwaltRow(r: Row): boolean {
