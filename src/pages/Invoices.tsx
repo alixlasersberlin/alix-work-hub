@@ -1168,9 +1168,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         // Älteste Rechnungen zuerst
         return String(a.invoice_date ?? '9999').localeCompare(String(b.invoice_date ?? '9999'));
       }
+      if (listSort === 'status') {
+        const d = statusRank(a) - statusRank(b);
+        if (d !== 0) return d;
+        return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
+      }
       if (listSort === 'number') {
         return String(b.invoice_number ?? '').localeCompare(String(a.invoice_number ?? ''), 'de', { numeric: true });
       }
+
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
