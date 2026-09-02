@@ -1715,6 +1715,33 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setStatusRow(r);
   };
 
+  /** Storniert eine Rechnung: schließt den offenen Betrag und bucht ihn als Storno aus. */
+  const bookStorno = async (r: Row) => {
+    const open = Number(r.balance ?? r.total ?? 0);
+    const table = tableFor(r.source);
+    const raw = await loadRawData(r);
+    const patch: any = {
+      payment_status: 'Storniert',
+      status: 'void',
+      balance: 0,
+      raw_data: { ...raw, is_draft: false, is_void: true, storno_at: new Date().toISOString(), storno_amount: open },
+    };
+    const { error } = await (supabase as any).from(table).update(patch).eq('id', r.id);
+    if (error) throw error;
+    if (open !== 0) {
+      await (supabase as any).from('finance_transactions').insert({
+        amount: -Math.abs(open),
+        currency: r.currency ?? 'EUR',
+        booking_date: new Date().toISOString().slice(0, 10),
+        reference: r.invoice_number ?? r.id,
+        transaction_type: 'Storno',
+        notes: `Storno Rechnung ${r.invoice_number ?? ''} – ${r.customer_name ?? ''}`.trim(),
+        tenant_id: tenantId ?? null,
+      });
+    }
+    return patch;
+  };
+
   const saveStatus = async () => {
     if (!statusRow) return;
     if (statusRow.source === 'unpaid') {
@@ -1723,6 +1750,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }
     setStatusSaving(true);
     try {
+      const isStorno = statusForm.status === 'void' || statusForm.payment_status === 'Storniert';
+      if (isStorno) {
+        const patch = await bookStorno(statusRow);
+        setRows((prev) => prev.map((x) => (x.id === statusRow.id && x.source === statusRow.source ? { ...x, ...patch } : x)));
+        toast({ title: 'Rechnung storniert', description: `Offener Betrag ausgebucht (Storno) – ${statusRow.invoice_number ?? ''}.` });
+        setStatusRow(null);
+        return;
+      }
       const table = tableFor(statusRow.source);
       const patch: any = { payment_status: statusForm.payment_status || null };
       if (statusForm.status) {
@@ -1741,6 +1776,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       setStatusSaving(false);
     }
   };
+
 
   const saveBulkStatus = async () => {
     const targets = rows.filter((x) => selectedIds.includes(x.id) && x.source !== 'unpaid');
