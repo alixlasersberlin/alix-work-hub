@@ -2392,50 +2392,51 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </label>
         )}
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
-          <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle</SelectItem>
-              <SelectItem value="draft">Entwurf</SelectItem>
-              <SelectItem value="sent">Versendet</SelectItem>
-              <SelectItem value="offen">Offen</SelectItem>
-              <SelectItem value="teilweise bezahlt">Teilweise bezahlt</SelectItem>
-              <SelectItem value="bezahlt">Bezahlt</SelectItem>
-              <SelectItem value="überfällig">Überfällig</SelectItem>
-              <SelectItem value="anwalt">Anwalt</SelectItem>
-              <SelectItem value="inkasso">Inkasso Intern</SelectItem>
-              <SelectItem value="void">Storniert</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="basis-full w-full flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+            <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
+              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="draft">Entwurf</SelectItem>
+                <SelectItem value="sent">Versendet</SelectItem>
+                <SelectItem value="offen">Offen</SelectItem>
+                <SelectItem value="teilweise bezahlt">Teilweise bezahlt</SelectItem>
+                <SelectItem value="bezahlt">Bezahlt</SelectItem>
+                <SelectItem value="überfällig">Überfällig</SelectItem>
+                <SelectItem value="anwalt">Anwalt</SelectItem>
+                <SelectItem value="inkasso">Inkasso Intern</SelectItem>
+                <SelectItem value="void">Storniert</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Zeitraum:</span>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-9 w-[150px]"
+              aria-label="Rechnungsdatum von"
+            />
+            <span className="text-xs text-muted-foreground">bis</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-9 w-[150px]"
+              aria-label="Rechnungsdatum bis"
+            />
+            {(dateFrom || dateTo) && (
+              <Button size="sm" variant="ghost" onClick={() => { setDateFrom(''); setDateTo(''); }}>
+                Zurücksetzen
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Zeitraum:</span>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-9 w-[150px]"
-            aria-label="Rechnungsdatum von"
-          />
-          <span className="text-xs text-muted-foreground">bis</span>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-9 w-[150px]"
-            aria-label="Rechnungsdatum bis"
-          />
-          {(dateFrom || dateTo) && (
-            <Button size="sm" variant="ghost" onClick={() => { setDateFrom(''); setDateTo(''); }}>
-              Zurücksetzen
-            </Button>
-          )}
-        </div>
 
         {isAccountView && (
           <div className="flex gap-2">
