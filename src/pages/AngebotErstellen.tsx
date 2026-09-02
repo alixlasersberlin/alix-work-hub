@@ -383,15 +383,44 @@ export default function AngebotErstellen() {
   }, []);
 
 
+  // Serverseitige Live-Suche für Kunden (unabhängig davon, ob alle Kunden schon geladen sind)
+  const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
+  useEffect(() => {
+    const q = customerSearch.trim();
+    if (q.length < 2) { setCustomerSearchLoading(false); return; }
+    let cancelled = false;
+    setCustomerSearchLoading(true);
+    const t = setTimeout(async () => {
+      const esc = q.replace(/[%,()]/g, ' ');
+      const { data } = await supabase
+        .from('customers')
+        .select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system')
+        .or(`company_name.ilike.%${esc}%,contact_name.ilike.%${esc}%,email.ilike.%${esc}%,external_customer_id.ilike.%${esc}%`)
+        .limit(50);
+      if (cancelled) return;
+      if (data?.length) {
+        setCustomers((prev) => {
+          const map = new Map<string, any>(prev.map((p) => [p.id, p]));
+          for (const c of data) map.set(c.id, c);
+          return Array.from(map.values());
+        });
+      }
+      setCustomerSearchLoading(false);
+    }, 250);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [customerSearch]);
+
   const filteredCustomers = useMemo(() => {
     const q = customerSearch.toLowerCase().trim();
     if (!q) return [];
     return customers.filter(c =>
       c.company_name?.toLowerCase().includes(q) ||
       c.contact_name?.toLowerCase().includes(q) ||
-      c.email?.toLowerCase().includes(q)
+      c.email?.toLowerCase().includes(q) ||
+      c.external_customer_id?.toLowerCase().includes(q)
     ).slice(0, 50);
   }, [customers, customerSearch]);
+
 
 
   // Serverseitige Live-Suche (unabhängig davon, ob der komplette Katalog schon geladen ist)
@@ -1814,7 +1843,7 @@ export default function AngebotErstellen() {
               <div className="max-h-64 overflow-auto border border-border rounded-lg divide-y divide-border">
                 {filteredCustomers.length === 0 ? (
                   <p className="p-4 text-sm text-muted-foreground text-center">
-                    Keine Kunden gefunden. Über „Neuer Kunde" anlegen.
+                    {customerSearchLoading ? 'Suche läuft …' : 'Keine Kunden gefunden. Über „Neuer Kunde" anlegen.'}
                   </p>
                 ) : filteredCustomers.map(c => (
                   <button
