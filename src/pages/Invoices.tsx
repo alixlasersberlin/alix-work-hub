@@ -340,7 +340,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
         </Button>
       )}
-      {isAdmin && r.source !== 'unpaid' && (
+      {isAdmin && (
+
         <Button
           size="sm"
           variant="outline"
