@@ -123,7 +123,8 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
     if (!stageTarget) return;
     setBusy(true);
     try {
-      const r = await setSupplyStage(d, stageTarget, { reason: reason || undefined });
+      const r = await setSupplyStage(d, stageTarget, { reason: reason || undefined, notifyCustomer });
+
       setResult(r);
       r.ok
         ? toast.success(`Lieferkette gesetzt: ${SUPPLY_STAGE_BY_KEY[stageTarget].label}`)
