@@ -538,14 +538,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       try { localStorage.setItem('invoices_extra_filters', JSON.stringify(next)); } catch {}
       return next;
     });
-  const [listSort, setListSort] = useState<'number' | 'date'>(() => {
+  const [listSort, setListSort] = useState<'number' | 'date' | 'status'>(() => {
     if (typeof window === 'undefined') return 'date';
-    return (localStorage.getItem('invoices_list_sort') as 'number' | 'date') || 'date';
+    return (localStorage.getItem('invoices_list_sort') as 'number' | 'date' | 'status') || 'date';
   });
   const setViewModePersist = (m: ViewMode) => {
     setViewMode(m); try { localStorage.setItem('invoices_view_mode', m); } catch {}
   };
-  const setListSortPersist = (s: 'number' | 'date') => {
+  const setListSortPersist = (s: 'number' | 'date' | 'status') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
   const isListView = viewMode === 'list' || viewMode === 'newest';
