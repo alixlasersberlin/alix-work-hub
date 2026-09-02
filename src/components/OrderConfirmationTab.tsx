@@ -604,7 +604,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           <Input type="date" value={confirmDate} onChange={e => setConfirmDate(e.target.value)} className="bg-secondary border-border mt-1" />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Liefertermin / KW (optional)</Label>
+          <Label className="text-xs text-muted-foreground">Voraussichtlicher Liefertermin / KW (optional)</Label>
           <div className="flex gap-2 mt-1">
             <Input value={deliveryWeek} onChange={e => setDeliveryWeek(e.target.value)} placeholder="z. B. KW 32 / 2026" className="bg-secondary border-border" />
             <Popover>
