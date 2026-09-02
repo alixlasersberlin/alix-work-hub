@@ -287,3 +287,121 @@ export async function executeMagicStatus(
 export function statusOptions() {
   return MAGIC_STATUSES;
 }
+
+/* ---------------- Lieferkette: Produktion → Transfer → Lager ---------------- */
+
+/** Ersetzt/setzt den [Status: X]-Marker in den Notizen der Geräteakte. */
+function withStatusMarker(notes: string | null | undefined, status: string): string {
+  const cleaned = String(notes ?? '').replace(/\[Status:\s*[^\]]*\]/gi, '').replace(/\s+/g, ' ').trim();
+  return `${cleaned} [Status: ${status}]`.trim();
+}
+
+export function currentSupplyStage(d: MagicDossier): SupplyStage | null {
+  const dev = d.devices[0];
+  const hay = `${dev?.device_status ?? ''} ${dev?.notes ?? ''} ${d.productionOrders[0]?.status ?? ''} ${d.order.magic_status ?? ''}`;
+  if (/bestand|lager|wareneingang|ware_eingegangen/i.test(hay)) return 'lager';
+  if (/transfer|unterwegs|ware_unterwegs/i.test(hay)) return 'transfer';
+  if (/produktion/i.test(hay)) return 'produktion';
+  return null;
+}
+
+export function canUseSupplyStage(stage: SupplyStageDef, roles: string[]): boolean {
+  const mine = magicRolesForUser(roles);
+  return stage.roles.some((r) => mine.includes(r));
+}
+
+/**
+ * Setzt eine Lieferketten-Stufe und löst alle Folgeschritte aus:
+ * Geräteakte, Lieferantenbestellung, Magic Status, Protokoll.
+ */
+export async function setSupplyStage(
+  d: MagicDossier,
+  stageKey: SupplyStage,
+  opts: { reason?: string } = {},
+): Promise<MagicResult> {
+  const stage = SUPPLY_STAGE_BY_KEY[stageKey];
+  if (!stage) return { ok: false, executed: [], failed: ['Unbekannte Lieferkettenstufe'] };
+
+  const executed: string[] = [];
+  const failed: string[] = [];
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  const serial = serialOf(d);
+  const po = d.productionOrders[0];
+  let device = d.devices[0];
+
+  // 1) Geräteakte
+  try {
+    if (!device && serial) {
+      const { data, error } = await supabase.from('lager_devices').insert({
+        serial_number: serial,
+        model_name: po?.modellname ?? null,
+        reserved_order_id: d.order.id,
+        customer_name: d.customer?.company_name || d.customer?.contact_name || null,
+        customer_email: d.customer?.email || null,
+        device_status: stage.deviceStatus,
+        notes: `[Status: ${stage.deviceStatus}]`,
+        entry_date: new Date().toISOString().slice(0, 10),
+      }).select('*').maybeSingle();
+      if (error) throw error;
+      device = data as any;
+      executed.push(`Geräteakte angelegt & auf „${stage.deviceStatus}" gesetzt`);
+    } else if (device) {
+      const { error } = await supabase.from('lager_devices').update({
+        device_status: stage.deviceStatus,
+        notes: withStatusMarker(device.notes, stage.deviceStatus),
+        reserved_order_id: device.reserved_order_id ?? d.order.id,
+      }).eq('id', device.id);
+      if (error) throw error;
+      executed.push(`Gerät ${device.serial_number ?? ''} auf „${stage.deviceStatus}" gesetzt`.replace('  ', ' '));
+    } else {
+      failed.push('Keine Geräteakte und keine Seriennummer vorhanden – Gerätestatus nicht gesetzt');
+    }
+  } catch (e: any) {
+    failed.push(`Geräteakte: ${e?.message ?? e}`);
+  }
+
+  // 2) Lieferantenbestellung
+  if (po) {
+    const { error } = await supabase.from('production_orders').update({ status: stage.productionStatus }).eq('id', po.id);
+    error
+      ? failed.push(`Lieferantenbestellung: ${error.message}`)
+      : executed.push(`Lieferantenbestellung auf „${stage.productionStatus}" gesetzt`);
+  } else {
+    failed.push('Keine Lieferantenbestellung vorhanden – Bestellstatus nicht gesetzt');
+  }
+
+  // 3) Magic Status
+  const from = d.order.magic_status ?? null;
+  const { error: upErr } = await supabase.from('orders').update({
+    magic_status: stage.magicStatus,
+    magic_status_at: new Date().toISOString(),
+    magic_status_by: user?.id ?? null,
+  }).eq('id', d.order.id);
+  upErr
+    ? failed.push(`Magic Status: ${upErr.message}`)
+    : executed.push(`Magic Status auf ${STATUS_BY_KEY[stage.magicStatus]?.label ?? stage.magicStatus} gesetzt`);
+
+  // 4) Folgeschritte protokollieren
+  for (const s of stage.steps.slice(3)) executed.push(`${s} (protokolliert)`);
+
+  await supabase.from('magic_status_log').insert({
+    entity_type: 'order',
+    order_id: d.order.id,
+    device_id: device?.id ?? null,
+    production_order_id: po?.id ?? null,
+    old_status: from,
+    new_status: stage.magicStatus,
+    serial_number: serial,
+    user_id: user?.id ?? null,
+    user_email: user?.email ?? null,
+    actions_executed: executed as any,
+    actions_failed: failed as any,
+    change_reason: opts.reason ?? null,
+    workflow_version: 1,
+    source: `magic_status.supply_chain.${stage.key}`,
+  });
+
+  return { ok: failed.length === 0, executed, failed };
+}
+
