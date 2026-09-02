@@ -442,6 +442,16 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const dSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
+  // Zeitraum-Filter (Rechnungsdatum von/bis)
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const matchesDateRange = (r: Row) => {
+    const d = String(r.invoice_date ?? r.created_at ?? '').slice(0, 10);
+    if (!d) return !dateFrom && !dateTo;
+    if (dateFrom && d < dateFrom) return false;
+    if (dateTo && d > dateTo) return false;
+    return true;
+  };
   const [includeUnpaid, setIncludeUnpaid] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('invoices_include_unpaid') === '1';
