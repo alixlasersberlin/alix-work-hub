@@ -48,7 +48,7 @@ export function ListToolbar({
 
   return (
     <div className={`rounded-xl border border-border bg-card p-4 mb-4 ${className ?? ''}`}>
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-stretch sm:items-center">
         {!searchBelow && searchField}
         {children}
         <div className="flex items-center gap-2">
