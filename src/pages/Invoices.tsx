@@ -1251,9 +1251,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
   const displayAccounts = useMemo<Account[]>(() => {
-    if (viewMode === 'highest') return [...accounts].sort((a, b) => b.totalAmount - a.totalAmount);
+    // Leere Ordner (Kundenkonten ohne passende Rechnungen) werden entfernt
+    const base = accounts.filter((a) => a.rows.length > 0);
+    if (viewMode === 'highest') return [...base].sort((a, b) => b.totalAmount - a.totalAmount);
     if (viewMode === 'oldest') {
-      const withOpen = accounts
+      const withOpen = base
         .map((a) => {
           const openRows = a.rows.filter((r) => Number(r.balance ?? 0) > 0);
           if (openRows.length === 0) return null;
@@ -1275,8 +1277,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         String(a.oldestOpenDate ?? '9999').localeCompare(String(b.oldestOpenDate ?? '9999')),
       );
     }
-    return accounts;
-  }, [accounts, viewMode]);
+    if (listSort === 'status') {
+      // Konten nach "dringendstem" Status ihrer Rechnungen gruppieren
+      return [...base]
+        .map((a) => ({ ...a, rows: [...a.rows].sort((x, y) => statusRank(x) - statusRank(y)) }))
+        .sort((a, b) => statusRank(a.rows[0]) - statusRank(b.rows[0]));
+    }
+    return base;
+  }, [accounts, viewMode, listSort]);
+
 
 
   // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
