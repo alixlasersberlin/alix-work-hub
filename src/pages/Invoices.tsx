@@ -442,6 +442,16 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const dSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
+  // Zeitraum-Filter (Rechnungsdatum von/bis)
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const matchesDateRange = (r: Row) => {
+    const d = String(r.invoice_date ?? r.created_at ?? '').slice(0, 10);
+    if (!d) return !dateFrom && !dateTo;
+    if (dateFrom && d < dateFrom) return false;
+    if (dateTo && d > dateTo) return false;
+    return true;
+  };
   const [includeUnpaid, setIncludeUnpaid] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('invoices_include_unpaid') === '1';
@@ -998,8 +1008,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     if (extra.overdue) {
       res = res.filter((r) => !isPaid(r) && Number(r.balance ?? 0) > 0 && !!r.due_date && String(r.due_date) < today);
     }
+    if (dateFrom || dateTo) {
+      res = res.filter((r) => matchesDateRange(r));
+    }
     return res;
-  }, [rows, extra]);
+  }, [rows, extra, dateFrom, dateTo]);
 
 
   const accounts = useMemo<Account[]>(() => {
@@ -2314,6 +2327,31 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </Select>
 
         </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Zeitraum:</span>
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-9 w-[150px]"
+            aria-label="Rechnungsdatum von"
+          />
+          <span className="text-xs text-muted-foreground">bis</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-9 w-[150px]"
+            aria-label="Rechnungsdatum bis"
+          />
+          {(dateFrom || dateTo) && (
+            <Button size="sm" variant="ghost" onClick={() => { setDateFrom(''); setDateTo(''); }}>
+              Zurücksetzen
+            </Button>
+          )}
+        </div>
+
         {isAccountView && (
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
