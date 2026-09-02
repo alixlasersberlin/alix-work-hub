@@ -1801,7 +1801,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
   const saveBulkStatus = async () => {
-    const targets = rows.filter((x) => selectedIds.includes(x.id) && x.source !== 'unpaid');
+    const targets = rows.filter((x) => selectedIds.includes(x.id) && (x.source !== 'unpaid' || bulkStatusValue === 'Storniert'));
     if (targets.length === 0 || !bulkStatusValue) return;
     setBulkStatusSaving(true);
     let ok = 0;
