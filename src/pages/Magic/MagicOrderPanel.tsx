@@ -77,6 +77,9 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const currentSerial = d ? serialOf(d) : null;
   const targetDef = target ? STATUS_BY_KEY[target] : null;
   const blockers = d && targetDef ? missingFor(targetDef, d) : [];
+  const stage = d ? currentSupplyStage(d) : null;
+  const stageDef = stageTarget ? SUPPLY_STAGE_BY_KEY[stageTarget] : null;
+
 
   if (loading || !d) {
     return <Card className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin" /></Card>;
