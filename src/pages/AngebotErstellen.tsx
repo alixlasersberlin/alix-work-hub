@@ -1939,7 +1939,12 @@ export default function AngebotErstellen() {
                     onClick={() => addItem(i)}
                     className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
                   >
-                    <p className="font-medium text-foreground">{i.name}</p>
+                    <p className="font-medium text-foreground">
+                      {i.name}
+                      {i.status && i.status !== 'active' && (
+                        <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</p>
                   </button>
                 ))}
