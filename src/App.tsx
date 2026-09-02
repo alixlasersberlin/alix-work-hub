@@ -288,6 +288,7 @@ const Auslieferungsfreigabe = lazy(() => import("./pages/Operations/Auslieferung
 const FactoryInvoice = lazy(() => import("./pages/FactoryInvoice"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 const Lager = lazy(() => import("./pages/Lager"));
+const MagicStatusPage = lazy(() => import("./pages/Magic/MagicStatus"));
 const Lagergeraete = lazy(() => import("./pages/Lagergeraete"));
 const Leihgeraete = lazy(() => import("./pages/Leihgeraete"));
 const DoppelteReservierungen = lazy(() => import("./pages/DoppelteReservierungen"));
