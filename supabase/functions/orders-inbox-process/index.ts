@@ -206,9 +206,12 @@ async function processOne(
     await supabase
       .from("orders")
       .update({
-        raw_data: { ...payload, _alixwork_warning: "items_missing" },
-        internal_notes:
-          "⚠️ Unvollständig: Der Sender hat keine Positionen (items) übermittelt. Positionen bitte manuell nachtragen.",
+        raw_data: {
+          ...payload,
+          _alixwork_warning: "items_missing",
+          _alixwork_warning_text:
+            "Unvollständig: Der Sender hat keine Positionen (items) übermittelt.",
+        },
       })
       .eq("id", order.id);
     console.warn("order received without items", orderNumber);
