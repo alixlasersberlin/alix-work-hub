@@ -160,7 +160,7 @@ export default function ProductionFertig() {
       { key: 'seriennummer',   label: 'SN',          w: 22 },
       { key: 'bearbeiter',     label: 'Bearbeiter',  w: 24 },
       { key: 'zulieferer',     label: 'Zulieferer',  w: 30 },
-      { key: 'liefertermin',   label: 'Liefertermin', w: 22 },
+      { key: 'liefertermin',   label: 'Voraussichtl.\nLiefertermin', w: 22 },
       { key: 'status',         label: 'Status',      w: 22 },
       { key: 'reklamation',    label: 'Rekl.',       w: 14 },
     ] as const;
@@ -168,11 +168,11 @@ export default function ProductionFertig() {
     const drawHeader = () => {
       doc.setFillColor(30, 30, 30);
       doc.setTextColor(255, 255, 255);
-      doc.rect(marginX, y - 4, pageW - marginX * 2, 6, 'F');
+      doc.rect(marginX, y - 4, pageW - marginX * 2, 9, 'F');
       doc.setFont('Inter', 'bold'); doc.setFontSize(8);
       let x = marginX + 1;
-      cols.forEach(c => { doc.text(c.label, x, y); x += c.w; });
-      y += 4;
+      cols.forEach(c => { doc.text(String(c.label).split('\n'), x, y); x += c.w; });
+      y += 7.5;
       doc.setTextColor(0, 0, 0);
       doc.setFont('Inter', 'normal');
     };
