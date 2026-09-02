@@ -180,7 +180,7 @@ export default function ProductionTimeline() {
       startY: 24,
       styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [30, 30, 30], textColor: 255 },
-      head: [['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Voraussichtl. Liefertermin', 'Status']],
+      head: [['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Voraussichtl.\nLiefertermin', 'Status']],
       body: data.map(r => [
         r.is_reclamation ? 'Reklamation' : 'Bestellung',
         r.display_order_number || '',

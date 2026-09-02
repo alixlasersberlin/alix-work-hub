@@ -75,12 +75,14 @@ export function buildPurchaseOrderPdf(po: PoPdfData) {
   [
     ['Bestell-Nr.', po.po_number || '—'],
     ['Bestelldatum', d(po.order_date)],
-    ['Voraussichtl. Liefertermin', d(po.expected_date)],
+    ['Voraussichtl.\nLiefertermin', d(po.expected_date)],
     ['Lieferantennr.', s.supplier_number || '—'],
   ].forEach(([k, v]) => {
-    doc.setTextColor(110); doc.text(String(k), 130, ry);
-    doc.setTextColor(0); doc.text(String(v), 190, ry, { align: 'right' });
-    ry += 5;
+    const kLines = String(k).split('\n');
+    doc.setTextColor(110);
+    kLines.forEach((line, i) => doc.text(line, 130, ry + i * 4.2));
+    doc.setTextColor(0); doc.text(String(v), 190, ry + (kLines.length - 1) * 4.2, { align: 'right' });
+    ry += 5 + (kLines.length - 1) * 4.2;
   });
 
   y = Math.max(y, ry) + 8;
