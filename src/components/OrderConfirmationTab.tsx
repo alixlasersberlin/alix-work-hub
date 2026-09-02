@@ -276,13 +276,14 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       meta.push(['Bestelldatum', fmtDate(order?.order_date)]);
       
       meta.push(['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')]);
-      if (deliveryWeek) meta.push(['Voraussichtl. Liefertermin', deliveryWeek]);
+      if (deliveryWeek) meta.push(['Voraussichtl.\nLiefertermin', deliveryWeek]);
       for (const [k, v] of meta) {
+        const kLines = String(k).split('\n');
         doc.setFont('helvetica', 'bold');
-        doc.text(k, metaX, metaY);
+        kLines.forEach((line, i) => doc.text(line, metaX, metaY + i * 4.2));
         doc.setFont('helvetica', 'normal');
-        doc.text(v, metaX + 32, metaY);
-        metaY += 5;
+        doc.text(v, metaX + 32, metaY + (kLines.length - 1) * 4.2);
+        metaY += 5 + (kLines.length - 1) * 4.2;
       }
 
       // Addresses
