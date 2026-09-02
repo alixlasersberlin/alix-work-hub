@@ -69,7 +69,6 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         templateName: 'ruecklastschrift-gebuehrenrechnung',
         recipientEmail: recipient,
-        bcc: BCC,
         idempotencyKey: `rd-fee-invoice-${id}-${Date.now()}`,
         templateData: {
           customerName,
