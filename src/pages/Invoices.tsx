@@ -1715,10 +1715,27 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setStatusRow(r);
   };
 
+  /**
+   * Ermittelt die beschreibbare Rechnung. Offene-Posten-Zeilen ("unpaid") sind nur eine
+   * Spiegelung – für Buchungen wird die echte Rechnung in zoho_invoices gesucht.
+   */
+  const resolveWritableTarget = async (r: Row): Promise<{ table: string; id: string } | null> => {
+    if (r.source !== 'unpaid') return { table: tableFor(r.source), id: r.id };
+    if (!r.invoice_number) return null;
+    const { data } = await (supabase as any)
+      .from('zoho_invoices')
+      .select('id')
+      .eq('invoice_number', r.invoice_number)
+      .limit(1)
+      .maybeSingle();
+    return data?.id ? { table: 'zoho_invoices', id: data.id } : null;
+  };
+
   /** Storniert eine Rechnung: schließt den offenen Betrag und bucht ihn als Storno aus. */
   const bookStorno = async (r: Row) => {
     const open = Number(r.balance ?? r.total ?? 0);
-    const table = tableFor(r.source);
+    const target = await resolveWritableTarget(r);
+    if (!target) throw new Error('Zu dieser Offenen-Posten-Zeile existiert keine Rechnung in Zoho-Rechnungen.');
     const raw = await loadRawData(r);
     const patch: any = {
       payment_status: 'Storniert',
@@ -1726,8 +1743,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       balance: 0,
       raw_data: { ...raw, is_draft: false, is_void: true, storno_at: new Date().toISOString(), storno_amount: open },
     };
-    const { error } = await (supabase as any).from(table).update(patch).eq('id', r.id);
+    const { error } = await (supabase as any).from(target.table).update(patch).eq('id', target.id);
     if (error) throw error;
+    if (r.source === 'unpaid') {
+      await (supabase as any).from('zoho_unpaid_invoices').update({ balance: 0, status: 'void' }).eq('id', r.id);
+    }
     if (open !== 0) {
       await (supabase as any).from('finance_transactions').insert({
         amount: -Math.abs(open),
@@ -1744,10 +1764,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const saveStatus = async () => {
     if (!statusRow) return;
-    if (statusRow.source === 'unpaid') {
+    const isStornoRequest = statusForm.status === 'void' || statusForm.payment_status === 'Storniert';
+    if (statusRow.source === 'unpaid' && !isStornoRequest) {
       toast({ title: 'Nur Ansicht', description: 'Offene-Posten-Rechnungen sind hier schreibgeschützt.', variant: 'destructive' });
       return;
     }
+
     setStatusSaving(true);
     try {
       const isStorno = statusForm.status === 'void' || statusForm.payment_status === 'Storniert';
