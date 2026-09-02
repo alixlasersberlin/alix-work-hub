@@ -28882,6 +28882,126 @@ export type Database = {
           },
         ]
       }
+      magic_status_log: {
+        Row: {
+          actions_executed: Json
+          actions_failed: Json
+          change_reason: string | null
+          created_at: string
+          device_id: string | null
+          entity_type: string
+          field_name: string | null
+          id: string
+          new_status: string | null
+          new_value: string | null
+          old_status: string | null
+          old_value: string | null
+          order_id: string | null
+          production_order_id: string | null
+          serial_number: string | null
+          source: string
+          user_email: string | null
+          user_id: string | null
+          workflow_version: number | null
+        }
+        Insert: {
+          actions_executed?: Json
+          actions_failed?: Json
+          change_reason?: string | null
+          created_at?: string
+          device_id?: string | null
+          entity_type?: string
+          field_name?: string | null
+          id?: string
+          new_status?: string | null
+          new_value?: string | null
+          old_status?: string | null
+          old_value?: string | null
+          order_id?: string | null
+          production_order_id?: string | null
+          serial_number?: string | null
+          source?: string
+          user_email?: string | null
+          user_id?: string | null
+          workflow_version?: number | null
+        }
+        Update: {
+          actions_executed?: Json
+          actions_failed?: Json
+          change_reason?: string | null
+          created_at?: string
+          device_id?: string | null
+          entity_type?: string
+          field_name?: string | null
+          id?: string
+          new_status?: string | null
+          new_value?: string | null
+          old_status?: string | null
+          old_value?: string | null
+          order_id?: string | null
+          production_order_id?: string | null
+          serial_number?: string | null
+          source?: string
+          user_email?: string | null
+          user_id?: string | null
+          workflow_version?: number | null
+        }
+        Relationships: []
+      }
+      magic_status_workflows: {
+        Row: {
+          actions: Json
+          created_at: string
+          entity_type: string
+          from_status: string | null
+          id: string
+          is_active: boolean
+          next_status: string | null
+          next_task: string | null
+          notifications: Json
+          required_conditions: Json
+          required_fields: Json
+          role_permissions: Json
+          to_status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          actions?: Json
+          created_at?: string
+          entity_type?: string
+          from_status?: string | null
+          id?: string
+          is_active?: boolean
+          next_status?: string | null
+          next_task?: string | null
+          notifications?: Json
+          required_conditions?: Json
+          required_fields?: Json
+          role_permissions?: Json
+          to_status: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          actions?: Json
+          created_at?: string
+          entity_type?: string
+          from_status?: string | null
+          id?: string
+          is_active?: boolean
+          next_status?: string | null
+          next_task?: string | null
+          notifications?: Json
+          required_conditions?: Json
+          required_fields?: Json
+          role_permissions?: Json
+          to_status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       mail_attachments: {
         Row: {
           created_at: string
@@ -33599,6 +33719,9 @@ export type Database = {
           is_mietkauf: boolean
           is_vip: boolean
           lawyer_reason: string | null
+          magic_status: string | null
+          magic_status_at: string | null
+          magic_status_by: string | null
           mietkauf_booked_at: string | null
           mietkauf_booked_by: string | null
           order_date: string | null
@@ -33645,6 +33768,9 @@ export type Database = {
           is_mietkauf?: boolean
           is_vip?: boolean
           lawyer_reason?: string | null
+          magic_status?: string | null
+          magic_status_at?: string | null
+          magic_status_by?: string | null
           mietkauf_booked_at?: string | null
           mietkauf_booked_by?: string | null
           order_date?: string | null
@@ -33691,6 +33817,9 @@ export type Database = {
           is_mietkauf?: boolean
           is_vip?: boolean
           lawyer_reason?: string | null
+          magic_status?: string | null
+          magic_status_at?: string | null
+          magic_status_by?: string | null
           mietkauf_booked_at?: string | null
           mietkauf_booked_by?: string | null
           order_date?: string | null

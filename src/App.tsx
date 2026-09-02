@@ -288,6 +288,7 @@ const Auslieferungsfreigabe = lazy(() => import("./pages/Operations/Auslieferung
 const FactoryInvoice = lazy(() => import("./pages/FactoryInvoice"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 const Lager = lazy(() => import("./pages/Lager"));
+const MagicStatusPage = lazy(() => import("./pages/Magic/MagicStatus"));
 const Lagergeraete = lazy(() => import("./pages/Lagergeraete"));
 const Leihgeraete = lazy(() => import("./pages/Leihgeraete"));
 const DoppelteReservierungen = lazy(() => import("./pages/DoppelteReservierungen"));
@@ -2062,6 +2063,8 @@ function AppRoutes() {
           <Route path="/production/order-in" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionOrderIn /></ProtectedRoute>} />
           <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES} allowEmails={["natalia.p@alix-operation.de"]}><FactoryInvoice /></ProtectedRoute>} />
           <Route path="/lager" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lager /></ProtectedRoute>} />
+          <Route path="/magic" element={<ProtectedRoute><MagicStatusPage /></ProtectedRoute>} />
+
           <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
           <Route path="/lager/leihgeraete" element={<ProtectedRoute><Leihgeraete /></ProtectedRoute>} />
           <Route path="/lager/doppelte-reservierungen" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><DoppelteReservierungen /></ProtectedRoute>} />

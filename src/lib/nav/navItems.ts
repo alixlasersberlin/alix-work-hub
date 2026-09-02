@@ -12,6 +12,10 @@ export type NavItem = NavChild & { children?: NavChild[] };
 
 export const navItems: NavItem[] = [
   {
+    path: '/magic', label: 'MAGIC STATUS', icon: Sparkles, roles: null,
+  },
+
+  {
     path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock,
     roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
     children: [

@@ -18,6 +18,7 @@ type Hit =
   | { kind: "invoice"; id: string; label: string; sub?: string };
 
 const NAV: { label: string; to: string; icon: any; roles?: string[]; group: string }[] = [
+  { label: "Magic Status · Suchen. Ändern. Ausführen.", to: "/magic", icon: Sparkles, group: "Navigation" },
   { label: "Dashboard", to: "/dashboard", icon: Home, group: "Navigation" },
   { label: "Verkauf · Anfragen", to: "/verkauf/anfragen", icon: ClipboardList, group: "Navigation" },
   { label: "Kunden", to: "/kunden", icon: Users, group: "Navigation" },
@@ -144,7 +145,7 @@ export function GlobalCommandBar() {
                   value={`${h.kind}-${h.label}-${h.id}`}
                   onSelect={() => {
                     if (h.kind === "customer") go(`/kunden/${h.id}`);
-                    else if (h.kind === "order") go(`/auftraege/${h.id}`);
+                    else if (h.kind === "order") go(`/magic?order=${h.id}`);
                     else if (h.kind === "repair") go(`/reparatur/${h.id}`);
                     else if (h.kind === "invoice") go(`/finance/belege?invoice=${h.id}`);
                     else go(`/tickets/${h.id}`);
