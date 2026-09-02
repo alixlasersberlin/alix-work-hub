@@ -58,7 +58,7 @@ const L = {
   farbe:        ['Farbe',                    'Color'],
   power:        ['Power Handstück',          'Power Handpiece'],
   bearbeiter:   ['Bearbeiter',               'Processor'],
-  liefertermin: ['Liefertermin',             'Delivery Date'],
+  liefertermin: ['Voraussichtl. Liefertermin', 'Expected Delivery Date'],
   seriennummer: ['Seriennummer',             'Serial Number'],
   sonder:       ['Interne Nummer',           'Internal Number'],
   positions:    ['Positionen',               'Items'],

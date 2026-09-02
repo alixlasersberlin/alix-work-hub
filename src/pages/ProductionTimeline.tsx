@@ -142,7 +142,7 @@ export default function ProductionTimeline() {
 
   const downloadCSV = () => {
     const data = getExportRows();
-    const headers = ['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Liefertermin', 'Status'];
+    const headers = ['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Voraussichtl. Liefertermin', 'Status'];
     const lines = [headers.join(';')];
     data.forEach(r => {
       const cells = [
@@ -180,7 +180,7 @@ export default function ProductionTimeline() {
       startY: 24,
       styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [30, 30, 30], textColor: 255 },
-      head: [['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Liefertermin', 'Status']],
+      head: [['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Voraussichtl. Liefertermin', 'Status']],
       body: data.map(r => [
         r.is_reclamation ? 'Reklamation' : 'Bestellung',
         r.display_order_number || '',
