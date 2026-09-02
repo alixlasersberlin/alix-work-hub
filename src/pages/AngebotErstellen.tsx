@@ -1843,7 +1843,7 @@ export default function AngebotErstellen() {
               <div className="max-h-64 overflow-auto border border-border rounded-lg divide-y divide-border">
                 {filteredCustomers.length === 0 ? (
                   <p className="p-4 text-sm text-muted-foreground text-center">
-                    Keine Kunden gefunden. Über „Neuer Kunde" anlegen.
+                    {customerSearchLoading ? 'Suche läuft …' : 'Keine Kunden gefunden. Über „Neuer Kunde" anlegen.'}
                   </p>
                 ) : filteredCustomers.map(c => (
                   <button
