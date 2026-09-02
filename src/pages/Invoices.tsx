@@ -171,9 +171,16 @@ function matchesDocStatus(r: Row, docStatus: string) {
   const s = String(r.status ?? '').toLowerCase();
   if (docStatus === 'draft') return isDraftInvoice(r);
   if (docStatus === 'void') return s === 'void' || s === 'storniert' || s === 'cancelled';
+  if (docStatus === 'anwalt') return isAnwaltRow(r);
+  if (docStatus === 'inkasso') return isInkassoRow(r);
+  if (docStatus === 'bezahlt' || docStatus === 'offen' || docStatus === 'teilweise bezahlt' || docStatus === 'überfällig') {
+    if (s === 'void' || s === 'storniert' || s === 'cancelled') return false;
+    return matchesPayStatus(r, docStatus);
+  }
   // sent = alles andere (verschickt/offen/bezahlt)
   return !isDraftInvoice(r) && !(s === 'void' || s === 'storniert' || s === 'cancelled');
 }
+
 
 // "Offen" umfasst auch teilweise bezahlte / überfällige Rechnungen mit Restsaldo
 export function matchesPayStatus(r: Row, statusFilter: string): boolean {
