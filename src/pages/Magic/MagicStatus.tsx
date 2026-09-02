@@ -110,12 +110,21 @@ export default function MagicStatusPage() {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Auftrag, Kunde, Seriennummer, Gerät oder Bestellung suchen …"
+            placeholder="Auftrag, Kunde, Seriennummer – oder frag in Worten: „Alle Aufträge ohne Seriennummer“"
             className="pl-12 h-16 text-lg"
           />
           {loading && <Loader2 className="w-5 h-5 animate-spin absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" />}
         </div>
+        <div className="flex flex-wrap gap-1.5 pt-2">
+          {MAGIC_NL_EXAMPLES.map((ex) => (
+            <button key={ex} onClick={() => setQ(ex)}
+              className="text-[11px] px-2.5 py-1 rounded-full border border-border/60 text-muted-foreground hover:border-primary/50 hover:text-primary transition">
+              {ex}
+            </button>
+          ))}
+        </div>
       </Card>
+
 
       {/* KPI */}
       {q.trim().length < 2 && (
