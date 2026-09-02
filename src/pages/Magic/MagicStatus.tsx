@@ -8,6 +8,7 @@ import { Loader2, Search, Sparkles, Wand2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { magicSearch, groupHits, MAGIC_KIND_LABEL, type MagicHit } from '@/lib/magic/search';
 import { statusLabel, statusTone, TONE_CLASS } from '@/lib/magic/statuses';
+import { parseMagicQuery, MAGIC_NL_EXAMPLES, type MagicNlRow } from '@/lib/magic/nlSearch';
 import MagicOrderPanel from './MagicOrderPanel';
 
 const QUICK_FILTERS: { key: string; label: string }[] = [
@@ -36,16 +37,28 @@ export default function MagicStatusPage() {
   const [filter, setFilter] = useState<string | null>(null);
   const [rows, setRows] = useState<ListRow[]>([]);
   const [kpis, setKpis] = useState<Record<string, number>>({});
+  const [nl, setNl] = useState<{ intent: string; explanation: string; rows: MagicNlRow[] } | null>(null);
 
   useEffect(() => {
     const term = q.trim();
-    if (term.length < 2) { setHits([]); return; }
+    if (term.length < 2) { setHits([]); setNl(null); return; }
     setLoading(true);
     const t = setTimeout(async () => {
-      try { setHits(await magicSearch(term)); } finally { setLoading(false); }
-    }, 250);
+      try {
+        const nlQuery = parseMagicQuery(term);
+        if (nlQuery) {
+          const r = await nlQuery.run();
+          setNl({ intent: nlQuery.intent, explanation: nlQuery.explanation, rows: r });
+          setHits([]);
+        } else {
+          setNl(null);
+          setHits(await magicSearch(term));
+        }
+      } finally { setLoading(false); }
+    }, 300);
     return () => clearTimeout(t);
   }, [q]);
+
 
   // KPI-Kacheln
   useEffect(() => {
@@ -97,12 +110,21 @@ export default function MagicStatusPage() {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Auftrag, Kunde, Seriennummer, Gerät oder Bestellung suchen …"
+            placeholder="Auftrag, Kunde, Seriennummer – oder frag in Worten: „Alle Aufträge ohne Seriennummer“"
             className="pl-12 h-16 text-lg"
           />
           {loading && <Loader2 className="w-5 h-5 animate-spin absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" />}
         </div>
+        <div className="flex flex-wrap gap-1.5 pt-2">
+          {MAGIC_NL_EXAMPLES.map((ex) => (
+            <button key={ex} onClick={() => setQ(ex)}
+              className="text-[11px] px-2.5 py-1 rounded-full border border-border/60 text-muted-foreground hover:border-primary/50 hover:text-primary transition">
+              {ex}
+            </button>
+          ))}
+        </div>
       </Card>
+
 
       {/* KPI */}
       {q.trim().length < 2 && (
@@ -163,9 +185,42 @@ export default function MagicStatusPage() {
             </div>
           ))}
 
-          {q.trim().length >= 2 && !loading && hits.length === 0 && (
+          {nl && (
+            <div className="space-y-1.5">
+              <Card className="p-3 border-primary/40 bg-primary/5">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold">{nl.intent} · {nl.rows.length}</div>
+                    <div className="text-[11.5px] text-muted-foreground">{nl.explanation}</div>
+                  </div>
+                </div>
+              </Card>
+              {nl.rows.map((r) => (
+                <Card key={r.id} className="p-3 hover:border-primary/50 transition cursor-pointer" onClick={() => openOrder(r.id)}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{r.order_number}{r.source_system === 'zoho_eu_2' ? '-AT' : ''}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {r.customers?.company_name || r.customers?.contact_name || '—'}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={TONE_CLASS[statusTone(r.magic_status)]}>
+                      {statusLabel(r.magic_status)}
+                    </Badge>
+                  </div>
+                </Card>
+              ))}
+              {nl.rows.length === 0 && (
+                <Card className="p-6 text-center text-sm text-muted-foreground">Keine Aufträge zu dieser Frage.</Card>
+              )}
+            </div>
+          )}
+
+          {q.trim().length >= 2 && !loading && !nl && hits.length === 0 && (
             <Card className="p-6 text-center text-sm text-muted-foreground">Keine Treffer.</Card>
           )}
+
 
           {q.trim().length < 2 && rows.length > 0 && (
             <div className="space-y-1.5">
