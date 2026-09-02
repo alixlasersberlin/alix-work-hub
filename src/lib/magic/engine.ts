@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { MAGIC_STATUSES, STATUS_BY_KEY, type MagicRequirement, type MagicStatusDef, REQUIREMENT_LABEL, magicRolesForUser } from './statuses';
+import { MAGIC_STATUSES, STATUS_BY_KEY, type MagicRequirement, type MagicStatusDef, REQUIREMENT_LABEL, magicRolesForUser, SUPPLY_STAGE_BY_KEY, type SupplyStage, type SupplyStageDef } from './statuses';
 
 export interface MagicDossier {
   order: any;
