@@ -383,8 +383,27 @@ export async function setSupplyStage(
     ? failed.push(`Magic Status: ${upErr.message}`)
     : executed.push(`Magic Status auf ${STATUS_BY_KEY[stage.magicStatus]?.label ?? stage.magicStatus} gesetzt`);
 
-  // 4) Folgeschritte protokollieren
+  // 4) Kunden-E-Mail zur Lieferkettenstufe
+  const tplForStage: Record<SupplyStage, 'customer_in_production' | 'customer_in_transit' | 'customer_warehouse_received' | null> = {
+    produktion: 'customer_in_production',
+    transfer: 'customer_in_transit',
+    lager: 'customer_warehouse_received',
+  } as any;
+  const tplKey = tplForStage[stageKey];
+  if (opts.notifyCustomer !== false && tplKey) {
+    try {
+      const r = await sendCustomerShippingNotice(d.order.id, device?.id, 'automatisch', tplKey);
+      r.ok
+        ? executed.push(`Kunden-E-Mail versendet (${r.message})`)
+        : failed.push(`Kunden-E-Mail: ${r.message}`);
+    } catch (e: any) {
+      failed.push(`Kunden-E-Mail: ${e?.message ?? e}`);
+    }
+  }
+
+  // 5) Folgeschritte protokollieren
   for (const s of stage.steps.slice(3)) executed.push(`${s} (protokolliert)`);
+
 
   await supabase.from('magic_status_log').insert({
     entity_type: 'order',
