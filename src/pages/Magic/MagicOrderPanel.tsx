@@ -11,16 +11,18 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  AlertTriangle, ArrowRight, Check, ChevronRight, Loader2, Package, ScanLine, ShieldCheck, Truck, User, Wand2, X,
+  AlertTriangle, ArrowRight, Check, ChevronRight, Factory, Loader2, Package, ScanLine, ShieldCheck, Truck, User, Wand2, Warehouse, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import {
   loadDossier, evaluateRequirements, missingFor, readinessScore, nextStepFor, magicWarnings,
-  executeMagicStatus, assignSerial, findSerialConflict, serialOf, canUseStatus, type MagicDossier, type MagicResult,
+  executeMagicStatus, assignSerial, findSerialConflict, serialOf, canUseStatus,
+  currentSupplyStage, canUseSupplyStage, setSupplyStage, type MagicDossier, type MagicResult,
 } from '@/lib/magic/engine';
-import { MAGIC_STATUSES, STATUS_BY_KEY, statusLabel, statusTone, TONE_CLASS } from '@/lib/magic/statuses';
+import { MAGIC_STATUSES, STATUS_BY_KEY, statusLabel, statusTone, TONE_CLASS, SUPPLY_STAGES, SUPPLY_STAGE_BY_KEY, type SupplyStage } from '@/lib/magic/statuses';
+
 
 const fmtMoney = (v: any, c = 'EUR') => v == null ? '—' : `${Number(v).toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${c}`;
 const fmtDate = (v: any) => v ? new Date(v).toLocaleDateString('de-DE') : '—';
@@ -56,6 +58,8 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MagicResult | null>(null);
+  const [stageTarget, setStageTarget] = useState<SupplyStage | null>(null);
+
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -73,6 +77,9 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const currentSerial = d ? serialOf(d) : null;
   const targetDef = target ? STATUS_BY_KEY[target] : null;
   const blockers = d && targetDef ? missingFor(targetDef, d) : [];
+  const stage = d ? currentSupplyStage(d) : null;
+  const stageDef = stageTarget ? SUPPLY_STAGE_BY_KEY[stageTarget] : null;
+
 
   if (loading || !d) {
     return <Card className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin" /></Card>;
@@ -111,6 +118,21 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
       await reload();
     } finally { setBusy(false); }
   };
+
+  const doStage = async () => {
+    if (!stageTarget) return;
+    setBusy(true);
+    try {
+      const r = await setSupplyStage(d, stageTarget, { reason: reason || undefined });
+      setResult(r);
+      r.ok
+        ? toast.success(`Lieferkette gesetzt: ${SUPPLY_STAGE_BY_KEY[stageTarget].label}`)
+        : toast.error('Lieferkette nicht vollständig ausgeführt');
+      setStageTarget(null); setReason('');
+      await reload();
+    } finally { setBusy(false); }
+  };
+
 
   return (
     <div className="space-y-3">
@@ -181,6 +203,49 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
         </Card>
       )}
 
+      {/* Lieferkette */}
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10.5px] uppercase tracking-widest text-muted-foreground">Lieferkette</span>
+          <span className="text-[11px] text-muted-foreground">
+            Aktuell: {stage ? SUPPLY_STAGE_BY_KEY[stage].label : 'nicht gesetzt'}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {SUPPLY_STAGES.map((s, idx) => {
+            const active = stage === s.key;
+            const allowed = canUseSupplyStage(s, roles);
+            return (
+              <Button
+                key={s.key}
+                variant={active ? 'default' : 'outline'}
+                disabled={!allowed}
+                onClick={() => { setStageTarget(s.key); setReason(''); }}
+                className="h-auto flex-col gap-1 py-2.5"
+              >
+                <span className="flex items-center gap-1.5 text-[12px] font-semibold">
+                  {idx === 0 ? <Factory className="w-3.5 h-3.5" /> : idx === 1 ? <Truck className="w-3.5 h-3.5" /> : <Warehouse className="w-3.5 h-3.5" />}
+                  {s.label}
+                </span>
+                <span className="text-[10px] font-normal opacity-70">
+                  {allowed ? (active ? 'aktiv' : 'setzen & auslösen') : 'keine Berechtigung'}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+        {stage && SUPPLY_STAGE_BY_KEY[stage].nextStage && (
+          <div className="flex items-center justify-between gap-3 pt-0.5">
+            <div className="text-[12px] text-muted-foreground">
+              Nächste Stufe: <b className="text-foreground">{SUPPLY_STAGE_BY_KEY[SUPPLY_STAGE_BY_KEY[stage].nextStage!].label}</b>
+            </div>
+            <Button size="sm" variant="secondary" onClick={() => setStageTarget(SUPPLY_STAGE_BY_KEY[stage].nextStage!)}>
+              WEITER <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </div>
+        )}
+      </Card>
+
       {/* Magic Status ändern */}
       <Card className="p-4 space-y-2">
         <div className="text-[10.5px] uppercase tracking-widest text-muted-foreground">Magic Status ändern</div>
@@ -200,6 +265,7 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
           </Button>
         </div>
       </Card>
+
 
       {/* Schnellaktionen */}
       <div className="flex flex-wrap gap-1.5">
@@ -369,6 +435,43 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Lieferkette */}
+      <Dialog open={!!stageTarget} onOpenChange={(v) => { if (!v) setStageTarget(null); }}>
+        <DialogContent className="z-[70]">
+          <DialogHeader>
+            <DialogTitle>LIEFERKETTE · {stageDef?.label}</DialogTitle>
+            <DialogDescription>
+              Auftrag {o.order_number} wird auf die Stufe <b>{stageDef?.label}</b> gesetzt.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="text-[12.5px] space-y-1">
+            <div className="text-muted-foreground">Folgende Schritte werden automatisch ausgelöst:</div>
+            {stageDef?.steps.map((s) => (
+              <div key={s} className="flex items-center gap-1.5 text-emerald-500">✓ {s}</div>
+            ))}
+            {!currentSerial && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2 text-amber-500 mt-2">
+                Keine Seriennummer vorhanden – die Geräteakte kann nicht gesetzt werden.
+                <Button size="sm" variant="outline" className="ml-2" onClick={() => { setStageTarget(null); setSerialOpen(true); }}>
+                  SERIENNUMMER VERGEBEN
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Änderungsgrund (optional, revisionssicher protokolliert)" rows={2} />
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStageTarget(null)}>Abbrechen</Button>
+            <Button disabled={busy} onClick={doStage}>
+              {busy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} STUFE SETZEN & AUSLÖSEN
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Ergebnis */}
       <Dialog open={!!result} onOpenChange={() => setResult(null)}>

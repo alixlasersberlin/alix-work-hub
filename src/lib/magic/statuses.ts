@@ -126,8 +126,78 @@ export const MAGIC_STATUSES: MagicStatusDef[] = [
   { key: 'servicefall', label: 'SERVICEFALL', group: 'SONDER', tone: 'rose', requires: [], actions: [{ key: 'create_ticket', label: 'Serviceticket erzeugen' }], roles: ['Technik', 'Admin', 'Super Admin'] },
 ];
 
+/* ---------------- Lieferkette ---------------- */
+
+export type SupplyStage = 'produktion' | 'transfer' | 'lager';
+
+export interface SupplyStageDef {
+  key: SupplyStage;
+  label: string;
+  /** Gerätestatus in der Geräteakte (lager_devices) */
+  deviceStatus: 'Produktion' | 'Transfer' | 'Bestand';
+  /** Status der Lieferantenbestellung */
+  productionStatus: string;
+  /** Magic Status, der gesetzt wird */
+  magicStatus: string;
+  /** empfohlene nächste Stufe */
+  nextStage?: SupplyStage;
+  steps: string[];
+  roles: MagicRole[];
+}
+
+export const SUPPLY_STAGES: SupplyStageDef[] = [
+  {
+    key: 'produktion',
+    label: 'PRODUKTION',
+    deviceStatus: 'Produktion',
+    productionStatus: 'In Produktion',
+    magicStatus: 'in_produktion',
+    nextStage: 'transfer',
+    steps: [
+      'Gerät auf „Produktion" setzen',
+      'Lieferantenbestellung auf „In Produktion" setzen',
+      'Magic Status auf IN PRODUKTION setzen',
+      'Timeline & Revisionsprotokoll schreiben',
+    ],
+    roles: ['Beschaffung', 'Technik', 'Admin', 'Super Admin'],
+  },
+  {
+    key: 'transfer',
+    label: 'TRANSFER',
+    deviceStatus: 'Transfer',
+    productionStatus: 'Transfer',
+    magicStatus: 'ware_unterwegs',
+    nextStage: 'lager',
+    steps: [
+      'Gerät auf „Unterwegs / Transfer" setzen',
+      'Lieferantenbestellung auf „Transfer" setzen',
+      'Magic Status auf WARE UNTERWEGS setzen',
+      'Timeline & Revisionsprotokoll schreiben',
+    ],
+    roles: ['Beschaffung', 'Logistik', 'Admin', 'Super Admin'],
+  },
+  {
+    key: 'lager',
+    label: 'LAGER',
+    deviceStatus: 'Bestand',
+    productionStatus: 'Wareneingang',
+    magicStatus: 'ware_eingegangen',
+    steps: [
+      'Gerät auf „Lager / Bestand" setzen und für den Auftrag reservieren',
+      'Lieferantenbestellung auf „Wareneingang" setzen',
+      'Magic Status auf WARE EINGEGANGEN setzen',
+      'Wareneingangsprüfung & Folgeaufgabe erzeugen',
+    ],
+    roles: ['Logistik', 'Beschaffung', 'Admin', 'Super Admin'],
+  },
+];
+
+export const SUPPLY_STAGE_BY_KEY: Record<SupplyStage, SupplyStageDef> =
+  Object.fromEntries(SUPPLY_STAGES.map((s) => [s.key, s])) as any;
+
 export const STATUS_BY_KEY: Record<string, MagicStatusDef> =
   Object.fromEntries(MAGIC_STATUSES.map((s) => [s.key, s]));
+
 
 export const TONE_CLASS: Record<MagicStatusDef['tone'], string> = {
   slate: 'bg-muted text-muted-foreground border-border',
