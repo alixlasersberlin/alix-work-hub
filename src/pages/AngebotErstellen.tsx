@@ -433,13 +433,15 @@ export default function AngebotErstellen() {
       const esc = q.replace(/[%,()]/g, ' ');
       const { data } = await supabase
         .from('zoho_items')
-        .select('id, name, sku, description, rate, tax_percentage, unit')
-        .eq('status', 'active')
-        .or(`name.ilike.%${esc}%,sku.ilike.%${esc}%`)
+        .select('id, name, sku, description, rate, tax_percentage, unit, status')
+        .or(`name.ilike.%${esc}%,sku.ilike.%${esc}%,description.ilike.%${esc}%`)
         .order('name')
         .limit(50);
       if (cancelled) return;
-      setRemoteItems(data ?? []);
+      // Aktive zuerst, inaktive trotzdem auswählbar
+      const rows = (data ?? []).slice().sort((a: any, b: any) =>
+        (a.status === 'active' ? 0 : 1) - (b.status === 'active' ? 0 : 1));
+      setRemoteItems(rows);
       setItemSearching(false);
     }, 250);
     return () => { cancelled = true; clearTimeout(t); };
