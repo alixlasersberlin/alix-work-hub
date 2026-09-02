@@ -193,7 +193,23 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
+// Reihenfolge für die Sortierung nach Status (Gruppen von "aktiv" nach "erledigt")
+export function statusRank(r: Row): number {
+  const s = String(r.status ?? '').toLowerCase();
+  if (s === 'void' || s === 'storniert' || s === 'cancelled') return 90;
+  if (isDraftInvoice(r)) return 10;
+  const ps = String(r.payment_status ?? '').trim().toLowerCase();
+  if (ps === 'anwalt') return 70;
+  if (ps === 'inkasso intern') return 60;
+  if (ps === 'überfällig') return 20;
+  if (ps === 'teilweise bezahlt') return 30;
+  if (ps === 'offen' || Number(r.balance ?? 0) > 0) return 40;
+  if (ps === 'bezahlt' || ps === 'paid') return 80;
+  return 50;
+}
+
 type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest' | 'overdue' | 'anwalt' | 'inkasso';
+
 
 // Rechnungen im Status "Anwalt" werden aus allen normalen Ansichten ausgeblendet
 export function isAnwaltRow(r: Row): boolean {
@@ -522,14 +538,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       try { localStorage.setItem('invoices_extra_filters', JSON.stringify(next)); } catch {}
       return next;
     });
-  const [listSort, setListSort] = useState<'number' | 'date'>(() => {
+  const [listSort, setListSort] = useState<'number' | 'date' | 'status'>(() => {
     if (typeof window === 'undefined') return 'date';
-    return (localStorage.getItem('invoices_list_sort') as 'number' | 'date') || 'date';
+    return (localStorage.getItem('invoices_list_sort') as 'number' | 'date' | 'status') || 'date';
   });
   const setViewModePersist = (m: ViewMode) => {
     setViewMode(m); try { localStorage.setItem('invoices_view_mode', m); } catch {}
   };
-  const setListSortPersist = (s: 'number' | 'date') => {
+  const setListSortPersist = (s: 'number' | 'date' | 'status') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
   const isListView = viewMode === 'list' || viewMode === 'newest';
@@ -1152,9 +1168,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         // Älteste Rechnungen zuerst
         return String(a.invoice_date ?? '9999').localeCompare(String(b.invoice_date ?? '9999'));
       }
+      if (listSort === 'status') {
+        const d = statusRank(a) - statusRank(b);
+        if (d !== 0) return d;
+        return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
+      }
       if (listSort === 'number') {
         return String(b.invoice_number ?? '').localeCompare(String(a.invoice_number ?? ''), 'de', { numeric: true });
       }
+
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
@@ -1229,9 +1251,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
   const displayAccounts = useMemo<Account[]>(() => {
-    if (viewMode === 'highest') return [...accounts].sort((a, b) => b.totalAmount - a.totalAmount);
+    // Leere Ordner (Kundenkonten ohne passende Rechnungen) werden entfernt
+    const base = accounts.filter((a) => a.rows.length > 0);
+    if (viewMode === 'highest') return [...base].sort((a, b) => b.totalAmount - a.totalAmount);
     if (viewMode === 'oldest') {
-      const withOpen = accounts
+      const withOpen = base
         .map((a) => {
           const openRows = a.rows.filter((r) => Number(r.balance ?? 0) > 0);
           if (openRows.length === 0) return null;
@@ -1253,8 +1277,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         String(a.oldestOpenDate ?? '9999').localeCompare(String(b.oldestOpenDate ?? '9999')),
       );
     }
-    return accounts;
-  }, [accounts, viewMode]);
+    if (listSort === 'status') {
+      // Konten nach "dringendstem" Status ihrer Rechnungen gruppieren
+      return [...base]
+        .map((a) => ({ ...a, rows: [...a.rows].sort((x, y) => statusRank(x) - statusRank(y)) }))
+        .sort((a, b) => statusRank(a.rows[0]) - statusRank(b.rows[0]));
+    }
+    return base;
+  }, [accounts, viewMode, listSort]);
+
 
 
   // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
@@ -2331,14 +2362,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           <span className="text-xs text-muted-foreground">Filter kombinierbar – erneut klicken zum Entfernen</span>
         )}
 
-        {viewMode === 'list' && (
+        {(viewMode === 'list' || viewMode === 'accounts') && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Sortierung:</span>
-            <Select value={listSort} onValueChange={(v) => setListSortPersist(v as 'number' | 'date')}>
+            <Select value={listSort} onValueChange={(v) => setListSortPersist(v as 'number' | 'date' | 'status')}>
               <SelectTrigger className="w-[220px] h-8"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="date">Datum (absteigend)</SelectItem>
                 <SelectItem value="number">Rechnungsnummer (absteigend)</SelectItem>
+                <SelectItem value="status">Status (Entwurf → Storniert)</SelectItem>
               </SelectContent>
             </Select>
           </div>
