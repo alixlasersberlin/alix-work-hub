@@ -454,3 +454,6 @@ verify_jwt = true
 
 [functions.product-hub-api]
 verify_jwt = false
+
+[functions.anzahlung-mahn-engine]
+verify_jwt = false
