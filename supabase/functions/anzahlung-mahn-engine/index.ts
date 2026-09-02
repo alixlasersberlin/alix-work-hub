@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         .select('id, metadata')
         .eq('customer_id', dep.customer_id)
         .eq('channel', 'email')
-        .contains('metadata', { type: 'anzahlung_mahnung', stage_id: stage.id, deposit_id: dep.id })
+        .contains('metadata', { type: 'anzahlung_mahnung', stage_id: stage.id, deposit_id: dep.id, status: 'sent' })
         .limit(1);
       if (prev?.length) { results.push({ deposit: dep.deposit_number, stage: stage.name, skipped: 'bereits gemahnt' }); continue; }
 
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
 
       const res = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}`, apikey: ANON },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}` },
         body: JSON.stringify({
           templateName: 'anzahlung-mahnung',
           recipientEmail: recipient,
