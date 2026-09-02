@@ -28,6 +28,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'LAGER & WERKSTATT',
     'TOURENPLANUNG',
     'EINKAUF',
+    'VERKAUF',
     'ALIXDOCS',
     'TEAMKALENDER',
   ],
@@ -43,9 +44,11 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'TOURENPLANUNG',
     'LAGER & WERKSTATT',
     'TICKETS',
+    'VERKAUF',
     'ALIXDOCS',
     'TEAMKALENDER',
   ],
+
   operation: [
     'DASHBOARDS',
     'OPERATIONS',
