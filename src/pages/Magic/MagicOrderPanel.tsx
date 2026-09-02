@@ -181,6 +181,49 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
         </Card>
       )}
 
+      {/* Lieferkette */}
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10.5px] uppercase tracking-widest text-muted-foreground">Lieferkette</span>
+          <span className="text-[11px] text-muted-foreground">
+            Aktuell: {stage ? SUPPLY_STAGE_BY_KEY[stage].label : 'nicht gesetzt'}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {SUPPLY_STAGES.map((s, idx) => {
+            const active = stage === s.key;
+            const allowed = canUseSupplyStage(s, roles);
+            return (
+              <Button
+                key={s.key}
+                variant={active ? 'default' : 'outline'}
+                disabled={!allowed}
+                onClick={() => { setStageTarget(s.key); setReason(''); }}
+                className="h-auto flex-col gap-1 py-2.5"
+              >
+                <span className="flex items-center gap-1.5 text-[12px] font-semibold">
+                  {idx === 0 ? <Factory className="w-3.5 h-3.5" /> : idx === 1 ? <Truck className="w-3.5 h-3.5" /> : <Warehouse className="w-3.5 h-3.5" />}
+                  {s.label}
+                </span>
+                <span className="text-[10px] font-normal opacity-70">
+                  {allowed ? (active ? 'aktiv' : 'setzen & auslösen') : 'keine Berechtigung'}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+        {stage && SUPPLY_STAGE_BY_KEY[stage].nextStage && (
+          <div className="flex items-center justify-between gap-3 pt-0.5">
+            <div className="text-[12px] text-muted-foreground">
+              Nächste Stufe: <b className="text-foreground">{SUPPLY_STAGE_BY_KEY[SUPPLY_STAGE_BY_KEY[stage].nextStage!].label}</b>
+            </div>
+            <Button size="sm" variant="secondary" onClick={() => setStageTarget(SUPPLY_STAGE_BY_KEY[stage].nextStage!)}>
+              WEITER <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </div>
+        )}
+      </Card>
+
       {/* Magic Status ändern */}
       <Card className="p-4 space-y-2">
         <div className="text-[10.5px] uppercase tracking-widest text-muted-foreground">Magic Status ändern</div>
@@ -200,6 +243,7 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
           </Button>
         </div>
       </Card>
+
 
       {/* Schnellaktionen */}
       <div className="flex flex-wrap gap-1.5">
