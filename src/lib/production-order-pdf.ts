@@ -166,9 +166,10 @@ export async function generateProductionOrderPdf(
   const labelX = 20;
   const valueX = 95; // mehr Platz für lange bilinguale Labels
   rows.forEach(([k, v]) => {
-    drawText(`${k}:`, labelX, y, 'bold');
-    drawText(v, valueX, y);
-    y += 5.5;
+    const kLines = String(k).split('\n');
+    kLines.forEach((line, i) => drawText(i === kLines.length - 1 ? `${line}:` : line, labelX, y + i * 4.6, 'bold'));
+    drawText(v, valueX, y + (kLines.length - 1) * 4.6);
+    y += 5.5 + (kLines.length - 1) * 4.6;
   });
   y += 5;
 
