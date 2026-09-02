@@ -67,6 +67,12 @@ export const MAGIC_STATUSES: MagicStatusDef[] = [
     { key: 'create_tech_check', label: 'Technische Prüfung erstellen' },
     { key: 'next_task', label: 'Nächste Aufgabe erzeugen' },
   ], next: 'ware_unterwegs', roles: ['Beschaffung', 'Technik', 'Admin', 'Super Admin'] },
+  { key: 'transfer', label: 'TRANSFER', group: 'BESCHAFFUNG', tone: 'sky', requires: [], actions: [
+    { key: 'device_transit', label: 'Gerät auf „Transfer" setzen' },
+    { key: 'production_status', label: 'Lieferantenbestellung auf „Transfer" setzen' },
+    { key: 'notify_procurement', label: 'Beschaffung informieren' },
+    { key: 'timeline', label: 'Timeline aktualisieren' },
+  ], next: 'ware_unterwegs', roles: ['Beschaffung', 'Logistik', 'Admin', 'Super Admin'] },
   { key: 'ware_unterwegs', label: 'WARE UNTERWEGS', group: 'BESCHAFFUNG', tone: 'sky', requires: [], actions: [{ key: 'device_transit', label: 'Gerät auf „Unterwegs" setzen' }, { key: 'timeline', label: 'Timeline aktualisieren' }], next: 'ware_eingegangen', roles: ['Beschaffung', 'Logistik', 'Admin', 'Super Admin'] },
   { key: 'ware_eingegangen', label: 'WARE EINGEGANGEN', group: 'BESCHAFFUNG', tone: 'emerald', requires: [], actions: [
     { key: 'goods_receipt', label: 'Wareneingang erfassen' },
