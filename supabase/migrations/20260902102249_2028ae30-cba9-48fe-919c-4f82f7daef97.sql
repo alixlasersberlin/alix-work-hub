@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_order_deposit_to_finance(uuid) FROM anon, authenticated, public;
