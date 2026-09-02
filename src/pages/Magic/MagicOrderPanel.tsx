@@ -56,6 +56,8 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const [statusOpen, setStatusOpen] = useState(false);
   const [target, setTarget] = useState<string>('');
   const [reason, setReason] = useState('');
+  const [notifyCustomer, setNotifyCustomer] = useState(true);
+
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MagicResult | null>(null);
   const [stageTarget, setStageTarget] = useState<SupplyStage | null>(null);
@@ -123,7 +125,8 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
     if (!stageTarget) return;
     setBusy(true);
     try {
-      const r = await setSupplyStage(d, stageTarget, { reason: reason || undefined });
+      const r = await setSupplyStage(d, stageTarget, { reason: reason || undefined, notifyCustomer });
+
       setResult(r);
       r.ok
         ? toast.success(`Lieferkette gesetzt: ${SUPPLY_STAGE_BY_KEY[stageTarget].label}`)
@@ -460,6 +463,11 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
               </div>
             )}
           </div>
+
+          <label className="flex items-center gap-2 text-[12.5px] cursor-pointer">
+            <input type="checkbox" checked={notifyCustomer} onChange={(e) => setNotifyCustomer(e.target.checked)} className="accent-primary" />
+            Kunden-E-Mail zur Stufe versenden
+          </label>
 
           <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Änderungsgrund (optional, revisionssicher protokolliert)" rows={2} />
 
