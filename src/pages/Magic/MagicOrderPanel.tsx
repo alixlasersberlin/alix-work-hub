@@ -58,6 +58,8 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MagicResult | null>(null);
+  const [stageTarget, setStageTarget] = useState<SupplyStage | null>(null);
+
 
   const reload = useCallback(async () => {
     setLoading(true);
