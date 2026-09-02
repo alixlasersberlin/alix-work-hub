@@ -53,9 +53,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const payload: any = sr.offer_payload || {};
+    let payload: any = sr.offer_payload || {};
+
+    // Fallback: Wenn im Signatur-Snapshot keine Positionen stehen,
+    // Positionen/Zahlung aus dem Original-Angebot nachladen.
+    if (!Array.isArray(payload.lines) || payload.lines.length === 0) {
+      const { data: off } = await supabase
+        .from('offers')
+        .select('payload')
+        .eq('offer_number', offer_number)
+        .maybeSingle();
+      const offPayload: any = off?.payload || {};
+      if (Array.isArray(offPayload.lines) && offPayload.lines.length > 0) {
+        payload = { ...offPayload, ...payload, lines: offPayload.lines };
+      }
+    }
+
     const totals = payload.totals || {};
     const customer_id = sr.customer_id || payload.customer?.id;
+
     if (!customer_id) {
       return new Response(JSON.stringify({ error: 'customer_id missing' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
