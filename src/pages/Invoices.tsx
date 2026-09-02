@@ -2362,14 +2362,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           <span className="text-xs text-muted-foreground">Filter kombinierbar – erneut klicken zum Entfernen</span>
         )}
 
-        {viewMode === 'list' && (
+        {(viewMode === 'list' || viewMode === 'accounts') && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Sortierung:</span>
-            <Select value={listSort} onValueChange={(v) => setListSortPersist(v as 'number' | 'date')}>
+            <Select value={listSort} onValueChange={(v) => setListSortPersist(v as 'number' | 'date' | 'status')}>
               <SelectTrigger className="w-[220px] h-8"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="date">Datum (absteigend)</SelectItem>
                 <SelectItem value="number">Rechnungsnummer (absteigend)</SelectItem>
+                <SelectItem value="status">Status (Entwurf → Storniert)</SelectItem>
               </SelectContent>
             </Select>
           </div>
