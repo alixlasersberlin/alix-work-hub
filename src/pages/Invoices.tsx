@@ -2400,6 +2400,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         searchBelow
       >
         <div className="flex items-center gap-2 flex-1 min-w-[200px] sm:flex-none">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+          <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="draft">Entwurf</SelectItem>
+              <SelectItem value="sent">Versendet</SelectItem>
+              <SelectItem value="offen">Offen</SelectItem>
+              <SelectItem value="teilweise bezahlt">Teilweise bezahlt</SelectItem>
+              <SelectItem value="bezahlt">Bezahlt</SelectItem>
+              <SelectItem value="überfällig">Überfällig</SelectItem>
+              <SelectItem value="anwalt">Anwalt</SelectItem>
+              <SelectItem value="inkasso">Inkasso Intern</SelectItem>
+              <SelectItem value="void">Storniert</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2 flex-1 min-w-[200px] sm:flex-none">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Zahlungsstatus:</span>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
@@ -2425,24 +2444,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         )}
 
         <div className="basis-full w-full flex flex-wrap items-center gap-x-4 gap-y-3">
-          <div className="flex items-center gap-2 flex-1 min-w-[200px] sm:flex-none">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
-            <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
-                <SelectItem value="draft">Entwurf</SelectItem>
-                <SelectItem value="sent">Versendet</SelectItem>
-                <SelectItem value="offen">Offen</SelectItem>
-                <SelectItem value="teilweise bezahlt">Teilweise bezahlt</SelectItem>
-                <SelectItem value="bezahlt">Bezahlt</SelectItem>
-                <SelectItem value="überfällig">Überfällig</SelectItem>
-                <SelectItem value="anwalt">Anwalt</SelectItem>
-                <SelectItem value="inkasso">Inkasso Intern</SelectItem>
-                <SelectItem value="void">Storniert</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+
 
           <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px] sm:flex-none">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Zeitraum:</span>
