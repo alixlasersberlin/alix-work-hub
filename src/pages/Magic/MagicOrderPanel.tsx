@@ -119,6 +119,21 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
     } finally { setBusy(false); }
   };
 
+  const doStage = async () => {
+    if (!stageTarget) return;
+    setBusy(true);
+    try {
+      const r = await setSupplyStage(d, stageTarget, { reason: reason || undefined });
+      setResult(r);
+      r.ok
+        ? toast.success(`Lieferkette gesetzt: ${SUPPLY_STAGE_BY_KEY[stageTarget].label}`)
+        : toast.error('Lieferkette nicht vollständig ausgeführt');
+      setStageTarget(null); setReason('');
+      await reload();
+    } finally { setBusy(false); }
+  };
+
+
   return (
     <div className="space-y-3">
       {/* Kopf */}
