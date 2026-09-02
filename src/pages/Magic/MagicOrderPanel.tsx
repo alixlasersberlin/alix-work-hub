@@ -56,6 +56,8 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const [statusOpen, setStatusOpen] = useState(false);
   const [target, setTarget] = useState<string>('');
   const [reason, setReason] = useState('');
+  const [notifyCustomer, setNotifyCustomer] = useState(true);
+
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MagicResult | null>(null);
   const [stageTarget, setStageTarget] = useState<SupplyStage | null>(null);
