@@ -94,7 +94,6 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         templateName: 'ruecklastschrift-mahnung',
         recipientEmail: recipient,
-        extraCc: CC,
         idempotencyKey: `ruecklastschrift-mahnung-${rd.id}-${Date.now()}`,
         templateData: {
           customerName,
