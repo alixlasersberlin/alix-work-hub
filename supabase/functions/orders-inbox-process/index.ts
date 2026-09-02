@@ -201,37 +201,57 @@ async function processOne(
   }
 
   const items = Array.isArray(payload.items) ? payload.items : [];
-  if (items.length > 0) {
-    const rows = items.map((it: any, idx: number) => {
-      const qty = Number(it.quantity ?? 1);
-      const rate = Number(it.unit_price_net ?? it.rate ?? it.unit_price ?? 0);
-      const amount = Number(
-        it.line_total_gross ?? it.amount ?? rate * qty ?? 0,
-      );
-      return {
-        order_id: order.id,
-        external_item_id: it.product_id ?? null,
-        item_name: it.name ?? null,
-        sku: it.sku ?? null,
-        quantity: qty,
-        rate,
-        amount,
-        tax_amount:
-          it.tax_amount != null
-            ? Number(it.tax_amount)
-            : it.tax_rate != null
-              ? Number((rate * qty * (Number(it.tax_rate) / 100)).toFixed(2))
-              : 0,
-        item_order: idx,
-        raw_data: it,
-      };
-    });
-    const { error: itemsErr } = await supabase.from("order_items").insert(rows);
-    if (itemsErr) {
-      console.error("order_items insert failed", itemsErr);
-      // Do not fail the whole process; log on inbox row
-      return { ok: true, order_id: order.id, error: `items: ${itemsErr.message}` };
-    }
+  if (items.length === 0) {
+    // Sender hat keine Positionen mitgeschickt -> Auftrag als unvollständig markieren
+    await supabase
+      .from("orders")
+      .update({
+        raw_data: {
+          ...payload,
+          _alixwork_warning: "items_missing",
+          _alixwork_warning_text:
+            "Unvollständig: Der Sender hat keine Positionen (items) übermittelt.",
+        },
+      })
+      .eq("id", order.id);
+    console.warn("order received without items", orderNumber);
+    return {
+      ok: true,
+      order_id: order.id,
+      warning: "items_missing",
+      error: "items_missing: Auftrag ohne Positionen empfangen",
+    };
+  }
+
+  const rows = items.map((it: any, idx: number) => {
+    const qty = Number(it.quantity ?? 1);
+    const rate = Number(it.unit_price_net ?? it.rate ?? it.unit_price ?? 0);
+    const amount = Number(
+      it.line_total_gross ?? it.amount ?? rate * qty ?? 0,
+    );
+    return {
+      order_id: order.id,
+      external_item_id: it.product_id ?? null,
+      item_name: it.name ?? null,
+      sku: it.sku ?? null,
+      quantity: qty,
+      rate,
+      amount,
+      tax_amount:
+        it.tax_amount != null
+          ? Number(it.tax_amount)
+          : it.tax_rate != null
+            ? Number((rate * qty * (Number(it.tax_rate) / 100)).toFixed(2))
+            : 0,
+      item_order: idx,
+      raw_data: it,
+    };
+  });
+  const { error: itemsErr } = await supabase.from("order_items").insert(rows);
+  if (itemsErr) {
+    console.error("order_items insert failed", itemsErr);
+    // Do not fail the whole process; log on inbox row
+    return { ok: true, order_id: order.id, error: `items: ${itemsErr.message}` };
   }
 
   return { ok: true, order_id: order.id };
