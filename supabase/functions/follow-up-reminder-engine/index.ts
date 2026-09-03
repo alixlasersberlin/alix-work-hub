@@ -53,13 +53,13 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            user_ids: [r.user_id],
+            notification_type: 'SYSTEM',
+            target_user_ids: [r.user_id],
             title: 'Wiedervorlage fällig',
-            message: r.title + (r.note ? ` – ${r.note}` : ''),
+            body: r.note ?? 'Erinnerung fällig',
             url,
             priority: 'P3',
-            event_key: `follow_up:${r.id}`,
-            category: 'FOLLOW_UP',
+            dedup_suffix: `follow_up_${r.id}`,
           }),
         });
         if (!res.ok) {
