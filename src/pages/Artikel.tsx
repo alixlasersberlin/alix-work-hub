@@ -319,6 +319,11 @@ export default function Artikel() {
     setEditing(false);
   }
 
+  /**
+   * Performance: `raw_data` (großes JSON pro Artikel) wird NICHT mehr in die
+   * Liste geladen — das war der Hauptgrund für ~3 s Ladezeit. Die Rohdaten
+   * holt `openDetail()` erst beim Öffnen eines Artikels nach.
+   */
   async function load() {
     setLoading(true);
     const PAGE = 1000;
@@ -328,14 +333,14 @@ export default function Artikel() {
     while (true) {
       const { data, error } = await supabase
         .from('zoho_items')
-        .select('*')
+        .select(LIST_COLUMNS)
         .order('name', { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) {
         toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
         break;
       }
-      const batch = (data as ZohoItem[]) ?? [];
+      const batch = (data as unknown as ZohoItem[]) ?? [];
       all.push(...batch);
       if (batch.length < PAGE) break;
       from += PAGE;
@@ -344,6 +349,18 @@ export default function Artikel() {
     setItems(all);
     setLoading(false);
   }
+
+  /** Detailansicht öffnen und die Zoho-Rohdaten bei Bedarf nachladen. */
+  async function openDetail(it: ZohoItem) {
+    setSelected(it);
+    if (it.raw_data !== undefined && it.raw_data !== null) return;
+    const { data } = await supabase.from('zoho_items').select('raw_data').eq('id', it.id).maybeSingle();
+    if (!data) return;
+    const merged = { ...it, raw_data: (data as any).raw_data };
+    setItems((prev) => prev.map((p) => (p.id === it.id ? merged : p)));
+    setSelected((cur) => (cur && cur.id === it.id ? merged : cur));
+  }
+
 
   async function loadAlixLasers() {
     const { data, error } = await supabase
