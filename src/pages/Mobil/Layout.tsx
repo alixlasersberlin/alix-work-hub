@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, ClipboardList, MessageSquare, MoreHorizontal, Wifi, WifiOff, ArrowLeft, Search } from 'lucide-react';
+import { Home, Truck, ClipboardList, MessageSquare, MoreHorizontal, Wifi, WifiOff, ArrowLeft, Search, Bell, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnlineStatus } from '@/hooks/emp/useOnlineStatus';
 import { Button } from '@/components/ui/button';
 import { cacheGet, cacheSet } from '@/lib/mobil/utils';
+import { syncBadge, takePendingDeepLink } from '@/lib/mobile/push-registration';
 import { format } from 'date-fns';
+
+type Banner = { title: string; message: string; url: string; priority: string } | null;
 
 export default function MobilLayout() {
   const online = useOnlineStatus();
   const nav = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [openStops, setOpenStops] = useState<number>(cacheGet<number>('openStops') ?? 0);
   const [inboxUnread, setInboxUnread] = useState<number>(cacheGet<number>('inboxUnread') ?? 0);
+  const [notifUnread, setNotifUnread] = useState(0);
+  const [banner, setBanner] = useState<Banner>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,6 +37,17 @@ export default function MobilLayout() {
     return () => { cancelled = true; };
   }, []);
 
+  // Deep Link aus Push (nach Login / SW-Nachricht)
+  useEffect(() => {
+    const pending = takePendingDeepLink();
+    if (pending) nav(pending);
+    const onSwMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'alix-deeplink' && typeof e.data.url === 'string') nav(e.data.url);
+    };
+    navigator.serviceWorker?.addEventListener('message', onSwMessage);
+    return () => navigator.serviceWorker?.removeEventListener('message', onSwMessage);
+  }, [nav]);
+
   // Inbox-Badge (ungelesene WhatsApp-Nachrichten) — Realtime
   useEffect(() => {
     let cancelled = false;
@@ -46,6 +62,7 @@ export default function MobilLayout() {
       const n = (data ?? []).reduce((s: number, r: any) => s + (r.unread_count ?? 0), 0);
       setInboxUnread(n);
       cacheSet('inboxUnread', n);
+      syncBadge(n);
     };
     loadUnread();
     const ch = supabase
@@ -54,6 +71,32 @@ export default function MobilLayout() {
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
   }, []);
+
+  // Interne Benachrichtigungen + In-App-Banner
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const load = async () => {
+      const { count } = await (supabase as any)
+        .from('app_notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id).is('read_at', null);
+      if (!cancelled) setNotifUnread(count ?? 0);
+    };
+    load();
+    const ch = supabase
+      .channel('mobil-app-notifications')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'app_notifications', filter: `user_id=eq.${user.id}` },
+        (payload: any) => {
+          const n = payload.new;
+          setBanner({ title: n.title, message: n.message, url: n.action_url || '/mobil/benachrichtigungen', priority: n.priority || 'P3' });
+          setTimeout(() => setBanner(null), 8000);
+          load();
+        })
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [user?.id]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -76,10 +119,36 @@ export default function MobilLayout() {
           {online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
           {online ? 'online' : 'offline'}
         </span>
+        <Button variant="ghost" size="icon" className="h-11 w-11 relative" onClick={() => nav('/mobil/benachrichtigungen')} aria-label="Benachrichtigungen">
+          <Bell className="h-5 w-5" />
+          {notifUnread > 0 && (
+            <span className="absolute top-1.5 right-1 bg-destructive text-destructive-foreground text-[10px] rounded-full px-1.5 min-w-[18px] text-center">
+              {notifUnread}
+            </span>
+          )}
+        </Button>
         <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => nav('/mobil/suche')} aria-label="Suche">
           <Search className="h-5 w-5" />
         </Button>
       </header>
+
+      {banner && (
+        <button
+          onClick={() => { nav(banner.url); setBanner(null); }}
+          className={`sticky top-[3.5rem] z-40 mx-2 mt-2 rounded-lg border px-3 py-2 text-left shadow-lg ${
+            banner.priority === 'P1' ? 'border-destructive bg-destructive/10' : 'border-primary/40 bg-primary/10'
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            <Bell className="h-4 w-4 mt-0.5 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold truncate">{banner.title}</div>
+              <div className="text-xs text-muted-foreground line-clamp-2">{banner.message}</div>
+            </div>
+            <X className="h-4 w-4 shrink-0" onClick={(e) => { e.stopPropagation(); setBanner(null); }} />
+          </div>
+        </button>
+      )}
 
       <main className="flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)' }}>
         <Outlet />

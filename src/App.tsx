@@ -405,6 +405,10 @@ const MobilMehr = lazy(() => import("./pages/Mobil/Mehr"));
 const MobilInbox = lazy(() => import("./pages/Mobil/Inbox"));
 const MobilInboxChat = lazy(() => import("./pages/Mobil/InboxChat"));
 const MobilInboxKanaele = lazy(() => import("./pages/Mobil/InboxKanaele"));
+const MobilBenachrichtigungen = lazy(() => import("./pages/Mobil/Benachrichtigungen"));
+const MobilEinstellungenBenachrichtigungen = lazy(() => import("./pages/Mobil/EinstellungenBenachrichtigungen"));
+const MobilPushDiagnose = lazy(() => import("./pages/Mobil/PushDiagnose"));
+const MobilAdminEskalationen = lazy(() => import("./pages/Mobil/AdminEskalationen"));
 const MobilKontakte = lazy(() => import("./pages/Mobil/Kontakte"));
 const MobileSyncAdmin = lazy(() => import("./pages/Admin/MobileSync"));
 const MobileGeraete = lazy(() => import("./pages/Einstellungen/MobileGeraete"));
@@ -2480,6 +2484,11 @@ function AppRoutes() {
           <Route path="inbox" element={<MobilInbox />} />
           <Route path="inbox/kanaele" element={<MobilInboxKanaele />} />
           <Route path="inbox/:id" element={<MobilInboxChat />} />
+          <Route path="benachrichtigungen" element={<MobilBenachrichtigungen />} />
+          <Route path="einstellungen/benachrichtigungen" element={<MobilEinstellungenBenachrichtigungen />} />
+          <Route path="push-diagnose" element={<MobilPushDiagnose />} />
+          <Route path="admin/eskalationen" element={<MobilAdminEskalationen />} />
+
 
         </Route>
 

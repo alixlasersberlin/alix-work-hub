@@ -1109,6 +1109,7 @@ export type Database = {
         Row: {
           ai_sentiment: string | null
           ai_summary: string | null
+          assigned_at: string | null
           assigned_department: string | null
           assigned_department_id: string | null
           assigned_to: string | null
@@ -1123,6 +1124,7 @@ export type Database = {
           customer_match_required: boolean
           external_meta: Json | null
           external_thread_id: string | null
+          first_read_at: string | null
           first_response_at: string | null
           id: string
           inbox_status: string
@@ -1133,6 +1135,7 @@ export type Database = {
           last_message_preview: string | null
           lead_id: string | null
           priority: string | null
+          resolved_at: string | null
           sla_notified_at: string | null
           status: Database["public"]["Enums"]["ac_conversation_status"]
           subject: string | null
@@ -1146,6 +1149,7 @@ export type Database = {
         Insert: {
           ai_sentiment?: string | null
           ai_summary?: string | null
+          assigned_at?: string | null
           assigned_department?: string | null
           assigned_department_id?: string | null
           assigned_to?: string | null
@@ -1160,6 +1164,7 @@ export type Database = {
           customer_match_required?: boolean
           external_meta?: Json | null
           external_thread_id?: string | null
+          first_read_at?: string | null
           first_response_at?: string | null
           id?: string
           inbox_status?: string
@@ -1170,6 +1175,7 @@ export type Database = {
           last_message_preview?: string | null
           lead_id?: string | null
           priority?: string | null
+          resolved_at?: string | null
           sla_notified_at?: string | null
           status?: Database["public"]["Enums"]["ac_conversation_status"]
           subject?: string | null
@@ -1183,6 +1189,7 @@ export type Database = {
         Update: {
           ai_sentiment?: string | null
           ai_summary?: string | null
+          assigned_at?: string | null
           assigned_department?: string | null
           assigned_department_id?: string | null
           assigned_to?: string | null
@@ -1197,6 +1204,7 @@ export type Database = {
           customer_match_required?: boolean
           external_meta?: Json | null
           external_thread_id?: string | null
+          first_read_at?: string | null
           first_response_at?: string | null
           id?: string
           inbox_status?: string
@@ -1207,6 +1215,7 @@ export type Database = {
           last_message_preview?: string | null
           lead_id?: string | null
           priority?: string | null
+          resolved_at?: string | null
           sla_notified_at?: string | null
           status?: Database["public"]["Enums"]["ac_conversation_status"]
           subject?: string | null
@@ -16000,6 +16009,59 @@ export type Database = {
           },
         ]
       }
+      conversation_escalations: {
+        Row: {
+          cancelled_at: string | null
+          conversation_id: string
+          created_at: string
+          escalation_level: number
+          id: string
+          notification_event_id: string | null
+          rule_id: string | null
+          scheduled_for: string
+          status: string
+          target_role: string | null
+          target_user_id: string | null
+          triggered_at: string | null
+        }
+        Insert: {
+          cancelled_at?: string | null
+          conversation_id: string
+          created_at?: string
+          escalation_level?: number
+          id?: string
+          notification_event_id?: string | null
+          rule_id?: string | null
+          scheduled_for: string
+          status?: string
+          target_role?: string | null
+          target_user_id?: string | null
+          triggered_at?: string | null
+        }
+        Update: {
+          cancelled_at?: string | null
+          conversation_id?: string
+          created_at?: string
+          escalation_level?: number
+          id?: string
+          notification_event_id?: string | null
+          rule_id?: string | null
+          scheduled_for?: string
+          status?: string
+          target_role?: string | null
+          target_user_id?: string | null
+          triggered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_escalations_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "escalation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_audit_log: {
         Row: {
           action: string
@@ -22384,6 +22446,54 @@ export type Database = {
           id?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      escalation_rules: {
+        Row: {
+          channel_id: string | null
+          created_at: string
+          department: string | null
+          escalate_minutes: number | null
+          escalate_to_role: string | null
+          escalate_to_user_id: string | null
+          first_reminder_minutes: number | null
+          id: string
+          is_active: boolean
+          name: string
+          priority: string | null
+          second_reminder_minutes: number | null
+          updated_at: string
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string
+          department?: string | null
+          escalate_minutes?: number | null
+          escalate_to_role?: string | null
+          escalate_to_user_id?: string | null
+          first_reminder_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          priority?: string | null
+          second_reminder_minutes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string
+          department?: string | null
+          escalate_minutes?: number | null
+          escalate_to_role?: string | null
+          escalate_to_user_id?: string | null
+          first_reminder_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          priority?: string | null
+          second_reminder_minutes?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -32218,15 +32328,25 @@ export type Database = {
           blocked_by: string | null
           browser: string | null
           created_at: string
+          device_id: string | null
           device_name: string | null
           endpoint: string
+          environment: string
           id: string
           ip_hint: string | null
+          last_push_error: string | null
+          last_push_error_at: string | null
+          last_push_ok_at: string | null
           last_seen_at: string
           native_token: string | null
+          notifications_enabled: boolean
           os: string | null
+          os_version: string | null
           p256dh: string
           platform: string
+          push_provider: string | null
+          revoked_at: string | null
+          updated_at: string
           user_agent: string | null
           user_id: string
         }
@@ -32241,15 +32361,25 @@ export type Database = {
           blocked_by?: string | null
           browser?: string | null
           created_at?: string
+          device_id?: string | null
           device_name?: string | null
           endpoint: string
+          environment?: string
           id?: string
           ip_hint?: string | null
+          last_push_error?: string | null
+          last_push_error_at?: string | null
+          last_push_ok_at?: string | null
           last_seen_at?: string
           native_token?: string | null
+          notifications_enabled?: boolean
           os?: string | null
+          os_version?: string | null
           p256dh: string
           platform?: string
+          push_provider?: string | null
+          revoked_at?: string | null
+          updated_at?: string
           user_agent?: string | null
           user_id: string
         }
@@ -32264,15 +32394,25 @@ export type Database = {
           blocked_by?: string | null
           browser?: string | null
           created_at?: string
+          device_id?: string | null
           device_name?: string | null
           endpoint?: string
+          environment?: string
           id?: string
           ip_hint?: string | null
+          last_push_error?: string | null
+          last_push_error_at?: string | null
+          last_push_ok_at?: string | null
           last_seen_at?: string
           native_token?: string | null
+          notifications_enabled?: boolean
           os?: string | null
+          os_version?: string | null
           p256dh?: string
           platform?: string
+          push_provider?: string | null
+          revoked_at?: string | null
+          updated_at?: string
           user_agent?: string | null
           user_id?: string
         }
@@ -32528,22 +32668,113 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_events: {
+        Row: {
+          attempt: number
+          body: string | null
+          conversation_id: string | null
+          created_at: string
+          dedup_key: string | null
+          delivered_at: string | null
+          device_id: string | null
+          failed_at: string | null
+          failure_reason: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          notification_type: string
+          opened_at: string | null
+          priority: string | null
+          provider: string | null
+          provider_message_id: string | null
+          sent_at: string | null
+          status: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt?: number
+          body?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          delivered_at?: string | null
+          device_id?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          notification_type: string
+          opened_at?: string | null
+          priority?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt?: number
+          body?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          delivered_at?: string | null
+          device_id?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          notification_type?: string
+          opened_at?: string | null
+          priority?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_push_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
+          assigned_messages: boolean
           badge_enabled: boolean
           created_at: string
           email_enabled: boolean
           escalations_enabled: boolean
           id: string
           in_app_enabled: boolean
+          new_messages: boolean
+          p1_ignores_quiet_hours: boolean
+          preview_enabled: boolean
+          priority_p1: boolean
+          priority_p2: boolean
           privacy_mode: boolean
           push_enabled: boolean
+          quiet_hours_enabled: boolean
           quiet_hours_end: string | null
           quiet_hours_start: string | null
+          sales_messages: boolean
           selected_departments: string[]
           selected_event_types: string[]
           sms_enabled: boolean
           sound_enabled: boolean
+          technical_messages: boolean
+          ticket_notifications: boolean
+          timezone: string
           updated_at: string
           user_id: string
           vibration_enabled: boolean
@@ -32551,20 +32782,31 @@ export type Database = {
           whatsapp_enabled: boolean
         }
         Insert: {
+          assigned_messages?: boolean
           badge_enabled?: boolean
           created_at?: string
           email_enabled?: boolean
           escalations_enabled?: boolean
           id?: string
           in_app_enabled?: boolean
+          new_messages?: boolean
+          p1_ignores_quiet_hours?: boolean
+          preview_enabled?: boolean
+          priority_p1?: boolean
+          priority_p2?: boolean
           privacy_mode?: boolean
           push_enabled?: boolean
+          quiet_hours_enabled?: boolean
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
+          sales_messages?: boolean
           selected_departments?: string[]
           selected_event_types?: string[]
           sms_enabled?: boolean
           sound_enabled?: boolean
+          technical_messages?: boolean
+          ticket_notifications?: boolean
+          timezone?: string
           updated_at?: string
           user_id: string
           vibration_enabled?: boolean
@@ -32572,20 +32814,31 @@ export type Database = {
           whatsapp_enabled?: boolean
         }
         Update: {
+          assigned_messages?: boolean
           badge_enabled?: boolean
           created_at?: string
           email_enabled?: boolean
           escalations_enabled?: boolean
           id?: string
           in_app_enabled?: boolean
+          new_messages?: boolean
+          p1_ignores_quiet_hours?: boolean
+          preview_enabled?: boolean
+          priority_p1?: boolean
+          priority_p2?: boolean
           privacy_mode?: boolean
           push_enabled?: boolean
+          quiet_hours_enabled?: boolean
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
+          sales_messages?: boolean
           selected_departments?: string[]
           selected_event_types?: string[]
           sms_enabled?: boolean
           sound_enabled?: boolean
+          technical_messages?: boolean
+          ticket_notifications?: boolean
+          timezone?: string
           updated_at?: string
           user_id?: string
           vibration_enabled?: boolean
