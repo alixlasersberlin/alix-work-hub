@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCw, Inbox as InboxIcon, AlertTriangle } from 'lucide-react';
+import { Search, RefreshCw, Inbox as InboxIcon } from 'lucide-react';
+import { haptic } from '@/lib/mobil/haptics';
+import {
+  MobilPage, MobilCard, Pill, PillRow, PrioBadge, ListSkeleton,
+  EmptyState, ErrorState, PullToRefresh,
+} from '@/components/mobil/ui';
 import {
   fetchConversations, sortConversations, normPriority, PRIORITY_LABEL,
   STATUS_LABEL, displayName, relTime, type ConversationRow, type InboxStatus,
@@ -101,126 +104,98 @@ export default function MobilInbox() {
   );
 
   return (
-    <div
-      className="p-3 space-y-3"
-      onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
-      onTouchEnd={(e) => {
-        const dy = e.changedTouches[0].clientY - touchStartY.current;
-        if (dy > 90 && window.scrollY <= 0 && !refreshing) { setRefreshing(true); load(); }
-      }}
-    >
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-bold flex-1">ALIX INBOX</h1>
-        {unreadTotal > 0 && (
-          <Badge variant="secondary" className="tabular-nums">{unreadTotal}</Badge>
-        )}
-        <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => { setRefreshing(true); load(); }} aria-label="Aktualisieren">
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-2 text-[11px]">
-        <span className={`inline-flex items-center gap-1 ${live ? 'text-emerald-500' : 'text-muted-foreground'}`}>
-          <span className={`h-2 w-2 rounded-full ${live ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
-          {live ? 'LIVE' : 'verbinde …'}
-        </span>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          className="pl-9 h-11"
-          placeholder="Name, Firma, Nummer, Nachricht …"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {CHIPS.map((c) => (
-          <button
-            key={c}
-            onClick={() => toggleChip(c)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
-              chips.includes(c)
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-muted/40 text-muted-foreground border-border'
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-
-      {loading && (
-        <div className="space-y-2">
-          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
-        </div>
-      )}
-
-      {!loading && error && (
-        <Card className="p-6 text-center space-y-3">
-          <AlertTriangle className="h-6 w-6 mx-auto text-muted-foreground" />
-          <div className="font-medium">Inbox konnte nicht geladen werden.</div>
-          <Button onClick={() => { setLoading(true); load(); }}>ERNEUT VERSUCHEN</Button>
-        </Card>
-      )}
-
-      {!loading && !error && filtered.length === 0 && (
-        <Card className="p-8 text-center space-y-2">
-          <InboxIcon className="h-6 w-6 mx-auto text-muted-foreground" />
-          <div className="font-medium">Keine offenen Nachrichten</div>
-          <div className="text-xs text-muted-foreground">
-            Neue WhatsApp-Anfragen erscheinen hier automatisch.
+    <PullToRefresh onRefresh={async () => { setRefreshing(true); await load(); }} refreshing={refreshing}>
+      <MobilPage className="pt-3">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[22px] font-semibold tracking-tight leading-tight">ALIX INBOX</h1>
+            <div className="flex items-center gap-1.5 text-[11px] mt-0.5">
+              <span className={`h-2 w-2 rounded-full ${live ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
+              <span className={live ? 'text-emerald-500' : 'text-muted-foreground'}>{live ? 'Live' : 'verbinde …'}</span>
+              {unreadTotal > 0 && <span className="text-muted-foreground">· {unreadTotal} ungelesen</span>}
+            </div>
           </div>
-        </Card>
-      )}
+          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => { haptic('light'); setRefreshing(true); load(); }} aria-label="Aktualisieren">
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
 
-      {!loading && !error && filtered.map((c) => {
-        const p = normPriority(c.priority);
-        const dept = c.assigned_department || c.ac_channels?.department || '';
-        return (
-          <Card
-            key={c.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => nav(`/mobil/inbox/${c.id}`)}
-            onKeyDown={(e) => { if (e.key === 'Enter') nav(`/mobil/inbox/${c.id}`); }}
-            className={`p-3 space-y-1 active:bg-muted/40 ${PRIO_STYLE[p]}`}
-          >
-            <div className="flex items-center gap-2 text-[11px] font-semibold">
-              <span className={p === 'P1' ? 'text-destructive' : p === 'P2' ? 'text-amber-500' : 'text-muted-foreground'}>
-                {p} · {PRIORITY_LABEL[p]}
-              </span>
-              {dept && <span className="text-muted-foreground">· {dept.toUpperCase()}</span>}
-              {c.is_test && <Badge variant="outline" className="h-4 px-1 text-[9px]">TEST</Badge>}
-              <span className="ml-auto font-normal text-muted-foreground">{relTime(c.last_message_at)}</span>
-            </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden />
+          <Input
+            className="pl-9 h-12 rounded-2xl"
+            placeholder="Name, Firma, Nummer, Nachricht …"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Inbox durchsuchen"
+          />
+        </div>
 
-            <div className="flex items-center gap-2">
-              <span className="font-semibold truncate">{displayName(c)}</span>
-              {!c.customer_id && (
-                <Badge variant="outline" className="h-4 px-1 text-[9px]">Unbekannter Kontakt</Badge>
-              )}
-              {c.customer_match_required && (
-                <Badge variant="outline" className="h-4 px-1 text-[9px] border-amber-500 text-amber-500">Mehrere Treffer</Badge>
-              )}
-            </div>
+        <PillRow>
+          {CHIPS.map((c) => (
+            <Pill key={c} active={chips.includes(c)} onClick={() => toggleChip(c)}>{c}</Pill>
+          ))}
+        </PillRow>
 
-            <div className="text-xs text-muted-foreground truncate">
-              {c.last_message_preview || '—'}
-            </div>
+        {loading && <ListSkeleton rows={4} height={104} />}
 
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
-              <span>{(c.ac_channels?.name || c.channel_type || 'WhatsApp').toString()}</span>
-              <span>· {STATUS_LABEL[(c.inbox_status || 'NEW') as InboxStatus]}</span>
-              {(c.unread_count ?? 0) > 0 && (
-                <Badge className="ml-auto h-4 px-1.5 text-[10px]">{c.unread_count} ungelesen</Badge>
-              )}
-            </div>
-          </Card>
-        );
-      })}
-    </div>
+        {!loading && error && (
+          <ErrorState hint="Inbox konnte nicht geladen werden." onRetry={() => { setLoading(true); load(); }} />
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <EmptyState
+            icon={InboxIcon}
+            title="Keine offenen Nachrichten"
+            hint="Neue WhatsApp-Anfragen erscheinen hier automatisch."
+          />
+        )}
+
+        {!loading && !error && filtered.map((c) => {
+          const p = normPriority(c.priority);
+          const dept = c.assigned_department || c.ac_channels?.department || '';
+          const unread = c.unread_count ?? 0;
+          return (
+            <MobilCard
+              key={c.id}
+              tone={p === 'P1' ? 'critical' : p === 'P2' ? 'warning' : 'default'}
+
+              onClick={() => { haptic('light'); nav(`/mobil/inbox/${c.id}`); }}
+              className={`p-3.5 space-y-1.5 ${PRIO_STYLE[p]}`}
+            >
+              <div className="flex items-center gap-2 text-[11px]">
+                <PrioBadge prio={p} />
+                {dept && <span className="text-muted-foreground uppercase tracking-wide">{dept}</span>}
+                {c.is_test && <Badge variant="outline" className="h-4 px-1 text-[9px]">TEST</Badge>}
+                <span className="ml-auto text-muted-foreground tabular-nums">{relTime(c.last_message_at)}</span>
+              </div>
+
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`truncate ${unread > 0 ? 'font-semibold' : 'font-medium'}`}>{displayName(c)}</span>
+                {!c.customer_id && <Badge variant="outline" className="h-4 px-1 text-[9px] shrink-0">Unbekannt</Badge>}
+                {c.customer_match_required && (
+                  <Badge variant="outline" className="h-4 px-1 text-[9px] border-amber-500 text-amber-500 shrink-0">Mehrere Treffer</Badge>
+                )}
+                {unread > 0 && (
+                  <span className="ml-auto shrink-0 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 tabular-nums">
+                    {unread}
+                  </span>
+                )}
+              </div>
+
+              <div className={`text-xs line-clamp-2 ${unread > 0 ? 'text-foreground/80' : 'text-muted-foreground'}`}>
+                {c.last_message_preview || '—'}
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-0.5">
+                <span>{(c.ac_channels?.name || c.channel_type || 'WhatsApp').toString()}</span>
+                <span>· {STATUS_LABEL[(c.inbox_status || 'NEW') as InboxStatus]}</span>
+              </div>
+            </MobilCard>
+          );
+        })}
+      </MobilPage>
+    </PullToRefresh>
   );
 }
+
