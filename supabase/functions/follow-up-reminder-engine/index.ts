@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
           continue;
         }
         await admin.from('follow_up_reminders')
-          .update({ notified_at: new Date().toISOString() })
+          .update({ status: 'TRIGGERED' })
           .eq('id', r.id);
         result.notified++;
       } catch (e) {
