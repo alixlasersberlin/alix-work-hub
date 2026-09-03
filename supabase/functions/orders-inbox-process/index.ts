@@ -151,8 +151,15 @@ async function processOne(
   const payload = row.payload ?? {};
   const sourceSystem = row.source_system || payload.source || "alixsmart";
   const rawOrderNumber =
-    row.external_id || payload.order_number || payload.order_id;
+    row.external_id ||
+    payload.order_number ||
+    payload.order_id ||
+    // Fallback für AlixSmart-Anfragen (z. B. WhatsApp): Angebots-/Anfragenummer nutzen
+    payload.quote_number ||
+    payload.request_number ||
+    payload.source_quote_id;
   if (!rawOrderNumber) return { ok: false, error: "missing_order_number" };
+
 
   // Nummernkreis-Regel: Auftragsnummern IMMER mit "AB-"-Präfix speichern
   const orderNumber = /^AB-/i.test(String(rawOrderNumber))
