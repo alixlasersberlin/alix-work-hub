@@ -110,7 +110,9 @@ Deno.serve(async (req) => {
               headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${serviceKey}`,
+                'x-alix-internal-key': Deno.env.get('INTERNAL_PUSH_SECRET') ?? '',
               },
+
               body: JSON.stringify({
                 user_id: r.user_id,
                 title: push.title,
