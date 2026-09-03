@@ -513,22 +513,23 @@ export default function Lagergeraete({
 
   /** Sucht offene Aufträge serverseitig über Auftragsnummer, Kundenname und Positionen. */
   const searchOpenOrders = async (term: string, max: number): Promise<any[]> => {
-    const q = term.trim();
+    // Sonderzeichen entfernen: PostgREST-Filter sind sonst nicht escape-sicher.
+    const q = term.trim().replace(/[,()*%]/g, ' ').trim();
     if (q.length < 2) return [];
     const like = `%${q}%`;
-    const [itemHits, custHits] = await Promise.all([
-      supabase.from('order_items').select('order_id').or(
-        `item_name.ilike.${like},description.ilike.${like},sku.ilike.${like}`.replace(/[(),]/g, ' '),
-      ).limit(300),
-      supabase.from('customers').select('id').ilike('company_name', like).limit(100),
+    const itemQ = () => supabase.from('order_items').select('order_id').limit(300);
+    const custQ = () => supabase.from('customers').select('id').limit(100);
+    const [byName, byDesc, bySku, custA, custB] = await Promise.all([
+      itemQ().ilike('item_name', like),
+      itemQ().ilike('description', like),
+      itemQ().ilike('sku', like),
+      custQ().ilike('company_name', like),
+      custQ().ilike('contact_name', like),
     ]);
-    const [custHits2] = await Promise.all([
-      supabase.from('customers').select('id').ilike('contact_name', like).limit(100),
-    ]);
-    const orderIds = Array.from(new Set(((itemHits.data as any[]) ?? []).map((r) => r.order_id).filter(Boolean)));
+    const orderIds = Array.from(new Set([...(byName.data as any[] ?? []), ...(byDesc.data as any[] ?? []), ...(bySku.data as any[] ?? [])].map((r) => r.order_id).filter(Boolean)));
     const custIds = Array.from(new Set([
-      ...(((custHits.data as any[]) ?? []).map((r) => r.id)),
-      ...(((custHits2.data as any[]) ?? []).map((r) => r.id)),
+      ...(((custA.data as any[]) ?? []).map((r) => r.id)),
+      ...(((custB.data as any[]) ?? []).map((r) => r.id)),
     ]));
 
     const base = () => supabase.from('orders').select(ORDER_SELECT).in('order_status', ORDER_STATUSES).limit(max);
