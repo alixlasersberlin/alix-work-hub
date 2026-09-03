@@ -6,6 +6,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { reportIncident } from '@/lib/mobil/golive';
 
 type Props = { children: ReactNode; area?: string; fallbackCompact?: boolean };
 type State = { error: Error | null };
@@ -20,7 +21,15 @@ export default class MobilErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Kein Kundeninhalt, keine Tokens – nur technische Kennung.
     console.error(`[mobil:${this.props.area ?? 'app'}] ${error.name}: ${error.message}`, info.componentStack?.slice(0, 400));
+    // Produktions-Monitoring (Prompt 9): gruppierte Incident-Meldung, kein Alert-Flood.
+    void reportIncident(
+      `mobil:${this.props.area ?? 'app'}`,
+      error.name || 'RENDER_ERROR',
+      error.message?.slice(0, 300) || 'Unbekannter Renderfehler',
+      'ERROR',
+    );
   }
+
 
   private reset = () => this.setState({ error: null });
 

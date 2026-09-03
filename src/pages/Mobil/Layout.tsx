@@ -12,6 +12,7 @@ import { syncBadge, takePendingDeepLink } from '@/lib/mobile/push-registration';
 import { format } from 'date-fns';
 import AppLockGate from '@/components/mobil/AppLockGate';
 import MobilErrorBoundary from '@/components/mobil/MobilErrorBoundary';
+import MobileOpsGate, { MobileOpsBanners } from '@/components/mobil/MobileOpsGate';
 import { touchTrustedDevice, markActivity } from '@/lib/mobil/security';
 import { APP_VERSION_MOBILE } from '@/lib/mobil/appInfo';
 
@@ -173,6 +174,8 @@ function MobilLayoutInner() {
       )}
 
 
+      <MobileOpsBanners />
+
       {banner && (
         <button
           onClick={() => { nav(banner.url); setBanner(null); }}
@@ -247,10 +250,13 @@ function MobilLayoutInner() {
 export default function MobilLayout() {
   return (
     <AppLockGate>
-      <MobilLayoutInner />
+      <MobileOpsGate>
+        <MobilLayoutInner />
+      </MobileOpsGate>
     </AppLockGate>
   );
 }
+
 
 function Tab({ to, icon: Icon, label, exact, badge }: { to: string; icon: any; label: string; exact?: boolean; badge?: number }) {
   return (

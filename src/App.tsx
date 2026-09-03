@@ -418,6 +418,9 @@ const MobilUebergabe = lazy(() => import("./pages/Mobil/Uebergabe"));
 const MobilKpi = lazy(() => import("./pages/Mobil/Kpi"));
 const MobilSystemstatus = lazy(() => import("./pages/Mobil/Systemstatus"));
 const MobilAdminCommandCenter = lazy(() => import("./pages/Mobil/AdminCommandCenter"));
+const MobilAdminGoLive = lazy(() => import("./pages/Mobil/AdminGoLive"));
+const MobilAdminStoerungen = lazy(() => import("./pages/Mobil/AdminStoerungen"));
+const MobilFeedback = lazy(() => import("./pages/Mobil/Feedback"));
 const MobilGeraetDetail = lazy(() => import("./pages/Mobil/GeraetDetail"));
 const MobilKontakte = lazy(() => import("./pages/Mobil/Kontakte"));
 const MobilSicherheit = lazy(() => import("./pages/Mobil/Sicherheit"));
@@ -2516,6 +2519,9 @@ function AppRoutes() {
           <Route path="datenschutz" element={<MobilDatenschutz />} />
           <Route path="support" element={<MobilSupport />} />
           <Route path="admin/release-readiness" element={<MobilReleaseReadiness />} />
+          <Route path="admin/go-live" element={<MobilAdminGoLive />} />
+          <Route path="admin/stoerungen" element={<MobilAdminStoerungen />} />
+          <Route path="feedback" element={<MobilFeedback />} />
 
 
         </Route>
