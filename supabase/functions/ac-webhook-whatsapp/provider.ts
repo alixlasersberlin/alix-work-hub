@@ -131,3 +131,51 @@ export function normalizePayload(payload: any): NormalizedMessage[] {
   }
   return [];
 }
+
+// ---- Status-Webhooks (sent / delivered / read / failed) -------------------
+export type NormalizedStatus = {
+  provider: 'META' | 'TWILIO';
+  provider_message_id: string;
+  status: 'sent' | 'delivered' | 'read' | 'failed';
+  error?: string | null;
+  timestamp: string;
+};
+
+const META_STATUS: Record<string, NormalizedStatus['status']> = {
+  sent: 'sent', delivered: 'delivered', read: 'read', failed: 'failed',
+};
+const TWILIO_STATUS: Record<string, NormalizedStatus['status']> = {
+  sent: 'sent', delivered: 'delivered', read: 'read',
+  failed: 'failed', undelivered: 'failed',
+};
+
+export function normalizeStatuses(payload: any): NormalizedStatus[] {
+  const out: NormalizedStatus[] = [];
+  for (const entry of payload?.entry ?? []) {
+    for (const change of entry?.changes ?? []) {
+      for (const st of change?.value?.statuses ?? []) {
+        const mapped = META_STATUS[String(st.status)];
+        if (!mapped || !st.id) continue;
+        out.push({
+          provider: 'META',
+          provider_message_id: st.id,
+          status: mapped,
+          error: st.errors?.[0]?.title ?? null,
+          timestamp: st.timestamp ? new Date(Number(st.timestamp) * 1000).toISOString() : new Date().toISOString(),
+        });
+      }
+    }
+  }
+  const twStatus = payload?.MessageStatus ?? payload?.SmsStatus;
+  const twSid = payload?.MessageSid ?? payload?.SmsSid;
+  if (twStatus && twSid && TWILIO_STATUS[String(twStatus)]) {
+    out.push({
+      provider: 'TWILIO',
+      provider_message_id: twSid,
+      status: TWILIO_STATUS[String(twStatus)],
+      error: payload?.ErrorMessage ?? payload?.ErrorCode ?? null,
+      timestamp: new Date().toISOString(),
+    });
+  }
+  return out;
+}

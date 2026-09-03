@@ -94,3 +94,4 @@
 - [ALIX Product Master](mem://features/alix-product-master) — /artikel: Artikelliste, Produktakte mit 15 Tabs, Attribut-Engine, Preise, Compliance-Freigabe, SEO, Datenqualitäts-Score
 - [Software & Compliance Workspace](mem://features/compliance-workspace) — Eigener Login /compliance-login, abgeschotteter Workspace /software-compliance, compliance_* Profilfelder, RLS-Helfer, Route-Guard
 - [Mobile Push & Eskalationen](mem://features/mobile-push-eskalationen) — send-mobile-notification, escalation-engine (Cron 2 Min.), Notification Center /mobil/benachrichtigungen, Push-Diagnose; APNs/FCM-Secrets fehlen noch
+- [Mobile WhatsApp Outbound](mem://features/mobile-whatsapp-outbound) — Edge Function ac-whatsapp-send, Bucket inbox-media, Quick Replies, Statuswebhooks, Ticket aus Chat

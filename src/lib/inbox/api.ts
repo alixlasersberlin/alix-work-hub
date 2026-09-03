@@ -279,3 +279,170 @@ export function relTime(iso: string | null): string {
   if (h < 24) return `vor ${h} Std.`;
   return new Date(iso).toLocaleDateString('de-DE');
 }
+
+// ============================================================
+// Prompt 4 — Outbound WhatsApp, Medien, Quick Replies, Ticket
+// ============================================================
+
+export type FeatureFlags = {
+  whatsapp_outbound_enabled: boolean;
+  media_send_enabled: boolean;
+  ticket_from_chat_enabled: boolean;
+  voice_messages_enabled: boolean;
+  templates_enabled: boolean;
+};
+
+export async function fetchFeatureFlags(): Promise<FeatureFlags> {
+  const keys = [
+    'whatsapp_outbound_enabled', 'media_send_enabled', 'ticket_from_chat_enabled',
+    'voice_messages_enabled', 'templates_enabled',
+  ];
+  const { data } = await (supabase as any).from('app_settings').select('key, value').in('key', keys);
+  const map = new Map<string, string>((data || []).map((r: any) => [r.key, String(r.value)]));
+  const on = (k: string) => (map.get(k) || '').toLowerCase() === 'true';
+  return {
+    whatsapp_outbound_enabled: on('whatsapp_outbound_enabled'),
+    media_send_enabled: on('media_send_enabled'),
+    ticket_from_chat_enabled: on('ticket_from_chat_enabled'),
+    voice_messages_enabled: on('voice_messages_enabled'),
+    templates_enabled: on('templates_enabled'),
+  };
+}
+
+export type QuickReply = {
+  id: string; title: string; body: string; category: string | null; department: string | null;
+};
+
+export async function fetchQuickReplies(): Promise<QuickReply[]> {
+  const { data } = await (supabase as any)
+    .from('quick_replies').select('id, title, body, category, department')
+    .eq('is_active', true).order('title').limit(200);
+  return (data || []) as QuickReply[];
+}
+
+/** Ist das 24-Stunden-Fenster offen? (letzte Kundennachricht < 24 h) */
+export function windowOpen(messages: MessageRow[]): boolean {
+  const last = [...messages].reverse().find((m) => m.direction === 'inbound');
+  if (!last) return false;
+  return Date.now() - new Date(last.created_at).getTime() < 24 * 3600_000;
+}
+
+const MEDIA_TYPE_BY_MIME = (mime: string): 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' => {
+  if (mime.startsWith('image/')) return 'IMAGE';
+  if (mime.startsWith('video/')) return 'VIDEO';
+  if (mime.startsWith('audio/')) return 'AUDIO';
+  return 'DOCUMENT';
+};
+
+const BLOCKED_MEDIA = /\.(exe|bat|cmd|scr|msi|js|vbs|sh|apk|dll|php|html?|svg)$/i;
+
+/** Lädt eine Datei in den privaten Bucket `inbox-media` (keine öffentliche URL). */
+export async function uploadInboxMedia(conversationId: string, file: File) {
+  if (BLOCKED_MEDIA.test(file.name)) throw new Error('Dieser Dateityp ist nicht erlaubt.');
+  if (file.size > 50 * 1024 * 1024) throw new Error('Die Datei ist größer als 50 MB.');
+  const ext = file.name.split('.').pop() || 'bin';
+  const path = `${conversationId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from('inbox-media')
+    .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  if (error) throw error;
+  return {
+    storage_path: path,
+    file_name: file.name,
+    mime_type: file.type || 'application/octet-stream',
+    file_size: file.size,
+    message_type: MEDIA_TYPE_BY_MIME(file.type || ''),
+  };
+}
+
+export type SendPayload = {
+  conversation_id: string;
+  message_type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'TEMPLATE';
+  body?: string | null;
+  storage_path?: string | null;
+  file_name?: string | null;
+  mime_type?: string | null;
+  file_size?: number | null;
+  reply_to_message_id?: string | null;
+  template_id?: string | null;
+  template_params?: string[];
+};
+
+/**
+ * Echter WhatsApp-Versand über die Edge Function. Es wird NIE ein Erfolg
+ * gemeldet, den der Provider nicht bestätigt hat.
+ */
+export async function sendWhatsApp(payload: SendPayload) {
+  const { data, error } = await supabase.functions.invoke('ac-whatsapp-send', {
+    body: { ...payload, client_message_id: crypto.randomUUID() },
+  });
+  if (error) {
+    let detail = error.message;
+    try {
+      const ctx = (error as any)?.context;
+      if (ctx?.text) {
+        const parsed = JSON.parse(await ctx.text());
+        detail = parsed?.error || parsed?.detail || detail;
+      }
+    } catch { /* Original-Fehlertext behalten */ }
+    throw new Error(detail);
+  }
+  if (!data?.ok) throw new Error(data?.error || 'Versand fehlgeschlagen.');
+  return data;
+}
+
+/** Erstellt ein Ticket im bestehenden Ticketsystem (eigene Nummernlogik bleibt aktiv). */
+export async function createTicketFromChat(opts: {
+  conv: ConversationRow;
+  title: string;
+  description: string;
+  department: string;
+  priority: string;
+  category?: string | null;
+  deviceId?: string | null;
+}) {
+  const { data: auth } = await supabase.auth.getUser();
+  const contact = opts.conv.ac_contacts;
+  const { data: ticket, error } = await (supabase as any).from('tickets').insert({
+    source_system: 'alixwork',
+    source: 'whatsapp',
+    title: opts.title,
+    subject: opts.title,
+    description: opts.description,
+    status: 'open',
+    priority: opts.priority,
+    department: opts.department,
+    category: opts.category ?? null,
+    customer_name: contact?.full_name ?? null,
+    customer_phone: contact?.whatsapp_number ?? contact?.phone ?? null,
+    customer_email: (contact as any)?.email ?? null,
+    device_id: opts.deviceId ?? null,
+    customer_visible_status: 'in_bearbeitung',
+    assigned_to: auth?.user?.id ?? null,
+  }).select('id, ticket_number, case_number').single();
+  if (error) throw error;
+
+  await (supabase as any).from('conversation_tickets').insert({
+    conversation_id: opts.conv.id,
+    ticket_id: ticket.id,
+    created_by_user_id: auth?.user?.id ?? null,
+  });
+  await logEvent(opts.conv.id, 'TICKET_CREATED', null, {
+    ticket_id: ticket.id, ticket_number: ticket.ticket_number ?? ticket.case_number,
+  });
+  return ticket;
+}
+
+export async function fetchLinkedTickets(conversationId: string) {
+  const { data } = await (supabase as any)
+    .from('conversation_tickets')
+    .select('ticket_id, created_at, tickets:ticket_id ( id, title, status, ticket_number, case_number )')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: false });
+  return data || [];
+}
+
+/** Signierte, kurzlebige URL für ein Chat-Medium. */
+export async function signedMediaUrl(path: string) {
+  const { data } = await supabase.storage.from('inbox-media').createSignedUrl(path, 600);
+  return data?.signedUrl ?? null;
+}
