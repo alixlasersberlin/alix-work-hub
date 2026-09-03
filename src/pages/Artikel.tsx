@@ -44,6 +44,10 @@ type ZohoItem = {
   synced_at: string;
 };
 
+/** Spalten der Listenabfrage — bewusst ohne `raw_data` (Ladezeit!). */
+const LIST_COLUMNS =
+  'id,zoho_item_id,name,sku,description,unit,rate,purchase_rate,currency_code,status,product_type,item_type,tax_name,tax_percentage,stock_on_hand,available_stock,category_name,brand,manufacturer,synced_at';
+
 const fmtMoney = (n: number | null, cur: string | null) =>
   n == null ? '–' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur || 'EUR' }).format(n);
 
