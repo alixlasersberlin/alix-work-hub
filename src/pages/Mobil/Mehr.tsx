@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles, Ticket, Search, Clock, ArrowLeftRight, ShieldCheck, BarChart3, Settings2 } from 'lucide-react';
+import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles, Ticket, Search, Clock, ArrowLeftRight, ShieldCheck, BarChart3, Settings2, Lock, LifeBuoy, Rocket } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const LINKS = [
