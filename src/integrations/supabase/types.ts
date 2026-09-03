@@ -53346,6 +53346,15 @@ export type Database = {
       tickets_dashboard_counts:
         | { Args: { _user_id: string }; Returns: Json }
         | { Args: { _source_system?: string; _user_id: string }; Returns: Json }
+      tmp_find_like: {
+        Args: { _v: string }
+        Returns: {
+          cnt: number
+          col: string
+          sample: string
+          tbl: string
+        }[]
+      }
       tmp_find_value: {
         Args: { _v: string }
         Returns: {
