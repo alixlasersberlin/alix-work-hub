@@ -741,12 +741,17 @@ export type Database = {
           is_archived: boolean | null
           is_private: boolean | null
           is_test: boolean
+          last_error: string | null
+          last_error_at: string | null
+          last_inbound_at: string | null
+          last_outbound_at: string | null
           name: string
           phone_number: string | null
           provider: string | null
           provider_phone_id: string | null
           push_enabled: boolean
           tenant_id: string | null
+          test_phone_number: string | null
           type: Database["public"]["Enums"]["ac_channel_type"]
           updated_at: string | null
           website_id: string | null
@@ -766,12 +771,17 @@ export type Database = {
           is_archived?: boolean | null
           is_private?: boolean | null
           is_test?: boolean
+          last_error?: string | null
+          last_error_at?: string | null
+          last_inbound_at?: string | null
+          last_outbound_at?: string | null
           name: string
           phone_number?: string | null
           provider?: string | null
           provider_phone_id?: string | null
           push_enabled?: boolean
           tenant_id?: string | null
+          test_phone_number?: string | null
           type: Database["public"]["Enums"]["ac_channel_type"]
           updated_at?: string | null
           website_id?: string | null
@@ -791,12 +801,17 @@ export type Database = {
           is_archived?: boolean | null
           is_private?: boolean | null
           is_test?: boolean
+          last_error?: string | null
+          last_error_at?: string | null
+          last_inbound_at?: string | null
+          last_outbound_at?: string | null
           name?: string
           phone_number?: string | null
           provider?: string | null
           provider_phone_id?: string | null
           push_enabled?: boolean
           tenant_id?: string | null
+          test_phone_number?: string | null
           type?: Database["public"]["Enums"]["ac_channel_type"]
           updated_at?: string | null
           website_id?: string | null
@@ -2015,11 +2030,13 @@ export type Database = {
           body: string | null
           body_html: string | null
           channel_id: string | null
+          client_message_id: string | null
           conversation_id: string | null
           created_at: string | null
           delivered_at: string | null
           delivery_status: string | null
           direction: Database["public"]["Enums"]["ac_message_direction"]
+          error_code: string | null
           external_message_id: string | null
           failed_reason: string | null
           id: string
@@ -2027,14 +2044,20 @@ export type Database = {
           is_edited: boolean | null
           is_internal_note: boolean | null
           mentions: string[] | null
+          message_type: string | null
           metadata: Json | null
           parent_id: string | null
+          provider_message_id: string | null
           reactions: Json | null
+          read_at: string | null
           read_by: Json | null
+          reply_to_message_id: string | null
+          retry_count: number
           sender_contact_id: string | null
           sender_name: string | null
           sender_type: Database["public"]["Enums"]["ac_sender_type"]
           sender_user_id: string | null
+          sent_at: string | null
           tenant_id: string | null
           updated_at: string | null
         }
@@ -2043,11 +2066,13 @@ export type Database = {
           body?: string | null
           body_html?: string | null
           channel_id?: string | null
+          client_message_id?: string | null
           conversation_id?: string | null
           created_at?: string | null
           delivered_at?: string | null
           delivery_status?: string | null
           direction?: Database["public"]["Enums"]["ac_message_direction"]
+          error_code?: string | null
           external_message_id?: string | null
           failed_reason?: string | null
           id?: string
@@ -2055,14 +2080,20 @@ export type Database = {
           is_edited?: boolean | null
           is_internal_note?: boolean | null
           mentions?: string[] | null
+          message_type?: string | null
           metadata?: Json | null
           parent_id?: string | null
+          provider_message_id?: string | null
           reactions?: Json | null
+          read_at?: string | null
           read_by?: Json | null
+          reply_to_message_id?: string | null
+          retry_count?: number
           sender_contact_id?: string | null
           sender_name?: string | null
           sender_type?: Database["public"]["Enums"]["ac_sender_type"]
           sender_user_id?: string | null
+          sent_at?: string | null
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -2071,11 +2102,13 @@ export type Database = {
           body?: string | null
           body_html?: string | null
           channel_id?: string | null
+          client_message_id?: string | null
           conversation_id?: string | null
           created_at?: string | null
           delivered_at?: string | null
           delivery_status?: string | null
           direction?: Database["public"]["Enums"]["ac_message_direction"]
+          error_code?: string | null
           external_message_id?: string | null
           failed_reason?: string | null
           id?: string
@@ -2083,14 +2116,20 @@ export type Database = {
           is_edited?: boolean | null
           is_internal_note?: boolean | null
           mentions?: string[] | null
+          message_type?: string | null
           metadata?: Json | null
           parent_id?: string | null
+          provider_message_id?: string | null
           reactions?: Json | null
+          read_at?: string | null
           read_by?: Json | null
+          reply_to_message_id?: string | null
+          retry_count?: number
           sender_contact_id?: string | null
           sender_name?: string | null
           sender_type?: Database["public"]["Enums"]["ac_sender_type"]
           sender_user_id?: string | null
+          sent_at?: string | null
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -2112,6 +2151,13 @@ export type Database = {
           {
             foreignKeyName: "ac_messages_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ac_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
             isOneToOne: false
             referencedRelation: "ac_messages"
             referencedColumns: ["id"]
@@ -16009,6 +16055,55 @@ export type Database = {
           },
         ]
       }
+      conversation_devices: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          created_by_user_id: string | null
+          device_id: string
+          id: string
+          is_primary: boolean
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          device_id: string
+          id?: string
+          is_primary?: boolean
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          device_id?: string
+          id?: string
+          is_primary?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_devices_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_devices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_devices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
+          },
+        ]
+      }
       conversation_escalations: {
         Row: {
           cancelled_at: string | null
@@ -16058,6 +16153,59 @@ export type Database = {
             columns: ["rule_id"]
             isOneToOne: false
             referencedRelation: "escalation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_tickets: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_tickets_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_tickets_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "conversation_tickets_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "conversation_tickets_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -40133,6 +40281,77 @@ export type Database = {
         }
         Relationships: []
       }
+      quick_replies: {
+        Row: {
+          body: string
+          category: string | null
+          channel_type: string
+          created_at: string
+          created_by_user_id: string | null
+          department: string | null
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          body: string
+          category?: string | null
+          channel_type?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          department?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          body?: string
+          category?: string | null
+          channel_type?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          department?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
+      quick_reply_favorites: {
+        Row: {
+          created_at: string
+          quick_reply_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          quick_reply_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          quick_reply_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_reply_favorites_quick_reply_id_fkey"
+            columns: ["quick_reply_id"]
+            isOneToOne: false
+            referencedRelation: "quick_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ratenplan_ai_corrections: {
         Row: {
           corrected_by: string | null
@@ -51043,15 +51262,20 @@ export type Database = {
       whatsapp_templates: {
         Row: {
           body: string
+          body_preview: string | null
           category: string
+          channel_id: string | null
           created_at: string
           created_by: string | null
           department: string | null
           id: string
+          is_active: boolean
           language: string
+          last_synced_at: string | null
           meta_template_name: string | null
           meta_template_status: string | null
           name: string
+          provider_template_id: string | null
           status: string
           updated_at: string
           updated_by: string | null
@@ -51059,15 +51283,20 @@ export type Database = {
         }
         Insert: {
           body: string
+          body_preview?: string | null
           category?: string
+          channel_id?: string | null
           created_at?: string
           created_by?: string | null
           department?: string | null
           id?: string
+          is_active?: boolean
           language?: string
+          last_synced_at?: string | null
           meta_template_name?: string | null
           meta_template_status?: string | null
           name: string
+          provider_template_id?: string | null
           status?: string
           updated_at?: string
           updated_by?: string | null
@@ -51075,21 +51304,34 @@ export type Database = {
         }
         Update: {
           body?: string
+          body_preview?: string | null
           category?: string
+          channel_id?: string | null
           created_at?: string
           created_by?: string | null
           department?: string | null
           id?: string
+          is_active?: boolean
           language?: string
+          last_synced_at?: string | null
           meta_template_name?: string | null
           meta_template_status?: string | null
           name?: string
+          provider_template_id?: string | null
           status?: string
           updated_at?: string
           updated_by?: string | null
           variables?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_templates_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "ac_channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspace_nav_items: {
         Row: {
