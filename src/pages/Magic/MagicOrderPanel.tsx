@@ -313,7 +313,27 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
               <Row label="Modell / Farbe" value={[po.modellname, po.farbe].filter(Boolean).join(' · ')} />
               <Row label="Seriennummer" value={po.seriennummer} />
               <Row label="Notizen" value={po.anmerkungen} />
+              <div className="pt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={mailBusy}
+                  onClick={async () => {
+                    setMailBusy(true);
+                    try {
+                      const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+                      const r = await sendProductionStartedEmail(po.id, 'manuell');
+                      r.ok ? toast.success(`Info-Mail Kunde: ${r.message}`) : toast.error(`Nicht versendet: ${r.message}`);
+                    } finally { setMailBusy(false); }
+                  }}
+                >
+                  {mailBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  Info-Mail Kunde
+                </Button>
+              </div>
             </>
+
           ) : <div className="text-[12.5px] text-muted-foreground">Keine Lieferantenbestellung vorhanden.</div>}
         </Section>
 
