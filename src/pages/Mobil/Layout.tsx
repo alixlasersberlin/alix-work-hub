@@ -12,6 +12,7 @@ import { syncBadge, takePendingDeepLink } from '@/lib/mobile/push-registration';
 import { format } from 'date-fns';
 import AppLockGate from '@/components/mobil/AppLockGate';
 import MobilErrorBoundary from '@/components/mobil/MobilErrorBoundary';
+import MobileOpsGate, { MobileOpsBanners } from '@/components/mobil/MobileOpsGate';
 import { touchTrustedDevice, markActivity } from '@/lib/mobil/security';
 import { APP_VERSION_MOBILE } from '@/lib/mobil/appInfo';
 
@@ -172,6 +173,8 @@ function MobilLayoutInner() {
         </div>
       )}
 
+
+      <MobileOpsBanners />
 
       {banner && (
         <button
