@@ -18,38 +18,117 @@ interface SendPayload {
   title: string;
   body: string;
   url?: string;
+  notification_type?: string;
   data?: Record<string, string>;
+}
+
+/** Whitelist erlaubter Notification-Typen (P0-2, Punkt 18). */
+const ALLOWED_TYPES = new Set([
+  'NEW_MESSAGE', 'ASSIGNED', 'P1_ALERT', 'P2_ALERT', 'ESCALATION',
+  'TICKET_CREATED', 'FOLLOW_UP', 'SYSTEM', 'TEST',
+]);
+
+const MAX_TITLE = 120;
+const MAX_BODY = 400;
+const MAX_DATA_BYTES = 2048;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const encoder = new TextEncoder();
+
+/** Konstantzeit-Vergleich, verhindert Timing-Angriffe auf das interne Secret. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const ab = encoder.encode(a);
+  const bb = encoder.encode(b);
+  if (ab.length !== bb.length || ab.length === 0) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+/**
+ * P0-2: Nur vertrauenswürdige interne Server-/Edge-Prozesse dürfen Push auslösen.
+ * Akzeptiert werden ausschliesslich:
+ *   - Header `x-alix-internal-key` == INTERNAL_PUSH_SECRET, ODER
+ *   - Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>
+ * Normale User-JWTs werden abgelehnt — sie könnten sonst beliebige Empfänger setzen.
+ */
+function isInternalCaller(req: Request): boolean {
+  const internal = Deno.env.get('INTERNAL_PUSH_SECRET') ?? '';
+  const provided = req.headers.get('x-alix-internal-key') ?? '';
+  if (internal && provided && timingSafeEqual(provided, internal)) return true;
+
+  const svcKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  const auth = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (svcKey && auth && timingSafeEqual(auth, svcKey)) return true;
+
+  return false;
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
+
+  if (!isInternalCaller(req)) {
+    console.warn('push-send-native: unauthorized caller rejected');
+    return json({ error: 'unauthorized' }, 401);
+  }
 
   const body = (await req.json().catch(() => null)) as SendPayload | null;
-  if (!body?.user_id || !body?.title) {
-    return json({ error: 'invalid payload' }, 400);
+  if (!body?.user_id || !UUID_RE.test(String(body.user_id))) {
+    return json({ error: 'invalid user_id' }, 400);
   }
+  if (!body.title || typeof body.title !== 'string' || body.title.length > MAX_TITLE) {
+    return json({ error: 'invalid title' }, 400);
+  }
+  if (body.body && (typeof body.body !== 'string' || body.body.length > MAX_BODY)) {
+    return json({ error: 'invalid body' }, 400);
+  }
+  if (body.notification_type && !ALLOWED_TYPES.has(body.notification_type)) {
+    return json({ error: 'invalid notification_type' }, 400);
+  }
+  if (body.data && encoder.encode(JSON.stringify(body.data)).length > MAX_DATA_BYTES) {
+    return json({ error: 'data payload too large' }, 400);
+  }
+  body.title = body.title.slice(0, MAX_TITLE);
+  body.body = String(body.body ?? '').slice(0, MAX_BODY);
 
   const svc = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
+  // Zielvalidierung: existiert der User und ist das Profil aktiv?
+  const { data: profile } = await svc
+    .from('user_profiles')
+    .select('id, status')
+    .eq('id', body.user_id)
+    .maybeSingle();
+  if (!profile) return json({ error: 'unknown target user' }, 400);
+  if (profile.status && String(profile.status).toLowerCase() !== 'active'
+      && String(profile.status).toLowerCase() !== 'aktiv') {
+    return json({ ok: true, skipped: 'user inactive', count: 0, results: [] });
+  }
+
   const { data: subs, error } = await svc
     .from('mobile_push_subscriptions')
-    .select('id, platform, native_token')
+    .select('id, platform, native_token, notifications_enabled, revoked_at')
     .eq('user_id', body.user_id)
     .in('platform', ['ios', 'android']);
   if (error) return json({ error: error.message }, 500);
 
+  const active = (subs || []).filter((s) => s.native_token && !s.revoked_at && s.notifications_enabled !== false);
+  if (active.length === 0) {
+    return json({ ok: true, skipped: 'no active devices', count: 0, results: [] });
+  }
+
   const results: Array<{ platform: string; ok: boolean; error?: string }> = [];
-  for (const sub of subs || []) {
-    if (!sub.native_token) continue;
+  for (const sub of active) {
     try {
       if (sub.platform === 'android') {
-        await sendFcm(sub.native_token, body);
+        await sendFcm(sub.native_token!, body);
         results.push({ platform: 'android', ok: true });
       } else if (sub.platform === 'ios') {
-        await sendApns(sub.native_token, body);
+        await sendApns(sub.native_token!, body);
         results.push({ platform: 'ios', ok: true });
       }
     } catch (e) {
@@ -59,6 +138,7 @@ Deno.serve(async (req) => {
 
   return json({ ok: true, count: results.length, results });
 });
+
 
 // ---------- FCM (HTTP v1) ----------
 
