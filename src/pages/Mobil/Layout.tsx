@@ -152,7 +152,9 @@ export default function MobilLayout() {
       )}
 
       <main className="flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)' }}>
-        <Outlet />
+        <MobilErrorBoundary area="mobil">
+          <Outlet />
+        </MobilErrorBoundary>
       </main>
 
       {/* Globale Schnellaktion – einhändig erreichbar */}
