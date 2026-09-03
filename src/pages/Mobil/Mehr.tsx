@@ -1,11 +1,19 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles } from 'lucide-react';
+import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles, Ticket, Search, Clock, ArrowLeftRight, ShieldCheck, BarChart3, Settings2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const LINKS = [
   { to: '/mobil/inbox', icon: MessageSquare, label: 'ALIX INBOX' },
+  { to: '/mobil/tickets', icon: Ticket, label: 'Ticket Center' },
+  { to: '/mobil/magic-suche', icon: Search, label: 'Magic Search' },
+  { to: '/mobil/wiedervorlagen', icon: Clock, label: 'Wiedervorlagen' },
+  { to: '/mobil/uebergabe', icon: ArrowLeftRight, label: 'Schichtübergabe' },
+  { to: '/mobil/supervisor', icon: ShieldCheck, label: 'Supervisor Cockpit' },
+  { to: '/mobil/kpi', icon: BarChart3, label: 'Kennzahlen' },
+  { to: '/mobil/systemstatus', icon: Activity, label: 'Systemstatus' },
+  { to: '/mobil/admin/command-center', icon: Settings2, label: 'Admin · Command Center' },
   { to: '/mobil/benachrichtigungen', icon: Bell, label: 'Benachrichtigungen' },
   { to: '/mobil/einstellungen/benachrichtigungen', icon: BellRing, label: 'Einstellungen · Benachrichtigungen' },
   { to: '/mobil/push-diagnose', icon: Activity, label: 'Push-Diagnose' },

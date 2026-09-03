@@ -349,7 +349,7 @@ export async function logMobileAudit(action: string, details: Record<string, any
   try {
     if (conversationId) {
       await (supabase as any).from('ac_conversation_events').insert({
-        conversation_id: conversationId, event_type: action, payload: details,
+        conversation_id: conversationId, event_type: action, metadata: details,
       });
       return;
     }

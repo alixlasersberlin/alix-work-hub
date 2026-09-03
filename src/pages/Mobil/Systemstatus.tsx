@@ -66,7 +66,8 @@ export default function MobilSystemstatus() {
 
     // Push
     const { count: devices } = await (supabase as any).from('mobile_push_subscriptions')
-      .select('id', { count: 'exact', head: true }).eq('is_active', true);
+      .select('id', { count: 'exact', head: true })
+      .is('revoked_at', null).is('blocked_at', null);
     out.push({
       key: 'push', label: 'Push-Benachrichtigungen',
       state: (devices ?? 0) > 0 ? 'OK' : 'NICHT_KONFIGURIERT',
