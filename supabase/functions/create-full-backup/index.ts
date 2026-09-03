@@ -180,7 +180,9 @@ const LOG_TABLES = new Set<string>([
 const HEAVY_PAGE_SIZE = 60;
 const XL_PAGE_SIZE = 8;
 const NANO_PAGE_SIZE = 2;
-const LOG_PAGE_SIZE = 250;
+// Performance: Log-Zeilen sind schmal — größere Seiten reduzieren die Anzahl
+// der Einzelabfragen um Faktor 6 und entlasten die Datenbank spürbar.
+const LOG_PAGE_SIZE = 1500;
 const pageSizeFor = (table: string) =>
   NANO_TABLES.has(table) ? NANO_PAGE_SIZE
     : LOG_TABLES.has(table) ? LOG_PAGE_SIZE
