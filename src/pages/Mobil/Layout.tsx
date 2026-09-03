@@ -247,10 +247,13 @@ function MobilLayoutInner() {
 export default function MobilLayout() {
   return (
     <AppLockGate>
-      <MobilLayoutInner />
+      <MobileOpsGate>
+        <MobilLayoutInner />
+      </MobileOpsGate>
     </AppLockGate>
   );
 }
+
 
 function Tab({ to, icon: Icon, label, exact, badge }: { to: string; icon: any; label: string; exact?: boolean; badge?: number }) {
   return (
