@@ -160,8 +160,8 @@ export default function MobilLayout() {
       >
         <Tab to="/mobil" icon={Home} label="Home" exact />
         <Tab to="/mobil/inbox" icon={MessageSquare} label="Inbox" badge={inboxUnread} />
-        <Tab to="/mobil/touren" icon={Truck} label="Touren" badge={openStops} />
-        <Tab to="/mobil/auftraege" icon={ClipboardList} label="Aufträge" />
+        <Tab to="/mobil/magic-suche" icon={Search} label="Suche" />
+        <Tab to="/mobil/tickets" icon={Ticket} label="Tickets" />
         <Tab to="/mobil/mehr" icon={MoreHorizontal} label="Mehr" />
       </nav>
     </div>
