@@ -2508,6 +2508,10 @@ function AppRoutes() {
           <Route path="systemstatus" element={<MobilSystemstatus />} />
           <Route path="admin/command-center" element={<MobilAdminCommandCenter />} />
           <Route path="geraet/:id" element={<MobilGeraetDetail />} />
+          <Route path="sicherheit" element={<MobilSicherheit />} />
+          <Route path="datenschutz" element={<MobilDatenschutz />} />
+          <Route path="support" element={<MobilSupport />} />
+          <Route path="admin/release-readiness" element={<MobilReleaseReadiness />} />
 
 
         </Route>
