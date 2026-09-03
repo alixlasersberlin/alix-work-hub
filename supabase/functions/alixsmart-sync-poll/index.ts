@@ -3,6 +3,8 @@
 // Uses cursor (updated_since) per entity, tracks runs, updates alixsmart_customer_links / _device_links.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { toE164 } from "../_shared/phone-e164.ts";
+
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
