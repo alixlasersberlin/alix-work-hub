@@ -7488,6 +7488,63 @@ export type Database = {
           },
         ]
       }
+      app_releases: {
+        Row: {
+          build_number: string
+          changes: Json | null
+          commit_ref: string | null
+          created_at: string
+          id: string
+          known_issues: Json | null
+          platform: string
+          release_channel: string
+          released_at: string | null
+          released_by_user_id: string | null
+          rollback_plan: string | null
+          stability: string
+          status: string
+          summary: string | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          build_number: string
+          changes?: Json | null
+          commit_ref?: string | null
+          created_at?: string
+          id?: string
+          known_issues?: Json | null
+          platform?: string
+          release_channel?: string
+          released_at?: string | null
+          released_by_user_id?: string | null
+          rollback_plan?: string | null
+          stability?: string
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          build_number?: string
+          changes?: Json | null
+          commit_ref?: string | null
+          created_at?: string
+          id?: string
+          known_issues?: Json | null
+          platform?: string
+          release_channel?: string
+          released_at?: string | null
+          released_by_user_id?: string | null
+          rollback_plan?: string | null
+          stability?: string
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
@@ -28215,6 +28272,39 @@ export type Database = {
           },
         ]
       }
+      integration_health: {
+        Row: {
+          id: string
+          integration: string
+          last_error_code: string | null
+          last_error_summary: string | null
+          last_failure_at: string | null
+          last_success_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          integration: string
+          last_error_code?: string | null
+          last_error_summary?: string | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          integration?: string
+          last_error_code?: string | null
+          last_error_summary?: string | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integration_logs: {
         Row: {
           created_at: string
@@ -32627,6 +32717,189 @@ export type Database = {
           },
         ]
       }
+      mobile_app_config: {
+        Row: {
+          ai_enabled: boolean
+          environment: string
+          id: string
+          maintenance_message: string | null
+          maintenance_mode: boolean
+          minimum_supported_version: string
+          mobile_access_enabled: boolean
+          mobile_read_only: boolean
+          push_enabled: boolean
+          recommended_version: string
+          restrict_to_rollout_groups: boolean
+          rollout_stage: number
+          ticket_creation_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+          whatsapp_outbound_enabled: boolean
+        }
+        Insert: {
+          ai_enabled?: boolean
+          environment: string
+          id?: string
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
+          minimum_supported_version?: string
+          mobile_access_enabled?: boolean
+          mobile_read_only?: boolean
+          push_enabled?: boolean
+          recommended_version?: string
+          restrict_to_rollout_groups?: boolean
+          rollout_stage?: number
+          ticket_creation_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp_outbound_enabled?: boolean
+        }
+        Update: {
+          ai_enabled?: boolean
+          environment?: string
+          id?: string
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
+          minimum_supported_version?: string
+          mobile_access_enabled?: boolean
+          mobile_read_only?: boolean
+          push_enabled?: boolean
+          recommended_version?: string
+          restrict_to_rollout_groups?: boolean
+          rollout_stage?: number
+          ticket_creation_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp_outbound_enabled?: boolean
+        }
+        Relationships: []
+      }
+      mobile_config_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          environment: string | null
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          environment?: string | null
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          environment?: string | null
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: []
+      }
+      mobile_feedback: {
+        Row: {
+          app_version: string | null
+          category: string
+          created_at: string
+          device_info: Json | null
+          id: string
+          message: string
+          screen: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          device_info?: Json | null
+          id?: string
+          message: string
+          screen?: string | null
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          device_info?: Json | null
+          id?: string
+          message?: string
+          screen?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mobile_incidents: {
+        Row: {
+          component: string
+          conversation_id: string | null
+          customer_impact: string
+          device_id: string | null
+          error_code: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          metadata: Json | null
+          occurrence_count: number
+          release_version: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          summary: string
+          ticket_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          component: string
+          conversation_id?: string | null
+          customer_impact?: string
+          device_id?: string | null
+          error_code?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          metadata?: Json | null
+          occurrence_count?: number
+          release_version?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          summary: string
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          component?: string
+          conversation_id?: string | null
+          customer_impact?: string
+          device_id?: string | null
+          error_code?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          metadata?: Json | null
+          occurrence_count?: number
+          release_version?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          summary?: string
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       mobile_push_subscriptions: {
         Row: {
           app_version: string | null
@@ -32728,6 +33001,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      mobile_rollout_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          feature_keys: Json | null
+          id: string
+          is_active: boolean
+          name: string
+          stage: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          feature_keys?: Json | null
+          id?: string
+          is_active?: boolean
+          name: string
+          stage?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          feature_keys?: Json | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          stage?: number
+        }
+        Relationships: []
+      }
+      mobile_rollout_users: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_rollout_users_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_rollout_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mobile_sync_devices: {
         Row: {
@@ -54038,6 +54373,11 @@ export type Database = {
           webauthn_count: number
         }[]
       }
+      mobile_access_state: {
+        Args: { p_app_version?: string; p_environment?: string }
+        Returns: Json
+      }
+      mobile_golive_snapshot: { Args: never; Returns: Json }
       mobile_magic_search: { Args: { q: string }; Returns: Json }
       mobile_my_devices: {
         Args: never
@@ -54053,6 +54393,18 @@ export type Database = {
           push_registered: boolean
           revoked_at: string
         }[]
+      }
+      mobile_pilot_overview: { Args: never; Returns: Json }
+      mobile_report_incident: {
+        Args: {
+          p_component: string
+          p_error_code: string
+          p_metadata?: Json
+          p_release_version?: string
+          p_severity?: string
+          p_summary: string
+        }
+        Returns: string
       }
       mobile_revoke_devices: {
         Args: {
