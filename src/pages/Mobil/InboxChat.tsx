@@ -14,13 +14,36 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Send, Paperclip, StickyNote, User2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, StickyNote, User2, UserPlus, Zap, Ticket, Loader2, X } from 'lucide-react';
 import {
   fetchMessages, fetchEvents, markRead, addInternalNote, claimConversation,
   assignConversation, setStatus, setPriority, setCategory, displayName, relTime,
   normPriority, PRIORITY_LABEL, PRIORITY_ORDER, STATUS_LABEL, STATUS_ORDER, CATEGORIES,
+  fetchFeatureFlags, fetchQuickReplies, windowOpen, uploadInboxMedia, sendWhatsApp,
+  createTicketFromChat, fetchLinkedTickets, signedMediaUrl,
   type ConversationRow, type MessageRow, type InboxStatus, type Priority,
+  type FeatureFlags, type QuickReply,
 } from '@/lib/inbox/api';
+
+const DRAFT_KEY = (id: string) => `alix-inbox-draft-${id}`;
+
+function MediaBubble({ att }: { att: any }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    if (att?.storage_path) signedMediaUrl(att.storage_path).then((u) => { if (alive) setUrl(u); });
+    return () => { alive = false; };
+  }, [att?.storage_path]);
+  const mime: string = att?.mime_type ?? '';
+  if (url && mime.startsWith('image/')) {
+    return <img src={url} alt={att.file_name ?? 'Anhang'} loading="lazy" className="rounded-lg max-h-56 object-cover" />;
+  }
+  return (
+    <a href={url ?? undefined} target="_blank" rel="noreferrer" className="underline text-xs break-all">
+      {att?.file_name ?? 'Anhang'}
+    </a>
+  );
+}
 
 export default function MobilInboxChat() {
   const { id } = useParams<{ id: string }>();
