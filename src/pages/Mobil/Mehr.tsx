@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock } from 'lucide-react';
+import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const LINKS = [
@@ -10,6 +10,7 @@ const LINKS = [
   { to: '/mobil/einstellungen/benachrichtigungen', icon: BellRing, label: 'Einstellungen · Benachrichtigungen' },
   { to: '/mobil/push-diagnose', icon: Activity, label: 'Push-Diagnose' },
   { to: '/mobil/admin/eskalationen', icon: AlarmClock, label: 'Admin · Eskalationen' },
+  { to: '/mobil/admin/alix-ai', icon: Sparkles, label: 'Admin · ALIX AI' },
   { to: '/mobil/inbox/kanaele', icon: Radio, label: 'Admin · Kommunikationskanäle' },
 
   { to: '/mobil/adressen', icon: Users, label: 'Kunden & Adressen' },
