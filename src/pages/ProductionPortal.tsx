@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Factory, Download, Search, Pencil, Camera, Calendar, User, Palette, Zap, Hash, ImageIcon, ArrowUpDown, HelpCircle, XCircle } from 'lucide-react';
+import { Loader2, Factory, Download, Search, Pencil, Camera, Calendar, User, Palette, Zap, Hash, ImageIcon, ArrowUpDown, HelpCircle, XCircle, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { differenceInCalendarDays, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -207,6 +207,13 @@ export default function ProductionPortal() {
       if (res.ok) toast.success(res.message);
       else toast.error(`E-Mail nicht versendet: ${res.message}`);
     }
+    if ((newStatus === 'gesendet' || newStatus === 'in_produktion') && prev?.status !== newStatus) {
+      const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+      const res = await sendProductionStartedEmail(id, 'automatisch');
+      if (res.ok) toast.success(`Produktionsstart-Info: ${res.message}`);
+      else toast.error(`Produktionsstart-E-Mail nicht versendet: ${res.message}`);
+    }
+
   };
 
   const revokeApproval = async (row: ProductionOrderRow) => {
@@ -314,6 +321,13 @@ export default function ProductionPortal() {
       if (res.ok) toast.success(res.message);
       else toast.error(`E-Mail nicht versendet: ${res.message}`);
     }
+    if ((payload.status === 'gesendet' || payload.status === 'in_produktion') && prevStatus !== payload.status) {
+      const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+      const res = await sendProductionStartedEmail(editingId, 'automatisch');
+      if (res.ok) toast.success(`Produktionsstart-Info: ${res.message}`);
+      else toast.error(`Produktionsstart-E-Mail nicht versendet: ${res.message}`);
+    }
+
   };
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
@@ -520,6 +534,22 @@ export default function ProductionPortal() {
                         <Download className="w-4 h-4 mr-1" /> {t.pdf}
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={updatingId === row.id}
+                      onClick={async () => {
+                        setUpdatingId(row.id);
+                        const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+                        const res = await sendProductionStartedEmail(row.id, 'manuell');
+                        setUpdatingId(null);
+                        if (res.ok) toast.success(res.message);
+                        else toast.error(`E-Mail nicht versendet: ${res.message}`);
+                      }}
+                    >
+                      <Mail className="w-4 h-4 mr-1" /> Info-Mail Kunde
+                    </Button>
+
                     {isSuperAdmin && row.approval_status === 'approved' && (
                       <Button
                         size="sm"
