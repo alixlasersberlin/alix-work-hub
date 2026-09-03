@@ -3,6 +3,8 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { normalizePayload, normalizeStatuses, toE164, type NormalizedMessage } from './provider.ts';
+import { detectProvider, verifyMetaSignature, verifyTwilioSignature, type VerifyResult } from './verify.ts';
+
 
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -176,12 +178,32 @@ Deno.serve(async (req) => {
 
   try {
     const ct = req.headers.get('content-type') ?? '';
-    let payload: any;
-    if (ct.includes('application/x-www-form-urlencoded')) {
-      payload = Object.fromEntries(new URLSearchParams(await req.text()));
+    // --- P0-1: kryptografische Provider-Verifikation über den RAW-Body ---
+    const rawBody = await req.text();
+    const provider = detectProvider(req, ct);
+    let verification: VerifyResult;
+    if (provider === 'META') {
+      verification = await verifyMetaSignature(rawBody, req.headers.get('x-hub-signature-256'));
+    } else if (provider === 'TWILIO') {
+      const form = Object.fromEntries(new URLSearchParams(rawBody));
+      verification = await verifyTwilioSignature(req.url, form, req.headers.get('x-twilio-signature'));
     } else {
-      payload = await req.json();
+      verification = { ok: false, provider: null, reason: 'UNKNOWN_PROVIDER' };
     }
+    if (!verification.ok) {
+      console.warn('ac-webhook-whatsapp rejected', { provider, reason: verification.reason });
+      return new Response(JSON.stringify({ error: 'unauthorized', reason: verification.reason }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let payload: any;
+    if (provider === 'TWILIO' || ct.includes('application/x-www-form-urlencoded')) {
+      payload = Object.fromEntries(new URLSearchParams(rawBody));
+    } else {
+      payload = JSON.parse(rawBody);
+    }
+
 
     // Zustellstatus für ausgehende Nachrichten (sent/delivered/read/failed)
     const statuses = normalizeStatuses(payload);

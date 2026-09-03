@@ -99,6 +99,24 @@ Deno.serve(async (req) => {
     const to = (contact?.whatsapp_number || contact?.phone || conv.external_thread_id || '').trim();
     if (!/^\+\d{7,15}$/.test(to)) return fail('INVALID_RECIPIENT', to);
 
+    // 5b) Staging-Allowlist (Punkt 23): Solange gesetzt, sind ausschliesslich
+    // freigegebene Testnummern erreichbar — verhindert Versand an echte Kunden.
+    const { data: alRow } = await admin.from('app_settings')
+      .select('value').eq('key', 'whatsapp_outbound_allowlist').maybeSingle();
+    const allowMode = String(alRow?.value ?? '').trim();
+    if (allowMode !== 'OFF') {
+      const allowed = allowMode.split(/[,\s;]+/).map((s) => s.trim()).filter(Boolean);
+      if (!allowed.includes(to)) {
+        return json({
+          ok: false, error_code: 'NOT_ALLOWLISTED',
+          error: 'Empfänger steht nicht auf der WhatsApp-Staging-Allowlist. Versand blockiert.',
+          detail: to,
+        }, 403);
+      }
+    }
+
+
+
     // 6) 24-Stunden-Fenster
     const { data: lastInbound } = await admin.from('ac_messages')
       .select('created_at').eq('conversation_id', conversationId).eq('direction', 'inbound')
