@@ -50301,6 +50301,60 @@ export type Database = {
           },
         ]
       }
+      trusted_devices: {
+        Row: {
+          app_version: string | null
+          auto_lock_minutes: number
+          biometric_enabled: boolean
+          created_at: string
+          device_id: string
+          device_name: string | null
+          id: string
+          last_seen_at: string
+          pin_enabled: boolean
+          platform: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          trusted: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          auto_lock_minutes?: number
+          biometric_enabled?: boolean
+          created_at?: string
+          device_id: string
+          device_name?: string | null
+          id?: string
+          last_seen_at?: string
+          pin_enabled?: boolean
+          platform?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          trusted?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          auto_lock_minutes?: number
+          biometric_enabled?: boolean
+          created_at?: string
+          device_id?: string
+          device_name?: string | null
+          id?: string
+          last_seen_at?: string
+          pin_enabled?: boolean
+          platform?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          trusted?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
@@ -53985,6 +54039,29 @@ export type Database = {
         }[]
       }
       mobile_magic_search: { Args: { q: string }; Returns: Json }
+      mobile_my_devices: {
+        Args: never
+        Returns: {
+          biometric_enabled: boolean
+          created_at: string
+          device_id: string
+          device_name: string
+          is_current: boolean
+          last_seen_at: string
+          pin_enabled: boolean
+          platform: string
+          push_registered: boolean
+          revoked_at: string
+        }[]
+      }
+      mobile_revoke_devices: {
+        Args: {
+          _all_others?: boolean
+          _current_device_id?: string
+          _device_id?: string
+        }
+        Returns: number
+      }
       next_backup_window: {
         Args: never
         Returns: {

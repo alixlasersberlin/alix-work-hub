@@ -8,10 +8,14 @@ import { Button } from '@/components/ui/button';
 import { cacheGet, cacheSet } from '@/lib/mobil/utils';
 import { syncBadge, takePendingDeepLink } from '@/lib/mobile/push-registration';
 import { format } from 'date-fns';
+import AppLockGate from '@/components/mobil/AppLockGate';
+import MobilErrorBoundary from '@/components/mobil/MobilErrorBoundary';
+import { touchTrustedDevice, markActivity } from '@/lib/mobil/security';
+import { APP_VERSION_MOBILE } from '@/lib/mobil/appInfo';
 
 type Banner = { title: string; message: string; url: string; priority: string } | null;
 
-export default function MobilLayout() {
+function MobilLayoutInner() {
   const online = useOnlineStatus();
   const nav = useNavigate();
   const { profile, user } = useAuth();
@@ -37,6 +41,13 @@ export default function MobilLayout() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Gerät registrieren / letzte Aktivität (Prompt 7)
+  useEffect(() => {
+    if (!user?.id) return;
+    markActivity();
+    void touchTrustedDevice(APP_VERSION_MOBILE);
+  }, [user?.id]);
 
   // Deep Link aus Push (nach Login / SW-Nachricht)
   useEffect(() => {
@@ -152,7 +163,9 @@ export default function MobilLayout() {
       )}
 
       <main className="flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)' }}>
-        <Outlet />
+        <MobilErrorBoundary area="mobil">
+          <Outlet />
+        </MobilErrorBoundary>
       </main>
 
       {/* Globale Schnellaktion – einhändig erreichbar */}
@@ -196,6 +209,14 @@ export default function MobilLayout() {
         <Tab to="/mobil/mehr" icon={MoreHorizontal} label="Mehr" />
       </nav>
     </div>
+  );
+}
+
+export default function MobilLayout() {
+  return (
+    <AppLockGate>
+      <MobilLayoutInner />
+    </AppLockGate>
   );
 }
 

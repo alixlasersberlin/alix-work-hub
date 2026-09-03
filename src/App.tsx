@@ -420,6 +420,10 @@ const MobilSystemstatus = lazy(() => import("./pages/Mobil/Systemstatus"));
 const MobilAdminCommandCenter = lazy(() => import("./pages/Mobil/AdminCommandCenter"));
 const MobilGeraetDetail = lazy(() => import("./pages/Mobil/GeraetDetail"));
 const MobilKontakte = lazy(() => import("./pages/Mobil/Kontakte"));
+const MobilSicherheit = lazy(() => import("./pages/Mobil/Sicherheit"));
+const MobilDatenschutz = lazy(() => import("./pages/Mobil/Datenschutz"));
+const MobilSupport = lazy(() => import("./pages/Mobil/Support"));
+const MobilReleaseReadiness = lazy(() => import("./pages/Mobil/AdminReleaseReadiness"));
 const MobileSyncAdmin = lazy(() => import("./pages/Admin/MobileSync"));
 const MobileGeraete = lazy(() => import("./pages/Einstellungen/MobileGeraete"));
 
@@ -2508,6 +2512,10 @@ function AppRoutes() {
           <Route path="systemstatus" element={<MobilSystemstatus />} />
           <Route path="admin/command-center" element={<MobilAdminCommandCenter />} />
           <Route path="geraet/:id" element={<MobilGeraetDetail />} />
+          <Route path="sicherheit" element={<MobilSicherheit />} />
+          <Route path="datenschutz" element={<MobilDatenschutz />} />
+          <Route path="support" element={<MobilSupport />} />
+          <Route path="admin/release-readiness" element={<MobilReleaseReadiness />} />
 
 
         </Route>

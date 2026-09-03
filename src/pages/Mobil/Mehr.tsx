@@ -1,10 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles, Ticket, Search, Clock, ArrowLeftRight, ShieldCheck, BarChart3, Settings2 } from 'lucide-react';
+import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles, Ticket, Search, Clock, ArrowLeftRight, ShieldCheck, BarChart3, Settings2, Lock, LifeBuoy, Rocket } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { wipeLocalSensitiveData } from '@/lib/mobil/security';
 
 const LINKS = [
+  { to: '/mobil/sicherheit', icon: Lock, label: 'Sicherheit' },
+  { to: '/mobil/datenschutz', icon: ShieldCheck, label: 'Datenschutz' },
+  { to: '/mobil/support', icon: LifeBuoy, label: 'Hilfe & Support' },
+  { to: '/mobil/admin/release-readiness', icon: Rocket, label: 'Admin · Release Readiness' },
   { to: '/mobil/inbox', icon: MessageSquare, label: 'ALIX INBOX' },
   { to: '/mobil/tickets', icon: Ticket, label: 'Ticket Center' },
   { to: '/mobil/magic-suche', icon: Search, label: 'Magic Search' },
@@ -57,7 +62,11 @@ export default function MobilMehr() {
       <Button asChild variant="outline" className="w-full h-12">
         <Link to="/?desktop=1"><Monitor className="w-4 h-4 mr-2" /> Zur Desktop-Ansicht</Link>
       </Button>
-      <Button variant="ghost" className="w-full h-12 text-destructive" onClick={signOut}>
+      <Button
+        variant="ghost"
+        className="w-full h-12 text-destructive"
+        onClick={async () => { wipeLocalSensitiveData({ keepUnlockMethods: true }); await signOut(); }}
+      >
         <LogOut className="w-4 h-4 mr-2" /> Abmelden
       </Button>
     </div>
