@@ -714,7 +714,7 @@ export default function Artikel() {
                       </Badge>
                     </td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(it)} title="Details ansehen">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openDetail(it)} title="Details ansehen">
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
@@ -723,7 +723,7 @@ export default function Artikel() {
                         className="h-8 w-8"
                         title="Bearbeiten"
                         onClick={() => {
-                          setSelected(it);
+                          openDetail(it);
                           setDraft({
                             name: it.name, sku: it.sku, description: it.description, unit: it.unit,
                             rate: it.rate, purchase_rate: it.purchase_rate, status: it.status,
