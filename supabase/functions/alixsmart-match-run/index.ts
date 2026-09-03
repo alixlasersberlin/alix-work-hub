@@ -54,10 +54,26 @@ Deno.serve(async (req) => {
       .limit(5000);
     if (error) return json({ error: error.message }, 500);
 
-    let registered = 0, possible = 0, unregistered = 0;
+    const ids = (rows as any[]).map((r) => r.customer_id);
+    // Telefonnummern (AlixWork-Stamm) und bestehende AlixSmart-Nummern laden
+    const phoneOfCustomer = new Map<string, string>();
+    const smartPhoneOfCustomer = new Map<string, string>();
+    for (let i = 0; i < ids.length; i += 500) {
+      const chunk = ids.slice(i, i + 500);
+      const [{ data: cs }, { data: ls }] = await Promise.all([
+        admin.from("customers").select("id, phone").in("id", chunk),
+        admin.from("alixsmart_customer_links").select("alixwork_customer_id, alixsmart_phone").in("alixwork_customer_id", chunk),
+      ]);
+      for (const c of cs ?? []) { const p = toE164((c as any).phone); if (p) phoneOfCustomer.set((c as any).id, p); }
+      for (const l of ls ?? []) { const p = toE164((l as any).alixsmart_phone); if (p) smartPhoneOfCustomer.set((l as any).alixwork_customer_id, p); }
+    }
+
+    let registered = 0, possible = 0, unregistered = 0, byPhone = 0;
 
     for (const r of (rows as any[])) {
       const custEmail = normEmail(r.email);
+      const custPhone = phoneOfCustomer.get(r.customer_id) ?? null;
+      const smartPhone = smartPhoneOfCustomer.get(r.customer_id) ?? null;
 
       // Prüfe Geräte für diesen Kunden
       const { data: devs } = await admin
@@ -66,21 +82,30 @@ Deno.serve(async (req) => {
         .eq("customer_id", r.customer_id);
 
       const hasUserId = (devs || []).some((d: any) => d.alixsmart_user_id);
-      const linkedByEmail = false; // Vereinfachung: bereits in View berücksichtigt
+      const phoneMatch = !!(custPhone && smartPhone && custPhone === smartPhone);
 
       let status: "registered" | "possible" | "unregistered" = "unregistered";
       let score = 0;
-      const compared: Record<string, unknown> = { hasUserId, custEmail, deviceCount: (devs||[]).length };
+      let method = "auto_v1";
+      const compared: Record<string, unknown> = {
+        hasUserId, custEmail, custPhone, smartPhone, phoneMatch, deviceCount: (devs || []).length,
+      };
 
-      if (hasUserId) { status = "registered"; score = 100; registered++; }
-      else if (custEmail) { status = "possible"; score = 25; possible++; }
-      else { status = "unregistered"; score = 0; unregistered++; }
+      if (hasUserId) {
+        status = "registered"; score = phoneMatch ? 100 : 95; registered++;
+      } else if (phoneMatch) {
+        status = "registered"; score = 90; method = "phone"; registered++; byPhone++;
+      } else if (smartPhone || custEmail) {
+        status = "possible"; score = smartPhone ? 45 : 25; possible++;
+      } else { status = "unregistered"; score = 0; unregistered++; }
 
       await admin.from("alixsmart_customer_links").upsert({
         alixwork_customer_id: r.customer_id,
+        // Nummer beibehalten (API-Priorität), sonst Kundenstamm nachtragen
+        alixsmart_phone: smartPhone ?? custPhone,
         match_status: status,
         match_score: score,
-        match_method: "auto_v1",
+        match_method: method,
         compared_fields: compared,
         last_checked_at: new Date().toISOString(),
         registered_at: status === "registered" ? new Date().toISOString() : null,
@@ -94,6 +119,9 @@ Deno.serve(async (req) => {
         source: "match_run",
       });
     }
+
+    return json({ ok: true, processed: rows?.length ?? 0, registered, possible, unregistered, matched_by_phone: byPhone });
+
 
     return json({ ok: true, processed: rows?.length ?? 0, registered, possible, unregistered });
   } catch (e: any) {
