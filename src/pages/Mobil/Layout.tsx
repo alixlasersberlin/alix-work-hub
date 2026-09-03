@@ -42,6 +42,13 @@ function MobilLayoutInner() {
     return () => { cancelled = true; };
   }, []);
 
+  // Gerät registrieren / letzte Aktivität (Prompt 7)
+  useEffect(() => {
+    if (!user?.id) return;
+    markActivity();
+    void touchTrustedDevice(APP_VERSION_MOBILE);
+  }, [user?.id]);
+
   // Deep Link aus Push (nach Login / SW-Nachricht)
   useEffect(() => {
     const pending = takePendingDeepLink();
