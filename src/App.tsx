@@ -410,6 +410,15 @@ const MobilEinstellungenBenachrichtigungen = lazy(() => import("./pages/Mobil/Ei
 const MobilPushDiagnose = lazy(() => import("./pages/Mobil/PushDiagnose"));
 const MobilAdminEskalationen = lazy(() => import("./pages/Mobil/AdminEskalationen"));
 const MobilAdminAlixAi = lazy(() => import("./pages/Mobil/AdminAlixAi"));
+const MobilMagicSuche = lazy(() => import("./pages/Mobil/MagicSuche"));
+const MobilTicketCenter = lazy(() => import("./pages/Mobil/TicketCenter"));
+const MobilWiedervorlagen = lazy(() => import("./pages/Mobil/Wiedervorlagen"));
+const MobilSupervisor = lazy(() => import("./pages/Mobil/Supervisor"));
+const MobilUebergabe = lazy(() => import("./pages/Mobil/Uebergabe"));
+const MobilKpi = lazy(() => import("./pages/Mobil/Kpi"));
+const MobilSystemstatus = lazy(() => import("./pages/Mobil/Systemstatus"));
+const MobilAdminCommandCenter = lazy(() => import("./pages/Mobil/AdminCommandCenter"));
+const MobilGeraetDetail = lazy(() => import("./pages/Mobil/GeraetDetail"));
 const MobilKontakte = lazy(() => import("./pages/Mobil/Kontakte"));
 const MobileSyncAdmin = lazy(() => import("./pages/Admin/MobileSync"));
 const MobileGeraete = lazy(() => import("./pages/Einstellungen/MobileGeraete"));
@@ -2490,6 +2499,15 @@ function AppRoutes() {
           <Route path="push-diagnose" element={<MobilPushDiagnose />} />
           <Route path="admin/eskalationen" element={<MobilAdminEskalationen />} />
           <Route path="admin/alix-ai" element={<MobilAdminAlixAi />} />
+          <Route path="magic-suche" element={<MobilMagicSuche />} />
+          <Route path="tickets" element={<MobilTicketCenter />} />
+          <Route path="wiedervorlagen" element={<MobilWiedervorlagen />} />
+          <Route path="supervisor" element={<MobilSupervisor />} />
+          <Route path="uebergabe" element={<MobilUebergabe />} />
+          <Route path="kpi" element={<MobilKpi />} />
+          <Route path="systemstatus" element={<MobilSystemstatus />} />
+          <Route path="admin/command-center" element={<MobilAdminCommandCenter />} />
+          <Route path="geraet/:id" element={<MobilGeraetDetail />} />
 
 
         </Route>

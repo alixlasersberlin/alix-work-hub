@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, ClipboardList, MessageSquare, MoreHorizontal, Wifi, WifiOff, ArrowLeft, Search, Bell, X } from 'lucide-react';
+import { Home, Truck, ClipboardList, MessageSquare, MoreHorizontal, Wifi, WifiOff, ArrowLeft, Search, Bell, X, Ticket, Plus, Clock, ArrowLeftRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnlineStatus } from '@/hooks/emp/useOnlineStatus';
@@ -19,6 +19,7 @@ export default function MobilLayout() {
   const [inboxUnread, setInboxUnread] = useState<number>(cacheGet<number>('inboxUnread') ?? 0);
   const [notifUnread, setNotifUnread] = useState(0);
   const [banner, setBanner] = useState<Banner>(null);
+  const [fabOpen, setFabOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,14 +155,44 @@ export default function MobilLayout() {
         <Outlet />
       </main>
 
+      {/* Globale Schnellaktion – einhändig erreichbar */}
+      {fabOpen && (
+        <button
+          className="fixed inset-0 z-40 bg-black/40"
+          aria-label="Schnellaktionen schliessen"
+          onClick={() => setFabOpen(false)}
+        />
+      )}
+      <div
+        className="fixed right-4 z-50 flex flex-col items-end gap-2"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+      >
+        {fabOpen && (
+          <>
+            <FabAction icon={Clock} label="Wiedervorlage" onClick={() => { setFabOpen(false); nav('/mobil/wiedervorlagen'); }} />
+            <FabAction icon={ArrowLeftRight} label="Übergabe" onClick={() => { setFabOpen(false); nav('/mobil/uebergabe'); }} />
+            <FabAction icon={Truck} label="Touren" onClick={() => { setFabOpen(false); nav('/mobil/touren'); }} />
+            <FabAction icon={ClipboardList} label="Aufträge" onClick={() => { setFabOpen(false); nav('/mobil/auftraege'); }} />
+          </>
+        )}
+        <button
+          onClick={() => setFabOpen((v) => !v)}
+          aria-label="Schnellaktionen"
+          aria-expanded={fabOpen}
+          className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <Plus className={`h-6 w-6 transition-transform ${fabOpen ? 'rotate-45' : ''}`} />
+        </button>
+      </div>
+
       <nav
         className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur grid grid-cols-5 text-[11px]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <Tab to="/mobil" icon={Home} label="Home" exact />
         <Tab to="/mobil/inbox" icon={MessageSquare} label="Inbox" badge={inboxUnread} />
-        <Tab to="/mobil/touren" icon={Truck} label="Touren" badge={openStops} />
-        <Tab to="/mobil/auftraege" icon={ClipboardList} label="Aufträge" />
+        <Tab to="/mobil/magic-suche" icon={Search} label="Suche" />
+        <Tab to="/mobil/tickets" icon={Ticket} label="Tickets" />
         <Tab to="/mobil/mehr" icon={MoreHorizontal} label="Mehr" />
       </nav>
     </div>
@@ -187,5 +218,17 @@ function Tab({ to, icon: Icon, label, exact, badge }: { to: string; icon: any; l
         </span>
       )}
     </NavLink>
+  );
+}
+
+function FabAction({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-full border border-border bg-background/95 backdrop-blur px-4 min-h-[44px] shadow-lg text-sm font-medium active:bg-muted"
+    >
+      <Icon className="h-4 w-4 text-primary" />
+      {label}
+    </button>
   );
 }
