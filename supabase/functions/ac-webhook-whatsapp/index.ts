@@ -27,8 +27,33 @@ async function findChannel(msg: NormalizedMessage) {
   else if (msg.to) q = q.eq('phone_number', msg.to);
   else return null;
   const { data } = await q.maybeSingle();
-  return data ?? null;
+  if (data) {
+    await admin.from('ac_channels')
+      .update({ last_inbound_at: new Date().toISOString(), is_active: true })
+      .eq('id', data.id);
+    return data;
+  }
+
+  // Kanal existiert noch nicht → beim ersten echten Inbound automatisch anlegen
+  // (kein Secret nötig, Werte stammen aus dem signaturgeprüften Provider-Payload).
+  const tenantId = (await admin.from('ac_websites').select('tenant_id').limit(1).maybeSingle())
+    .data?.tenant_id ?? null;
+  const { data: created, error } = await admin.from('ac_channels').insert({
+    tenant_id: tenantId,
+    type: 'whatsapp',
+    name: `WhatsApp ${msg.to ?? msg.provider_phone_id ?? msg.provider}`,
+    description: 'Automatisch beim ersten eingehenden WhatsApp-Webhook angelegt',
+    provider: msg.provider,
+    provider_phone_id: msg.provider_phone_id ?? null,
+    phone_number: msg.to ?? null,
+    is_active: true,
+    icon: 'message-circle',
+    last_inbound_at: new Date().toISOString(),
+  }).select('id, tenant_id, department, is_active').maybeSingle();
+  if (error) console.error('channel autocreate failed', error.message);
+  return created ?? null;
 }
+
 
 /** Kundenerkennung über bestehende Kundendaten — keine Kundentabelle verändern. */
 async function matchCustomer(e164: string): Promise<{ customerId: string | null; ambiguous: boolean }> {
