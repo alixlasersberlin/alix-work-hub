@@ -53346,6 +53346,14 @@ export type Database = {
       tickets_dashboard_counts:
         | { Args: { _user_id: string }; Returns: Json }
         | { Args: { _source_system?: string; _user_id: string }; Returns: Json }
+      tmp_find_value: {
+        Args: { _v: string }
+        Returns: {
+          cnt: number
+          col: string
+          tbl: string
+        }[]
+      }
       user_accounting_regions: {
         Args: never
         Returns: Database["public"]["Enums"]["accounting_region"][]
