@@ -61,7 +61,11 @@ export default function MobilMehr() {
       <Button asChild variant="outline" className="w-full h-12">
         <Link to="/?desktop=1"><Monitor className="w-4 h-4 mr-2" /> Zur Desktop-Ansicht</Link>
       </Button>
-      <Button variant="ghost" className="w-full h-12 text-destructive" onClick={signOut}>
+      <Button
+        variant="ghost"
+        className="w-full h-12 text-destructive"
+        onClick={async () => { wipeLocalSensitiveData({ keepUnlockMethods: true }); await signOut(); }}
+      >
         <LogOut className="w-4 h-4 mr-2" /> Abmelden
       </Button>
     </div>
