@@ -65,6 +65,17 @@ export default function MobilInboxChat() {
   const [devices, setDevices] = useState<any[]>([]);
   const [openTickets, setOpenTickets] = useState<number>(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [flags, setFlags] = useState<FeatureFlags | null>(null);
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [replyTo, setReplyTo] = useState<MessageRow | null>(null);
+  const [ticketOpen, setTicketOpen] = useState(false);
+  const [ticketBusy, setTicketBusy] = useState(false);
+  const [ticketForm, setTicketForm] = useState({ title: '', description: '', department: 'SERVICE', priority: 'normal', category: '' });
+  const [linkedTickets, setLinkedTickets] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -93,6 +104,21 @@ export default function MobilInboxChat() {
   }, [id]);
 
   useEffect(() => { setLoading(true); load(); }, [load]);
+
+  useEffect(() => {
+    fetchFeatureFlags().then(setFlags).catch(() => setFlags(null));
+    fetchQuickReplies().then(setQuickReplies).catch(() => setQuickReplies([]));
+  }, []);
+
+  useEffect(() => { if (id) fetchLinkedTickets(id).then(setLinkedTickets).catch(() => {}); }, [id]);
+
+  // Entwurf lokal sichern (Verbindungsabbruch darf keinen Text kosten)
+  useEffect(() => { if (id) setDraft(localStorage.getItem(DRAFT_KEY(id)) ?? ''); }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    if (draft) localStorage.setItem(DRAFT_KEY(id), draft);
+    else localStorage.removeItem(DRAFT_KEY(id));
+  }, [id, draft]);
 
   useEffect(() => {
     if (!id) return;
@@ -269,32 +295,176 @@ export default function MobilInboxChat() {
         className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur p-2 space-y-2"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}
       >
+        {replyTo && (
+          <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-2 text-xs">
+            <div className="flex-1 truncate">Antwort auf: {replyTo.body || '(Anhang)'}</div>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTo(null)} aria-label="Antwortbezug entfernen">
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+        {pendingFile && (
+          <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-2 text-xs">
+            <Paperclip className="h-3 w-3" />
+            <div className="flex-1 truncate">{pendingFile.name} · {(pendingFile.size / 1024 / 1024).toFixed(1)} MB</div>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPendingFile(null)} aria-label="Anhang entfernen">
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-10 w-10" disabled title="Anhänge folgen in Prompt 3">
+          <input
+            ref={fileRef}
+            type="file"
+            className="hidden"
+            accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (!f) return;
+              if (f.size > 50 * 1024 * 1024) { toast.error('Die Datei ist größer als 50 MB.'); return; }
+              setPendingFile(f);
+            }}
+          />
+          <Button
+            variant="ghost" size="icon" className="h-10 w-10"
+            disabled={!flags?.media_send_enabled || sending}
+            onClick={() => fileRef.current?.click()}
+            aria-label="Anhang"
+          >
             <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setQuickOpen(true)} aria-label="Schnellantworten">
+            <Zap className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setNoteOpen(true)} aria-label="Interne Notiz">
             <StickyNote className="h-4 w-4" />
           </Button>
+          {flags?.ticket_from_chat_enabled && (
+            <Button
+              variant="ghost" size="icon" className="h-10 w-10"
+              aria-label="Ticket erstellen"
+              onClick={() => {
+                setTicketForm((f) => ({
+                  ...f,
+                  title: conv.subject || `WhatsApp · ${displayName(conv)}`,
+                  description: messages.filter((m) => m.direction === 'inbound').slice(-5)
+                    .map((m) => `${new Date(m.created_at).toLocaleString('de-DE')}: ${m.body ?? '(Anhang)'}`).join('\n'),
+                  category: conv.category ?? '',
+                }));
+                setTicketOpen(true);
+              }}
+            >
+              <Ticket className="h-4 w-4" />
+            </Button>
+          )}
           <Input
             className="h-11"
             placeholder="Antwort schreiben …"
             value={draft}
+            disabled={sending}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSend(); } }}
           />
           <Button
             size="icon"
             className="h-11 w-11"
-            onClick={() => toast.warning('WhatsApp-Versand ist noch nicht aktiviert (Testmodus). Nachricht wurde NICHT gesendet.')}
+            disabled={sending || (!draft.trim() && !pendingFile)}
+            onClick={() => void handleSend()}
             aria-label="Senden"
           >
-            <Send className="h-4 w-4" />
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
-        <div className="text-[10px] text-muted-foreground text-center">
-          Testmodus: Ausgehender WhatsApp-Versand folgt in einem späteren Schritt.
-        </div>
+        {!flags?.whatsapp_outbound_enabled && (
+          <div className="text-[10px] text-amber-500 text-center">
+            WhatsApp-Versand ist deaktiviert (Feature-Flag whatsapp_outbound_enabled).
+          </div>
+        )}
+        {flags?.whatsapp_outbound_enabled && !canSend && (
+          <div className="text-[10px] text-amber-500 text-center">
+            24-Stunden-Fenster geschlossen – es ist nur noch eine freigegebene WhatsApp-Vorlage möglich.
+          </div>
+        )}
       </div>
+
+      <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Schnellantworten</DialogTitle></DialogHeader>
+          <div className="space-y-1">
+            {quickReplies.length === 0 && <div className="text-sm text-muted-foreground">Keine Schnellantworten hinterlegt.</div>}
+            {quickReplies.map((q) => (
+              <button
+                key={q.id}
+                className="w-full text-left p-2 rounded-md hover:bg-muted"
+                onClick={() => {
+                  setDraft(q.body
+                    .replace(/\{\{\s*kunde\s*\}\}/gi, displayName(conv))
+                    .replace(/\{\{\s*mitarbeiter\s*\}\}/gi, (user as any)?.user_metadata?.full_name ?? ''));
+                  setQuickOpen(false);
+                }}
+              >
+                <div className="text-sm font-medium">{q.title}</div>
+                <div className="text-[11px] text-muted-foreground line-clamp-2">{q.body}</div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ticketOpen} onOpenChange={setTicketOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Ticket aus Chat erstellen</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Input placeholder="Titel" value={ticketForm.title} onChange={(e) => setTicketForm({ ...ticketForm, title: e.target.value })} />
+            <Textarea rows={5} placeholder="Beschreibung" value={ticketForm.description} onChange={(e) => setTicketForm({ ...ticketForm, description: e.target.value })} />
+            <Select value={ticketForm.department} onValueChange={(v) => setTicketForm({ ...ticketForm, department: v })}>
+              <SelectTrigger className="h-10"><SelectValue placeholder="Abteilung" /></SelectTrigger>
+              <SelectContent>
+                {['SERVICE', 'TECHNIK', 'VERTRIEB', 'BUCHHALTUNG', 'LOGISTIK'].map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={ticketForm.priority} onValueChange={(v) => setTicketForm({ ...ticketForm, priority: v })}>
+              <SelectTrigger className="h-10"><SelectValue placeholder="Priorität" /></SelectTrigger>
+              <SelectContent>
+                {['urgent', 'high', 'normal', 'low'].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {linkedTickets.length > 0 && (
+              <div className="text-[11px] text-muted-foreground">
+                Bereits verknüpft: {linkedTickets.map((t: any) => t.tickets?.ticket_number ?? t.tickets?.case_number ?? t.ticket_id).join(', ')}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTicketOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={!ticketForm.title.trim() || ticketBusy}
+              onClick={async () => {
+                setTicketBusy(true);
+                try {
+                  const t = await createTicketFromChat({
+                    conv,
+                    title: ticketForm.title.trim(),
+                    description: ticketForm.description.trim(),
+                    department: ticketForm.department,
+                    priority: ticketForm.priority,
+                    category: ticketForm.category || null,
+                    deviceId: devices[0]?.id ?? null,
+                  });
+                  toast.success(`Ticket ${t.ticket_number ?? t.case_number ?? ''} erstellt.`);
+                  setTicketOpen(false);
+                  const [ev, lt] = await Promise.all([fetchEvents(conv.id), fetchLinkedTickets(conv.id)]);
+                  setEvents(ev); setLinkedTickets(lt);
+                } catch (e: any) {
+                  toast.error(e?.message || 'Ticket konnte nicht erstellt werden.');
+                } finally { setTicketBusy(false); }
+              }}
+            >{ticketBusy ? 'Wird erstellt …' : 'Ticket erstellen'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
         <DialogContent>
