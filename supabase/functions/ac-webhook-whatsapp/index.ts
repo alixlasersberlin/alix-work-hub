@@ -2,7 +2,7 @@
 // Idempotent, mit Kundenerkennung und Anbindung an die bestehende ac_* Struktur.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { normalizePayload, toE164, type NormalizedMessage } from './provider.ts';
+import { normalizePayload, normalizeStatuses, toE164, type NormalizedMessage } from './provider.ts';
 
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
       if (st.status === 'read') patch.read_at = st.timestamp;
       if (st.status === 'sent') patch.sent_at = st.timestamp;
       if (st.status === 'failed') patch.failed_reason = st.error ?? 'provider failure';
-      const { data: upd } = await supabase.from('ac_messages').update(patch)
+      const { data: upd } = await admin.from('ac_messages').update(patch)
         .or(`provider_message_id.eq.${st.provider_message_id},external_message_id.eq.${st.provider_message_id}`)
         .select('id');
       statusUpdates += upd?.length ?? 0;
@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
       const res = await storeMessage(msg);
       res.skipped ? skipped++ : stored++;
     }
-    return new Response(JSON.stringify({ ok: true, stored, skipped }), {
+    return new Response(JSON.stringify({ ok: true, stored, skipped, statusUpdates }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
