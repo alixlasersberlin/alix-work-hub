@@ -95,3 +95,4 @@
 - [Software & Compliance Workspace](mem://features/compliance-workspace) — Eigener Login /compliance-login, abgeschotteter Workspace /software-compliance, compliance_* Profilfelder, RLS-Helfer, Route-Guard
 - [Mobile Push & Eskalationen](mem://features/mobile-push-eskalationen) — send-mobile-notification, escalation-engine (Cron 2 Min.), Notification Center /mobil/benachrichtigungen, Push-Diagnose; APNs/FCM-Secrets fehlen noch
 - [Mobile WhatsApp Outbound](mem://features/mobile-whatsapp-outbound) — Edge Function ac-whatsapp-send, Bucket inbox-media, Quick Replies, Statuswebhooks, Ticket aus Chat
+- [ALIX AI Communication Assistant](mem://features/alix-ai-assistant) — Prompt 5: analyze-conversation, ai_classifications/ai_feedback, AlixAiCard, nur Vorschläge, kein Auto-Versand

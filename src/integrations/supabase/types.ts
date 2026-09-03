@@ -4049,6 +4049,127 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_classifications: {
+        Row: {
+          category: string | null
+          classification_type: string
+          confidence: number | null
+          conversation_id: string
+          created_at: string
+          detected_customer_id: string | null
+          detected_device_id: string | null
+          detected_serial_number: string | null
+          detected_ticket_id: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          model_name: string | null
+          priority: string | null
+          prompt_version: string | null
+          reasoning_summary: string | null
+          reviewed_at: string | null
+          reviewed_by_user_id: string | null
+          status: string
+          suggested_action: string | null
+          summary: string | null
+        }
+        Insert: {
+          category?: string | null
+          classification_type?: string
+          confidence?: number | null
+          conversation_id: string
+          created_at?: string
+          detected_customer_id?: string | null
+          detected_device_id?: string | null
+          detected_serial_number?: string | null
+          detected_ticket_id?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          model_name?: string | null
+          priority?: string | null
+          prompt_version?: string | null
+          reasoning_summary?: string | null
+          reviewed_at?: string | null
+          reviewed_by_user_id?: string | null
+          status?: string
+          suggested_action?: string | null
+          summary?: string | null
+        }
+        Update: {
+          category?: string | null
+          classification_type?: string
+          confidence?: number | null
+          conversation_id?: string
+          created_at?: string
+          detected_customer_id?: string | null
+          detected_device_id?: string | null
+          detected_serial_number?: string | null
+          detected_ticket_id?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          model_name?: string | null
+          priority?: string | null
+          prompt_version?: string | null
+          reasoning_summary?: string | null
+          reviewed_at?: string | null
+          reviewed_by_user_id?: string | null
+          status?: string
+          suggested_action?: string | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_classifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_feedback: {
+        Row: {
+          classification_id: string
+          comment: string | null
+          corrected_value: Json | null
+          created_at: string
+          feedback_type: string
+          id: string
+          original_value: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          classification_id: string
+          comment?: string | null
+          corrected_value?: Json | null
+          created_at?: string
+          feedback_type: string
+          id?: string
+          original_value?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          classification_id?: string
+          comment?: string | null
+          corrected_value?: Json | null
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          original_value?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_feedback_classification_id_fkey"
+            columns: ["classification_id"]
+            isOneToOne: false
+            referencedRelation: "ai_classifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_service_analyses: {
         Row: {
           ai_model: string | null

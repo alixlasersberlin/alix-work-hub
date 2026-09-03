@@ -24,6 +24,7 @@ import {
   type ConversationRow, type MessageRow, type InboxStatus, type Priority,
   type FeatureFlags, type QuickReply,
 } from '@/lib/inbox/api';
+import AlixAiCard from '@/components/inbox/AlixAiCard';
 
 const STATUS_TEXT: Record<string, string> = {
   queued: 'in Warteschlange', sent: 'gesendet', delivered: 'zugestellt',
@@ -298,7 +299,17 @@ export default function MobilInboxChat() {
         </div>
       </div>
 
+      <AlixAiCard
+        conversationId={conv.id}
+        lastMessageId={messages.length ? messages[messages.length - 1].id : null}
+        onInsertDraft={(text) => setDraft(text)}
+        onOpenTicket={(ticketId) => nav(`/tickets?ticket=${ticketId}`)}
+        onApplyCategory={(c) => guard(() => setCategory(conv, c), 'Kategorie übernommen.')}
+        onApplyPriority={(p) => guard(() => setPriority(conv, p as Priority), 'Priorität übernommen.')}
+      />
+
       <div className="flex-1 p-3 space-y-2">
+
         {timeline.map((it) => {
           if (it.kind === 'evt') {
             return (
