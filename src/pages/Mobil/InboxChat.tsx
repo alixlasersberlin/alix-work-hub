@@ -308,47 +308,52 @@ export default function MobilInboxChat() {
         onApplyPriority={(p) => guard(() => setPriority(conv, p as Priority), 'Priorität übernommen.')}
       />
 
-      <div className="flex-1 p-3 space-y-2">
+      <div className="flex-1 p-3 space-y-2.5">
 
         {timeline.map((it) => {
           if (it.kind === 'evt') {
             return (
-              <div key={`e-${it.e.id}`} className="text-center text-[10px] text-muted-foreground py-1">
-                {it.e.event_type} · {relTime(it.at)}
+              <div key={`e-${it.e.id}`} className="flex justify-center py-1">
+                <span className="rounded-full bg-muted/60 px-2.5 py-1 text-[10px] text-muted-foreground">
+                  {it.e.event_type} · {relTime(it.at)}
+                </span>
               </div>
             );
           }
           const m = it.m;
           if (m.is_internal_note || m.direction === 'internal') {
             return (
-              <div key={m.id} className="rounded-lg border border-dashed border-amber-500/60 bg-amber-500/5 p-2">
-                <div className="text-[10px] font-semibold text-amber-500">
+              <div key={m.id} className="rounded-xl border border-dashed border-amber-500/60 bg-amber-500/5 p-2.5">
+                <div className="text-[10px] font-semibold tracking-wide text-amber-500">
                   INTERN · {m.sender_name || 'Mitarbeiter'} · {relTime(m.created_at)}
                 </div>
-                <div className="text-sm whitespace-pre-wrap">{m.body}</div>
+                <div className="text-sm whitespace-pre-wrap mt-0.5">{m.body}</div>
               </div>
             );
           }
           const inbound = m.direction === 'inbound';
           return (
             <div key={m.id} className={`flex ${inbound ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                inbound ? 'bg-muted rounded-bl-sm' : 'bg-primary text-primary-foreground rounded-br-sm'
+              <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-[15px] leading-snug shadow-sm ${
+                inbound
+                  ? 'bg-muted text-foreground rounded-bl-md'
+                  : 'bg-primary text-primary-foreground rounded-br-md'
               }`}>
                 {Array.isArray(m.attachments) && m.attachments.length > 0 && (
-                  <div className="mb-1 space-y-1">
+                  <div className="mb-1.5 space-y-1">
                     {m.attachments.map((att: any, i: number) => <MediaBubble key={i} att={att} />)}
                   </div>
                 )}
                 {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
-                <div className={`text-[10px] mt-0.5 flex items-center gap-2 ${inbound ? 'text-muted-foreground' : 'opacity-80'}`}>
-                  <span>{relTime(m.created_at)}{m.delivery_status ? ` · ${STATUS_TEXT[m.delivery_status] ?? m.delivery_status}` : ''}</span>
-                  <button className="underline" onClick={() => setReplyTo(m)}>Antworten</button>
+                <div className={`text-[10px] mt-1 flex items-center gap-2 ${inbound ? 'text-muted-foreground' : 'opacity-80'}`}>
+                  <span className="tabular-nums">{relTime(m.created_at)}{m.delivery_status ? ` · ${STATUS_TEXT[m.delivery_status] ?? m.delivery_status}` : ''}</span>
+                  <button className="underline min-h-[24px]" onClick={() => { haptic('light'); setReplyTo(m); }}>Antworten</button>
                 </div>
               </div>
             </div>
           );
         })}
+
         <div ref={bottomRef} />
       </div>
 
