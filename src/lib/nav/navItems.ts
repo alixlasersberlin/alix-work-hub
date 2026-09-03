@@ -644,6 +644,8 @@ export const navItems: NavItem[] = [
     children: [
       { path: '/connect/team', label: 'Team Chat', icon: MessageSquare, roles: null },
       { path: '/connect/inbox', label: 'Unified Inbox', icon: Inbox, roles: null },
+      { path: '/connect/inbox-2', label: 'Omnichannel Inbox 2.0', icon: Inbox, roles: ['Admin','Super Admin'] },
+      { path: '/mobil/inbox', label: 'WhatsApp Chat (Mobile)', icon: MessageSquare, roles: null },
       { path: '/connect/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: null },
       { path: '/connect/wallboard', label: 'Wallboard', icon: Activity, roles: null },
       { path: '/connect/queues', label: 'Warteschlangen & Agenten', icon: Users, roles: null },
