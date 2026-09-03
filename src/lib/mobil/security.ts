@@ -114,7 +114,8 @@ export async function revokeAllOtherDevices() {
 
 async function pbkdf2(pin: string, salt: Uint8Array, iterations: number): Promise<string> {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, key, 256);
+  const saltBuf = new Uint8Array(salt).buffer as ArrayBuffer;
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: saltBuf, iterations, hash: 'SHA-256' }, key, 256);
   return Array.from(new Uint8Array(bits)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
