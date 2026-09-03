@@ -109,7 +109,7 @@ async function storeMessage(msg: NormalizedMessage) {
   const { conv } = await ensureConversation(msg);
   if (!conv) return { skipped: true };
 
-  const { error } = await admin.from('ac_messages').insert({
+  const { data: inserted, error } = await admin.from('ac_messages').insert({
     tenant_id: conv.tenant_id,
     conversation_id: conv.id,
     direction: DIRECTION_MAP[msg.direction],
@@ -121,7 +121,7 @@ async function storeMessage(msg: NormalizedMessage) {
     external_message_id: msg.provider_message_id,
     delivery_status: 'RECEIVED',
     metadata: { provider: msg.provider, message_type: msg.message_type, raw: msg.raw_metadata },
-  });
+  }).select('id').maybeSingle();
   // Unique-Index kann bei parallelen Webhooks greifen — das ist gewollt.
   if (error && !String(error.message).includes('duplicate key')) throw error;
   if (error) return { skipped: true };
@@ -138,8 +138,28 @@ async function storeMessage(msg: NormalizedMessage) {
     event_type: 'MESSAGE_RECEIVED',
     new_value: { provider_message_id: msg.provider_message_id, message_type: msg.message_type },
   });
+
+  // Push-Benachrichtigung: darf die Speicherung niemals blockieren oder fehlschlagen lassen.
+  try {
+    const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-mobile-notification`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        notification_type: 'NEW_MESSAGE',
+        conversation_id: conv.id,
+        message_id: inserted?.id,
+      }),
+    });
+    if (!res.ok) console.error('push dispatch failed', res.status, await res.text());
+  } catch (e) {
+    console.error('push dispatch error', e);
+  }
   return { skipped: false };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
