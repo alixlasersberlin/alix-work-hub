@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, ClipboardList, MessageSquare, MoreHorizontal, Wifi, WifiOff, ArrowLeft, Search, Bell, X, Ticket, Plus, Clock, ArrowLeftRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Truck, ClipboardList, MessageSquare, MoreHorizontal, WifiOff, ArrowLeft, Search, Bell, X, Ticket, Plus, Clock, ArrowLeftRight } from 'lucide-react';
+import { toast } from 'sonner';
+import { haptic } from '@/lib/mobil/haptics';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnlineStatus } from '@/hooks/emp/useOnlineStatus';
@@ -18,12 +20,29 @@ type Banner = { title: string; message: string; url: string; priority: string } 
 function MobilLayoutInner() {
   const online = useOnlineStatus();
   const nav = useNavigate();
+  const { pathname } = useLocation();
   const { profile, user } = useAuth();
   const [openStops, setOpenStops] = useState<number>(cacheGet<number>('openStops') ?? 0);
   const [inboxUnread, setInboxUnread] = useState<number>(cacheGet<number>('inboxUnread') ?? 0);
   const [notifUnread, setNotifUnread] = useState(0);
   const [banner, setBanner] = useState<Banner>(null);
   const [fabOpen, setFabOpen] = useState(false);
+  const wasOffline = useRef(false);
+
+  const initials = (profile?.full_name || profile?.email || 'A')
+    .split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('') || 'A';
+
+  // Reconnect-Feedback: kurz und einmalig, kein Dauerbanner.
+  useEffect(() => {
+    if (!online) { wasOffline.current = true; return; }
+    if (wasOffline.current) {
+      wasOffline.current = false;
+      haptic('success');
+      toast.success('Wieder verbunden');
+    }
+  }, [online]);
+
+
 
   useEffect(() => {
     let cancelled = false;
@@ -113,36 +132,46 @@ function MobilLayoutInner() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header
-        className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur px-2 py-2 flex items-center gap-2"
+        className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl px-1.5 py-2 flex items-center gap-1"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)' }}
       >
-        <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => nav(-1)} aria-label="Zurück">
+        <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={() => nav(-1)} aria-label="Zurück">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none">AlixWork · Mobil</div>
-          <div className="text-sm font-semibold leading-tight truncate">{profile?.full_name || profile?.email || 'Mitarbeiter'}</div>
+        <div className="flex-1 min-w-0 leading-tight">
+          <div className="text-sm font-semibold tracking-[0.16em]">ALIXWORK</div>
+          <div className="text-[10px] text-muted-foreground truncate">Mobile Command Center</div>
         </div>
-        <span
-          className={`inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full ${
-            online ? 'bg-emerald-500/10 text-emerald-500' : 'bg-destructive/10 text-destructive'
-          }`}
-        >
-          {online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-          {online ? 'online' : 'offline'}
-        </span>
-        <Button variant="ghost" size="icon" className="h-11 w-11 relative" onClick={() => nav('/mobil/benachrichtigungen')} aria-label="Benachrichtigungen">
+        <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={() => nav('/mobil/magic-suche')} aria-label="Suche">
+          <Search className="h-5 w-5" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-11 w-11 relative shrink-0" onClick={() => nav('/mobil/benachrichtigungen')} aria-label={`Benachrichtigungen${notifUnread ? `, ${notifUnread} ungelesen` : ''}`}>
           <Bell className="h-5 w-5" />
           {notifUnread > 0 && (
-            <span className="absolute top-1.5 right-1 bg-destructive text-destructive-foreground text-[10px] rounded-full px-1.5 min-w-[18px] text-center">
-              {notifUnread}
+            <span className="absolute top-1.5 right-1 bg-destructive text-destructive-foreground text-[10px] font-semibold rounded-full px-1.5 min-w-[18px] text-center">
+              {notifUnread > 99 ? '99+' : notifUnread}
             </span>
           )}
         </Button>
-        <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => nav('/mobil/suche')} aria-label="Suche">
-          <Search className="h-5 w-5" />
-        </Button>
+        <button
+          onClick={() => nav('/mobil/mehr')}
+          aria-label="Profil und Einstellungen"
+          className="h-11 w-11 shrink-0 flex items-center justify-center"
+        >
+          <span className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center">
+            {initials}
+          </span>
+        </button>
       </header>
+
+      {!online && (
+        <div className="sticky top-[3.25rem] z-30 mx-3 mt-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] flex items-center gap-2">
+          <WifiOff className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="font-medium">Offline</span>
+          <span className="text-muted-foreground">· Stand {format(new Date(), 'HH:mm')} Uhr</span>
+        </div>
+      )}
+
 
       {banner && (
         <button
@@ -164,9 +193,12 @@ function MobilLayoutInner() {
 
       <main className="flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)' }}>
         <MobilErrorBoundary area="mobil">
-          <Outlet />
+          <div key={pathname} className="mobil-page-enter">
+            <Outlet />
+          </div>
         </MobilErrorBoundary>
       </main>
+
 
       {/* Globale Schnellaktion – einhändig erreichbar */}
       {fabOpen && (
@@ -225,11 +257,13 @@ function Tab({ to, icon: Icon, label, exact, badge }: { to: string; icon: any; l
     <NavLink
       to={to}
       end={exact}
+      onClick={() => haptic('light')}
       className={({ isActive }) =>
-        `relative flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-colors ${
-          isActive ? 'text-primary' : 'text-muted-foreground active:text-foreground'
+        `relative flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-colors duration-150 ${
+          isActive ? 'text-primary font-semibold' : 'text-muted-foreground active:text-foreground'
         }`
       }
+
     >
       <Icon className="w-5 h-5" />
       <span className="font-medium">{label}</span>

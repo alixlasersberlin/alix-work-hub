@@ -2834,3 +2834,28 @@ html[data-booking-alix] body {
   line-height: 1.65;
   color: hsl(var(--muted-foreground));
 }
+
+/* =========================================================
+   ALIXWORK MOBILE – Premium Polish (Prompt 8)
+   Reine Darstellungsschicht, keine Logik.
+   ========================================================= */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes mobil-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Seitenwechsel: kurz, unmittelbar, nie verspielt */
+.mobil-page-enter { animation: mobil-fade-up 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mobil-page-enter { animation: none; }
+}

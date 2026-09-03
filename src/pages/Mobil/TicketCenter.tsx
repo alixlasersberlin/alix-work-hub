@@ -8,11 +8,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Ticket as TicketIcon, Loader2, MessageSquare, RefreshCw, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { logMobileAudit, minutesLabel } from '@/lib/mobil/command';
+import { haptic } from '@/lib/mobil/haptics';
+import { MobilPage, MobilCard, Pill, PillRow, EmptyState, ListSkeleton, PullToRefresh } from '@/components/mobil/ui';
 
 const DONE = ['closed', 'geschlossen', 'erledigt', 'resolved'];
 const TABS = ['MEINE', 'NEU', 'P1P2', 'UEBERFAELLIG', 'WARTET', 'ERLEDIGT'] as const;
@@ -95,29 +96,29 @@ export default function MobilTicketCenter() {
   const count = useMemo(() => rows.length, [rows]);
 
   return (
-    <div className="p-4 space-y-3">
+    <PullToRefresh onRefresh={load} refreshing={loading}>
+    <MobilPage>
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold flex items-center gap-2"><TicketIcon className="w-5 h-5" /> Tickets</h1>
+        <h1 className="text-[22px] font-semibold tracking-tight flex items-center gap-2">
+          <TicketIcon className="w-5 h-5 text-primary" aria-hidden /> Tickets
+        </h1>
         <Button variant="ghost" size="icon" className="h-11 w-11" onClick={load} aria-label="Aktualisieren">
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <RefreshCw className="h-5 w-5" />}
         </Button>
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+      <PillRow>
         {TABS.map((t) => (
-          <button key={t} onClick={() => setTabAndUrl(t)}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs border min-h-[34px] ${
-              tab === t ? 'border-primary bg-primary/15 text-primary font-semibold' : 'border-border text-muted-foreground'
-            }`}>
-            {TAB_LABEL[t]}
-          </button>
+          <Pill key={t} active={tab === t} onClick={() => setTabAndUrl(t)}>{TAB_LABEL[t]}</Pill>
         ))}
-      </div>
+      </PillRow>
 
       <div className="text-xs text-muted-foreground">{count} Ticket{count === 1 ? '' : 's'}</div>
 
+      {loading && rows.length === 0 && <ListSkeleton rows={3} height={132} />}
+
       {!loading && rows.length === 0 && (
-        <Card className="p-6 text-center text-sm text-muted-foreground">Keine Tickets in dieser Ansicht.</Card>
+        <EmptyState icon={TicketIcon} title="Keine Tickets in dieser Ansicht" hint="Andere Ansicht wählen oder Liste aktualisieren." />
       )}
 
       {rows.map((r) => {
@@ -125,7 +126,7 @@ export default function MobilTicketCenter() {
         const overdue = r.resolution_due_at ? new Date(r.resolution_due_at) < new Date() && !DONE.includes((r.status || '').toLowerCase()) : false;
         const convs = links[r.id] || [];
         return (
-          <Card key={r.id} className={`p-3 space-y-2 ${overdue ? 'border-destructive/50' : ''}`}>
+          <MobilCard key={r.id} tone={overdue || r.priority === 'P1' ? 'critical' : 'default'} className="p-3.5 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-mono">{r.ticket_number || r.case_number || '—'}</span>
               {r.priority && (
@@ -141,7 +142,7 @@ export default function MobilTicketCenter() {
               {[r.company_name || r.customer_name, r.device_name, r.serial_number, r.category, r.status].filter(Boolean).join(' · ')}
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Button size="sm" className="h-9 flex-1 min-w-[92px]" onClick={() => nav(`/tickets?ticket=${r.id}`)}>Öffnen</Button>
+              <Button size="sm" className="h-9 flex-1 min-w-[92px]" onClick={() => { haptic('light'); nav(`/tickets?ticket=${r.id}`); }}>Öffnen</Button>
               {r.assigned_to !== user?.id && (
                 <Button size="sm" variant="outline" className="h-9 flex-1 min-w-[92px]" onClick={() => takeOver(r)}>Übernehmen</Button>
               )}
@@ -151,9 +152,10 @@ export default function MobilTicketCenter() {
                 </Button>
               )}
             </div>
-          </Card>
+          </MobilCard>
         );
       })}
-    </div>
+    </MobilPage>
+    </PullToRefresh>
   );
 }
