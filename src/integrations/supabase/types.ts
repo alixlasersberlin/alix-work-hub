@@ -727,51 +727,75 @@ export type Database = {
       }
       ac_channels: {
         Row: {
+          ai_enabled: boolean
           color: string | null
           created_at: string | null
           created_by: string | null
+          department: string | null
           department_id: string | null
           description: string | null
           external_config: Json | null
           icon: string | null
           id: string
+          is_active: boolean
           is_archived: boolean | null
           is_private: boolean | null
+          is_test: boolean
           name: string
+          phone_number: string | null
+          provider: string | null
+          provider_phone_id: string | null
+          push_enabled: boolean
           tenant_id: string | null
           type: Database["public"]["Enums"]["ac_channel_type"]
           updated_at: string | null
           website_id: string | null
         }
         Insert: {
+          ai_enabled?: boolean
           color?: string | null
           created_at?: string | null
           created_by?: string | null
+          department?: string | null
           department_id?: string | null
           description?: string | null
           external_config?: Json | null
           icon?: string | null
           id?: string
+          is_active?: boolean
           is_archived?: boolean | null
           is_private?: boolean | null
+          is_test?: boolean
           name: string
+          phone_number?: string | null
+          provider?: string | null
+          provider_phone_id?: string | null
+          push_enabled?: boolean
           tenant_id?: string | null
           type: Database["public"]["Enums"]["ac_channel_type"]
           updated_at?: string | null
           website_id?: string | null
         }
         Update: {
+          ai_enabled?: boolean
           color?: string | null
           created_at?: string | null
           created_by?: string | null
+          department?: string | null
           department_id?: string | null
           description?: string | null
           external_config?: Json | null
           icon?: string | null
           id?: string
+          is_active?: boolean
           is_archived?: boolean | null
           is_private?: boolean | null
+          is_test?: boolean
           name?: string
+          phone_number?: string | null
+          provider?: string | null
+          provider_phone_id?: string | null
+          push_enabled?: boolean
           tenant_id?: string | null
           type?: Database["public"]["Enums"]["ac_channel_type"]
           updated_at?: string | null
@@ -942,6 +966,88 @@ export type Database = {
           },
         ]
       }
+      ac_conversation_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by_user_id: string | null
+          assigned_to_user_id: string
+          assignment_type: string
+          conversation_id: string
+          created_at: string
+          id: string
+          released_at: string | null
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by_user_id?: string | null
+          assigned_to_user_id: string
+          assignment_type?: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          released_at?: string | null
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by_user_id?: string | null
+          assigned_to_user_id?: string
+          assignment_type?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          released_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_conversation_assignments_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_conversation_events: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          new_value: Json | null
+          old_value: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_conversation_events_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_conversation_qa: {
         Row: {
           agent_user_id: string | null
@@ -1003,8 +1109,10 @@ export type Database = {
         Row: {
           ai_sentiment: string | null
           ai_summary: string | null
+          assigned_department: string | null
           assigned_department_id: string | null
           assigned_to: string | null
+          category: string | null
           channel_id: string | null
           channel_type: Database["public"]["Enums"]["ac_channel_type"]
           closed_at: string | null
@@ -1012,9 +1120,15 @@ export type Database = {
           created_at: string | null
           csat_score: number | null
           customer_id: string | null
+          customer_match_required: boolean
           external_meta: Json | null
           external_thread_id: string | null
+          first_response_at: string | null
           id: string
+          inbox_status: string
+          is_test: boolean
+          last_agent_message_at: string | null
+          last_customer_message_at: string | null
           last_message_at: string | null
           last_message_preview: string | null
           lead_id: string | null
@@ -1032,8 +1146,10 @@ export type Database = {
         Insert: {
           ai_sentiment?: string | null
           ai_summary?: string | null
+          assigned_department?: string | null
           assigned_department_id?: string | null
           assigned_to?: string | null
+          category?: string | null
           channel_id?: string | null
           channel_type: Database["public"]["Enums"]["ac_channel_type"]
           closed_at?: string | null
@@ -1041,9 +1157,15 @@ export type Database = {
           created_at?: string | null
           csat_score?: number | null
           customer_id?: string | null
+          customer_match_required?: boolean
           external_meta?: Json | null
           external_thread_id?: string | null
+          first_response_at?: string | null
           id?: string
+          inbox_status?: string
+          is_test?: boolean
+          last_agent_message_at?: string | null
+          last_customer_message_at?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
           lead_id?: string | null
@@ -1061,8 +1183,10 @@ export type Database = {
         Update: {
           ai_sentiment?: string | null
           ai_summary?: string | null
+          assigned_department?: string | null
           assigned_department_id?: string | null
           assigned_to?: string | null
+          category?: string | null
           channel_id?: string | null
           channel_type?: Database["public"]["Enums"]["ac_channel_type"]
           closed_at?: string | null
@@ -1070,9 +1194,15 @@ export type Database = {
           created_at?: string | null
           csat_score?: number | null
           customer_id?: string | null
+          customer_match_required?: boolean
           external_meta?: Json | null
           external_thread_id?: string | null
+          first_response_at?: string | null
           id?: string
+          inbox_status?: string
+          is_test?: boolean
+          last_agent_message_at?: string | null
+          last_customer_message_at?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
           lead_id?: string | null

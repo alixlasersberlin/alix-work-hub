@@ -1,90 +1,179 @@
-// WhatsApp Cloud API webhook — verification GET + inbound POST
+// WhatsApp Webhook — GET Verification + POST Inbound (Meta & Twilio)
+// Idempotent, mit Kundenerkennung und Anbindung an die bestehende ac_* Struktur.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { normalizePayload, toE164, type NormalizedMessage } from './provider.ts';
 
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
 );
 
-async function upsertConversation(from: string, name: string | null) {
-  const { data: existingConv } = await admin.from('ac_conversations')
-    .select('id, tenant_id, contact_id')
+const DIRECTION_MAP = { INBOUND: 'inbound', OUTBOUND: 'outbound' } as const;
+
+function phoneVariants(e164: string): string[] {
+  const digits = e164.replace(/\D/g, '');
+  const local = digits.startsWith('49') ? `0${digits.slice(2)}` : digits;
+  return Array.from(new Set([e164, digits, local, `+${digits}`]));
+}
+
+/** Findet den passenden Kanal anhand der angeschriebenen Alix-Nummer. */
+async function findChannel(msg: NormalizedMessage) {
+  let q = admin.from('ac_channels')
+    .select('id, tenant_id, department, is_active').eq('type', 'whatsapp').limit(1);
+  if (msg.provider_phone_id) q = q.eq('provider_phone_id', msg.provider_phone_id);
+  else if (msg.to) q = q.eq('phone_number', msg.to);
+  else return null;
+  const { data } = await q.maybeSingle();
+  return data ?? null;
+}
+
+/** Kundenerkennung über bestehende Kundendaten — keine Kundentabelle verändern. */
+async function matchCustomer(e164: string): Promise<{ customerId: string | null; ambiguous: boolean }> {
+  const variants = phoneVariants(e164);
+  const or = variants.map((v) => `phone.eq.${v}`).join(',');
+  const { data } = await admin.from('customers').select('id').or(or).limit(5);
+  if (!data || data.length === 0) return { customerId: null, ambiguous: false };
+  if (data.length > 1) return { customerId: null, ambiguous: true };
+  return { customerId: data[0].id, ambiguous: false };
+}
+
+async function ensureContact(msg: NormalizedMessage, tenantId: string | null, customerId: string | null) {
+  const { data: existing } = await admin.from('ac_contacts')
+    .select('id, customer_id').eq('whatsapp_number', msg.from).maybeSingle();
+  if (existing) {
+    if (customerId && !existing.customer_id) {
+      await admin.from('ac_contacts').update({ customer_id: customerId }).eq('id', existing.id);
+    }
+    return existing.id as string;
+  }
+  const { data: created } = await admin.from('ac_contacts').insert({
+    tenant_id: tenantId,
+    whatsapp_number: msg.from,
+    phone: msg.from,
+    full_name: msg.contact_name,
+    customer_id: customerId,
+  }).select('id').single();
+  return created?.id ?? null;
+}
+
+async function ensureConversation(msg: NormalizedMessage) {
+  const channel = await findChannel(msg);
+  const { data: existing } = await admin.from('ac_conversations')
+    .select('id, tenant_id, contact_id, customer_id, unread_count')
     .eq('channel_type', 'whatsapp')
-    .eq('external_thread_id', from)
-    .in('status', ['open', 'pending'])
+    .eq('external_thread_id', msg.from)
+    .not('inbox_status', 'in', '("RESOLVED","ARCHIVED")')
     .order('last_message_at', { ascending: false })
     .limit(1).maybeSingle();
-  if (existingConv) return existingConv;
+  if (existing) return { conv: existing, created: false };
 
-  const { data: site } = await admin.from('ac_websites').select('tenant_id').limit(1).maybeSingle();
-  const tenant_id = site?.tenant_id ?? null;
-
-  let contact_id: string | null = null;
-  const { data: contact } = await admin.from('ac_contacts')
-    .select('id').eq('whatsapp_number', from).maybeSingle();
-  if (contact) contact_id = contact.id;
-  else {
-    const { data: newC } = await admin.from('ac_contacts')
-      .insert({ tenant_id, whatsapp_number: from, phone: from, full_name: name })
-      .select('id').single();
-    contact_id = newC?.id ?? null;
-  }
+  const tenantId = channel?.tenant_id
+    ?? (await admin.from('ac_websites').select('tenant_id').limit(1).maybeSingle()).data?.tenant_id
+    ?? null;
+  const { customerId, ambiguous } = await matchCustomer(msg.from);
+  const contactId = await ensureContact(msg, tenantId, customerId);
 
   const { data: conv } = await admin.from('ac_conversations').insert({
-    tenant_id,
+    tenant_id: tenantId,
+    channel_id: channel?.id ?? null,
     channel_type: 'whatsapp',
     status: 'open',
-    subject: `WhatsApp · ${name || from}`,
-    contact_id,
-    external_thread_id: from,
-    external_meta: { from, name },
-    priority: 'normal',
-  }).select('id, tenant_id, contact_id').single();
-  return conv;
+    inbox_status: 'NEW',
+    subject: `WhatsApp · ${msg.contact_name || msg.from}`,
+    contact_id: contactId,
+    customer_id: customerId,
+    customer_match_required: ambiguous,
+    assigned_department: channel?.department ?? null,
+    external_thread_id: msg.from,
+    external_meta: { from: msg.from, to: msg.to, provider: msg.provider, name: msg.contact_name },
+    priority: 'P3',
+    unread_count: 0,
+  }).select('id, tenant_id, contact_id, customer_id, unread_count').single();
+
+  if (conv) {
+    await admin.from('ac_conversation_events').insert([
+      { conversation_id: conv.id, event_type: 'CREATED', new_value: { provider: msg.provider } },
+      ...(customerId ? [{ conversation_id: conv.id, event_type: 'CUSTOMER_LINKED', new_value: { customer_id: customerId } }] : []),
+    ]);
+  }
+  return { conv, created: true };
+}
+
+async function storeMessage(msg: NormalizedMessage) {
+  // Idempotenz: bereits verarbeitete Provider-Nachricht ignorieren
+  const { data: dupe } = await admin.from('ac_messages')
+    .select('id').eq('external_message_id', msg.provider_message_id).maybeSingle();
+  if (dupe) return { skipped: true };
+
+  const { conv } = await ensureConversation(msg);
+  if (!conv) return { skipped: true };
+
+  const { error } = await admin.from('ac_messages').insert({
+    tenant_id: conv.tenant_id,
+    conversation_id: conv.id,
+    direction: DIRECTION_MAP[msg.direction],
+    sender_type: 'contact',
+    sender_contact_id: conv.contact_id,
+    sender_name: msg.contact_name || msg.from,
+    body: msg.body ? String(msg.body).slice(0, 6000) : `(${msg.message_type})`,
+    attachments: msg.media.length ? msg.media : null,
+    external_message_id: msg.provider_message_id,
+    delivery_status: 'RECEIVED',
+    metadata: { provider: msg.provider, message_type: msg.message_type, raw: msg.raw_metadata },
+  });
+  // Unique-Index kann bei parallelen Webhooks greifen — das ist gewollt.
+  if (error && !String(error.message).includes('duplicate key')) throw error;
+  if (error) return { skipped: true };
+
+  await admin.from('ac_conversations').update({
+    last_message_at: msg.timestamp,
+    last_customer_message_at: msg.timestamp,
+    last_message_preview: (msg.body ?? `(${msg.message_type})`).slice(0, 200),
+    unread_count: (conv.unread_count ?? 0) + 1,
+  }).eq('id', conv.id);
+
+  await admin.from('ac_conversation_events').insert({
+    conversation_id: conv.id,
+    event_type: 'MESSAGE_RECEIVED',
+    new_value: { provider_message_id: msg.provider_message_id, message_type: msg.message_type },
+  });
+  return { skipped: false };
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const url = new URL(req.url);
 
-  // Verification
   if (req.method === 'GET') {
     const verify = Deno.env.get('WHATSAPP_VERIFY_TOKEN') ?? '';
-    if (url.searchParams.get('hub.mode') === 'subscribe' && url.searchParams.get('hub.verify_token') === verify) {
+    if (verify && url.searchParams.get('hub.mode') === 'subscribe'
+      && url.searchParams.get('hub.verify_token') === verify) {
       return new Response(url.searchParams.get('hub.challenge') ?? '', { status: 200 });
     }
     return new Response('forbidden', { status: 403 });
   }
 
   try {
-    const body = await req.json();
-    const entries = body.entry ?? [];
-    for (const entry of entries) {
-      for (const change of entry.changes ?? []) {
-        const value = change.value ?? {};
-        const contacts = value.contacts ?? [];
-        for (const msg of value.messages ?? []) {
-          const from = msg.from;
-          const name = contacts.find((c: any) => c.wa_id === from)?.profile?.name ?? null;
-          const text = msg.text?.body ?? msg.button?.text ?? msg.interactive?.button_reply?.title ?? '(non-text message)';
-          const conv = await upsertConversation(from, name);
-          if (!conv) continue;
-          await admin.from('ac_messages').insert({
-            tenant_id: conv.tenant_id,
-            conversation_id: conv.id,
-            direction: 'inbound',
-            sender_type: 'contact',
-            sender_contact_id: conv.contact_id,
-            sender_name: name || from,
-            body: String(text).slice(0, 6000),
-            external_message_id: msg.id,
-            metadata: { raw: msg },
-          });
-        }
-      }
+    const ct = req.headers.get('content-type') ?? '';
+    let payload: any;
+    if (ct.includes('application/x-www-form-urlencoded')) {
+      payload = Object.fromEntries(new URLSearchParams(await req.text()));
+    } else {
+      payload = await req.json();
     }
-    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    const messages = normalizePayload(payload);
+    let stored = 0, skipped = 0;
+    for (const msg of messages) {
+      if (!msg.provider_message_id || !msg.from) { skipped++; continue; }
+      msg.from = toE164(msg.from);
+      const res = await storeMessage(msg);
+      res.skipped ? skipped++ : stored++;
+    }
+    return new Response(JSON.stringify({ ok: true, stored, skipped }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (e) {
     console.error('ac-webhook-whatsapp error', e);
     return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {

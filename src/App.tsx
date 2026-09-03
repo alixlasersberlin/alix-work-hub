@@ -402,6 +402,9 @@ const MobilTourDetail = lazy(() => import("./pages/Mobil/TourDetail"));
 const MobilSuche = lazy(() => import("./pages/Mobil/Suche"));
 const MobilAuftraege = lazy(() => import("./pages/Mobil/Auftraege"));
 const MobilMehr = lazy(() => import("./pages/Mobil/Mehr"));
+const MobilInbox = lazy(() => import("./pages/Mobil/Inbox"));
+const MobilInboxChat = lazy(() => import("./pages/Mobil/InboxChat"));
+const MobilInboxKanaele = lazy(() => import("./pages/Mobil/InboxKanaele"));
 const MobilKontakte = lazy(() => import("./pages/Mobil/Kontakte"));
 const MobileSyncAdmin = lazy(() => import("./pages/Admin/MobileSync"));
 const MobileGeraete = lazy(() => import("./pages/Einstellungen/MobileGeraete"));
@@ -2474,6 +2477,9 @@ function AppRoutes() {
           <Route path="auftraege" element={<MobilAuftraege />} />
           <Route path="kontakte" element={<MobilKontakte />} />
           <Route path="mehr" element={<MobilMehr />} />
+          <Route path="inbox" element={<MobilInbox />} />
+          <Route path="inbox/kanaele" element={<MobilInboxKanaele />} />
+          <Route path="inbox/:id" element={<MobilInboxChat />} />
 
         </Route>
 
