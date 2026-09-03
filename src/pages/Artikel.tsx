@@ -44,6 +44,10 @@ type ZohoItem = {
   synced_at: string;
 };
 
+/** Spalten der Listenabfrage — bewusst ohne `raw_data` (Ladezeit!). */
+const LIST_COLUMNS =
+  'id,zoho_item_id,name,sku,description,unit,rate,purchase_rate,currency_code,status,product_type,item_type,tax_name,tax_percentage,stock_on_hand,available_stock,category_name,brand,manufacturer,synced_at';
+
 const fmtMoney = (n: number | null, cur: string | null) =>
   n == null ? '–' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur || 'EUR' }).format(n);
 
@@ -319,6 +323,11 @@ export default function Artikel() {
     setEditing(false);
   }
 
+  /**
+   * Performance: `raw_data` (großes JSON pro Artikel) wird NICHT mehr in die
+   * Liste geladen — das war der Hauptgrund für ~3 s Ladezeit. Die Rohdaten
+   * holt `openDetail()` erst beim Öffnen eines Artikels nach.
+   */
   async function load() {
     setLoading(true);
     const PAGE = 1000;
@@ -328,14 +337,14 @@ export default function Artikel() {
     while (true) {
       const { data, error } = await supabase
         .from('zoho_items')
-        .select('*')
+        .select(LIST_COLUMNS)
         .order('name', { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) {
         toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
         break;
       }
-      const batch = (data as ZohoItem[]) ?? [];
+      const batch = (data as unknown as ZohoItem[]) ?? [];
       all.push(...batch);
       if (batch.length < PAGE) break;
       from += PAGE;
@@ -344,6 +353,18 @@ export default function Artikel() {
     setItems(all);
     setLoading(false);
   }
+
+  /** Detailansicht öffnen und die Zoho-Rohdaten bei Bedarf nachladen. */
+  async function openDetail(it: ZohoItem) {
+    setSelected(it);
+    if (it.raw_data !== undefined && it.raw_data !== null) return;
+    const { data } = await supabase.from('zoho_items').select('raw_data').eq('id', it.id).maybeSingle();
+    if (!data) return;
+    const merged = { ...it, raw_data: (data as any).raw_data };
+    setItems((prev) => prev.map((p) => (p.id === it.id ? merged : p)));
+    setSelected((cur) => (cur && cur.id === it.id ? merged : cur));
+  }
+
 
   async function loadAlixLasers() {
     const { data, error } = await supabase
@@ -693,7 +714,7 @@ export default function Artikel() {
                       </Badge>
                     </td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(it)} title="Details ansehen">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openDetail(it)} title="Details ansehen">
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
@@ -702,7 +723,7 @@ export default function Artikel() {
                         className="h-8 w-8"
                         title="Bearbeiten"
                         onClick={() => {
-                          setSelected(it);
+                          openDetail(it);
                           setDraft({
                             name: it.name, sku: it.sku, description: it.description, unit: it.unit,
                             rate: it.rate, purchase_rate: it.purchase_rate, status: it.status,
