@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
       message_id: inserted.id, provider, provider_message_id: result.providerMessageId,
     });
     const { data: esc } = await admin.from('conversation_escalations')
-      .update({ status: 'CANCELLED', cancelled_at: now, cancel_reason: 'AGENT_RESPONSE' })
+      .update({ status: 'CANCELLED', cancelled_at: now })
       .eq('conversation_id', conversationId).eq('status', 'SCHEDULED').select('id');
     if (esc?.length) await logEvent(conversationId, 'ESCALATION_CANCELLED', user.id, { reason: 'AGENT_RESPONSE', count: esc.length });
 
