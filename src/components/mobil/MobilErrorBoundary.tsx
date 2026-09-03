@@ -6,6 +6,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { reportIncident } from '@/lib/mobil/golive';
 
 type Props = { children: ReactNode; area?: string; fallbackCompact?: boolean };
 type State = { error: Error | null };
