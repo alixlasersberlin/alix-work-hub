@@ -151,13 +151,6 @@ export async function syncBadge(count: number) {
     if (count > 0) await nav.setAppBadge?.(count);
     else await nav.clearAppBadge?.();
   } catch { /* optional */ }
-  try {
-    const { Capacitor } = await import('@capacitor/core');
-    if (Capacitor.isNativePlatform()) {
-      const { Badge } = await import('@capawesome/capacitor-badge' as any);
-      await Badge?.set?.({ count });
-    }
-  } catch { /* Plugin optional */ }
 }
 
 /** Test-Push ausschließlich an das aktuelle Gerät des angemeldeten Users. */
