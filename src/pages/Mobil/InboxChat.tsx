@@ -72,6 +72,9 @@ export default function MobilInboxChat() {
   const [customer, setCustomer] = useState<any>(null);
   const [devices, setDevices] = useState<any[]>([]);
   const [openTickets, setOpenTickets] = useState<number>(0);
+  const [smartLink, setSmartLink] = useState<any>(null);
+  const [smartDevices, setSmartDevices] = useState<any[]>([]);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [flags, setFlags] = useState<FeatureFlags | null>(null);
@@ -145,7 +148,7 @@ export default function MobilInboxChat() {
     const cid = conv?.customer_id || conv?.ac_contacts?.customer_id;
     const email = (conv?.ac_contacts as any)?.email as string | undefined;
     const phone = conv?.ac_contacts?.whatsapp_number || conv?.ac_contacts?.phone || undefined;
-    if (!cid && !email && !phone) { setCustomer(null); setDevices([]); setOpenTickets(0); return; }
+    if (!cid && !email && !phone) { setCustomer(null); setDevices([]); setOpenTickets(0); setSmartLink(null); setSmartDevices([]); return; }
     (async () => {
       if (cid) {
         const { data: cu } = await (supabase as any)
@@ -161,12 +164,38 @@ export default function MobilInboxChat() {
         setDevices(dev ?? []);
       } else setDevices([]);
 
+      // AlixSmart-Registrierung: über Kunde oder direkt über die WhatsApp-Nummer
+      let link: any = null;
+      if (cid) {
+        const { data } = await (supabase as any)
+          .from('alixsmart_customer_links')
+          .select('id, match_status, match_score, match_method, alixsmart_phone, alixsmart_email, registered_at')
+          .eq('alixwork_customer_id', cid).maybeSingle();
+        link = data ?? null;
+      }
+      if (!link && phone) {
+        const { data } = await (supabase as any)
+          .from('alixsmart_customer_links')
+          .select('id, match_status, match_score, match_method, alixsmart_phone, alixsmart_email, registered_at')
+          .eq('alixsmart_phone', phone).maybeSingle();
+        link = data ?? null;
+      }
+      setSmartLink(link);
+      if (link?.id) {
+        const { data: sd } = await (supabase as any)
+          .from('alixsmart_device_links')
+          .select('id, device_name, device_model, serial_number, registration_status')
+          .eq('customer_link_id', link.id).limit(10);
+        setSmartDevices(sd ?? []);
+      } else setSmartDevices([]);
+
       let tq = (supabase as any).from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'closed');
       tq = email ? tq.eq('customer_email', email) : tq.eq('customer_phone', phone);
       const { count } = await tq;
       setOpenTickets(count ?? 0);
     })();
   }, [conv?.customer_id, conv?.ac_contacts?.customer_id, (conv?.ac_contacts as any)?.email, conv?.ac_contacts?.whatsapp_number, conv?.ac_contacts?.phone]);
+
 
   const timeline = useMemo(() => {
     const items = [
@@ -603,10 +632,30 @@ export default function MobilInboxChat() {
                     ))}
                   </div>
                 )}
+                {smartLink && (
+                  <div className="space-y-1 rounded-md border p-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs uppercase text-muted-foreground">AlixSmart</span>
+                      <Badge variant={smartLink.match_status === 'registered' ? 'default' : 'secondary'}>
+                        {smartLink.match_status === 'registered' ? 'Registriert' : smartLink.match_status === 'possible' ? 'Möglich' : 'Nicht registriert'}
+                      </Badge>
+                      {smartLink.match_method === 'phone' && <span className="text-[10px] text-muted-foreground">via Nummer</span>}
+                    </div>
+                    {smartLink.alixsmart_phone && (
+                      <div className="text-xs text-muted-foreground">{smartLink.alixsmart_phone}</div>
+                    )}
+                    {smartDevices.map((d) => (
+                      <div key={d.id} className="text-xs">
+                        {d.device_name || d.device_model || 'Gerät'} · SN {d.serial_number || '—'} · {d.registration_status || '—'}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-xs">Offene Tickets: {openTickets}</span>
                   <Button size="sm" variant="outline" onClick={() => nav('/tickets')}>TICKETS</Button>
                 </div>
+
               </>
             )}
           </div>

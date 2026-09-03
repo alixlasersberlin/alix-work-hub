@@ -35,10 +35,19 @@ async function matchCustomer(e164: string): Promise<{ customerId: string | null;
   const variants = phoneVariants(e164);
   const or = variants.map((v) => `phone.eq.${v}`).join(',');
   const { data } = await admin.from('customers').select('id').or(or).limit(5);
-  if (!data || data.length === 0) return { customerId: null, ambiguous: false };
-  if (data.length > 1) return { customerId: null, ambiguous: true };
-  return { customerId: data[0].id, ambiguous: false };
+  if (data && data.length === 1) return { customerId: data[0].id, ambiguous: false };
+  if (data && data.length > 1) return { customerId: null, ambiguous: true };
+
+  // Fallback: AlixSmart-Registrierungsnummer (weicht oft von der Stammnummer ab)
+  const smartOr = variants.map((v) => `alixsmart_phone.eq.${v}`).join(',');
+  const { data: links } = await admin
+    .from('alixsmart_customer_links')
+    .select('alixwork_customer_id').or(smartOr).limit(5);
+  if (!links || links.length === 0) return { customerId: null, ambiguous: false };
+  if (links.length > 1) return { customerId: null, ambiguous: true };
+  return { customerId: links[0].alixwork_customer_id, ambiguous: false };
 }
+
 
 async function ensureContact(msg: NormalizedMessage, tenantId: string | null, customerId: string | null) {
   const { data: existing } = await admin.from('ac_contacts')
