@@ -5,6 +5,8 @@
 // Möglich:     Kunde hat E-Mail, es gibt Kandidaten mit gleicher Domain (schwacher Hinweis)
 // Sonst:       unregistriert
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { toE164 } from "../_shared/phone-e164.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
