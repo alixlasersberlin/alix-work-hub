@@ -70,7 +70,7 @@ export async function getPushStatus(): Promise<PushStatus> {
 async function upsertDevice(row: Record<string, unknown>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Nicht angemeldet.');
-  const { error } = await (supabase as any).from('mobile_push_subscriptions').upsert({
+  const base = {
     user_id: user.id,
     device_id: deviceId(),
     notifications_enabled: true,
@@ -80,7 +80,12 @@ async function upsertDevice(row: Record<string, unknown>) {
     last_seen_at: new Date().toISOString(),
     environment: import.meta.env.PROD ? 'production' : 'development',
     ...row,
-  }, { onConflict: 'user_id,device_id' });
+  };
+  const { data: existing } = await (supabase as any).from('mobile_push_subscriptions')
+    .select('id').eq('user_id', user.id).eq('device_id', deviceId()).maybeSingle();
+  const { error } = existing
+    ? await (supabase as any).from('mobile_push_subscriptions').update(base).eq('id', existing.id)
+    : await (supabase as any).from('mobile_push_subscriptions').insert(base);
   if (error) throw new Error(error.message);
 }
 
