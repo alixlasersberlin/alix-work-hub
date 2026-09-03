@@ -8,7 +8,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Ticket as TicketIcon, Loader2, MessageSquare, RefreshCw, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
