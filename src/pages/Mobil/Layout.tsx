@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/button';
 import { cacheGet, cacheSet } from '@/lib/mobil/utils';
 import { syncBadge, takePendingDeepLink } from '@/lib/mobile/push-registration';
 import { format } from 'date-fns';
+import AppLockGate from '@/components/mobil/AppLockGate';
+import MobilErrorBoundary from '@/components/mobil/MobilErrorBoundary';
+import { touchTrustedDevice, markActivity } from '@/lib/mobil/security';
+import { APP_VERSION_MOBILE } from '@/lib/mobil/appInfo';
 
 type Banner = { title: string; message: string; url: string; priority: string } | null;
 
