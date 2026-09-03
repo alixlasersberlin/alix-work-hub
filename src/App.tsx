@@ -2480,6 +2480,11 @@ function AppRoutes() {
           <Route path="inbox" element={<MobilInbox />} />
           <Route path="inbox/kanaele" element={<MobilInboxKanaele />} />
           <Route path="inbox/:id" element={<MobilInboxChat />} />
+          <Route path="benachrichtigungen" element={<MobilBenachrichtigungen />} />
+          <Route path="einstellungen/benachrichtigungen" element={<MobilEinstellungenBenachrichtigungen />} />
+          <Route path="push-diagnose" element={<MobilPushDiagnose />} />
+          <Route path="admin/eskalationen" element={<MobilAdminEskalationen />} />
+
 
         </Route>
 
