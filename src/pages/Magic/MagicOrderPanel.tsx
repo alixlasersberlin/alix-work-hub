@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  AlertTriangle, ArrowRight, Check, ChevronRight, Factory, Loader2, Package, ScanLine, ShieldCheck, Truck, User, Wand2, Warehouse, X,
+  AlertTriangle, ArrowRight, Check, ChevronRight, Factory, Loader2, Mail, Package, ScanLine, ShieldCheck, Truck, User, Wand2, Warehouse, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -61,6 +61,7 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MagicResult | null>(null);
   const [stageTarget, setStageTarget] = useState<SupplyStage | null>(null);
+  const [mailBusy, setMailBusy] = useState(false);
 
 
   const reload = useCallback(async () => {
