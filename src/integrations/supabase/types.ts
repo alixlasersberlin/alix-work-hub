@@ -3273,8 +3273,10 @@ export type Database = {
       ac_user_presence: {
         Row: {
           active_queue_id: string | null
+          current_activity: string | null
           custom_status: string | null
           last_seen_at: string | null
+          manual_status: boolean
           skills: string[]
           status: string | null
           updated_at: string | null
@@ -3282,8 +3284,10 @@ export type Database = {
         }
         Insert: {
           active_queue_id?: string | null
+          current_activity?: string | null
           custom_status?: string | null
           last_seen_at?: string | null
+          manual_status?: boolean
           skills?: string[]
           status?: string | null
           updated_at?: string | null
@@ -3291,8 +3295,10 @@ export type Database = {
         }
         Update: {
           active_queue_id?: string | null
+          current_activity?: string | null
           custom_status?: string | null
           last_seen_at?: string | null
+          manual_status?: boolean
           skills?: string[]
           status?: string | null
           updated_at?: string | null
@@ -28032,6 +28038,42 @@ export type Database = {
           },
         ]
       }
+      follow_up_reminders: {
+        Row: {
+          completed_at: string | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          remind_at: string
+          status: string
+          ticket_id: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          remind_at: string
+          status?: string
+          ticket_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          completed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          remind_at?: string
+          status?: string
+          ticket_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       goods_receipts: {
         Row: {
           created_at: string
@@ -44106,6 +44148,86 @@ export type Database = {
         }
         Relationships: []
       }
+      shift_handover_items: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          handover_id: string
+          id: string
+          item_type: string
+          note: string | null
+          priority: string | null
+          ticket_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          handover_id: string
+          id?: string
+          item_type: string
+          note?: string | null
+          priority?: string | null
+          ticket_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          handover_id?: string
+          id?: string
+          item_type?: string
+          note?: string | null
+          priority?: string | null
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_handover_items_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "shift_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_handovers: {
+        Row: {
+          accepted_at: string | null
+          accepted_by_user_id: string | null
+          cancelled_at: string | null
+          created_at: string
+          department: string | null
+          from_user_id: string
+          id: string
+          status: string
+          summary: string | null
+          to_user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          department?: string | null
+          from_user_id?: string
+          id?: string
+          status?: string
+          summary?: string | null
+          to_user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          department?: string | null
+          from_user_id?: string
+          id?: string
+          status?: string
+          summary?: string | null
+          to_user_id?: string | null
+        }
+        Relationships: []
+      }
       sig_ai_analyses: {
         Row: {
           clauses: Json | null
@@ -53746,6 +53868,7 @@ export type Database = {
           valid_until: string
         }[]
       }
+      get_mobile_command_center: { Args: never; Returns: Json }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
       has_accounting_region: {
         Args: {
@@ -53816,6 +53939,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_device_active: { Args: { _sub_id: string }; Returns: boolean }
       is_internal_user: { Args: never; Returns: boolean }
+      is_mobile_supervisor: { Args: never; Returns: boolean }
       is_portal_customer:
         | { Args: never; Returns: boolean }
         | { Args: { _customer_id: string }; Returns: boolean }
@@ -53860,6 +53984,7 @@ export type Database = {
           webauthn_count: number
         }[]
       }
+      mobile_magic_search: { Args: { q: string }; Returns: Json }
       next_backup_window: {
         Args: never
         Returns: {
