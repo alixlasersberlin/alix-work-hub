@@ -3,6 +3,8 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { normalizePayload, normalizeStatuses, toE164, type NormalizedMessage } from './provider.ts';
+import { detectProvider, verifyMetaSignature, verifyTwilioSignature, type VerifyResult } from './verify.ts';
+
 
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
