@@ -506,6 +506,42 @@ export default function Lagergeraete({
     return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />;
   };
 
+  // Performance: Aufträge werden serverseitig gefiltert geladen (vorher: 500 Aufträge
+  // inkl. Kunde + Positionen bei jedem Tastendruck und Filterung im Browser).
+  const ORDER_STATUSES = ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved', 'Hold', 'hold', 'Anwalt', 'anwalt'];
+  const ORDER_SELECT = 'id, order_number, order_status, expected_shipment_date, customers(company_name, contact_name), order_items(item_name, description, sku)';
+
+  /** Sucht offene Aufträge serverseitig über Auftragsnummer, Kundenname und Positionen. */
+  const searchOpenOrders = async (term: string, max: number): Promise<any[]> => {
+    // Sonderzeichen entfernen: PostgREST-Filter sind sonst nicht escape-sicher.
+    const q = term.trim().replace(/[,()*%]/g, ' ').trim();
+    if (q.length < 2) return [];
+    const like = `%${q}%`;
+    const itemQ = () => supabase.from('order_items').select('order_id').limit(300);
+    const custQ = () => supabase.from('customers').select('id').limit(100);
+    const [byName, byDesc, bySku, custA, custB] = await Promise.all([
+      itemQ().ilike('item_name', like),
+      itemQ().ilike('description', like),
+      itemQ().ilike('sku', like),
+      custQ().ilike('company_name', like),
+      custQ().ilike('contact_name', like),
+    ]);
+    const orderIds = Array.from(new Set([...(byName.data as any[] ?? []), ...(byDesc.data as any[] ?? []), ...(bySku.data as any[] ?? [])].map((r) => r.order_id).filter(Boolean)));
+    const custIds = Array.from(new Set([
+      ...(((custA.data as any[]) ?? []).map((r) => r.id)),
+      ...(((custB.data as any[]) ?? []).map((r) => r.id)),
+    ]));
+
+    const base = () => supabase.from('orders').select(ORDER_SELECT).in('order_status', ORDER_STATUSES).limit(max);
+    const queries: any[] = [base().ilike('order_number', like)];
+    if (orderIds.length) queries.push(base().in('id', orderIds.slice(0, 200)));
+    if (custIds.length) queries.push(base().in('customer_id', custIds.slice(0, 200)));
+    const results = await Promise.all(queries);
+    const byId = new Map<string, any>();
+    for (const r of results) for (const o of ((r.data as any[]) ?? [])) byId.set(o.id, o);
+    return Array.from(byId.values());
+  };
+
   // Search free (unreserved) open orders matching the query
   useEffect(() => {
     const q = searchQuery.trim();
@@ -516,23 +552,22 @@ export default function Lagergeraete({
     let cancelled = false;
     const t = setTimeout(async () => {
       setLoadingFreeOrders(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id, order_number, order_status, expected_shipment_date, customers(company_name, contact_name), order_items(item_name, description, sku)')
-        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved', 'Hold', 'hold', 'Anwalt', 'anwalt'])
-        .limit(500);
+      let data: any[] = [];
+      try {
+        data = await searchOpenOrders(q, 60);
+      } catch {
+        if (!cancelled) setLoadingFreeOrders(false);
+        return;
+      }
       if (cancelled) return;
-      if (error) { setLoadingFreeOrders(false); return; }
       const norm = q.toLowerCase();
       const matched: FreeOrder[] = [];
-      for (const o of (data ?? []) as any[]) {
+      for (const o of data) {
         if (reservedOrderIdsSet.has(o.id)) continue;
         const customer = o.customers?.company_name || o.customers?.contact_name || '—';
         const matchedItem = (o.order_items ?? []).find((it: any) =>
           `${it.item_name ?? ''} ${it.description ?? ''} ${it.sku ?? ''}`.toLowerCase().includes(norm),
         );
-        const inHeader = `${o.order_number ?? ''} ${customer}`.toLowerCase().includes(norm);
-        if (!matchedItem && !inHeader) continue;
         matched.push({
           id: o.id,
           order_number: o.order_number,
@@ -562,19 +597,16 @@ export default function Lagergeraete({
     (async () => {
       setLoadingSuggestions(true);
       const norm = modelName.toLowerCase().trim();
-      // Search for orders with items matching the selected model
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id, order_number, order_status, expected_shipment_date, customers(company_name, contact_name), order_items(item_name, description, sku)')
-        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved', 'Hold', 'hold', 'Anwalt', 'anwalt'])
-        .limit(500);
-      if (cancelled) return;
-      if (error) {
-        setLoadingSuggestions(false);
+      let data: any[] = [];
+      try {
+        data = await searchOpenOrders(modelName, 40);
+      } catch {
+        if (!cancelled) setLoadingSuggestions(false);
         return;
       }
+      if (cancelled) return;
       const matched: Suggestion[] = [];
-      for (const o of (data ?? []) as any[]) {
+      for (const o of data) {
         if (reservedOrderIdsSet.has(o.id)) continue;
         const item = (o.order_items ?? []).find((it: any) => {
           const hay = `${it.item_name ?? ''} ${it.description ?? ''} ${it.sku ?? ''}`.toLowerCase();
@@ -601,6 +633,7 @@ export default function Lagergeraete({
     })();
     return () => { cancelled = true; };
   }, [open, modelName, reservedOrderId, reservedOrderIdsSet]);
+
 
   // Kunden-Suche für Leihgerät-Vorgang
   useEffect(() => {
