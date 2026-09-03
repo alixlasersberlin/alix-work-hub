@@ -321,6 +321,13 @@ export default function ProductionPortal() {
       if (res.ok) toast.success(res.message);
       else toast.error(`E-Mail nicht versendet: ${res.message}`);
     }
+    if ((payload.status === 'gesendet' || payload.status === 'in_produktion') && prevStatus !== payload.status) {
+      const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+      const res = await sendProductionStartedEmail(editingId, 'automatisch');
+      if (res.ok) toast.success(`Produktionsstart-Info: ${res.message}`);
+      else toast.error(`Produktionsstart-E-Mail nicht versendet: ${res.message}`);
+    }
+
   };
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
