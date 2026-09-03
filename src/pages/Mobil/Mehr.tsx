@@ -5,6 +5,10 @@ import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Con
 import { useAuth } from '@/hooks/useAuth';
 
 const LINKS = [
+  { to: '/mobil/sicherheit', icon: Lock, label: 'Sicherheit' },
+  { to: '/mobil/datenschutz', icon: ShieldCheck, label: 'Datenschutz' },
+  { to: '/mobil/support', icon: LifeBuoy, label: 'Hilfe & Support' },
+  { to: '/mobil/admin/release-readiness', icon: Rocket, label: 'Admin · Release Readiness' },
   { to: '/mobil/inbox', icon: MessageSquare, label: 'ALIX INBOX' },
   { to: '/mobil/tickets', icon: Ticket, label: 'Ticket Center' },
   { to: '/mobil/magic-suche', icon: Search, label: 'Magic Search' },
