@@ -52,7 +52,7 @@ export default function MobilInboxChat() {
         .select(`id, channel_id, channel_type, customer_id, contact_id, assigned_to, assigned_department,
                  inbox_status, priority, category, subject, last_message_at, last_message_preview,
                  unread_count, customer_match_required, is_test, external_thread_id,
-                 ac_contacts:contact_id ( full_name, phone, whatsapp_number, customer_id ),
+                 ac_contacts:contact_id ( full_name, phone, email, whatsapp_number, customer_id ),
                  ac_channels:channel_id ( name, department, provider )`)
         .eq('id', id).maybeSingle();
       if (cErr) throw cErr;
@@ -83,21 +83,33 @@ export default function MobilInboxChat() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ block: 'end' }); }, [messages.length]);
 
-  // Kundendaten (nur lesen, bestehende Strukturen)
+  // Kundendaten (nur lesen, bestehende Strukturen — keine Duplizierung)
   useEffect(() => {
     const cid = conv?.customer_id || conv?.ac_contacts?.customer_id;
-    if (!cid) { setCustomer(null); setDevices([]); setOpenTickets(0); return; }
+    const email = (conv?.ac_contacts as any)?.email as string | undefined;
+    const phone = conv?.ac_contacts?.whatsapp_number || conv?.ac_contacts?.phone || undefined;
+    if (!cid && !email && !phone) { setCustomer(null); setDevices([]); setOpenTickets(0); return; }
     (async () => {
-      const [{ data: cu }, { data: dev }, { count }] = await Promise.all([
-        (supabase as any).from('customers').select('id, company_name, phone').eq('id', cid).maybeSingle(),
-        (supabase as any).from('lager_devices').select('id, model, serial_number, status').eq('customer_id', cid).limit(10),
-        (supabase as any).from('tickets').select('id', { count: 'exact', head: true }).eq('customer_id', cid).neq('status', 'closed'),
-      ]);
-      setCustomer(cu ?? null);
-      setDevices(dev ?? []);
+      if (cid) {
+        const { data: cu } = await (supabase as any)
+          .from('customers').select('id, company_name, phone').eq('id', cid).maybeSingle();
+        setCustomer(cu ?? null);
+      } else setCustomer(null);
+
+      if (email) {
+        const { data: dev } = await (supabase as any)
+          .from('lager_devices')
+          .select('id, model_name, serial_number, device_status')
+          .eq('customer_email', email).limit(10);
+        setDevices(dev ?? []);
+      } else setDevices([]);
+
+      let tq = (supabase as any).from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'closed');
+      tq = email ? tq.eq('customer_email', email) : tq.eq('customer_phone', phone);
+      const { count } = await tq;
       setOpenTickets(count ?? 0);
     })();
-  }, [conv?.customer_id, conv?.ac_contacts?.customer_id]);
+  }, [conv?.customer_id, conv?.ac_contacts?.customer_id, (conv?.ac_contacts as any)?.email, conv?.ac_contacts?.whatsapp_number, conv?.ac_contacts?.phone]);
 
   const timeline = useMemo(() => {
     const items = [
@@ -307,7 +319,7 @@ export default function MobilInboxChat() {
         <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
           <SheetHeader><SheetTitle>Kunde</SheetTitle></SheetHeader>
           <div className="space-y-3 pt-2 text-sm">
-            {!customer && (
+            {!customer && devices.length === 0 && (
               <div className="space-y-2">
                 <div className="text-muted-foreground">Unbekannter Kontakt</div>
                 <div className="text-xs">{conv.ac_contacts?.whatsapp_number || conv.external_thread_id}</div>
@@ -323,8 +335,8 @@ export default function MobilInboxChat() {
                     <div className="text-xs uppercase text-muted-foreground">Geräte</div>
                     {devices.map((d) => (
                       <Card key={d.id} className="p-2 text-xs">
-                        <div className="font-medium">{d.model || 'Gerät'}</div>
-                        <div className="text-muted-foreground">SN {d.serial_number || '—'} · {d.status || '—'}</div>
+                        <div className="font-medium">{d.model_name || 'Gerät'}</div>
+                        <div className="text-muted-foreground">SN {d.serial_number || '—'} · {d.device_status || '—'}</div>
                       </Card>
                     ))}
                   </div>
