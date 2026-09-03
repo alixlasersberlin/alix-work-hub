@@ -31,10 +31,9 @@ Deno.serve(async (req) => {
     const nowIso = new Date().toISOString();
     const { data: due, error } = await admin
       .from('follow_up_reminders')
-      .select('id, user_id, title, note, due_at, conversation_id, ticket_id')
-      .eq('status', 'OFFEN')
-      .is('notified_at', null)
-      .lte('due_at', nowIso)
+      .select('id, user_id, note, remind_at, conversation_id, ticket_id')
+      .eq('status', 'SCHEDULED')
+      .lte('remind_at', nowIso)
       .limit(200);
     if (error) throw error;
 
