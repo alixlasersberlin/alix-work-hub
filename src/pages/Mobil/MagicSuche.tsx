@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { magicSearch, EMPTY_RESULTS, type MagicResults } from '@/lib/mobil/command';
+import { haptic } from '@/lib/mobil/haptics';
+import { MobilPage, SectionLabel, EmptyState, ErrorState, ListSkeleton } from '@/components/mobil/ui';
 
 const HISTORY_KEY = 'alix.magic.history';
 
@@ -55,8 +57,10 @@ export default function MobilMagicSuche() {
   );
 
   return (
-    <div className="p-4 space-y-3">
-      <h1 className="text-xl font-bold flex items-center gap-2"><Search className="w-5 h-5" /> Magic Search</h1>
+    <MobilPage>
+      <h1 className="text-[22px] font-semibold tracking-tight flex items-center gap-2">
+        <Search className="w-5 h-5 text-primary" aria-hidden /> Magic Search
+      </h1>
       <div className="relative">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -64,7 +68,7 @@ export default function MobilMagicSuche() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Kunde, Telefon, Seriennummer, Ticket, Auftrag suchen…"
-          className="pl-9 h-12 text-base"
+          className="pl-9 h-12 text-base rounded-2xl"
           inputMode="search"
         />
       </div>
@@ -84,7 +88,7 @@ export default function MobilMagicSuche() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {history.map((h) => (
-              <button key={h} onClick={() => setQ(h)} className="px-3 py-1.5 rounded-full border border-border text-xs min-h-[34px]">
+              <button key={h} onClick={() => { haptic('light'); setQ(h); }} className="px-3 py-1.5 rounded-full border border-border text-xs min-h-[34px]">
                 {h}
               </button>
             ))}
@@ -93,10 +97,10 @@ export default function MobilMagicSuche() {
         </Card>
       )}
 
-      {loading && <div className="py-6 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" /></div>}
-      {error && <Card className="p-4 text-sm text-destructive border-destructive/40">{error}</Card>}
+      {loading && <ListSkeleton rows={3} height={62} />}
+      {error && <ErrorState hint={error} />}
       {!loading && !error && q.trim().length >= 2 && total === 0 && (
-        <Card className="p-6 text-center text-sm text-muted-foreground">Keine Treffer.</Card>
+        <EmptyState icon={Search} title="Keine Treffer" hint="Andere Schreibweise, Seriennummer oder Telefonnummer versuchen." />
       )}
 
       <Group title="Kunden" n={res.customers.length}>
@@ -147,7 +151,7 @@ export default function MobilMagicSuche() {
             right={c.priority ? <Badge variant={c.priority === 'P1' ? 'destructive' : 'secondary'} className="text-[10px]">{c.priority}</Badge> : null} />
         ))}
       </Group>
-    </div>
+    </MobilPage>
   );
 }
 
@@ -155,7 +159,7 @@ function Group({ title, n, children }: { title: string; n: number; children: Rea
   if (!n) return null;
   return (
     <div className="space-y-2">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground pt-2">{title} ({n})</div>
+      <SectionLabel>{title} ({n})</SectionLabel>
       {children}
     </div>
   );
@@ -163,8 +167,8 @@ function Group({ title, n, children }: { title: string; n: number; children: Rea
 
 function Row({ title, sub, right, onClick }: { title: string; sub?: string; right?: React.ReactNode; onClick: () => void }) {
   return (
-    <Card className="p-3 flex items-center gap-3 active:bg-muted/40 min-h-[60px]">
-      <button onClick={onClick} className="flex-1 min-w-0 text-left">
+    <Card className="rounded-2xl border-border/70 p-3 flex items-center gap-3 min-h-[64px] transition-transform duration-150 active:scale-[0.99] active:bg-muted/40 motion-reduce:transition-none motion-reduce:active:scale-100">
+      <button onClick={() => { haptic('light'); onClick(); }} className="flex-1 min-w-0 text-left">
         <div className="text-sm font-medium truncate">{title}</div>
         {sub && <div className="text-xs text-muted-foreground truncate">{sub}</div>}
       </button>
