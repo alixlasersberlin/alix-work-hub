@@ -145,7 +145,7 @@ export default function MobilInboxChat() {
     const cid = conv?.customer_id || conv?.ac_contacts?.customer_id;
     const email = (conv?.ac_contacts as any)?.email as string | undefined;
     const phone = conv?.ac_contacts?.whatsapp_number || conv?.ac_contacts?.phone || undefined;
-    if (!cid && !email && !phone) { setCustomer(null); setDevices([]); setOpenTickets(0); return; }
+    if (!cid && !email && !phone) { setCustomer(null); setDevices([]); setOpenTickets(0); setSmartLink(null); setSmartDevices([]); return; }
     (async () => {
       if (cid) {
         const { data: cu } = await (supabase as any)
@@ -161,12 +161,38 @@ export default function MobilInboxChat() {
         setDevices(dev ?? []);
       } else setDevices([]);
 
+      // AlixSmart-Registrierung: über Kunde oder direkt über die WhatsApp-Nummer
+      let link: any = null;
+      if (cid) {
+        const { data } = await (supabase as any)
+          .from('alixsmart_customer_links')
+          .select('id, match_status, match_score, match_method, alixsmart_phone, alixsmart_email, registered_at')
+          .eq('alixwork_customer_id', cid).maybeSingle();
+        link = data ?? null;
+      }
+      if (!link && phone) {
+        const { data } = await (supabase as any)
+          .from('alixsmart_customer_links')
+          .select('id, match_status, match_score, match_method, alixsmart_phone, alixsmart_email, registered_at')
+          .eq('alixsmart_phone', phone).maybeSingle();
+        link = data ?? null;
+      }
+      setSmartLink(link);
+      if (link?.id) {
+        const { data: sd } = await (supabase as any)
+          .from('alixsmart_device_links')
+          .select('id, device_name, device_model, serial_number, registration_status')
+          .eq('customer_link_id', link.id).limit(10);
+        setSmartDevices(sd ?? []);
+      } else setSmartDevices([]);
+
       let tq = (supabase as any).from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'closed');
       tq = email ? tq.eq('customer_email', email) : tq.eq('customer_phone', phone);
       const { count } = await tq;
       setOpenTickets(count ?? 0);
     })();
   }, [conv?.customer_id, conv?.ac_contacts?.customer_id, (conv?.ac_contacts as any)?.email, conv?.ac_contacts?.whatsapp_number, conv?.ac_contacts?.phone]);
+
 
   const timeline = useMemo(() => {
     const items = [
