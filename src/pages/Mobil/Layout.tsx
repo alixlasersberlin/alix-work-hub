@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 
 type Banner = { title: string; message: string; url: string; priority: string } | null;
 
-export default function MobilLayout() {
+function MobilLayoutInner() {
   const online = useOnlineStatus();
   const nav = useNavigate();
   const { profile, user } = useAuth();
