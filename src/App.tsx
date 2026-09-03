@@ -409,6 +409,7 @@ const MobilBenachrichtigungen = lazy(() => import("./pages/Mobil/Benachrichtigun
 const MobilEinstellungenBenachrichtigungen = lazy(() => import("./pages/Mobil/EinstellungenBenachrichtigungen"));
 const MobilPushDiagnose = lazy(() => import("./pages/Mobil/PushDiagnose"));
 const MobilAdminEskalationen = lazy(() => import("./pages/Mobil/AdminEskalationen"));
+const MobilAdminAlixAi = lazy(() => import("./pages/Mobil/AdminAlixAi"));
 const MobilKontakte = lazy(() => import("./pages/Mobil/Kontakte"));
 const MobileSyncAdmin = lazy(() => import("./pages/Admin/MobileSync"));
 const MobileGeraete = lazy(() => import("./pages/Einstellungen/MobileGeraete"));
@@ -2488,6 +2489,7 @@ function AppRoutes() {
           <Route path="einstellungen/benachrichtigungen" element={<MobilEinstellungenBenachrichtigungen />} />
           <Route path="push-diagnose" element={<MobilPushDiagnose />} />
           <Route path="admin/eskalationen" element={<MobilAdminEskalationen />} />
+          <Route path="admin/alix-ai" element={<MobilAdminAlixAi />} />
 
 
         </Route>
