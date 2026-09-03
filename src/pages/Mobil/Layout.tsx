@@ -220,3 +220,15 @@ function Tab({ to, icon: Icon, label, exact, badge }: { to: string; icon: any; l
     </NavLink>
   );
 }
+
+function FabAction({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-full border border-border bg-background/95 backdrop-blur px-4 min-h-[44px] shadow-lg text-sm font-medium active:bg-muted"
+    >
+      <Icon className="h-4 w-4 text-primary" />
+      {label}
+    </button>
+  );
+}
