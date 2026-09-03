@@ -72,6 +72,9 @@ export default function MobilInboxChat() {
   const [customer, setCustomer] = useState<any>(null);
   const [devices, setDevices] = useState<any[]>([]);
   const [openTickets, setOpenTickets] = useState<number>(0);
+  const [smartLink, setSmartLink] = useState<any>(null);
+  const [smartDevices, setSmartDevices] = useState<any[]>([]);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [flags, setFlags] = useState<FeatureFlags | null>(null);
