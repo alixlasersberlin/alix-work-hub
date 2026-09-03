@@ -183,6 +183,21 @@ Deno.serve(async (req) => {
       payload = await req.json();
     }
 
+    // Zustellstatus für ausgehende Nachrichten (sent/delivered/read/failed)
+    const statuses = normalizeStatuses(payload);
+    let statusUpdates = 0;
+    for (const st of statuses) {
+      const patch: Record<string, unknown> = { delivery_status: st.status };
+      if (st.status === 'delivered') patch.delivered_at = st.timestamp;
+      if (st.status === 'read') patch.read_at = st.timestamp;
+      if (st.status === 'sent') patch.sent_at = st.timestamp;
+      if (st.status === 'failed') patch.failed_reason = st.error ?? 'provider failure';
+      const { data: upd } = await supabase.from('ac_messages').update(patch)
+        .or(`provider_message_id.eq.${st.provider_message_id},external_message_id.eq.${st.provider_message_id}`)
+        .select('id');
+      statusUpdates += upd?.length ?? 0;
+    }
+
     const messages = normalizePayload(payload);
     let stored = 0, skipped = 0;
     for (const msg of messages) {
