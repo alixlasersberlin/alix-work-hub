@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Search, Truck, ClipboardList, MoreHorizontal, Wifi, WifiOff, ArrowLeft } from 'lucide-react';
+import { Home, Truck, ClipboardList, MessageSquare, MoreHorizontal, Wifi, WifiOff, ArrowLeft, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnlineStatus } from '@/hooks/emp/useOnlineStatus';
@@ -13,6 +13,7 @@ export default function MobilLayout() {
   const nav = useNavigate();
   const { profile } = useAuth();
   const [openStops, setOpenStops] = useState<number>(cacheGet<number>('openStops') ?? 0);
+  const [inboxUnread, setInboxUnread] = useState<number>(cacheGet<number>('inboxUnread') ?? 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +30,29 @@ export default function MobilLayout() {
       cacheSet('openStops', n);
     })();
     return () => { cancelled = true; };
+  }, []);
+
+  // Inbox-Badge (ungelesene WhatsApp-Nachrichten) — Realtime
+  useEffect(() => {
+    let cancelled = false;
+    const loadUnread = async () => {
+      const { data } = await (supabase as any)
+        .from('ac_conversations')
+        .select('unread_count')
+        .neq('inbox_status', 'ARCHIVED')
+        .gt('unread_count', 0)
+        .limit(500);
+      if (cancelled) return;
+      const n = (data ?? []).reduce((s: number, r: any) => s + (r.unread_count ?? 0), 0);
+      setInboxUnread(n);
+      cacheSet('inboxUnread', n);
+    };
+    loadUnread();
+    const ch = supabase
+      .channel('mobil-inbox-badge')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ac_conversations' }, loadUnread)
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
   }, []);
 
   return (
@@ -66,7 +90,7 @@ export default function MobilLayout() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <Tab to="/mobil" icon={Home} label="Home" exact />
-        <Tab to="/mobil/suche" icon={Search} label="Suche" />
+        <Tab to="/mobil/inbox" icon={MessageSquare} label="Inbox" badge={inboxUnread} />
         <Tab to="/mobil/touren" icon={Truck} label="Touren" badge={openStops} />
         <Tab to="/mobil/auftraege" icon={ClipboardList} label="Aufträge" />
         <Tab to="/mobil/mehr" icon={MoreHorizontal} label="Mehr" />
