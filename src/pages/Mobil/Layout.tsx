@@ -154,6 +154,36 @@ export default function MobilLayout() {
         <Outlet />
       </main>
 
+      {/* Globale Schnellaktion – einhändig erreichbar */}
+      {fabOpen && (
+        <button
+          className="fixed inset-0 z-40 bg-black/40"
+          aria-label="Schnellaktionen schliessen"
+          onClick={() => setFabOpen(false)}
+        />
+      )}
+      <div
+        className="fixed right-4 z-50 flex flex-col items-end gap-2"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+      >
+        {fabOpen && (
+          <>
+            <FabAction icon={Clock} label="Wiedervorlage" onClick={() => { setFabOpen(false); nav('/mobil/wiedervorlagen'); }} />
+            <FabAction icon={ArrowLeftRight} label="Übergabe" onClick={() => { setFabOpen(false); nav('/mobil/uebergabe'); }} />
+            <FabAction icon={Truck} label="Touren" onClick={() => { setFabOpen(false); nav('/mobil/touren'); }} />
+            <FabAction icon={ClipboardList} label="Aufträge" onClick={() => { setFabOpen(false); nav('/mobil/auftraege'); }} />
+          </>
+        )}
+        <button
+          onClick={() => setFabOpen((v) => !v)}
+          aria-label="Schnellaktionen"
+          aria-expanded={fabOpen}
+          className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <Plus className={`h-6 w-6 transition-transform ${fabOpen ? 'rotate-45' : ''}`} />
+        </button>
+      </div>
+
       <nav
         className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur grid grid-cols-5 text-[11px]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
