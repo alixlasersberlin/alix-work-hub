@@ -1125,6 +1125,7 @@ export type Database = {
           external_thread_id: string | null
           first_response_at: string | null
           id: string
+          inbox_status: string
           is_test: boolean
           last_agent_message_at: string | null
           last_customer_message_at: string | null
@@ -1161,6 +1162,7 @@ export type Database = {
           external_thread_id?: string | null
           first_response_at?: string | null
           id?: string
+          inbox_status?: string
           is_test?: boolean
           last_agent_message_at?: string | null
           last_customer_message_at?: string | null
@@ -1197,6 +1199,7 @@ export type Database = {
           external_thread_id?: string | null
           first_response_at?: string | null
           id?: string
+          inbox_status?: string
           is_test?: boolean
           last_agent_message_at?: string | null
           last_customer_message_at?: string | null
