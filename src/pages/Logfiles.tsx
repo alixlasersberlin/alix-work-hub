@@ -68,8 +68,8 @@ export default function Logfiles() {
     setLoading(true);
     try {
       const [a, s, p] = await Promise.all([
-        supabase.from('audit_logs').select('id,created_at,user_id,action,module,record_id,details,ip_address,user_agent').order('created_at', { ascending: false }).limit(2000),
-        supabase.from('login_sessions').select('id,created_at,user_id,is_active,expires_at,otp_verified_at,last_reauth_at,ip_address,device_info,session_context').order('created_at', { ascending: false }).limit(1000),
+        supabase.from('audit_logs').select('id,created_at,user_id,action,module,record_id,details,ip_address,user_agent').order('created_at', { ascending: false }).limit(500),
+        supabase.from('login_sessions').select('id,created_at,user_id,is_active,expires_at,otp_verified_at,last_reauth_at,ip_address,device_info,session_context').order('created_at', { ascending: false }).limit(300),
         supabase.from('user_profiles').select('id,full_name,email'),
       ]);
       if (a.error) throw a.error;

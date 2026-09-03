@@ -444,7 +444,8 @@ export default function AppLayout() {
     const initialId = isOrdersRoute
       ? window.setTimeout(() => { if (!cancelled) load(); }, 5000)
       : ric(() => { if (!cancelled) load(); });
-    const intervalId = window.setInterval(load, 60 * 1000);
+    // Polling entlastet: Realtime aktualisiert ohnehin sofort, daher 3-Minuten-Takt.
+    const intervalId = window.setInterval(load, 180 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
