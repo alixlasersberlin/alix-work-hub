@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact, FileSignature, MessageSquare, Radio, Bell, BellRing, Activity, AlarmClock, Sparkles, Ticket, Search, Clock, ArrowLeftRight, ShieldCheck, BarChart3, Settings2, Lock, LifeBuoy, Rocket } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { wipeLocalSensitiveData } from '@/lib/mobil/security';
 
 const LINKS = [
   { to: '/mobil/sicherheit', icon: Lock, label: 'Sicherheit' },
