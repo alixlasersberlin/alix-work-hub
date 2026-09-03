@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { haptic } from '@/lib/mobil/haptics';
+import { ListSkeleton, ErrorState } from '@/components/mobil/ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -186,19 +188,18 @@ export default function MobilInboxChat() {
   };
 
   const guard = async (fn: () => Promise<void>, ok: string) => {
-    try { await fn(); await load(); toast.success(ok); }
-    catch (e: any) { toast.error(e?.message || 'Aktion fehlgeschlagen.'); }
+    try { await fn(); await load(); haptic('success'); toast.success(ok); }
+    catch (e: any) { haptic('error'); toast.error(e?.message || 'Aktion fehlgeschlagen.'); }
   };
 
   if (loading) {
-    return <div className="p-3 space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>;
+    return <div className="p-3"><ListSkeleton rows={3} height={80} /></div>;
   }
   if (error || !conv) {
     return (
-      <Card className="m-3 p-6 text-center space-y-3">
-        <div className="font-medium">Chat konnte nicht geladen werden.</div>
-        <Button onClick={() => { setLoading(true); load(); }}>ERNEUT VERSUCHEN</Button>
-      </Card>
+      <div className="p-3">
+        <ErrorState hint="Chat konnte nicht geladen werden." onRetry={() => { setLoading(true); load(); }} />
+      </div>
     );
   }
 
@@ -235,8 +236,10 @@ export default function MobilInboxChat() {
       setDraft(''); setPendingFile(null); setReplyTo(null);
       localStorage.removeItem(DRAFT_KEY(conv.id));
       await load();
+      haptic('success');
       toast.success('Nachricht gesendet.');
     } catch (e: any) {
+      haptic('error');
       toast.error(e?.message || 'Nachricht konnte nicht gesendet werden.');
     } finally {
       setSending(false);
