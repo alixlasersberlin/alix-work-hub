@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  AlertTriangle, ArrowRight, Check, ChevronRight, Factory, Loader2, Package, ScanLine, ShieldCheck, Truck, User, Wand2, Warehouse, X,
+  AlertTriangle, ArrowRight, Check, ChevronRight, Factory, Loader2, Mail, Package, ScanLine, ShieldCheck, Truck, User, Wand2, Warehouse, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -61,6 +61,7 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MagicResult | null>(null);
   const [stageTarget, setStageTarget] = useState<SupplyStage | null>(null);
+  const [mailBusy, setMailBusy] = useState(false);
 
 
   const reload = useCallback(async () => {
@@ -313,7 +314,27 @@ export default function MagicOrderPanel({ orderId, onClose }: { orderId: string;
               <Row label="Modell / Farbe" value={[po.modellname, po.farbe].filter(Boolean).join(' · ')} />
               <Row label="Seriennummer" value={po.seriennummer} />
               <Row label="Notizen" value={po.anmerkungen} />
+              <div className="pt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={mailBusy}
+                  onClick={async () => {
+                    setMailBusy(true);
+                    try {
+                      const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+                      const r = await sendProductionStartedEmail(po.id, 'manuell');
+                      r.ok ? toast.success(`Info-Mail Kunde: ${r.message}`) : toast.error(`Nicht versendet: ${r.message}`);
+                    } finally { setMailBusy(false); }
+                  }}
+                >
+                  {mailBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  Info-Mail Kunde
+                </Button>
+              </div>
             </>
+
           ) : <div className="text-[12.5px] text-muted-foreground">Keine Lieferantenbestellung vorhanden.</div>}
         </Section>
 
