@@ -534,6 +534,22 @@ export default function ProductionPortal() {
                         <Download className="w-4 h-4 mr-1" /> {t.pdf}
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={updatingId === row.id}
+                      onClick={async () => {
+                        setUpdatingId(row.id);
+                        const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+                        const res = await sendProductionStartedEmail(row.id, 'manuell');
+                        setUpdatingId(null);
+                        if (res.ok) toast.success(res.message);
+                        else toast.error(`E-Mail nicht versendet: ${res.message}`);
+                      }}
+                    >
+                      <Mail className="w-4 h-4 mr-1" /> Info-Mail Kunde
+                    </Button>
+
                     {isSuperAdmin && row.approval_status === 'approved' && (
                       <Button
                         size="sm"
