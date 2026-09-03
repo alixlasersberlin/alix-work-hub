@@ -33,8 +33,6 @@ export function useMobileWriteAllowed(): { allowed: boolean; hint: string | null
 export default function MobileOpsGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<MobileAccessState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [softDismissed, setSoftDismissed] = useState(false);
-
   const load = useCallback(async () => {
     setLoading(true);
     const s = await fetchAccessState();
@@ -96,7 +94,20 @@ export default function MobileOpsGate({ children }: { children: ReactNode }) {
 
   return (
     <OpsCtx.Provider value={{ state, loading, readOnly, refresh: () => void load() }}>
-      {state?.maintenance_mode && (
+      {children}
+    </OpsCtx.Provider>
+  );
+}
+
+/** Betriebs-Banner (Wartung, Nur-Lesen, Update) – wird im Layout unter dem Header gerendert. */
+export function MobileOpsBanners() {
+  const { state } = useMobileOps();
+  const [softDismissed, setSoftDismissed] = useState(false);
+  if (!state) return null;
+
+  return (
+    <>
+      {state.maintenance_mode && (
         <div className="mx-3 mt-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] flex items-start gap-2">
           <Wrench className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
           <div>
@@ -108,13 +119,13 @@ export default function MobileOpsGate({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {!state?.maintenance_mode && readOnly && (
+      {!state.maintenance_mode && state.read_only && (
         <div className="mx-3 mt-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold">
           WARTUNGSMODUS – NUR LESEN
         </div>
       )}
 
-      {state?.update_required === 'SOFT' && !softDismissed && (
+      {state.update_required === 'SOFT' && !softDismissed && (
         <div className="mx-3 mt-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-[11px] flex items-center gap-2">
           <ArrowUpCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span className="flex-1">Update verfügbar (Version {state.recommended_version})</span>
@@ -123,7 +134,11 @@ export default function MobileOpsGate({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {children}
-    </OpsCtx.Provider>
+      {state.environment !== 'PRODUCTION' && (
+        <div className="mx-3 mt-2 rounded-md border border-border bg-muted/50 px-2 py-1 text-[10px] tracking-widest text-muted-foreground text-center">
+          {state.environment}
+        </div>
+      )}
+    </>
   );
 }
