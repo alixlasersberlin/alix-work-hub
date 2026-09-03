@@ -19,6 +19,7 @@ export default function MobilLayout() {
   const [inboxUnread, setInboxUnread] = useState<number>(cacheGet<number>('inboxUnread') ?? 0);
   const [notifUnread, setNotifUnread] = useState(0);
   const [banner, setBanner] = useState<Banner>(null);
+  const [fabOpen, setFabOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
