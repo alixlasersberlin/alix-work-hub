@@ -207,6 +207,13 @@ export default function ProductionPortal() {
       if (res.ok) toast.success(res.message);
       else toast.error(`E-Mail nicht versendet: ${res.message}`);
     }
+    if ((newStatus === 'gesendet' || newStatus === 'in_produktion') && prev?.status !== newStatus) {
+      const { sendProductionStartedEmail } = await import('@/lib/send-production-started-email');
+      const res = await sendProductionStartedEmail(id, 'automatisch');
+      if (res.ok) toast.success(`Produktionsstart-Info: ${res.message}`);
+      else toast.error(`Produktionsstart-E-Mail nicht versendet: ${res.message}`);
+    }
+
   };
 
   const revokeApproval = async (row: ProductionOrderRow) => {
