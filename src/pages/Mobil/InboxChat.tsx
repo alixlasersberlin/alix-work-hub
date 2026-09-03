@@ -25,6 +25,11 @@ import {
   type FeatureFlags, type QuickReply,
 } from '@/lib/inbox/api';
 
+const STATUS_TEXT: Record<string, string> = {
+  queued: 'in Warteschlange', sent: 'gesendet', delivered: 'zugestellt',
+  read: 'gelesen', failed: 'fehlgeschlagen', internal: 'intern',
+};
+
 const DRAFT_KEY = (id: string) => `alix-inbox-draft-${id}`;
 
 function MediaBubble({ att }: { att: any }) {
@@ -198,6 +203,45 @@ export default function MobilInboxChat() {
 
   const prio = normPriority(conv.priority);
   const mine = !!user && conv.assigned_to === user.id;
+  const canSend = windowOpen(messages);
+
+  async function handleSend() {
+    if (!conv) return;
+    if (!flags?.whatsapp_outbound_enabled) {
+      toast.error('WhatsApp-Versand ist deaktiviert. Nachricht wurde NICHT gesendet.');
+      return;
+    }
+    if (!canSend) {
+      toast.error('24-Stunden-Fenster geschlossen – bitte eine freigegebene Vorlage verwenden.');
+      return;
+    }
+    const text = draft.trim();
+    if (!text && !pendingFile) return;
+    setSending(true);
+    try {
+      let media: Awaited<ReturnType<typeof uploadInboxMedia>> | null = null;
+      if (pendingFile) media = await uploadInboxMedia(conv.id, pendingFile);
+      await sendWhatsApp({
+        conversation_id: conv.id,
+        message_type: media ? media.message_type : 'TEXT',
+        body: text || null,
+        storage_path: media?.storage_path ?? null,
+        file_name: media?.file_name ?? null,
+        mime_type: media?.mime_type ?? null,
+        file_size: media?.file_size ?? null,
+        reply_to_message_id: replyTo?.id ?? null,
+      });
+      setDraft(''); setPendingFile(null); setReplyTo(null);
+      localStorage.removeItem(DRAFT_KEY(conv.id));
+      await load();
+      toast.success('Nachricht gesendet.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Nachricht konnte nicht gesendet werden.');
+    } finally {
+      setSending(false);
+    }
+  }
+
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-9rem)]">
@@ -280,9 +324,15 @@ export default function MobilInboxChat() {
               <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
                 inbound ? 'bg-muted rounded-bl-sm' : 'bg-primary text-primary-foreground rounded-br-sm'
               }`}>
-                <div className="whitespace-pre-wrap break-words">{m.body || '—'}</div>
-                <div className={`text-[10px] mt-0.5 ${inbound ? 'text-muted-foreground' : 'opacity-80'}`}>
-                  {relTime(m.created_at)}{m.delivery_status ? ` · ${m.delivery_status}` : ''}
+                {Array.isArray(m.attachments) && m.attachments.length > 0 && (
+                  <div className="mb-1 space-y-1">
+                    {m.attachments.map((att: any, i: number) => <MediaBubble key={i} att={att} />)}
+                  </div>
+                )}
+                {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
+                <div className={`text-[10px] mt-0.5 flex items-center gap-2 ${inbound ? 'text-muted-foreground' : 'opacity-80'}`}>
+                  <span>{relTime(m.created_at)}{m.delivery_status ? ` · ${STATUS_TEXT[m.delivery_status] ?? m.delivery_status}` : ''}</span>
+                  <button className="underline" onClick={() => setReplyTo(m)}>Antworten</button>
                 </div>
               </div>
             </div>
