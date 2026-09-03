@@ -125,20 +125,34 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
     // Users: auf AlixWork-Kunden per E-Mail matchen (alixwork_customer_id ist Pflicht)
     if (entity === "users") {
       const emails = new Map<string, any>();
+      const phones = new Map<string, any>();
       for (const item of items) {
         const email = String(item.email ?? "").toLowerCase().trim();
         if (email) emails.set(email, item);
+        const p = toE164(item.phone ?? item.mobile ?? item.whatsapp ?? item.phone_number);
+        if (p && !phones.has(p)) phones.set(p, item);
       }
-      // Kunden laden (seitenweise)
+      // Kunden laden (seitenweise) – E-Mail und Telefon als Match-Schlüssel
       const custByEmail = new Map<string, string>();
+      const custByPhone = new Map<string, string>();
+      const phoneOfCustomer = new Map<string, string>();
+      const ambiguousPhones = new Set<string>();
       for (let off = 0; off < 50000; off += 1000) {
-        const { data } = await supabase.from("customers").select("id, email").range(off, off + 999);
+        const { data } = await supabase.from("customers").select("id, email, phone").range(off, off + 999);
         if (!data?.length) break;
         for (const c of data) {
           if (c.email) custByEmail.set(String(c.email).toLowerCase().trim(), c.id);
+          const p = toE164(c.phone);
+          if (p) {
+            phoneOfCustomer.set(c.id, p);
+            if (custByPhone.has(p) && custByPhone.get(p) !== c.id) ambiguousPhones.add(p);
+            else custByPhone.set(p, c.id);
+          }
         }
         if (data.length < 1000) break;
       }
+      for (const p of ambiguousPhones) custByPhone.delete(p);
+
       const { data: existingLinks } = await supabase
         .from("alixsmart_customer_links")
         .select("id, alixwork_customer_id")
@@ -146,18 +160,30 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
       const linkByCustomer = new Map<string, string>();
       for (const l of existingLinks ?? []) linkByCustomer.set(l.alixwork_customer_id, l.id);
 
-      const rows: any[] = [];
+      // Kandidaten: E-Mail-Match hat Vorrang, Telefon-Match ergänzt
+      const byCustomer = new Map<string, { item: any; method: string }>();
       for (const [email, item] of emails) {
         const customerId = custByEmail.get(email);
-        if (!customerId) continue; // kein AlixWork-Kunde -> kein Link möglich
+        if (customerId) byCustomer.set(customerId, { item, method: "api_sync" });
+      }
+      for (const [phone, item] of phones) {
+        const customerId = custByPhone.get(phone);
+        if (customerId && !byCustomer.has(customerId)) byCustomer.set(customerId, { item, method: "api_sync_phone" });
+      }
+
+      const rows: any[] = [];
+      for (const [customerId, { item, method }] of byCustomer) {
+        // Priorität: Nummer aus AlixSmart-API, Fallback Kundenstamm
+        const apiPhone = toE164(item.phone ?? item.mobile ?? item.whatsapp ?? item.phone_number);
         const row: any = {
           alixwork_customer_id: customerId,
           alixsmart_user_id: String(item.id ?? item.user_id ?? ""),
-          alixsmart_email: email,
-          alixsmart_phone: item.phone ?? null,
+          alixsmart_email: String(item.email ?? "").toLowerCase().trim() || null,
+          alixsmart_phone: apiPhone ?? phoneOfCustomer.get(customerId) ?? null,
           match_status: "registered",
           match_score: 100,
-          match_method: "api_sync",
+          match_method: method,
+          compared_fields: { phone_source: apiPhone ? "alixsmart_api" : (phoneOfCustomer.has(customerId) ? "alixwork_customer" : "none") },
           registered_at: item.created_at ?? null,
           last_checked_at: nowIso,
         };
@@ -171,6 +197,7 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
           .upsert(chunk, { onConflict: "alixwork_customer_id" });
         if (e) { failed += chunk.length; created = Math.max(0, created - chunk.length); console.error("[users] upsert:", e.message); }
       }
+
       items.length = 0;
     }
 
