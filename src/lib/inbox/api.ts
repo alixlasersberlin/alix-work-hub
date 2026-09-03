@@ -424,7 +424,7 @@ export async function createTicketFromChat(opts: {
   await (supabase as any).from('conversation_tickets').insert({
     conversation_id: opts.conv.id,
     ticket_id: ticket.id,
-    created_by: auth?.user?.id ?? null,
+    created_by_user_id: auth?.user?.id ?? null,
   });
   await logEvent(opts.conv.id, 'TICKET_CREATED', null, {
     ticket_id: ticket.id, ticket_number: ticket.ticket_number ?? ticket.case_number,
