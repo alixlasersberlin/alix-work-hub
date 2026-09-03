@@ -632,10 +632,30 @@ export default function MobilInboxChat() {
                     ))}
                   </div>
                 )}
+                {smartLink && (
+                  <div className="space-y-1 rounded-md border p-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs uppercase text-muted-foreground">AlixSmart</span>
+                      <Badge variant={smartLink.match_status === 'registered' ? 'default' : 'secondary'}>
+                        {smartLink.match_status === 'registered' ? 'Registriert' : smartLink.match_status === 'possible' ? 'Möglich' : 'Nicht registriert'}
+                      </Badge>
+                      {smartLink.match_method === 'phone' && <span className="text-[10px] text-muted-foreground">via Nummer</span>}
+                    </div>
+                    {smartLink.alixsmart_phone && (
+                      <div className="text-xs text-muted-foreground">{smartLink.alixsmart_phone}</div>
+                    )}
+                    {smartDevices.map((d) => (
+                      <div key={d.id} className="text-xs">
+                        {d.device_name || d.device_model || 'Gerät'} · SN {d.serial_number || '—'} · {d.registration_status || '—'}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-xs">Offene Tickets: {openTickets}</span>
                   <Button size="sm" variant="outline" onClick={() => nav('/tickets')}>TICKETS</Button>
                 </div>
+
               </>
             )}
           </div>
