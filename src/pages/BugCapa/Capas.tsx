@@ -230,6 +230,9 @@ export default function Capas() {
                         )}
                       </>
                     ) : null}
+                    <Button asChild size="icon" variant="ghost" className="h-8 w-8" title="12-Schritte-Prozess öffnen">
+                      <Link to={`/bug-capa/capa/${r.id}`}><Workflow className="h-4 w-4" /></Link>
+                    </Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetail(r)}>
                       <MessageSquare className="h-4 w-4" />
                     </Button>
