@@ -120,9 +120,20 @@ export default function SalesLeadAssignmentOverlay() {
     nav('/verkauf/angebot/neu');
   };
 
+  const handleDismiss = () => {
+    ack(lead.id);
+    setQueue((q) => q.filter((l) => l.id !== lead.id));
+  };
+
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-      <div className="w-full max-w-5xl rounded-3xl border-2 border-primary/50 bg-gradient-to-br from-background via-background to-primary/10 shadow-[0_0_80px_rgba(255,200,0,0.25)] overflow-hidden">
+    <div
+      className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in"
+      onClick={handleDismiss}
+    >
+      <div
+        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/50 bg-gradient-to-br from-background via-background to-primary/10 shadow-[0_0_80px_rgba(255,200,0,0.25)]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-4 px-8 py-6 border-b border-primary/30 bg-primary/10">
           <div className="h-14 w-14 rounded-2xl bg-primary/20 flex items-center justify-center">
             <Inbox className="h-8 w-8 text-primary animate-pulse" />
@@ -137,9 +148,13 @@ export default function SalesLeadAssignmentOverlay() {
               <div className="text-xs uppercase tracking-wider text-muted-foreground">{lead.score_category || 'Score'}</div>
             </div>
           )}
+          <Button variant="ghost" size="icon" onClick={handleDismiss} title="Schließen (Esc)" aria-label="Schließen">
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
+
           <Row icon={<Building2 className="h-5 w-5" />} label="Firma" value={lead.company} />
           <Row icon={<UserIcon className="h-5 w-5" />} label="Ansprechpartner" value={fullName} />
           <Row icon={<Mail className="h-5 w-5" />} label="E-Mail" value={lead.email} link={lead.email ? `mailto:${lead.email}` : undefined} />
