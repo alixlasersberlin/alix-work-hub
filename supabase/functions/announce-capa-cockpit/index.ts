@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     await new Promise(r => setTimeout(r, 400));
   }
 
-  await admin.from("app_settings").insert({ key: SETTING_KEY, value: { sent, at: new Date().toISOString() } });
+  await admin.from("app_settings").insert({ key: SETTING_KEY, value: JSON.stringify({ sent, at: new Date().toISOString() }) });
 
   return json({ sent, total: recipients.length, failed });
 });
