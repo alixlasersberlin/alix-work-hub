@@ -99,6 +99,13 @@ export const navItems: NavItem[] = [
     ],
   },
   {
+    path: '/bug-capa/capa-cockpit', label: 'CAPA 2.0 COCKPIT', icon: Workflow, roles: null,
+    children: [
+      { path: '/bug-capa/capa-cockpit', label: 'Cockpit', icon: LayoutDashboard, roles: null },
+      { path: '/bug-capa/capa', label: 'CAPA-Fälle', icon: ClipboardCheck, roles: null },
+    ],
+  },
+  {
     path: '/mailcenter', label: 'KONTAKT', icon: HelpCircle,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Tourenplanung', 'Bestellwesen', 'Order', 'Auftragsverwaltung', 'QM', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
