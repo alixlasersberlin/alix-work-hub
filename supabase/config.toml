@@ -457,3 +457,6 @@ verify_jwt = false
 
 [functions.anzahlung-mahn-engine]
 verify_jwt = false
+
+[functions.announce-capa-cockpit]
+verify_jwt = false
