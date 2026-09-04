@@ -9695,54 +9695,81 @@ export type Database = {
       capa_actions: {
         Row: {
           action_text: string
+          adverse_impact: string | null
+          adverse_impact_note: string | null
           audit_finding_id: string | null
           bug_id: string | null
           capa_id: string | null
+          category: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
           due_date: string | null
           evidence_text: string | null
+          expected_result: string | null
           id: string
+          priority: string
           responsible_id: string | null
+          root_cause_ref: string | null
           source: string
+          start_date: string | null
           status: string
           updated_at: string
           updated_by: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           action_text: string
+          adverse_impact?: string | null
+          adverse_impact_note?: string | null
           audit_finding_id?: string | null
           bug_id?: string | null
           capa_id?: string | null
+          category?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           due_date?: string | null
           evidence_text?: string | null
+          expected_result?: string | null
           id?: string
+          priority?: string
           responsible_id?: string | null
+          root_cause_ref?: string | null
           source?: string
+          start_date?: string | null
           status?: string
           updated_at?: string
           updated_by?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           action_text?: string
+          adverse_impact?: string | null
+          adverse_impact_note?: string | null
           audit_finding_id?: string | null
           bug_id?: string | null
           capa_id?: string | null
+          category?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           due_date?: string | null
           evidence_text?: string | null
+          expected_result?: string | null
           id?: string
+          priority?: string
           responsible_id?: string | null
+          root_cause_ref?: string | null
           source?: string
+          start_date?: string | null
           status?: string
           updated_at?: string
           updated_by?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -9782,78 +9809,489 @@ export type Database = {
           },
         ]
       }
+      capa_attachments: {
+        Row: {
+          capa_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          kind: string | null
+          mime_type: string | null
+          size_bytes: number | null
+          step_no: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          capa_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          kind?: string | null
+          mime_type?: string | null
+          size_bytes?: number | null
+          step_no?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          capa_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          kind?: string | null
+          mime_type?: string | null
+          size_bytes?: number | null
+          step_no?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capa_attachments_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capa_overdue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capa_attachments_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capa_step_state: {
+        Row: {
+          capa_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          step_no: number
+          updated_at: string
+        }
+        Insert: {
+          capa_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          step_no: number
+          updated_at?: string
+        }
+        Update: {
+          capa_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          step_no?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capa_step_state_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capa_overdue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capa_step_state_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capa_timeline: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          capa_id: string
+          created_at: string
+          event_type: string
+          field_name: string | null
+          id: string
+          new_value: string | null
+          note: string | null
+          old_value: string | null
+          step_no: number | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string | null
+          capa_id: string
+          created_at?: string
+          event_type: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+          step_no?: number | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string | null
+          capa_id?: string
+          created_at?: string
+          event_type?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+          step_no?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capa_timeline_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capa_overdue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capa_timeline_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capa_vigilance_rules: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          days: number
+          description: string | null
+          id: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          days: number
+          description?: string | null
+          id?: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          days?: number
+          description?: string | null
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       capas: {
         Row: {
           audit_finding_id: string | null
+          batch_number: string | null
           bug_id: string | null
           capa_number: string | null
+          capa_required: boolean | null
+          closed_at: string | null
           closure_approved_at: string | null
           closure_approved_by: string | null
+          closure_summary: string | null
+          complaint_number: string | null
+          containment_actions: Json
+          correction_text: string | null
           corrective_action: string | null
+          country: string | null
           created_at: string
           created_by: string | null
+          current_step: number
+          customer_id: string | null
+          customer_name: string | null
+          decision_approved_at: string | null
+          decision_approved_by: string | null
+          decision_at: string | null
+          decision_by: string | null
+          decision_factors: Json
+          description: string | null
+          direct_cause: string | null
           due_date: string | null
+          eff_actual: string | null
+          eff_check_date: string | null
+          eff_criterion: string | null
+          eff_evidence: string | null
+          eff_method: string | null
+          eff_period: string | null
+          eff_responsible_id: string | null
+          eff_result: string | null
+          eff_start: string | null
+          eff_target: string | null
           effectiveness_check: string | null
           effectiveness_ok: boolean | null
+          failure_mode: string | null
+          fsca: Json
+          fsca_affected: boolean | null
+          fsca_released_at: string | null
+          fsca_released_by: string | null
+          health_consequences: string | null
           id: string
           immediate_action: string | null
+          immediate_danger: string | null
+          investigation: Json
+          market: string | null
+          no_capa_reason: string | null
+          no_capa_risk: string | null
+          patient_affected: string | null
+          pms_assessment: string | null
+          pms_stats: Json
           preventive_action: string | null
+          priority: string
+          product_name: string | null
+          product_ref: string | null
+          product_secured: string | null
+          product_secured_reason: string | null
           production_order_id: string | null
+          rca_data: Json
+          rca_method: string | null
+          received_date: string | null
           responsible_id: string | null
+          risk_after: Json
+          risk_answers: Json
+          risk_before: Json
+          risk_decision: string | null
+          risk_evidence: string | null
+          risk_level: string
           root_cause: string | null
+          root_cause_kind: string | null
+          root_cause_note: string | null
+          root_cause_status: string | null
+          scope_answers: Json
+          scope_result: string | null
+          serial_number: string | null
+          site: string | null
           status: string
           title: string
           trigger_type: string
+          udi: string | null
           updated_at: string
           updated_by: string | null
+          vigilance_answers: Json
+          vigilance_approved_at: string | null
+          vigilance_approved_by: string | null
+          vigilance_deadline_date: string | null
+          vigilance_preliminary: boolean
+          vigilance_result: string | null
+          vigilance_rule_code: string | null
         }
         Insert: {
           audit_finding_id?: string | null
+          batch_number?: string | null
           bug_id?: string | null
           capa_number?: string | null
+          capa_required?: boolean | null
+          closed_at?: string | null
           closure_approved_at?: string | null
           closure_approved_by?: string | null
+          closure_summary?: string | null
+          complaint_number?: string | null
+          containment_actions?: Json
+          correction_text?: string | null
           corrective_action?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
+          current_step?: number
+          customer_id?: string | null
+          customer_name?: string | null
+          decision_approved_at?: string | null
+          decision_approved_by?: string | null
+          decision_at?: string | null
+          decision_by?: string | null
+          decision_factors?: Json
+          description?: string | null
+          direct_cause?: string | null
           due_date?: string | null
+          eff_actual?: string | null
+          eff_check_date?: string | null
+          eff_criterion?: string | null
+          eff_evidence?: string | null
+          eff_method?: string | null
+          eff_period?: string | null
+          eff_responsible_id?: string | null
+          eff_result?: string | null
+          eff_start?: string | null
+          eff_target?: string | null
           effectiveness_check?: string | null
           effectiveness_ok?: boolean | null
+          failure_mode?: string | null
+          fsca?: Json
+          fsca_affected?: boolean | null
+          fsca_released_at?: string | null
+          fsca_released_by?: string | null
+          health_consequences?: string | null
           id?: string
           immediate_action?: string | null
+          immediate_danger?: string | null
+          investigation?: Json
+          market?: string | null
+          no_capa_reason?: string | null
+          no_capa_risk?: string | null
+          patient_affected?: string | null
+          pms_assessment?: string | null
+          pms_stats?: Json
           preventive_action?: string | null
+          priority?: string
+          product_name?: string | null
+          product_ref?: string | null
+          product_secured?: string | null
+          product_secured_reason?: string | null
           production_order_id?: string | null
+          rca_data?: Json
+          rca_method?: string | null
+          received_date?: string | null
           responsible_id?: string | null
+          risk_after?: Json
+          risk_answers?: Json
+          risk_before?: Json
+          risk_decision?: string | null
+          risk_evidence?: string | null
+          risk_level?: string
           root_cause?: string | null
+          root_cause_kind?: string | null
+          root_cause_note?: string | null
+          root_cause_status?: string | null
+          scope_answers?: Json
+          scope_result?: string | null
+          serial_number?: string | null
+          site?: string | null
           status?: string
           title: string
           trigger_type?: string
+          udi?: string | null
           updated_at?: string
           updated_by?: string | null
+          vigilance_answers?: Json
+          vigilance_approved_at?: string | null
+          vigilance_approved_by?: string | null
+          vigilance_deadline_date?: string | null
+          vigilance_preliminary?: boolean
+          vigilance_result?: string | null
+          vigilance_rule_code?: string | null
         }
         Update: {
           audit_finding_id?: string | null
+          batch_number?: string | null
           bug_id?: string | null
           capa_number?: string | null
+          capa_required?: boolean | null
+          closed_at?: string | null
           closure_approved_at?: string | null
           closure_approved_by?: string | null
+          closure_summary?: string | null
+          complaint_number?: string | null
+          containment_actions?: Json
+          correction_text?: string | null
           corrective_action?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
+          current_step?: number
+          customer_id?: string | null
+          customer_name?: string | null
+          decision_approved_at?: string | null
+          decision_approved_by?: string | null
+          decision_at?: string | null
+          decision_by?: string | null
+          decision_factors?: Json
+          description?: string | null
+          direct_cause?: string | null
           due_date?: string | null
+          eff_actual?: string | null
+          eff_check_date?: string | null
+          eff_criterion?: string | null
+          eff_evidence?: string | null
+          eff_method?: string | null
+          eff_period?: string | null
+          eff_responsible_id?: string | null
+          eff_result?: string | null
+          eff_start?: string | null
+          eff_target?: string | null
           effectiveness_check?: string | null
           effectiveness_ok?: boolean | null
+          failure_mode?: string | null
+          fsca?: Json
+          fsca_affected?: boolean | null
+          fsca_released_at?: string | null
+          fsca_released_by?: string | null
+          health_consequences?: string | null
           id?: string
           immediate_action?: string | null
+          immediate_danger?: string | null
+          investigation?: Json
+          market?: string | null
+          no_capa_reason?: string | null
+          no_capa_risk?: string | null
+          patient_affected?: string | null
+          pms_assessment?: string | null
+          pms_stats?: Json
           preventive_action?: string | null
+          priority?: string
+          product_name?: string | null
+          product_ref?: string | null
+          product_secured?: string | null
+          product_secured_reason?: string | null
           production_order_id?: string | null
+          rca_data?: Json
+          rca_method?: string | null
+          received_date?: string | null
           responsible_id?: string | null
+          risk_after?: Json
+          risk_answers?: Json
+          risk_before?: Json
+          risk_decision?: string | null
+          risk_evidence?: string | null
+          risk_level?: string
           root_cause?: string | null
+          root_cause_kind?: string | null
+          root_cause_note?: string | null
+          root_cause_status?: string | null
+          scope_answers?: Json
+          scope_result?: string | null
+          serial_number?: string | null
+          site?: string | null
           status?: string
           title?: string
           trigger_type?: string
+          udi?: string | null
           updated_at?: string
           updated_by?: string | null
+          vigilance_answers?: Json
+          vigilance_approved_at?: string | null
+          vigilance_approved_by?: string | null
+          vigilance_deadline_date?: string | null
+          vigilance_preliminary?: boolean
+          vigilance_result?: string | null
+          vigilance_rule_code?: string | null
         }
         Relationships: [
           {
