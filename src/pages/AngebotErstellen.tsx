@@ -1463,7 +1463,7 @@ export default function AngebotErstellen() {
   }
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6 max-w-6xl">
+    <div className="p-4 lg:p-5 animate-fade-in space-y-4 max-w-4xl">
       <div>
         <Button
           variant="ghost"
@@ -1474,7 +1474,7 @@ export default function AngebotErstellen() {
           <ArrowLeft className="w-4 h-4 mr-1.5" />
           Zurück
         </Button>
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+        <h1 className="text-xl font-display font-bold text-foreground flex items-center gap-2">
           {sofortMode ? <Zap className="w-6 h-6 text-primary" /> : <FilePlus className="w-6 h-6 text-primary" />}
           {sofortMode ? 'Sofortauftrag erstellen' : 'Angebot erstellen'}
         </h1>
@@ -1495,7 +1495,7 @@ export default function AngebotErstellen() {
         </div>
       )}
 
-      <div className="rounded-xl border border-border bg-card card-glow p-6 grid gap-4 md:grid-cols-3">
+      <div className="rounded-xl border border-border bg-card card-glow p-4 grid gap-3 md:grid-cols-3">
         <div>
           <Label>{sofortMode ? 'Auftragsnummer' : 'Angebotsnummer'}</Label>
           <Input value={offerNumber} onChange={e => setOfferNumber(e.target.value)} className="bg-secondary border-border mt-1.5" />
@@ -1636,7 +1636,7 @@ export default function AngebotErstellen() {
       </div>
 
       {/* Customer */}
-      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
+      <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
         <h2 className="font-semibold text-foreground">Kunde</h2>
         {selectedCustomer ? (
           <div className="p-4 rounded-lg bg-secondary border border-border space-y-3">
@@ -1864,7 +1864,7 @@ export default function AngebotErstellen() {
       </div>
 
       {/* Items */}
-      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
+      <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Positionen</h2>
           <div className="flex gap-2">
@@ -2048,7 +2048,7 @@ export default function AngebotErstellen() {
       </div>
 
       {/* Zahlungsberechnung */}
-      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
+      <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground">Zahlungsberechnung</h3>
           <Select value={payType} onValueChange={(v: any) => { setPayType(v); if (v === 'Alix Smart Impulse' && payTerm > 36) setPayTerm(36); if (v === 'Miete' && ![12,24,36].includes(payTerm)) setPayTerm(24); }}>
@@ -2174,7 +2174,7 @@ export default function AngebotErstellen() {
       </div>
 
       {/* Notes */}
-      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-3">
+      <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
         <Label>Anmerkungen / Bedingungen</Label>
         <Textarea
           value={notes}
