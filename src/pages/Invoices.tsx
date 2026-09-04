@@ -1724,14 +1724,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     if (editRow.source === 'unpaid') { toast({ title: 'Nur Ansicht', description: 'Offene-Posten-Rechnungen sind hier schreibgeschützt.', variant: 'destructive' }); return; }
     setEditSaving(true);
     try {
+      // Storno nur beim tatsächlichen Übergang buchen – bereits stornierte Rechnungen
+      // dürfen weiterhin normal bearbeitet werden (Referenz, Fälligkeit, Beträge …).
+      const alreadyStorno = editRow.payment_status === 'Storniert' || editRow.status === 'void';
       const wantsStorno = editForm.payment_status === 'Storniert' || editForm.status === 'void';
-      if (wantsStorno) {
+      if (wantsStorno && !alreadyStorno) {
         const stornoPatch = await bookStorno(editRow);
         setRows((prev) => prev.map((x) => (x.id === editRow.id && x.source === editRow.source ? { ...x, ...stornoPatch } : x)));
         toast({ title: 'Rechnung storniert', description: `Offener Betrag ausgebucht (Storno) – ${editRow.invoice_number ?? ''}.` });
         setEditRow(null);
         return;
       }
+
       const table = tableFor(editRow.source);
       const patch: any = {
         reference_number: editForm.reference_number || null,
