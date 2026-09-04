@@ -32,6 +32,7 @@ import { template as alixdocsAccessGranted } from './alixdocs-access-granted.tsx
 import { template as ruecklastschriftMahnung } from './ruecklastschrift-mahnung.tsx'
 import { template as ruecklastschriftGebuehrenrechnung } from './ruecklastschrift-gebuehrenrechnung.tsx'
 import { template as offerFollowupDigest } from './offer-followup-digest.tsx'
+import { template as capaCockpitAnnouncement } from './capa-cockpit-announcement.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -57,4 +58,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'ruecklastschrift-mahnung': ruecklastschriftMahnung,
   'ruecklastschrift-gebuehrenrechnung': ruecklastschriftGebuehrenrechnung,
   'offer-followup-digest': offerFollowupDigest,
+  'capa-cockpit-announcement': capaCockpitAnnouncement,
 }
