@@ -619,7 +619,7 @@ const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
 const BugCapaBugs = lazy(() => import("./pages/BugCapa/Bugs"));
 const BugCapaCapas = lazy(() => import("./pages/BugCapa/Capas"));
 const BugCapaCockpit = lazy(() => import("./pages/BugCapa/CapaCockpit"));
-const BugCapaDetail = lazy(() => import("./pages/BugCapa/CapaDetail").then(m => ({ default: m.CapaDetail })));
+const BugCapaDetail = lazy(() => import("./pages/BugCapa/CapaDetail"));
 const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"));
 const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
