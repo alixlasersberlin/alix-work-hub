@@ -93,9 +93,23 @@ export default function SalesLeadAssignmentOverlay() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user?.id, fetchLead]);
+  // Esc schließt das Fenster
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setQueue((q) => {
+        if (q.length === 0) return q;
+        ack(q[0].id);
+        return q.slice(1);
+      });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   if (queue.length === 0) return null;
   const lead = queue[0];
+
 
   const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ');
   const address = [lead.street, [lead.zip, lead.city].filter(Boolean).join(' '), lead.country].filter(Boolean).join(', ');
