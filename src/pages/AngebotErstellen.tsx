@@ -1463,7 +1463,7 @@ export default function AngebotErstellen() {
   }
 
   return (
-    <div className="p-4 lg:p-5 animate-fade-in space-y-4 max-w-4xl">
+    <div className="p-4 lg:p-5 animate-fade-in space-y-4 max-w-4xl max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain">
       <div>
         <Button
           variant="ghost"
