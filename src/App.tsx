@@ -618,6 +618,8 @@ const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m =>
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
 const BugCapaBugs = lazy(() => import("./pages/BugCapa/Bugs"));
 const BugCapaCapas = lazy(() => import("./pages/BugCapa/Capas"));
+const BugCapaCockpit = lazy(() => import("./pages/BugCapa/CapaCockpit"));
+const BugCapaDetail = lazy(() => import("./pages/BugCapa/CapaDetail"));
 const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"));
 const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
@@ -2106,6 +2108,8 @@ function AppRoutes() {
             <Route index element={<BugCapaDashboard />} />
             <Route path="bugs" element={<BugCapaBugs />} />
             <Route path="capa" element={<BugCapaCapas />} />
+            <Route path="capa-cockpit" element={<BugCapaCockpit />} />
+            <Route path="capa/:id" element={<BugCapaDetail />} />
             <Route path="reklamationen" element={<BugCapaReklamationen />} />
             <Route path="audit" element={<BugCapaAudit />} />
             <Route path="massnahmen" element={<BugCapaMassnahmen />} />
@@ -2113,6 +2117,7 @@ function AppRoutes() {
             <Route path="analytics" element={<BugCapaAnalytics />} />
             <Route path="iso-report" element={<BugCapaIsoReport />} />
           </Route>
+
 
           <Route path="/audit-center" element={<AuditCenterLayout />}>
             <Route index element={<AuditOverview />} />

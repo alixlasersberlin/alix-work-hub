@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Bug, ClipboardCheck, AlertOctagon, FileSearch, ListChecks, BarChart3, LayoutDashboard, Shield, TrendingUp, FileText } from 'lucide-react';
+import { Bug, ClipboardCheck, AlertOctagon, FileSearch, ListChecks, BarChart3, LayoutDashboard, Shield, TrendingUp, FileText, Workflow } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const QM_ROLES = ['Admin', 'Super Admin', 'QM'];
@@ -22,7 +22,8 @@ const tabs = [
   { to: '/bug-capa', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/bug-capa/analytics', label: 'Analytics', icon: TrendingUp },
   { to: '/bug-capa/bugs', label: 'Bugs', icon: Bug },
-  { to: '/bug-capa/capa', label: 'CAPA', icon: ClipboardCheck },
+  { to: '/bug-capa/capa', label: 'CAPA', icon: ClipboardCheck, end: true },
+  { to: '/bug-capa/capa-cockpit', label: 'CAPA 2.0 Cockpit', icon: Workflow },
   { to: '/bug-capa/reklamationen', label: 'Reklamationen', icon: AlertOctagon },
   { to: '/bug-capa/audit', label: 'Audit-Feststellungen', icon: FileSearch },
   { to: '/bug-capa/massnahmen', label: 'Maßnahmen', icon: ListChecks },

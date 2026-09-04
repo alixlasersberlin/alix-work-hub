@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Plus, MessageSquare, Pencil, CheckCircle2 } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, CheckCircle2, Workflow } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Section, CAPA_STATUS, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
@@ -229,6 +230,9 @@ export default function Capas() {
                         )}
                       </>
                     ) : null}
+                    <Button asChild size="icon" variant="ghost" className="h-8 w-8" title="12-Schritte-Prozess öffnen">
+                      <Link to={`/bug-capa/capa/${r.id}`}><Workflow className="h-4 w-4" /></Link>
+                    </Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetail(r)}>
                       <MessageSquare className="h-4 w-4" />
                     </Button>
