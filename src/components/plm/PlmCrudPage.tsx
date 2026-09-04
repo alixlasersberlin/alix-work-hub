@@ -140,6 +140,9 @@ export function PlmCrudPage({
       else if (f.type === 'boolean') v = !!v;
       else if (f.type === 'tags') v = String(v || '').split(',').map(s => s.trim()).filter(Boolean);
       else if (v === '') v = null;
+      // Beim Anlegen leere Felder weglassen, damit DB-Defaults (z. B. Status, Revision) greifen
+      // und NOT-NULL-Spalten nicht mit explizitem NULL überschrieben werden.
+      if (!editing && (v === null || v === undefined)) continue;
       payload[f.key] = v;
     }
     setSaving(true);
@@ -147,7 +150,15 @@ export function PlmCrudPage({
       ? await (supabase.from(table as any) as any).update(payload).eq('id', editing.id)
       : await (supabase.from(table as any) as any).insert(payload);
     setSaving(false);
-    if (res.error) return toast.error(res.error.message);
+    if (res.error) {
+      const msg = /null value in column "([^"]+)"/.exec(res.error.message);
+      if (msg) {
+        const label = fields.find(f => f.key === msg[1])?.label ?? msg[1];
+        return toast.error(`Pflichtfeld darf nicht leer sein: ${label}`);
+      }
+      return toast.error(res.error.message);
+    }
+
     await supabase.from('plm_audit_log' as any).insert({
       entity_type: table, entity_id: editing?.id ?? null,
       action: editing ? 'update' : 'create', changes: payload as any,
