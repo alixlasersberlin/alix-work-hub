@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Inbox, FilePlus, Mail, Phone, Building2, User as UserIcon, MapPin, MessageSquare } from 'lucide-react';
+import { Inbox, FilePlus, Mail, Phone, Building2, User as UserIcon, MapPin, MessageSquare, X } from 'lucide-react';
 
 type Lead = {
   id: string;
