@@ -123,6 +123,16 @@ export function PlmCrudPage({
   }
 
   async function save() {
+    const missing = fields
+      .filter(f => f.required && f.type !== 'boolean')
+      .filter(f => {
+        const v = form[f.key];
+        return v === undefined || v === null || String(v).trim() === '';
+      });
+    if (missing.length) {
+      toast.error(`Pflichtfelder fehlen: ${missing.map(f => f.label).join(', ')}`);
+      return;
+    }
     const payload: Record<string, any> = { ...(defaults || {}) };
     for (const f of fields) {
       let v = form[f.key];
