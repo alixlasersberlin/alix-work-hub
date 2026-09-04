@@ -9,7 +9,7 @@ const fields: PlmField[] = [
   { key: 'hardware_version', label: 'Hardwareversion', group: 'Versionen' },
   { key: 'software_version', label: 'Softwareversion', group: 'Versionen' },
   { key: 'firmware_version', label: 'Firmwareversion', group: 'Versionen' },
-  { key: 'version', label: 'Version', group: 'Versionen', list: true },
+  { key: 'version', label: 'Version', group: 'Versionen', list: true, required: true },
   { key: 'revision', label: 'Revision', group: 'Versionen', list: true },
   { key: 'ce_status', label: 'CE Status', type: 'select', options: CE_STATUS, group: 'Regulatory', list: true },
   { key: 'mdr_status', label: 'MDR Status', type: 'select', options: MDR_STATUS, group: 'Regulatory', list: true },

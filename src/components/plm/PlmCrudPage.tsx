@@ -262,7 +262,7 @@ export function PlmCrudPage({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {gf.map(f => (
                     <div key={f.key} className={f.type === 'textarea' ? 'md:col-span-2 space-y-1' : 'space-y-1'}>
-                      <Label className="text-xs">{f.label}</Label>
+                      <Label className="text-xs">{f.label}{f.required ? <span className="text-destructive"> *</span> : null}</Label>
                       {f.type === 'textarea' ? (
                         <Textarea rows={3} value={form[f.key] ?? ''} onChange={e => setForm(s => ({ ...s, [f.key]: e.target.value }))} />
                       ) : f.type === 'select' ? (
