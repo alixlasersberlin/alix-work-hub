@@ -165,6 +165,30 @@ function HeroImageField({ form, set, disabled }: any) {
 }
 
 
+/** Angebotsbild: zeigt niemals die Supabase-Domain, sondern eine alixwork.de-Adresse. */
+function OfferImageField({ form, set, disabled }: any) {
+  const [edit, setEdit] = useState(false);
+  const raw = form.offer_image_url ?? '';
+  const masked = displayMediaUrl(raw);
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-end">
+        {!disabled && (
+          <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground underline"
+            onClick={() => setEdit(v => !v)}>
+            {edit ? 'Fertig' : 'Bearbeiten'}
+          </button>
+        )}
+      </div>
+      {edit
+        ? <Input value={raw} disabled={disabled} placeholder="Bild-Adresse eingeben oder unten aus den Medien wählen"
+            onChange={e => set('offer_image_url', e.target.value)} />
+        : <Input value={masked} readOnly title={masked} className="text-muted-foreground"
+            placeholder="Bild unten aus den Medien wählen" />}
+    </div>
+  );
+}
+
 /** Daten eines anderen Geräts übernehmen */
 const COPY_GROUPS: { key: string; label: string; fields: string[] }[] = [
   { key: 'texte', label: 'Beschreibungen', fields: ['short_description', 'long_description', 'features'] },
@@ -452,9 +476,7 @@ export default function ProductHubEditor() {
                   </div>
                 )}
                 <div className="flex-1 space-y-2">
-                  <Input value={form.offer_image_url || ''} disabled={!canWrite}
-                    placeholder="Bild-URL oder unten aus den Medien wählen"
-                    onChange={e => set('offer_image_url', e.target.value)} />
+                  <OfferImageField form={form} set={set} disabled={!canWrite} />
                   <p className="text-[11px] text-muted-foreground">
                     Dieses Bild wird automatisch in Angeboten, Angebots-PDFs und Aufträgen verwendet.
                   </p>
