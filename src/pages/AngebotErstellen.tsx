@@ -778,7 +778,45 @@ export default function AngebotErstellen() {
   };
 
 
+  const applyDeviceConfig = (cfg: DeviceConfig) => {
+    if (configLineId) {
+      setLines(prev => prev.map(l => (l.id === configLineId ? {
+        ...l,
+        ph_product_id: cfg.product_id ?? l.ph_product_id ?? null,
+        ph_product_name: cfg.product_name ?? l.ph_product_name ?? null,
+        device_color: cfg.device_color ?? null,
+        ral_color_code: cfg.ral_color_code ?? null,
+        laser_module_power: cfg.laser_module_power ?? null,
+      } : l)));
+    } else if (pendingItem) {
+      appendLine(buildLineFromItem(pendingItem, cfg));
+    }
+    setPendingItem(null);
+    setConfigLineId(null);
+  };
+
+  const openLineConfig = (l: LineItem) => {
+    const dev = matchPhDevice(l);
+    setConfigTarget({
+      productId: l.ph_product_id ?? dev?.id ?? null,
+      productName: l.name,
+      colors: l.config_colors ?? dev?.colors ?? null,
+      powers: l.config_powers ?? dev?.powers ?? null,
+      initial: {
+        device_color: l.device_color,
+        ral_color_code: l.ral_color_code,
+        laser_module_power: l.laser_module_power,
+        product_id: l.ph_product_id ?? dev?.id ?? null,
+        product_name: l.ph_product_name ?? l.name,
+      },
+    });
+    setPendingItem(null);
+    setConfigLineId(l.id);
+    setConfigOpen(true);
+  };
+
   const updateLine = (id: string, patch: Partial<LineItem>) => {
+
     setLines(prev => prev.map(l => (l.id === id ? { ...l, ...patch } : l)));
   };
 
