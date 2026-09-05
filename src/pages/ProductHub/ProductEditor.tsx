@@ -309,18 +309,21 @@ export default function ProductHubEditor() {
 
 
         <TabsContent value="dokumente">
-          <Card><CardContent className="p-0">
+          <Card><CardContent className="p-4 space-y-4">
+            {canWrite && id && <DocUpload productId={id} onDone={load} />}
             <Table>
-              <TableHeader><TableRow><TableHead>Titel</TableHead><TableHead>Typ</TableHead><TableHead>Sichtbarkeit</TableHead><TableHead>Version</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Titel</TableHead><TableHead>Typ</TableHead><TableHead>Sichtbarkeit</TableHead><TableHead>Version</TableHead><TableHead></TableHead></TableRow></TableHeader>
               <TableBody>
                 {docs.map(d => (
-                  <TableRow key={d.id}><TableCell>{d.url ? <a href={d.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{d.title}</a> : d.title}</TableCell>
-                    <TableCell>{d.doc_type}</TableCell><TableCell><Badge variant="outline">{d.visibility}</Badge></TableCell><TableCell>{d.version || '—'}</TableCell></TableRow>
+                  <TableRow key={d.id}><TableCell>{d.title}</TableCell>
+                    <TableCell>{d.doc_type}</TableCell><TableCell><Badge variant="outline">{d.visibility}</Badge></TableCell><TableCell>{d.version || '—'}</TableCell>
+                    <TableCell className="text-right"><DocOpenButton doc={d} /></TableCell></TableRow>
                 ))}
-                {docs.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">Keine Dokumente.</TableCell></TableRow>}
+                {docs.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Keine Dokumente.</TableCell></TableRow>}
               </TableBody>
             </Table>
           </CardContent></Card>
+
         </TabsContent>
 
         <TabsContent value="regulatory">
