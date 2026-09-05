@@ -357,6 +357,34 @@ export default function ProductHubEditor() {
           </CardContent></Card>
         </TabsContent>
 
+        <TabsContent value="konfiguration">
+          <Card><CardContent className="p-4 space-y-6">
+            <p className="text-xs text-muted-foreground">
+              Diese Werte werden bei der Angebotserstellung je Geräteposition abgefragt.
+            </p>
+            <OptionListEditor
+              label="Farbe des Gerätes"
+              values={(form.config_colors as string[]) || []}
+              defaults={PH_DEFAULT_COLORS}
+              disabled={!canWrite}
+              onChange={v => set('config_colors', v)}
+            />
+            <OptionListEditor
+              label="Leistung Lasermodul"
+              values={(form.config_powers as string[]) || []}
+              defaults={PH_DEFAULT_POWERS}
+              disabled={!canWrite}
+              onChange={v => set('config_powers', v)}
+            />
+            <div className="flex items-center gap-3">
+              <Switch checked={form.config_required !== false} disabled={!canWrite}
+                onCheckedChange={v => set('config_required', v)} />
+              <Label className="text-xs">Konfiguration im Angebot verpflichtend abfragen</Label>
+            </div>
+          </CardContent></Card>
+        </TabsContent>
+
+
         <TabsContent value="anwendungen">
           <Card><CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
