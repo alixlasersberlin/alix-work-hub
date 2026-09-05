@@ -468,7 +468,7 @@ export default function AngebotErstellen() {
   type PhDevice = {
     id: string | null; name: string; model: string; sku: string; url: string | null;
     colors: string[]; powers: string[]; configRequired: boolean;
-    netPrice: number | null; promoName: string | null;
+    netPrice: number | null; promoName: string | null; description: string;
   };
   const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
@@ -482,7 +482,7 @@ export default function AngebotErstellen() {
     (async () => {
       const { data } = await (supabase as any)
         .from('ph_products')
-        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp')
+        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp, short_description, long_description')
         .neq('status', 'archived');
       setPhDevices((data ?? []).map((p: any) => {
         // Aktueller Preis: Deutschland (Netto) aus dem Product Hub
@@ -500,6 +500,7 @@ export default function AngebotErstellen() {
           configRequired: p.config_required !== false,
           netPrice: net > 0 ? Math.round(net * 100) / 100 : null,
           promoName: de.promo_active === true ? (de.promo_name || null) : null,
+          description: String(p.short_description || p.long_description || '').trim(),
         };
       }));
     })();
@@ -579,7 +580,7 @@ export default function AngebotErstellen() {
           id: `ph:${norm(p.name) || norm(p.model) || norm(p.sku)}`,
           name: p.name || p.model,
           sku: p.sku || '',
-          description: '',
+          description: p.description || '',
           rate: p.netPrice ?? 0,
           tax_percentage: 19,
           unit: 'Stk',
@@ -764,7 +765,7 @@ export default function AngebotErstellen() {
       id: crypto.randomUUID(),
       item_id: it.id,
       name: it.name || '',
-      description: it.description || '',
+      description: it.description || dev?.description || '',
       sku: it.sku || '',
       quantity: 1,
       rate: hubPrice > 0 ? hubPrice : Number(it.rate || 0),
