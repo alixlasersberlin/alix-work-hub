@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace(/^Bearer\s+/i, "");
     let authorized = false;
     if (CRON_SECRET && cronHeader === CRON_SECRET) authorized = true;
+    else if (token && token === SERVICE_ROLE) authorized = true;
     else if (token) {
       const { data: userData } = await admin.auth.getUser(token);
       const user = userData?.user;
