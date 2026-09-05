@@ -2340,21 +2340,49 @@ export default function AngebotErstellen() {
                         rows={Math.max(2, (l.description?.split('\n').length || 1))}
                         className="bg-secondary border-border text-xs min-h-[3.5rem] whitespace-pre-wrap resize-y leading-snug w-full"
                       />
-                      {(l.device_color || l.laser_module_power || matchPhDevice(l)) && (
-                        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
-                          {deviceConfigLines(l).length > 0 ? (
-                            <div className="text-[11px] leading-tight text-foreground">
-                              {deviceConfigLines(l).map(t => <div key={t}>{t}</div>)}
+                      {(l.device_color || l.laser_module_power || matchPhDevice(l)) && (() => {
+                        const dev = matchPhDevice(l);
+                        const img = l.product_image_url || l.image_url || dev?.url || null;
+                        const phId = l.ph_product_id || dev?.id || null;
+                        return (
+                          <div className="mt-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              {img ? (
+                                <img src={img} alt={l.name} loading="lazy"
+                                  className="h-16 w-full sm:w-20 rounded bg-background object-contain" />
+                              ) : (
+                                <div className="h-16 w-full sm:w-20 rounded border border-dashed border-amber-500/60 bg-background flex items-center justify-center text-[10px] text-amber-500 text-center px-1">
+                                  kein Bild
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                {deviceConfigLines(l).length > 0 ? (
+                                  <div className="text-[11px] leading-tight text-foreground">
+                                    {deviceConfigLines(l).map(t => <div key={t}>{t}</div>)}
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-amber-500">Gerätekonfiguration fehlt</span>
+                                )}
+                                {!img && (
+                                  <div className="text-[11px] text-amber-500 mt-1">
+                                    Für dieses Gerät ist im Product Hub noch kein Angebotsbild hinterlegt.
+                                    {phId && (
+                                      <a href={`/product-hub/geraete/${phId}`} target="_blank" rel="noreferrer" className="ml-1 underline">
+                                        Produktbild im Product Hub hinterlegen
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] sm:ml-auto self-start"
+                                onClick={() => openLineConfig(l)}>
+                                <Pencil className="w-3 h-3 mr-1" /> Konfiguration
+                              </Button>
                             </div>
-                          ) : (
-                            <span className="text-[11px] text-amber-500">Gerätekonfiguration fehlt</span>
-                          )}
-                          <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] ml-auto"
-                            onClick={() => openLineConfig(l)}>
-                            <Pencil className="w-3 h-3 mr-1" /> Konfiguration
-                          </Button>
-                        </div>
-                      )}
+                          </div>
+                        );
+                      })()}
+
                     </td>
 
                   </tr>
