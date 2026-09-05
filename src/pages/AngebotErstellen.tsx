@@ -1051,7 +1051,7 @@ export default function AngebotErstellen() {
       body: validLines.map((l, idx) => {
         const base = [
           idx + 1,
-          `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}`,
+          `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}${deviceConfigLines(l).length ? `\n${deviceConfigLines(l).join('\n')}` : ''}`,
           l.quantity,
           fmtMoney(l.rate),
           `${l.tax_percentage}%`,
