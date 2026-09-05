@@ -2173,9 +2173,12 @@ export default function AngebotErstellen() {
           </>
         )}
       </div>
+      )}
 
+      {step === 3 && (
       {/* Items */}
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
+
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Positionen</h2>
           <div className="flex gap-2">
