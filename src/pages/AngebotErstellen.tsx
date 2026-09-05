@@ -23,6 +23,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
 import { BookOpen } from 'lucide-react';
 import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
+import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/producthub/DeviceConfigDialog';
+import { deviceConfigLines, type DeviceConfig } from '@/lib/producthub/deviceConfig';
+
 
 
 type LineItem = {
