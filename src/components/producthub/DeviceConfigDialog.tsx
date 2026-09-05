@@ -72,7 +72,7 @@ export function DeviceConfigDialog({
               Für dieses Gerät ist im Product Hub noch kein Angebotsbild hinterlegt.
               {target?.productId && (
                 <a
-                  href={`/product-hub/${target.productId}`}
+                  href={`/product-hub/geraete/${target.productId}`}
                   target="_blank"
                   rel="noreferrer"
                   className="ml-1 underline"
