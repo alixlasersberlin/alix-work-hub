@@ -156,13 +156,16 @@ export default function ProductHubEditor() {
     if (!id) return;
     const p = await phGetProduct(id);
     setForm(p);
-    const [h, m, d, c] = await Promise.all([
+    const [h, m, d, c, seo] = await Promise.all([
       db.from('ph_field_history').select('*').eq('product_id', id).order('created_at', { ascending: false }).limit(200),
       db.from('ph_media').select('*').eq('product_id', id).order('sort_order'),
       db.from('ph_documents').select('*').eq('product_id', id),
       phChannelRows(id),
+      db.from('ph_seo').select('*').eq('product_id', id).maybeSingle(),
     ]);
     setHistory(h.data || []); setMedia(m.data || []); setDocs(d.data || []); setChannels(c);
+    setMainKeyword(seo?.data?.main_keyword || '');
+    setKeywords(seo?.data?.secondary_keywords || []);
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
 
@@ -174,11 +177,22 @@ export default function ProductHubEditor() {
     try {
       const { id: _i, created_at, updated_at, ...patch } = form;
       await phUpdateProduct(id, patch);
+      const { error: seoErr } = await db.from('ph_seo').upsert({
+        product_id: id,
+        seo_title: form.seo_title ?? null,
+        meta_description: form.seo_description ?? null,
+        url_slug: form.slug ?? null,
+        main_keyword: mainKeyword.trim() || null,
+        secondary_keywords: keywords,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'product_id' });
+      if (seoErr) throw seoErr;
       toast.success('Gespeichert – Änderungen wurden protokolliert');
       await load();
     } catch (e: any) { toast.error(e.message); }
     setSaving(false);
   };
+
 
   const toggleApp = (a: string) => {
     const cur: string[] = form.applications || [];
