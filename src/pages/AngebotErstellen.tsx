@@ -2121,7 +2121,14 @@ export default function AngebotErstellen() {
             </Button>
           </div>
         </div>
+        <DeviceConfigDialog
+          open={configOpen}
+          target={configTarget}
+          onOpenChange={(v) => { setConfigOpen(v); if (!v) { setPendingItem(null); setConfigLineId(null); } }}
+          onConfirm={applyDeviceConfig}
+        />
         <KatalogPickerDialog
+
           open={katalogPickerOpen}
           onOpenChange={setKatalogPickerOpen}
           usedInType="offer_draft"
