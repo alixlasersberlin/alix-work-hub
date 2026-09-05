@@ -43,6 +43,8 @@ type LineItem = {
   // Gerätekonfiguration (Snapshot je Position, aus dem Product Hub)
   ph_product_id?: string | null;
   ph_product_name?: string | null;
+  product_image_url?: string | null;
+
   device_color?: string | null;
   ral_color_code?: string | null;
   laser_module_power?: string | null;
