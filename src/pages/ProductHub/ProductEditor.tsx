@@ -141,6 +141,15 @@ export default function ProductHubEditor() {
   const [docs, setDocs] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [mainKeyword, setMainKeyword] = useState('');
+  const [kwInput, setKwInput] = useState('');
+
+  const addKeyword = (raw: string) => {
+    const v = raw.trim();
+    if (!v) return;
+    setKeywords(prev => (prev.some(x => x.toLowerCase() === v.toLowerCase()) ? prev : [...prev, v]));
+  };
+
 
 
   const load = async () => {
