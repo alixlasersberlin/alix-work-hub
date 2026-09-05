@@ -14,7 +14,7 @@ import { Cpu, Save, Loader2, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  PH_APPLICATIONS, PH_CHANNELS, PH_CRITICAL_FIELDS, PH_STATUS, phLabel, PH_ACTIVE_FIELD,
+  PH_APPLICATIONS, PH_CHANNELS, PH_CRITICAL_FIELDS, PH_STATUS, phLabel, PH_ACTIVE_FIELD, PH_DOC_TYPES, PH_DOC_VISIBILITY,
 } from '@/lib/producthub/config';
 import { phGetProduct, phUpdateProduct, phChannelRows, phUpsertChannel } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -309,18 +309,21 @@ export default function ProductHubEditor() {
 
 
         <TabsContent value="dokumente">
-          <Card><CardContent className="p-0">
+          <Card><CardContent className="p-4 space-y-4">
+            {canWrite && id && <DocUpload productId={id} onDone={load} />}
             <Table>
-              <TableHeader><TableRow><TableHead>Titel</TableHead><TableHead>Typ</TableHead><TableHead>Sichtbarkeit</TableHead><TableHead>Version</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Titel</TableHead><TableHead>Typ</TableHead><TableHead>Sichtbarkeit</TableHead><TableHead>Version</TableHead><TableHead></TableHead></TableRow></TableHeader>
               <TableBody>
                 {docs.map(d => (
-                  <TableRow key={d.id}><TableCell>{d.url ? <a href={d.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{d.title}</a> : d.title}</TableCell>
-                    <TableCell>{d.doc_type}</TableCell><TableCell><Badge variant="outline">{d.visibility}</Badge></TableCell><TableCell>{d.version || '—'}</TableCell></TableRow>
+                  <TableRow key={d.id}><TableCell>{d.title}</TableCell>
+                    <TableCell>{d.doc_type}</TableCell><TableCell><Badge variant="outline">{d.visibility}</Badge></TableCell><TableCell>{d.version || '—'}</TableCell>
+                    <TableCell className="text-right"><DocOpenButton doc={d} /></TableCell></TableRow>
                 ))}
-                {docs.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">Keine Dokumente.</TableCell></TableRow>}
+                {docs.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Keine Dokumente.</TableCell></TableRow>}
               </TableBody>
             </Table>
           </CardContent></Card>
+
         </TabsContent>
 
         <TabsContent value="regulatory">
@@ -483,6 +486,103 @@ export default function ProductHubEditor() {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+/** Öffnet ein Dokument – externe URL direkt, Storage-Datei über signierten Link */
+function DocOpenButton({ doc }: { doc: any }) {
+  const open = async () => {
+    try {
+      if (doc.storage_path) {
+        const { data, error } = await supabase.storage
+          .from('product-hub-docs').createSignedUrl(doc.storage_path, 300);
+        if (error) throw error;
+        window.open(data.signedUrl, '_blank', 'noopener');
+        return;
+      }
+      if (doc.url) { window.open(doc.url, '_blank', 'noopener'); return; }
+      toast.error('Keine Datei hinterlegt');
+    } catch (e: any) { toast.error(e.message); }
+  };
+  return <Button size="sm" variant="outline" onClick={open}>Öffnen</Button>;
+}
+
+/** Dokument-Upload für ein Gerät */
+function DocUpload({ productId, onDone }: { productId: string; onDone: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [docType, setDocType] = useState<string>(PH_DOC_TYPES[0]);
+  const [visibility, setVisibility] = useState<string>('internal');
+  const [version, setVersion] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const upload = async () => {
+    if (!file) { toast.error('Bitte eine Datei auswählen'); return; }
+    setBusy(true);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${productId}/${Date.now()}-${safe}`;
+      const { error: upErr } = await supabase.storage
+        .from('product-hub-docs').upload(path, file, { upsert: false, contentType: file.type || undefined });
+      if (upErr) throw upErr;
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await db.from('ph_documents').insert({
+        product_id: productId,
+        title: title.trim() || file.name,
+        doc_type: docType,
+        visibility,
+        version: version.trim() || null,
+        storage_path: path,
+        file_size: file.size,
+        resource_type: file.name.split('.').pop()?.toLowerCase() || 'pdf',
+        created_by: u?.user?.id ?? null,
+      });
+      if (error) throw error;
+      toast.success('Dokument importiert');
+      setFile(null); setTitle(''); setVersion('');
+      onDone();
+    } catch (e: any) { toast.error(e.message); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="rounded-md border border-border p-3 space-y-3">
+      <div className="text-sm font-medium">Dokument importieren</div>
+      <div className="grid md:grid-cols-5 gap-3">
+        <div className="space-y-1.5 md:col-span-2">
+          <Label className="text-xs">Datei (PDF, Word, Bild …)</Label>
+          <Input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            onChange={e => setFile(e.target.files?.[0] ?? null)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Titel</Label>
+          <Input value={title} placeholder="optional – sonst Dateiname" onChange={e => setTitle(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Dokumentart</Label>
+          <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+            value={docType} onChange={e => setDocType(e.target.value)}>
+            {PH_DOC_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Sichtbarkeit</Label>
+          <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+            value={visibility} onChange={e => setVisibility(e.target.value)}>
+            {PH_DOC_VISIBILITY.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="flex items-end gap-3">
+        <div className="space-y-1.5 max-w-[160px]">
+          <Label className="text-xs">Version</Label>
+          <Input value={version} placeholder="z. B. 1.2" onChange={e => setVersion(e.target.value)} />
+        </div>
+        <Button onClick={upload} disabled={busy || !file}>
+          {busy ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Hochladen
+        </Button>
+      </div>
     </div>
   );
 }
