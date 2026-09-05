@@ -1616,7 +1616,23 @@ export default function AngebotErstellen() {
         amount: (Number(l.quantity) || 0) * (Number(l.rate) || 0),
         tax_amount: ((Number(l.quantity) || 0) * (Number(l.rate) || 0)) * ((Number(l.tax_percentage) || 0) / 100),
         item_order: idx + 1,
+        // Gerätekonfiguration als dauerhafter Snapshot der Position
+        ph_product_id: l.ph_product_id || null,
+        ph_product_name: l.ph_product_name || null,
+        device_color: l.device_color || null,
+        ral_color_code: l.ral_color_code || null,
+        laser_module_power: l.laser_module_power || null,
+        raw_data: (l.device_color || l.laser_module_power) ? {
+          device_config: {
+            product_id: l.ph_product_id || null,
+            product_name: l.ph_product_name || l.name,
+            device_color: l.device_color || null,
+            ral_color_code: l.ral_color_code || null,
+            laser_module_power: l.laser_module_power || null,
+          },
+        } : null,
       }));
+
       if (itemsPayload.length > 0) {
         const { error: itErr } = await supabase.from('order_items').insert(itemsPayload as any);
         if (itErr) throw itErr;
