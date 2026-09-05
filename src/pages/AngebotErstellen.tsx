@@ -767,7 +767,7 @@ export default function AngebotErstellen() {
       description: it.description || '',
       sku: it.sku || '',
       quantity: 1,
-      rate: Number(it.rate || 0),
+      rate: hubPrice > 0 ? hubPrice : Number(it.rate || 0),
       tax_percentage: Number(it.tax_percentage || 19),
       image_url: img,
       ph_product_id: cfg?.product_id ?? dev?.id ?? null,
