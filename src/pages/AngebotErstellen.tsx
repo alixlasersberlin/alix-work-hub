@@ -482,7 +482,7 @@ export default function AngebotErstellen() {
     (async () => {
       const { data } = await (supabase as any)
         .from('ph_products')
-        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp')
+        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp, short_description, long_description')
         .neq('status', 'archived');
       setPhDevices((data ?? []).map((p: any) => {
         // Aktueller Preis: Deutschland (Netto) aus dem Product Hub
