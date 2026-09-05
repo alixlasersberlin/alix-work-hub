@@ -2419,7 +2419,19 @@ export default function AngebotErstellen() {
                           <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
                         )}
                       </span>
-                      <span className="block text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</span>
+                      {(() => {
+                        const hub = Number((i as any)._phPrice ?? matchPhDevice(i)?.netPrice ?? 0);
+                        const promo = (i as any)._phPromo ?? matchPhDevice(i)?.promoName ?? null;
+                        const shown = hub > 0 ? hub : Number(i.rate || 0);
+                        return (
+                          <span className="block text-xs text-muted-foreground">
+                            {i.sku} · {fmtMoney(shown)} netto
+                            {hub > 0 && <span className="ml-1 text-primary">(Product Hub)</span>}
+                            {promo && <span className="ml-1 text-amber-500">· {promo}</span>}
+                          </span>
+                        );
+                      })()}
+
                     </span>
                   </button>
 
