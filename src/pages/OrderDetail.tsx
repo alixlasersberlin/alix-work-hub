@@ -1,4 +1,6 @@
 import { SkeletonForm } from '@/components/infinity/Skeleton';
+import { deviceConfigLines } from '@/lib/producthub/deviceConfig';
+
 
 const CURRENCY_SYMBOL_MAP: Record<string, string> = {
   '€': 'EUR', 'EUR': 'EUR', 'eur': 'EUR',
