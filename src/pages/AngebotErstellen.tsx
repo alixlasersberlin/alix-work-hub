@@ -514,11 +514,13 @@ export default function AngebotErstellen() {
     // Geräte aus dem Product Hub, zu denen es (noch) keinen Katalogartikel gibt,
     // trotzdem auswählbar machen
     const extras: any[] = [];
-    if (q.length >= 2) {
+    {
       const covered = new Set(withFlag.flatMap(i => [norm(i.name), norm(i.sku)]).filter(Boolean));
       for (const p of phDevices) {
-        const hay = `${p.name} ${p.model} ${p.sku}`.toLowerCase();
-        if (!hay.includes(q)) continue;
+        if (q.length >= 2) {
+          const hay = `${p.name} ${p.model} ${p.sku}`.toLowerCase();
+          if (!hay.includes(q)) continue;
+        }
         const keys = [norm(p.name), norm(p.model), norm(p.sku)].filter(k => k.length >= 4);
         const already = keys.some(k => Array.from(covered).some(c => c === k || c.includes(k)));
         if (already) continue;
@@ -539,8 +541,15 @@ export default function AngebotErstellen() {
 
     const all = [...extras, ...withFlag];
     const filtered = onlyPhDevices ? all.filter(i => i._ph) : all;
-    filtered.sort((a, b) => (a._ph === b._ph ? 0 : a._ph ? -1 : 1));
-    return filtered.slice(0, q ? 100 : 40);
+    filtered.sort((a, b) => {
+      if (a._ph !== b._ph) return a._ph ? -1 : 1;
+      return String(a.name || '').localeCompare(String(b.name || ''), 'de');
+    });
+    // Product-Hub-Geräte werden nie abgeschnitten
+    const phAll = filtered.filter(i => i._ph);
+    const rest = filtered.filter(i => !i._ph);
+    return [...phAll, ...rest.slice(0, q ? 100 : 40)];
+
   }, [items, itemSearch, remoteItems, isPhDevice, onlyPhDevices, phDevices]);
 
 
