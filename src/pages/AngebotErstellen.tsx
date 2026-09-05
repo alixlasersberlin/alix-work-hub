@@ -547,6 +547,11 @@ export default function AngebotErstellen() {
           status: 'active',
           image_url: p.url,
           _ph: true,
+          _phId: p.id,
+          _phColors: p.colors,
+          _phPowers: p.powers,
+          _phRequired: p.configRequired,
+
         });
       }
     }
