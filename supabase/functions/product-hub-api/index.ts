@@ -17,7 +17,18 @@ const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 const PUBLIC_FIELDS =
-  "alix_product_id,name,model,sku,slug,status,product_group,categories,applications,short_description,long_description,features,smart_ki,tech_specs,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling,laser_class,intended_use,manufacturer,ce_status,mdr_status,iso_status,standards,hero_image_url,seo_title,seo_description,sort_order,featured,active_de,active_com,active_at,active_usa,active_dubai,updated_at";
+  "alix_product_id,name,model,sku,slug,status,product_group,categories,applications,short_description,long_description,features,smart_ki,tech_specs,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling,laser_class,intended_use,manufacturer,ce_status,mdr_status,iso_status,standards,hero_image_url,seo_title,seo_description,sort_order,featured,active_de,active_com,active_at,active_usa,active_dubai,updated_at,price_public,price_uvp,vk_min_mode,vk_min_value,vk_max_mode,vk_max_value,promo_active,promo_name";
+
+const PRICE_FIELDS = ["price_uvp", "vk_min_mode", "vk_min_value", "vk_max_mode", "vk_max_value", "promo_active", "promo_name"];
+
+/** Preise sind standardmäßig nicht öffentlich – nur bei price_public=true ausliefern. */
+function stripPrices<T extends Record<string, unknown>>(row: T): T {
+  if (!row) return row;
+  if (row.price_public === true) return row;
+  const out: Record<string, unknown> = { ...row };
+  for (const f of PRICE_FIELDS) delete out[f];
+  return out as T;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
