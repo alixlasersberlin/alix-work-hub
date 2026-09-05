@@ -512,7 +512,10 @@ export default function AngebotErstellen() {
 
 
   const resolveLineImage = (l: LineItem): string | null => {
+    if (l.product_image_url) return l.product_image_url;
     if (l.image_url) return l.image_url;
+    const dev = matchPhDevice(l);
+    if (dev?.url) return dev.url;
     const cands = [l.name, l.sku].map(norm).filter(Boolean);
     if (!cands.length) return null;
     for (const p of phImages) {
@@ -1664,6 +1667,7 @@ export default function AngebotErstellen() {
         // Gerätekonfiguration als dauerhafter Snapshot der Position
         ph_product_id: l.ph_product_id || null,
         ph_product_name: l.ph_product_name || null,
+        product_image_url: l.product_image_url || l.image_url || null,
         device_color: l.device_color || null,
         ral_color_code: l.ral_color_code || null,
         laser_module_power: l.laser_module_power || null,
@@ -1671,6 +1675,7 @@ export default function AngebotErstellen() {
           device_config: {
             product_id: l.ph_product_id || null,
             product_name: l.ph_product_name || l.name,
+            product_image_url: l.product_image_url || l.image_url || null,
             device_color: l.device_color || null,
             ral_color_code: l.ral_color_code || null,
             laser_module_power: l.laser_module_power || null,
