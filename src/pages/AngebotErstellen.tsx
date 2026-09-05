@@ -117,6 +117,9 @@ export default function AngebotErstellen() {
   const [specialOffer, setSpecialOffer] = useState('');
   const [notes, setNotes] = useState('');
   const [includeAppendix, setIncludeAppendix] = useState(true);
+  const [step, setStep] = useState(1);
+  const [stepSaving, setStepSaving] = useState(false);
+
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
   const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
   const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
@@ -1764,6 +1767,109 @@ export default function AngebotErstellen() {
     }
   };
 
+  // ---- Schritt-für-Schritt-Assistent -------------------------------------
+  const STEP_TITLES = ['Angebotsdaten', 'Kunde', 'Positionen', 'Zahlung & Abschluss'];
+
+  const stepValid = (s: number): string | null => {
+    if (s === 1) {
+      if (!offerNumber.trim()) return 'Bitte eine Nummer vergeben.';
+      if (!offerDate) return 'Bitte ein Datum wählen.';
+      return null;
+    }
+    if (s === 2) {
+      if (!selectedCustomer) return 'Bitte einen Kunden auswählen oder neu anlegen.';
+      return null;
+    }
+    if (s === 3) {
+      if (!lines.some(l => l.name && Number(l.quantity) > 0)) return 'Bitte mindestens eine Position erfassen.';
+      const incomplete = lines.find(l => l.name && (l.ph_product_id || matchPhDevice(l)) && !deviceConfigComplete(l));
+      if (incomplete) return `Bitte die Gerätekonfiguration für „${incomplete.name}" vervollständigen.`;
+      return null;
+    }
+    return null;
+  };
+
+  const goNext = async () => {
+    const err = stepValid(step);
+    if (err) { toast.error(err); return; }
+    // Ab Schritt 3 lässt sich der Entwurf speichern (Kunde + Position vorhanden)
+    if (step === 3 && !sofortMode && !isLockedForEdit) {
+      setStepSaving(true);
+      try { await saveOffer(true); } catch { /* Entwurf bleibt lokal erhalten */ }
+      setStepSaving(false);
+    }
+    setStep(s => Math.min(4, s + 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goStep = (s: number) => {
+    if (s > step) {
+      for (let i = step; i < s; i++) {
+        const err = stepValid(i);
+        if (err) { toast.error(err); return; }
+      }
+    }
+    setStep(s);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderStepper = () => (
+    <div className="rounded-xl border border-border bg-card card-glow p-3">
+      <div className="flex items-center gap-2 overflow-x-auto">
+        {STEP_TITLES.map((title, idx) => {
+          const n = idx + 1;
+          const active = n === step;
+          const done = n < step;
+          return (
+            <Fragment key={title}>
+              <button
+                type="button"
+                onClick={() => goStep(n)}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors ${
+                  active ? 'bg-primary/15 text-primary font-semibold'
+                  : done ? 'text-foreground hover:bg-secondary/60'
+                  : 'text-muted-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                  active ? 'bg-primary text-primary-foreground'
+                  : done ? 'bg-emerald-600 text-white'
+                  : 'bg-secondary text-muted-foreground'
+                }`}>
+                  {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : n}
+                </span>
+                <span className="hidden sm:inline">{title}</span>
+              </button>
+              {n < STEP_TITLES.length && <div className="h-px flex-1 min-w-[12px] bg-border" />}
+            </Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const renderStepNav = () => (
+    <div className="flex items-center justify-between gap-3 pt-1">
+      <Button
+        variant="outline"
+        className="gap-2 border-border min-h-[48px]"
+        onClick={() => goStep(Math.max(1, step - 1))}
+        disabled={step === 1}
+      >
+        <ArrowLeft className="w-4 h-4" /> Zurück
+      </Button>
+      <span className="text-xs text-muted-foreground hidden sm:block">
+        Schritt {step} von {STEP_TITLES.length} · {STEP_TITLES[step - 1]}
+      </span>
+      {step < 4 ? (
+        <Button onClick={goNext} disabled={stepSaving} className="gold-gradient text-primary-foreground gap-2 min-h-[48px]">
+          {stepSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          {step === 3 ? 'Speichern & weiter' : 'Weiter'}
+        </Button>
+      ) : <span />}
+    </div>
+  );
+
 
   if (loading) {
     return (
@@ -1806,7 +1912,12 @@ export default function AngebotErstellen() {
         </div>
       )}
 
+      {renderStepper()}
+
+      {step === 1 && (
+      <>
       <div className="rounded-xl border border-border bg-card card-glow p-4 grid gap-3 md:grid-cols-3">
+
         <div>
           <Label>{sofortMode ? 'Auftragsnummer' : 'Angebotsnummer'}</Label>
           <Input value={offerNumber} onChange={e => setOfferNumber(e.target.value)} className="bg-secondary border-border mt-1.5" />
@@ -1945,10 +2056,15 @@ export default function AngebotErstellen() {
           </div>
         )}
       </div>
+      </>
+      )}
 
-      {/* Customer */}
+
+
+      {step === 2 && (
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
         <h2 className="font-semibold text-foreground">Kunde</h2>
+
         {selectedCustomer ? (
           <div className="p-4 rounded-lg bg-secondary border border-border space-y-3">
             <div className="flex items-start justify-between gap-3">
@@ -2173,9 +2289,12 @@ export default function AngebotErstellen() {
           </>
         )}
       </div>
+      )}
 
-      {/* Items */}
+      {step === 3 && (
+
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
+
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Positionen</h2>
           <div className="flex gap-2">
@@ -2431,9 +2550,16 @@ export default function AngebotErstellen() {
             </tbody>
           </table>
       </div>
+      </div>
+      )}
 
+      {renderStepNav()}
+
+      {step === 4 && (
+      <>
       {/* Zahlungsberechnung */}
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
+
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground">Zahlungsberechnung</h3>
           <Select value={payType} onValueChange={(v: any) => { setPayType(v); if (v === 'Alix Smart Impulse' && payTerm > 36) setPayTerm(36); if (v === 'Miete' && ![12,24,36].includes(payTerm)) setPayTerm(24); }}>
@@ -2551,12 +2677,12 @@ export default function AngebotErstellen() {
 
 
 
-        <div className="flex flex-col items-end gap-1 pt-3 border-t border-border text-sm">
+        <div className="rounded-xl border border-border bg-card card-glow p-4 flex flex-col items-end gap-1 text-sm">
           <div className="flex gap-8"><span className="text-muted-foreground">Netto:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.net)}</span></div>
           <div className="flex gap-8"><span className="text-muted-foreground">MwSt:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.tax)}</span></div>
           <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(totals.gross)}</span></div>
         </div>
-      </div>
+
 
       {/* Notes */}
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
@@ -2710,7 +2836,10 @@ export default function AngebotErstellen() {
 
       </>
       )}
+      </>
+      )}
     </div>
+
   );
 }
 
