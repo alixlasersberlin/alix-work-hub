@@ -2025,13 +2025,24 @@ export default function AngebotErstellen() {
               className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
               onWheel={e => e.stopPropagation()}
             >
-              <div className="bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border flex items-center justify-between">
-                <span>{itemSearch ? `${filteredItems.length} Treffer` : `Vorauswahl · ${filteredItems.length} von ${items.length} Artikeln`}</span>
-                <button
-                  type="button"
-                  onClick={() => { setItemSearch(''); setItemListOpen(false); }}
-                  className="text-muted-foreground hover:text-foreground"
-                >Schließen</button>
+              <div className="bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border flex items-center justify-between gap-3">
+                <span>{itemSearch ? `${filteredItems.length} Treffer` : `Vorauswahl · ${filteredItems.length} von ${items.length} Artikeln`} · Geräte zuerst</span>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={onlyPhDevices}
+                      onChange={e => setOnlyPhDevices(e.target.checked)}
+                      className="accent-primary h-3 w-3"
+                    />
+                    Nur Geräte (Product Hub)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => { setItemSearch(''); setItemListOpen(false); }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >Schließen</button>
+                </div>
               </div>
               <ScrollArea className="h-80">
                 {filteredItems.length === 0 ? (
@@ -2046,10 +2057,14 @@ export default function AngebotErstellen() {
                   >
                     <p className="font-medium text-foreground">
                       {i.name}
+                      {i._ph && (
+                        <span className="ml-2 text-[10px] uppercase text-primary border border-primary/50 rounded px-1 py-0.5">Gerät</span>
+                      )}
                       {i.status && i.status !== 'active' && (
                         <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
                       )}
                     </p>
+
                     <p className="text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</p>
                   </button>
                 ))}
