@@ -36934,9 +36934,13 @@ export type Database = {
           offer_image_url: string | null
           plm_device_id: string | null
           power: string | null
+          price_public: boolean
+          price_uvp: number | null
           product_family: string | null
           product_group: string | null
           production_site: string | null
+          promo_active: boolean
+          promo_name: string | null
           protected: boolean
           pulse_duration: string | null
           quality_score: number | null
@@ -36959,6 +36963,10 @@ export type Database = {
           technology_claims: string[]
           updated_at: string
           updated_by: string | null
+          vk_max_mode: string
+          vk_max_value: number | null
+          vk_min_mode: string
+          vk_min_value: number | null
           wavelengths: string | null
           wavelengths_nm: number[]
         }
@@ -37004,9 +37012,13 @@ export type Database = {
           offer_image_url?: string | null
           plm_device_id?: string | null
           power?: string | null
+          price_public?: boolean
+          price_uvp?: number | null
           product_family?: string | null
           product_group?: string | null
           production_site?: string | null
+          promo_active?: boolean
+          promo_name?: string | null
           protected?: boolean
           pulse_duration?: string | null
           quality_score?: number | null
@@ -37029,6 +37041,10 @@ export type Database = {
           technology_claims?: string[]
           updated_at?: string
           updated_by?: string | null
+          vk_max_mode?: string
+          vk_max_value?: number | null
+          vk_min_mode?: string
+          vk_min_value?: number | null
           wavelengths?: string | null
           wavelengths_nm?: number[]
         }
@@ -37074,9 +37090,13 @@ export type Database = {
           offer_image_url?: string | null
           plm_device_id?: string | null
           power?: string | null
+          price_public?: boolean
+          price_uvp?: number | null
           product_family?: string | null
           product_group?: string | null
           production_site?: string | null
+          promo_active?: boolean
+          promo_name?: string | null
           protected?: boolean
           pulse_duration?: string | null
           quality_score?: number | null
@@ -37099,6 +37119,10 @@ export type Database = {
           technology_claims?: string[]
           updated_at?: string
           updated_by?: string | null
+          vk_max_mode?: string
+          vk_max_value?: number | null
+          vk_min_mode?: string
+          vk_min_value?: number | null
           wavelengths?: string | null
           wavelengths_nm?: number[]
         }
