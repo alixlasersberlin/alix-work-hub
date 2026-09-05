@@ -2551,12 +2551,12 @@ export default function AngebotErstellen() {
 
 
 
-        <div className="flex flex-col items-end gap-1 pt-3 border-t border-border text-sm">
+        <div className="rounded-xl border border-border bg-card card-glow p-4 flex flex-col items-end gap-1 text-sm">
           <div className="flex gap-8"><span className="text-muted-foreground">Netto:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.net)}</span></div>
           <div className="flex gap-8"><span className="text-muted-foreground">MwSt:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.tax)}</span></div>
           <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(totals.gross)}</span></div>
         </div>
-      </div>
+
 
       {/* Notes */}
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
