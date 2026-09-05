@@ -493,14 +493,26 @@ export default function ProductHubEditor() {
                   <div className="text-[10px] text-muted-foreground truncate" title={displayMediaUrl(m.url)}>{displayMediaFileName(m.url)}</div>
                   <div className="flex items-center gap-1 flex-wrap">
                     <Badge variant="outline" className="text-[10px]">{m.kind}</Badge>
+                    {form.hero_image_url === m.url && <Badge className="text-[10px]">Hauptbild</Badge>}
                     {form.offer_image_url === m.url && <Badge className="text-[10px]">Angebotsbild</Badge>}
                   </div>
-                  {canWrite && m.media_type === 'image' && form.offer_image_url !== m.url && (
-                    <Button size="sm" variant="outline" className="w-full h-7 text-[10px]"
-                      onClick={() => set('offer_image_url', m.url)}>
-                      Als Angebotsbild
-                    </Button>
+                  {canWrite && m.media_type === 'image' && (
+                    <div className="space-y-1">
+                      {form.hero_image_url !== m.url && (
+                        <Button size="sm" variant="outline" className="w-full h-7 text-[10px]"
+                          onClick={() => set('hero_image_url', m.url)}>
+                          Als Hauptbild
+                        </Button>
+                      )}
+                      {form.offer_image_url !== m.url && (
+                        <Button size="sm" variant="outline" className="w-full h-7 text-[10px]"
+                          onClick={() => set('offer_image_url', m.url)}>
+                          Als Angebotsbild
+                        </Button>
+                      )}
+                    </div>
                   )}
+
                 </div>
               ))}
               {media.length === 0 && <div className="text-sm text-muted-foreground">Keine Medien.</div>}
