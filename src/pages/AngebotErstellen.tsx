@@ -447,21 +447,35 @@ export default function AngebotErstellen() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [itemSearch]);
 
-  // Produktfotos aus dem Gerätestamm (Product Hub) für Angebots-PDF
-  const [phImages, setPhImages] = useState<Array<{ name: string; model: string; sku: string; url: string }>>([]);
+  // Geräte aus dem Product Hub (Gerätestamm) – Priorisierung in der Suche + Fotos im PDF
+  const [phDevices, setPhDevices] = useState<Array<{ name: string; model: string; sku: string; url: string | null }>>([]);
+  const [onlyPhDevices, setOnlyPhDevices] = useState(false);
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from('ph_products')
-        .select('name, model, sku, hero_image_url')
-        .not('hero_image_url', 'is', null);
-      setPhImages((data ?? []).map((p: any) => ({
-        name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url,
+        .select('name, model, sku, hero_image_url, status')
+        .neq('status', 'archived');
+      setPhDevices((data ?? []).map((p: any) => ({
+        name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url ?? null,
       })));
     })();
   }, []);
 
+  const phImages = useMemo(() => phDevices.filter(p => !!p.url) as Array<{ name: string; model: string; sku: string; url: string }>, [phDevices]);
+
   const norm = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  /** Passt ein Katalogartikel zu einem Product-Hub-Gerät? */
+  const isPhDevice = useCallback((i: any): boolean => {
+    const cands = [i?.name, i?.sku].map(norm).filter(Boolean);
+    if (!cands.length) return false;
+    for (const p of phDevices) {
+      const keys = [norm(p.name), norm(p.model), norm(p.sku)].filter(k => k.length >= 4);
+      for (const k of keys) for (const c of cands) if (c === k || c.includes(k)) return true;
+    }
+    return false;
+  }, [phDevices]);
 
   const resolveLineImage = (l: LineItem): string | null => {
     if (l.image_url) return l.image_url;
@@ -481,16 +495,26 @@ export default function AngebotErstellen() {
 
   const filteredItems = useMemo(() => {
     const q = itemSearch.toLowerCase().trim();
-    if (!q) return items.slice(0, 30);
-    const local = items.filter(i =>
-      i.name?.toLowerCase().includes(q) ||
-      i.sku?.toLowerCase().includes(q) ||
-      i.description?.toLowerCase().includes(q)
-    );
-    const map = new Map<string, any>();
-    for (const i of [...local, ...remoteItems]) map.set(i.id, i);
-    return Array.from(map.values()).slice(0, 100);
-  }, [items, itemSearch, remoteItems]);
+    let list: any[];
+    if (!q) {
+      list = items;
+    } else {
+      const local = items.filter(i =>
+        i.name?.toLowerCase().includes(q) ||
+        i.sku?.toLowerCase().includes(q) ||
+        i.description?.toLowerCase().includes(q)
+      );
+      const map = new Map<string, any>();
+      for (const i of [...local, ...remoteItems]) map.set(i.id, i);
+      list = Array.from(map.values());
+    }
+    // Product-Hub-Geräte zuerst
+    const withFlag = list.map(i => ({ ...i, _ph: isPhDevice(i) }));
+    const filtered = onlyPhDevices ? withFlag.filter(i => i._ph) : withFlag;
+    filtered.sort((a, b) => (a._ph === b._ph ? 0 : a._ph ? -1 : 1));
+    return filtered.slice(0, q ? 100 : 40);
+  }, [items, itemSearch, remoteItems, isPhDevice, onlyPhDevices]);
+
 
 
   const baseCustomer = customers.find(c => c.id === customerId);
