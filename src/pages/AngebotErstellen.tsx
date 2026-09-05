@@ -816,6 +816,8 @@ export default function AngebotErstellen() {
       productName: l.name,
       colors: l.config_colors ?? dev?.colors ?? null,
       powers: l.config_powers ?? dev?.powers ?? null,
+      imageUrl: l.product_image_url ?? l.image_url ?? dev?.url ?? null,
+
       initial: {
         device_color: l.device_color,
         ral_color_code: l.ral_color_code,
