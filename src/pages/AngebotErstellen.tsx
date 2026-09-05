@@ -37,7 +37,16 @@ type LineItem = {
   snapshot_id?: string;
   long_text?: string;
   image_url?: string;
+  // Gerätekonfiguration (Snapshot je Position, aus dem Product Hub)
+  ph_product_id?: string | null;
+  ph_product_name?: string | null;
+  device_color?: string | null;
+  ral_color_code?: string | null;
+  laser_module_power?: string | null;
+  config_colors?: string[];
+  config_powers?: string[];
 };
+
 
 const newLine = (): LineItem => ({
   id: crypto.randomUUID(),
