@@ -721,24 +721,53 @@ export default function AngebotErstellen() {
   }
 
 
-  const addItem = (it: any) => {
-    setLines(prev => [
-      ...prev.filter(l => l.name || l.sku || l.rate),
-      {
-        id: crypto.randomUUID(),
-        item_id: it.id,
-        name: it.name || '',
-        description: it.description || '',
-        sku: it.sku || '',
-        quantity: 1,
-        rate: Number(it.rate || 0),
-        tax_percentage: Number(it.tax_percentage || 19),
-        image_url: it.image_url || it.hero_image_url || undefined,
+  const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => ({
+    id: crypto.randomUUID(),
+    item_id: it.id,
+    name: it.name || '',
+    description: it.description || '',
+    sku: it.sku || '',
+    quantity: 1,
+    rate: Number(it.rate || 0),
+    tax_percentage: Number(it.tax_percentage || 19),
+    image_url: it.image_url || it.hero_image_url || undefined,
+    ph_product_id: cfg?.product_id ?? null,
+    ph_product_name: cfg?.product_name ?? null,
+    device_color: cfg?.device_color ?? null,
+    ral_color_code: cfg?.ral_color_code ?? null,
+    laser_module_power: cfg?.laser_module_power ?? null,
+    config_colors: it._phColors ?? matchPhDevice(it)?.colors ?? undefined,
+    config_powers: it._phPowers ?? matchPhDevice(it)?.powers ?? undefined,
+  });
 
-      },
-    ]);
+  const appendLine = (line: LineItem) => {
+    setLines(prev => [...prev.filter(l => l.name || l.sku || l.rate), line]);
+  };
+
+  const addItem = (it: any) => {
+    const dev: any = it._ph
+      ? (it._phId !== undefined
+        ? { id: it._phId, name: it.name, colors: it._phColors, powers: it._phPowers, configRequired: it._phRequired !== false }
+        : matchPhDevice(it))
+      : matchPhDevice(it);
+    if (dev && dev.configRequired !== false) {
+      // Gerät: erst konfigurieren, dann in das Angebot übernehmen
+      setConfigTarget({
+        productId: dev.id ?? null,
+        productName: it.name || dev.name,
+        colors: dev.colors,
+        powers: dev.powers,
+      });
+      setPendingItem(it);
+      setConfigLineId(null);
+      setConfigOpen(true);
+      setItemSearch('');
+      return;
+    }
+    appendLine(buildLineFromItem(it));
     setItemSearch('');
   };
+
 
   const updateLine = (id: string, patch: Partial<LineItem>) => {
     setLines(prev => prev.map(l => (l.id === id ? { ...l, ...patch } : l)));
