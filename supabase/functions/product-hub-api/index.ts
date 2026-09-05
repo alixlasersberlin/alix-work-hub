@@ -85,13 +85,14 @@ Deno.serve(async (req) => {
       if (channel && activeCol[channel]) q = q.eq(activeCol[channel], true);
       const { data, error } = await q;
       if (error) throw error;
-      return json(200, { products: data || [] });
+      return json(200, { products: (data || []).map((r: any) => stripPrices(r)) });
     }
 
     const { data: prod, error: pe } = await supabase.from("ph_products")
       .select(`id,${PUBLIC_FIELDS}`).eq("alix_product_id", productId).maybeSingle();
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
+    const pubProd = stripPrices(prod as any);
 
     if (sub === "media") {
       const { data } = await supabase.from("ph_media")
