@@ -24,6 +24,44 @@ import { SmartKiEditor } from '@/components/producthub/SmartKiEditor';
 import { SeoAiButton } from '@/components/producthub/SeoAiButton';
 import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
+import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
+
+/** Editor für eine Werteliste (Farben / Leistungen), die im Angebot zur Auswahl steht. */
+function OptionListEditor({ label, values, defaults, disabled, onChange }: {
+  label: string; values: string[]; defaults: readonly string[]; disabled?: boolean;
+  onChange: (v: string[]) => void;
+}) {
+  const [draft, setDraft] = useState('');
+  const list = values.length ? values : [...defaults];
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex flex-wrap gap-2">
+        {list.map(v => (
+          <Badge key={v} variant="outline" className="gap-1">
+            {v}
+            {!disabled && (
+              <button type="button" className="ml-1 text-destructive"
+                onClick={() => onChange(list.filter(x => x !== v))}>×</button>
+            )}
+          </Badge>
+        ))}
+        {list.length === 0 && <span className="text-xs text-muted-foreground">Keine Werte hinterlegt</span>}
+      </div>
+      {!disabled && (
+        <div className="flex gap-2">
+          <Input value={draft} onChange={e => setDraft(e.target.value)} placeholder="Wert hinzufügen" className="h-9" />
+          <Button size="sm" variant="outline" type="button"
+            onClick={() => { const v = draft.trim(); if (v && !list.includes(v)) onChange([...list, v]); setDraft(''); }}>
+            Hinzufügen
+          </Button>
+          <Button size="sm" variant="ghost" type="button" onClick={() => onChange([...defaults])}>Standard</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 
 
