@@ -429,6 +429,17 @@ export default function ProductHubEditor() {
         <TabsContent value="medien">
           <Card><CardContent className="p-4 space-y-3">
             <HeroImageField form={form} set={set} disabled={!canWrite} />
+            {canWrite && id && (
+              <ImageUpload
+                productId={id}
+                onDone={async (url) => {
+                  if (!form.hero_image_url) set('hero_image_url', url);
+                  if (!form.offer_image_url) set('offer_image_url', url);
+                  await load();
+                }}
+              />
+            )}
+
             <div className="rounded-md border border-border p-3 space-y-2">
               <Label className="text-xs">Hauptbild für Angebote</Label>
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
