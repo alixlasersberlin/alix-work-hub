@@ -2266,20 +2266,28 @@ export default function AngebotErstellen() {
                   <button
                     key={i.id}
                     onClick={() => addItem(i)}
-                    className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
+                    className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm flex items-center gap-3"
                   >
-                    <p className="font-medium text-foreground">
-                      {i.name}
-                      {i._ph && (
-                        <span className="ml-2 text-[10px] uppercase text-primary border border-primary/50 rounded px-1 py-0.5">Gerät</span>
-                      )}
-                      {i.status && i.status !== 'active' && (
-                        <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
-                      )}
-                    </p>
-
-                    <p className="text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</p>
+                    {(i as any).image_url ? (
+                      <img src={(i as any).image_url} alt={i.name} loading="lazy"
+                        className="h-10 w-12 rounded bg-white object-contain shrink-0 p-0.5" />
+                    ) : i._ph ? (
+                      <div className="h-10 w-12 rounded border border-dashed border-amber-500/50 shrink-0" />
+                    ) : null}
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium text-foreground truncate">
+                        {i.name}
+                        {i._ph && (
+                          <span className="ml-2 text-[10px] uppercase text-primary border border-primary/50 rounded px-1 py-0.5">Gerät</span>
+                        )}
+                        {i.status && i.status !== 'active' && (
+                          <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
+                        )}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</span>
+                    </span>
                   </button>
+
                 ))}
               </ScrollArea>
             </div>
