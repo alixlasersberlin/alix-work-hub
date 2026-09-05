@@ -117,6 +117,9 @@ export default function AngebotErstellen() {
   const [specialOffer, setSpecialOffer] = useState('');
   const [notes, setNotes] = useState('');
   const [includeAppendix, setIncludeAppendix] = useState(true);
+  const [step, setStep] = useState(1);
+  const [stepSaving, setStepSaving] = useState(false);
+
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
   const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
   const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
