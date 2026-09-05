@@ -20,21 +20,26 @@ function json(d: unknown, s = 200) {
   return new Response(JSON.stringify(d), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
+    const cronHeader = req.headers.get("x-cron-secret") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return json({ error: "Unauthorized" }, 401);
-    const { data: userData } = await admin.auth.getUser(token);
-    const user = userData?.user;
-    if (!user) return json({ error: "Unauthorized" }, 401);
-
-    const { data: roles } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
-    const names = (roles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-    if (!names.some((n: string) => n === "Super Admin" || n === "super_admin")) {
-      return json({ error: "Forbidden", roles: names }, 403);
+    let authorized = false;
+    if (CRON_SECRET && cronHeader === CRON_SECRET) authorized = true;
+    else if (token) {
+      const { data: userData } = await admin.auth.getUser(token);
+      const user = userData?.user;
+      if (user) {
+        const { data: roles } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+        const names = (roles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+        if (names.some((n: string) => n === "Super Admin" || n === "super_admin")) authorized = true;
+      }
     }
+    if (!authorized) return json({ error: "Unauthorized" }, 401);
 
     if (!ENV_SID || !ENV_TOKEN) return json({ error: "twilio_not_configured", have_sid: !!ENV_SID, have_token: !!ENV_TOKEN, env_from: ENV_FROM || null }, 500);
 
