@@ -1945,6 +1945,10 @@ export default function AngebotErstellen() {
           </div>
         )}
       </div>
+      </>
+      )}
+
+
 
       {step === 2 && (
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
