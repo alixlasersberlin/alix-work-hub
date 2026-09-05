@@ -580,7 +580,7 @@ export default function AngebotErstellen() {
           name: p.name || p.model,
           sku: p.sku || '',
           description: '',
-          rate: 0,
+          rate: p.netPrice ?? 0,
           tax_percentage: 19,
           unit: 'Stk',
           status: 'active',
@@ -590,6 +590,8 @@ export default function AngebotErstellen() {
           _phColors: p.colors,
           _phPowers: p.powers,
           _phRequired: p.configRequired,
+          _phPrice: p.netPrice,
+          _phPromo: p.promoName,
 
         });
       }
