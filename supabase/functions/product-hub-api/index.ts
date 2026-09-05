@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { id, ...pub } = prod as any;
+    const { id, ...pub } = pubProd as any;
     return json(200, { product: pub });
   } catch (e) {
     return json(500, { error: (e as Error).message });
