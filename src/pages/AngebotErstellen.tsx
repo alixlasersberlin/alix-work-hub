@@ -510,10 +510,39 @@ export default function AngebotErstellen() {
     }
     // Product-Hub-Geräte zuerst
     const withFlag = list.map(i => ({ ...i, _ph: isPhDevice(i) }));
-    const filtered = onlyPhDevices ? withFlag.filter(i => i._ph) : withFlag;
+
+    // Geräte aus dem Product Hub, zu denen es (noch) keinen Katalogartikel gibt,
+    // trotzdem auswählbar machen
+    const extras: any[] = [];
+    if (q.length >= 2) {
+      const covered = new Set(withFlag.flatMap(i => [norm(i.name), norm(i.sku)]).filter(Boolean));
+      for (const p of phDevices) {
+        const hay = `${p.name} ${p.model} ${p.sku}`.toLowerCase();
+        if (!hay.includes(q)) continue;
+        const keys = [norm(p.name), norm(p.model), norm(p.sku)].filter(k => k.length >= 4);
+        const already = keys.some(k => Array.from(covered).some(c => c === k || c.includes(k)));
+        if (already) continue;
+        extras.push({
+          id: `ph:${norm(p.name) || norm(p.model) || norm(p.sku)}`,
+          name: p.name || p.model,
+          sku: p.sku || '',
+          description: '',
+          rate: 0,
+          tax_percentage: 19,
+          unit: 'Stk',
+          status: 'active',
+          image_url: p.url,
+          _ph: true,
+        });
+      }
+    }
+
+    const all = [...extras, ...withFlag];
+    const filtered = onlyPhDevices ? all.filter(i => i._ph) : all;
     filtered.sort((a, b) => (a._ph === b._ph ? 0 : a._ph ? -1 : 1));
     return filtered.slice(0, q ? 100 : 40);
-  }, [items, itemSearch, remoteItems, isPhDevice, onlyPhDevices]);
+  }, [items, itemSearch, remoteItems, isPhDevice, onlyPhDevices, phDevices]);
+
 
 
 
