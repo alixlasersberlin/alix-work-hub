@@ -1072,8 +1072,9 @@ export default function AngebotErstellen() {
       rowImages.push(u ? await toDataUrl(u) : null);
     }
     const hasImages = rowImages.some(Boolean);
-    const IMG_COL_W = 22;
-    const IMG_SIZE = 18;
+    const IMG_COL_W = 34;
+    const IMG_SIZE = 30;
+
 
     autoTable(doc, {
       startY: cy,
