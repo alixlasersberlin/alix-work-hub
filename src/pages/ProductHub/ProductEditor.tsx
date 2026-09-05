@@ -429,6 +429,17 @@ export default function ProductHubEditor() {
         <TabsContent value="medien">
           <Card><CardContent className="p-4 space-y-3">
             <HeroImageField form={form} set={set} disabled={!canWrite} />
+            {canWrite && id && (
+              <ImageUpload
+                productId={id}
+                onDone={async (url) => {
+                  if (!form.hero_image_url) set('hero_image_url', url);
+                  if (!form.offer_image_url) set('offer_image_url', url);
+                  await load();
+                }}
+              />
+            )}
+
             <div className="rounded-md border border-border p-3 space-y-2">
               <Label className="text-xs">Hauptbild für Angebote</Label>
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
@@ -752,6 +763,66 @@ function DocUpload({ productId, onDone }: { productId: string; onDone: () => voi
           {busy ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Hochladen
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** Bild-Upload für ein Gerät (Medien-Reiter) */
+function ImageUpload({ productId, onDone }: { productId: string; onDone: (url: string) => void | Promise<void> }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const upload = async () => {
+    if (!file) { toast.error('Bitte ein Bild auswählen'); return; }
+    setBusy(true);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `images/${productId}/${Date.now()}-${safe}`;
+      const { error: upErr } = await supabase.storage
+        .from('product-hub-docs').upload(path, file, { upsert: false, contentType: file.type || undefined });
+      if (upErr) throw upErr;
+      const { data: signed, error: sErr } = await supabase.storage
+        .from('product-hub-docs').createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+      if (sErr || !signed?.signedUrl) throw sErr || new Error('Link konnte nicht erzeugt werden');
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await db.from('ph_media').insert({
+        product_id: productId,
+        url: signed.signedUrl,
+        storage_path: path,
+        kind: 'product',
+        media_type: 'image',
+        title: title.trim() || file.name,
+        alt_text: title.trim() || file.name,
+        created_by: u?.user?.id ?? null,
+      });
+      if (error) throw error;
+      toast.success('Bild hochgeladen – bitte oben speichern');
+      setFile(null); setTitle('');
+      await onDone(signed.signedUrl);
+    } catch (e: any) { toast.error(e.message || 'Upload fehlgeschlagen'); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="rounded-md border border-border p-3 space-y-3">
+      <div className="text-sm font-medium">Bild hochladen</div>
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="space-y-1.5 md:col-span-2">
+          <Label className="text-xs">Bilddatei (JPG, PNG, WEBP)</Label>
+          <Input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] ?? null)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Titel</Label>
+          <Input value={title} placeholder="optional – sonst Dateiname" onChange={e => setTitle(e.target.value)} />
+        </div>
+      </div>
+      <Button onClick={upload} disabled={busy || !file} size="sm">
+        {busy ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Hochladen
+      </Button>
+      <p className="text-[11px] text-muted-foreground">
+        Das erste hochgeladene Bild wird automatisch als Hauptbild und Angebotsbild übernommen.
+      </p>
     </div>
   );
 }
