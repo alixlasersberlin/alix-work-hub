@@ -461,6 +461,3 @@ verify_jwt = false
 [functions.announce-capa-cockpit]
 verify_jwt = false
 
-[functions.twilio-diag]
-verify_jwt = false
-
