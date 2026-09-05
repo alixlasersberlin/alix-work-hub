@@ -2299,7 +2299,23 @@ export default function AngebotErstellen() {
                         rows={Math.max(2, (l.description?.split('\n').length || 1))}
                         className="bg-secondary border-border text-xs min-h-[3.5rem] whitespace-pre-wrap resize-y leading-snug w-full"
                       />
+                      {(l.device_color || l.laser_module_power || matchPhDevice(l)) && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                          {deviceConfigLines(l).length > 0 ? (
+                            <div className="text-[11px] leading-tight text-foreground">
+                              {deviceConfigLines(l).map(t => <div key={t}>{t}</div>)}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-amber-500">Gerätekonfiguration fehlt</span>
+                          )}
+                          <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] ml-auto"
+                            onClick={() => openLineConfig(l)}>
+                            <Pencil className="w-3 h-3 mr-1" /> Konfiguration
+                          </Button>
+                        </div>
+                      )}
                     </td>
+
                   </tr>
                 </Fragment>
               ))}
