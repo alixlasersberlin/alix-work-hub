@@ -448,16 +448,24 @@ export default function AngebotErstellen() {
   }, [itemSearch]);
 
   // Geräte aus dem Product Hub (Gerätestamm) – Priorisierung in der Suche + Fotos im PDF
-  const [phDevices, setPhDevices] = useState<Array<{ name: string; model: string; sku: string; url: string | null }>>([]);
+  type PhDevice = {
+    id: string | null; name: string; model: string; sku: string; url: string | null;
+    colors: string[]; powers: string[]; configRequired: boolean;
+  };
+  const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('ph_products')
-        .select('name, model, sku, hero_image_url, status')
+        .select('id, name, model, sku, hero_image_url, status, config_colors, config_powers, config_required')
         .neq('status', 'archived');
       setPhDevices((data ?? []).map((p: any) => ({
+        id: p.id ?? null,
         name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url ?? null,
+        colors: Array.isArray(p.config_colors) ? p.config_colors : [],
+        powers: Array.isArray(p.config_powers) ? p.config_powers : [],
+        configRequired: p.config_required !== false,
       })));
     })();
   }, []);
@@ -466,16 +474,20 @@ export default function AngebotErstellen() {
 
   const norm = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  /** Passt ein Katalogartikel zu einem Product-Hub-Gerät? */
-  const isPhDevice = useCallback((i: any): boolean => {
+  /** Liefert das passende Product-Hub-Gerät zu einem Katalogartikel (oder null). */
+  const matchPhDevice = useCallback((i: any): PhDevice | null => {
     const cands = [i?.name, i?.sku].map(norm).filter(Boolean);
-    if (!cands.length) return false;
+    if (!cands.length) return null;
     for (const p of phDevices) {
       const keys = [norm(p.name), norm(p.model), norm(p.sku)].filter(k => k.length >= 4);
-      for (const k of keys) for (const c of cands) if (c === k || c.includes(k)) return true;
+      for (const k of keys) for (const c of cands) if (c === k || c.includes(k)) return p;
     }
-    return false;
+    return null;
   }, [phDevices]);
+
+  /** Passt ein Katalogartikel zu einem Product-Hub-Gerät? */
+  const isPhDevice = useCallback((i: any): boolean => !!matchPhDevice(i), [matchPhDevice]);
+
 
   const resolveLineImage = (l: LineItem): string | null => {
     if (l.image_url) return l.image_url;
