@@ -13,8 +13,10 @@ export type DeviceConfigTarget = {
   productName: string;
   colors?: string[] | null;
   powers?: string[] | null;
+  imageUrl?: string | null;
   initial?: DeviceConfig | null;
 };
+
 
 export function DeviceConfigDialog({
   open, target, onOpenChange, onConfirm,
