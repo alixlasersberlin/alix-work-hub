@@ -127,6 +127,77 @@ function HeroImageField({ form, set, disabled }: any) {
 }
 
 
+/** Daten eines anderen Geräts übernehmen */
+const COPY_GROUPS: { key: string; label: string; fields: string[] }[] = [
+  { key: 'texte', label: 'Beschreibungen', fields: ['short_description', 'long_description', 'features'] },
+  { key: 'technik', label: 'Technik', fields: ['wavelengths', 'power', 'fluence', 'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class'] },
+  { key: 'anwendungen', label: 'Anwendungen & Kategorien', fields: ['applications', 'categories', 'product_group'] },
+  { key: 'regulatory', label: 'Regulatory', fields: ['intended_use', 'manufacturer', 'production_site', 'ce_status', 'mdr_status', 'iso_status', 'standards'] },
+  { key: 'smartki', label: 'Smart KI', fields: ['smart_ki'] },
+  { key: 'seo', label: 'SEO', fields: ['seo_title', 'seo_description'] },
+];
+
+function CopyFromProduct({ currentId, disabled, onApply }: { currentId?: string; disabled?: boolean; onApply: (patch: Record<string, any>) => void }) {
+  const [list, setList] = useState<any[]>([]);
+  const [src, setSrc] = useState('');
+  const [groups, setGroups] = useState<string[]>(COPY_GROUPS.map(g => g.key));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    db.from('ph_products').select('id,name,model,alix_product_id').order('name').then(({ data }: any) =>
+      setList((data || []).filter((p: any) => p.id !== currentId)));
+  }, [currentId]);
+
+  const toggle = (k: string) => setGroups(g => g.includes(k) ? g.filter(x => x !== k) : [...g, k]);
+
+  const apply = async () => {
+    if (!src) { toast.error('Bitte ein Gerät auswählen'); return; }
+    setBusy(true);
+    try {
+      const source = await phGetProduct(src);
+      const fields = COPY_GROUPS.filter(g => groups.includes(g.key)).flatMap(g => g.fields);
+      const patch: Record<string, any> = {};
+      fields.forEach(f => { if ((source as any)[f] !== undefined) patch[f] = (source as any)[f]; });
+      onApply(patch);
+      toast.success('Daten übernommen – bitte prüfen und speichern');
+    } catch (e: any) { toast.error(e.message); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="md:col-span-3 rounded-md border border-border p-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <Copy className="w-4 h-4 text-muted-foreground" />
+        <span className="text-sm font-medium">Daten eines anderen Geräts übernehmen</span>
+      </div>
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="md:col-span-2 space-y-1.5">
+          <Label className="text-xs">Vorlage-Gerät</Label>
+          <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+            value={src} disabled={disabled} onChange={e => setSrc(e.target.value)}>
+            <option value="">— Gerät wählen —</option>
+            {list.map(p => <option key={p.id} value={p.id}>{p.name}{p.model ? ` · ${p.model}` : ''}</option>)}
+          </select>
+        </div>
+        <div className="flex items-end">
+          <Button size="sm" variant="outline" className="w-full" disabled={disabled || busy || !src} onClick={apply}>
+            {busy ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Copy className="w-4 h-4 mr-1" />} Übernehmen
+          </Button>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {COPY_GROUPS.map(g => (
+          <Badge key={g.key} variant={groups.includes(g.key) ? 'default' : 'outline'}
+            className="cursor-pointer" onClick={() => !disabled && toggle(g.key)}>{g.label}</Badge>
+        ))}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Name, SKU, Slug, Artikel-ID und Medien werden nie übernommen. Änderungen werden erst mit „Speichern“ übernommen.
+      </p>
+    </div>
+  );
+}
+
 
 
 export default function ProductHubEditor() {
