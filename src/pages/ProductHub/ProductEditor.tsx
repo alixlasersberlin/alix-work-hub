@@ -24,6 +24,44 @@ import { SmartKiEditor } from '@/components/producthub/SmartKiEditor';
 import { SeoAiButton } from '@/components/producthub/SeoAiButton';
 import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
+import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
+
+/** Editor für eine Werteliste (Farben / Leistungen), die im Angebot zur Auswahl steht. */
+function OptionListEditor({ label, values, defaults, disabled, onChange }: {
+  label: string; values: string[]; defaults: readonly string[]; disabled?: boolean;
+  onChange: (v: string[]) => void;
+}) {
+  const [draft, setDraft] = useState('');
+  const list = values.length ? values : [...defaults];
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex flex-wrap gap-2">
+        {list.map(v => (
+          <Badge key={v} variant="outline" className="gap-1">
+            {v}
+            {!disabled && (
+              <button type="button" className="ml-1 text-destructive"
+                onClick={() => onChange(list.filter(x => x !== v))}>×</button>
+            )}
+          </Badge>
+        ))}
+        {list.length === 0 && <span className="text-xs text-muted-foreground">Keine Werte hinterlegt</span>}
+      </div>
+      {!disabled && (
+        <div className="flex gap-2">
+          <Input value={draft} onChange={e => setDraft(e.target.value)} placeholder="Wert hinzufügen" className="h-9" />
+          <Button size="sm" variant="outline" type="button"
+            onClick={() => { const v = draft.trim(); if (v && !list.includes(v)) onChange([...list, v]); setDraft(''); }}>
+            Hinzufügen
+          </Button>
+          <Button size="sm" variant="ghost" type="button" onClick={() => onChange([...defaults])}>Standard</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 
 
@@ -286,7 +324,7 @@ export default function ProductHubEditor() {
 
       <Tabs defaultValue="allgemein">
         <TabsList className="flex-wrap h-auto">
-          {['allgemein', 'technik', 'anwendungen', 'smartki', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'historie'].map(t => (
+          {['allgemein', 'technik', 'konfiguration', 'anwendungen', 'smartki', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'historie'].map(t => (
             <TabsTrigger key={t} value={t} className="capitalize">{t === 'smartki' ? 'Smart KI' : t}</TabsTrigger>
           ))}
         </TabsList>
@@ -318,6 +356,34 @@ export default function ProductHubEditor() {
             ))}
           </CardContent></Card>
         </TabsContent>
+
+        <TabsContent value="konfiguration">
+          <Card><CardContent className="p-4 space-y-6">
+            <p className="text-xs text-muted-foreground">
+              Diese Werte werden bei der Angebotserstellung je Geräteposition abgefragt.
+            </p>
+            <OptionListEditor
+              label="Farbe des Gerätes"
+              values={(form.config_colors as string[]) || []}
+              defaults={PH_DEFAULT_COLORS}
+              disabled={!canWrite}
+              onChange={v => set('config_colors', v)}
+            />
+            <OptionListEditor
+              label="Leistung Lasermodul"
+              values={(form.config_powers as string[]) || []}
+              defaults={PH_DEFAULT_POWERS}
+              disabled={!canWrite}
+              onChange={v => set('config_powers', v)}
+            />
+            <div className="flex items-center gap-3">
+              <Switch checked={form.config_required !== false} disabled={!canWrite}
+                onCheckedChange={v => set('config_required', v)} />
+              <Label className="text-xs">Konfiguration im Angebot verpflichtend abfragen</Label>
+            </div>
+          </CardContent></Card>
+        </TabsContent>
+
 
         <TabsContent value="anwendungen">
           <Card><CardContent className="p-4 space-y-3">

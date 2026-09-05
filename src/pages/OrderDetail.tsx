@@ -1,4 +1,6 @@
 import { SkeletonForm } from '@/components/infinity/Skeleton';
+import { deviceConfigLines } from '@/lib/producthub/deviceConfig';
+
 
 const CURRENCY_SYMBOL_MAP: Record<string, string> = {
   '€': 'EUR', 'EUR': 'EUR', 'eur': 'EUR',
@@ -1087,6 +1089,10 @@ export default function OrderDetail() {
                       <TableCell>
                         <div className="font-medium text-foreground">{item.item_name || '—'}</div>
                         {item.description && <div className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">{item.description}</div>}
+                        {deviceConfigLines(item as any).map((t: string) => (
+                          <div key={t} className="text-xs text-primary mt-0.5">{t}</div>
+                        ))}
+
                       </TableCell>
                       <TableCell className="text-muted-foreground">{item.sku || '—'}</TableCell>
                       <TableCell className="text-right">{item.quantity != null ? Number(item.quantity).toLocaleString('de-DE') : '—'}</TableCell>

@@ -23,6 +23,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
 import { BookOpen } from 'lucide-react';
 import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
+import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/producthub/DeviceConfigDialog';
+import { deviceConfigLines, type DeviceConfig } from '@/lib/producthub/deviceConfig';
+
 
 
 type LineItem = {
@@ -37,7 +40,16 @@ type LineItem = {
   snapshot_id?: string;
   long_text?: string;
   image_url?: string;
+  // Gerätekonfiguration (Snapshot je Position, aus dem Product Hub)
+  ph_product_id?: string | null;
+  ph_product_name?: string | null;
+  device_color?: string | null;
+  ral_color_code?: string | null;
+  laser_module_power?: string | null;
+  config_colors?: string[];
+  config_powers?: string[];
 };
+
 
 const newLine = (): LineItem => ({
   id: crypto.randomUUID(),
@@ -448,16 +460,30 @@ export default function AngebotErstellen() {
   }, [itemSearch]);
 
   // Geräte aus dem Product Hub (Gerätestamm) – Priorisierung in der Suche + Fotos im PDF
-  const [phDevices, setPhDevices] = useState<Array<{ name: string; model: string; sku: string; url: string | null }>>([]);
+  type PhDevice = {
+    id: string | null; name: string; model: string; sku: string; url: string | null;
+    colors: string[]; powers: string[]; configRequired: boolean;
+  };
+  const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
+  // Gerätekonfiguration (Farbe / Lasermodul) beim Hinzufügen einer Geräteposition
+  const [configOpen, setConfigOpen] = useState(false);
+  const [configTarget, setConfigTarget] = useState<DeviceConfigTarget | null>(null);
+  const [pendingItem, setPendingItem] = useState<any | null>(null);
+  const [configLineId, setConfigLineId] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('ph_products')
-        .select('name, model, sku, hero_image_url, status')
+        .select('id, name, model, sku, hero_image_url, status, config_colors, config_powers, config_required')
         .neq('status', 'archived');
       setPhDevices((data ?? []).map((p: any) => ({
+        id: p.id ?? null,
         name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url ?? null,
+        colors: Array.isArray(p.config_colors) ? p.config_colors : [],
+        powers: Array.isArray(p.config_powers) ? p.config_powers : [],
+        configRequired: p.config_required !== false,
       })));
     })();
   }, []);
@@ -466,16 +492,20 @@ export default function AngebotErstellen() {
 
   const norm = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  /** Passt ein Katalogartikel zu einem Product-Hub-Gerät? */
-  const isPhDevice = useCallback((i: any): boolean => {
+  /** Liefert das passende Product-Hub-Gerät zu einem Katalogartikel (oder null). */
+  const matchPhDevice = useCallback((i: any): PhDevice | null => {
     const cands = [i?.name, i?.sku].map(norm).filter(Boolean);
-    if (!cands.length) return false;
+    if (!cands.length) return null;
     for (const p of phDevices) {
       const keys = [norm(p.name), norm(p.model), norm(p.sku)].filter(k => k.length >= 4);
-      for (const k of keys) for (const c of cands) if (c === k || c.includes(k)) return true;
+      for (const k of keys) for (const c of cands) if (c === k || c.includes(k)) return p;
     }
-    return false;
+    return null;
   }, [phDevices]);
+
+  /** Passt ein Katalogartikel zu einem Product-Hub-Gerät? */
+  const isPhDevice = useCallback((i: any): boolean => !!matchPhDevice(i), [matchPhDevice]);
+
 
   const resolveLineImage = (l: LineItem): string | null => {
     if (l.image_url) return l.image_url;
@@ -535,6 +565,11 @@ export default function AngebotErstellen() {
           status: 'active',
           image_url: p.url,
           _ph: true,
+          _phId: p.id,
+          _phColors: p.colors,
+          _phPowers: p.powers,
+          _phRequired: p.configRequired,
+
         });
       }
     }
@@ -695,26 +730,93 @@ export default function AngebotErstellen() {
   }
 
 
-  const addItem = (it: any) => {
-    setLines(prev => [
-      ...prev.filter(l => l.name || l.sku || l.rate),
-      {
-        id: crypto.randomUUID(),
-        item_id: it.id,
-        name: it.name || '',
-        description: it.description || '',
-        sku: it.sku || '',
-        quantity: 1,
-        rate: Number(it.rate || 0),
-        tax_percentage: Number(it.tax_percentage || 19),
-        image_url: it.image_url || it.hero_image_url || undefined,
+  const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => ({
+    id: crypto.randomUUID(),
+    item_id: it.id,
+    name: it.name || '',
+    description: it.description || '',
+    sku: it.sku || '',
+    quantity: 1,
+    rate: Number(it.rate || 0),
+    tax_percentage: Number(it.tax_percentage || 19),
+    image_url: it.image_url || it.hero_image_url || undefined,
+    ph_product_id: cfg?.product_id ?? null,
+    ph_product_name: cfg?.product_name ?? null,
+    device_color: cfg?.device_color ?? null,
+    ral_color_code: cfg?.ral_color_code ?? null,
+    laser_module_power: cfg?.laser_module_power ?? null,
+    config_colors: it._phColors ?? matchPhDevice(it)?.colors ?? undefined,
+    config_powers: it._phPowers ?? matchPhDevice(it)?.powers ?? undefined,
+  });
 
-      },
-    ]);
+  const appendLine = (line: LineItem) => {
+    setLines(prev => [...prev.filter(l => l.name || l.sku || l.rate), line]);
+  };
+
+  const addItem = (it: any) => {
+    const dev: any = it._ph
+      ? (it._phId !== undefined
+        ? { id: it._phId, name: it.name, colors: it._phColors, powers: it._phPowers, configRequired: it._phRequired !== false }
+        : matchPhDevice(it))
+      : matchPhDevice(it);
+    if (dev && dev.configRequired !== false) {
+      // Gerät: erst konfigurieren, dann in das Angebot übernehmen
+      setConfigTarget({
+        productId: dev.id ?? null,
+        productName: it.name || dev.name,
+        colors: dev.colors,
+        powers: dev.powers,
+      });
+      setPendingItem(it);
+      setConfigLineId(null);
+      setConfigOpen(true);
+      setItemSearch('');
+      return;
+    }
+    appendLine(buildLineFromItem(it));
     setItemSearch('');
   };
 
+
+  const applyDeviceConfig = (cfg: DeviceConfig) => {
+    if (configLineId) {
+      setLines(prev => prev.map(l => (l.id === configLineId ? {
+        ...l,
+        ph_product_id: cfg.product_id ?? l.ph_product_id ?? null,
+        ph_product_name: cfg.product_name ?? l.ph_product_name ?? null,
+        device_color: cfg.device_color ?? null,
+        ral_color_code: cfg.ral_color_code ?? null,
+        laser_module_power: cfg.laser_module_power ?? null,
+      } : l)));
+    } else if (pendingItem) {
+      appendLine(buildLineFromItem(pendingItem, cfg));
+    }
+    setPendingItem(null);
+    setConfigLineId(null);
+  };
+
+  const openLineConfig = (l: LineItem) => {
+    const dev = matchPhDevice(l);
+    setConfigTarget({
+      productId: l.ph_product_id ?? dev?.id ?? null,
+      productName: l.name,
+      colors: l.config_colors ?? dev?.colors ?? null,
+      powers: l.config_powers ?? dev?.powers ?? null,
+      initial: {
+        device_color: l.device_color,
+        ral_color_code: l.ral_color_code,
+        laser_module_power: l.laser_module_power,
+        product_id: l.ph_product_id ?? dev?.id ?? null,
+        product_name: l.ph_product_name ?? l.name,
+      },
+    });
+    setPendingItem(null);
+    setConfigLineId(l.id);
+    setConfigOpen(true);
+  };
+
   const updateLine = (id: string, patch: Partial<LineItem>) => {
+
     setLines(prev => prev.map(l => (l.id === id ? { ...l, ...patch } : l)));
   };
 
@@ -949,7 +1051,7 @@ export default function AngebotErstellen() {
       body: validLines.map((l, idx) => {
         const base = [
           idx + 1,
-          `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}`,
+          `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}${deviceConfigLines(l).length ? `\n${deviceConfigLines(l).join('\n')}` : ''}`,
           l.quantity,
           fmtMoney(l.rate),
           `${l.tax_percentage}%`,
@@ -1514,7 +1616,23 @@ export default function AngebotErstellen() {
         amount: (Number(l.quantity) || 0) * (Number(l.rate) || 0),
         tax_amount: ((Number(l.quantity) || 0) * (Number(l.rate) || 0)) * ((Number(l.tax_percentage) || 0) / 100),
         item_order: idx + 1,
+        // Gerätekonfiguration als dauerhafter Snapshot der Position
+        ph_product_id: l.ph_product_id || null,
+        ph_product_name: l.ph_product_name || null,
+        device_color: l.device_color || null,
+        ral_color_code: l.ral_color_code || null,
+        laser_module_power: l.laser_module_power || null,
+        raw_data: (l.device_color || l.laser_module_power) ? {
+          device_config: {
+            product_id: l.ph_product_id || null,
+            product_name: l.ph_product_name || l.name,
+            device_color: l.device_color || null,
+            ral_color_code: l.ral_color_code || null,
+            laser_module_power: l.laser_module_power || null,
+          },
+        } : null,
       }));
+
       if (itemsPayload.length > 0) {
         const { error: itErr } = await supabase.from('order_items').insert(itemsPayload as any);
         if (itErr) throw itErr;
@@ -2019,7 +2137,14 @@ export default function AngebotErstellen() {
             </Button>
           </div>
         </div>
+        <DeviceConfigDialog
+          open={configOpen}
+          target={configTarget}
+          onOpenChange={(v) => { setConfigOpen(v); if (!v) { setPendingItem(null); setConfigLineId(null); } }}
+          onConfirm={applyDeviceConfig}
+        />
         <KatalogPickerDialog
+
           open={katalogPickerOpen}
           onOpenChange={setKatalogPickerOpen}
           usedInType="offer_draft"
@@ -2197,7 +2322,23 @@ export default function AngebotErstellen() {
                         rows={Math.max(2, (l.description?.split('\n').length || 1))}
                         className="bg-secondary border-border text-xs min-h-[3.5rem] whitespace-pre-wrap resize-y leading-snug w-full"
                       />
+                      {(l.device_color || l.laser_module_power || matchPhDevice(l)) && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                          {deviceConfigLines(l).length > 0 ? (
+                            <div className="text-[11px] leading-tight text-foreground">
+                              {deviceConfigLines(l).map(t => <div key={t}>{t}</div>)}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-amber-500">Gerätekonfiguration fehlt</span>
+                          )}
+                          <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] ml-auto"
+                            onClick={() => openLineConfig(l)}>
+                            <Pencil className="w-3 h-3 mr-1" /> Konfiguration
+                          </Button>
+                        </div>
+                      )}
                     </td>
+
                   </tr>
                 </Fragment>
               ))}
