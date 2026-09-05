@@ -429,6 +429,27 @@ export default function ProductHubEditor() {
         <TabsContent value="medien">
           <Card><CardContent className="p-4 space-y-3">
             <HeroImageField form={form} set={set} disabled={!canWrite} />
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <Label className="text-xs">Hauptbild für Angebote</Label>
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                {(form.offer_image_url || form.hero_image_url) ? (
+                  <img src={form.offer_image_url || form.hero_image_url} alt="Angebotsbild" loading="lazy"
+                    className="h-20 w-28 rounded bg-white object-contain p-1" />
+                ) : (
+                  <div className="h-20 w-28 rounded border border-dashed border-amber-500/60 flex items-center justify-center text-[11px] text-amber-500 text-center px-1">
+                    kein Angebotsbild
+                  </div>
+                )}
+                <div className="flex-1 space-y-2">
+                  <Input value={form.offer_image_url || ''} disabled={!canWrite}
+                    placeholder="Bild-URL oder unten aus den Medien wählen"
+                    onChange={e => set('offer_image_url', e.target.value)} />
+                  <p className="text-[11px] text-muted-foreground">
+                    Dieses Bild wird automatisch in Angeboten, Angebots-PDFs und Aufträgen verwendet.
+                  </p>
+                </div>
+              </div>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {media.map(m => (
                 <div key={m.id} className="border border-border rounded-md p-2 space-y-1">
@@ -437,13 +458,23 @@ export default function ProductHubEditor() {
                     : <div className="aspect-square flex items-center justify-center text-xs text-muted-foreground">Video</div>}
                   <div className="text-[11px] truncate">{m.title || m.kind}</div>
                   <div className="text-[10px] text-muted-foreground truncate" title={displayMediaUrl(m.url)}>{displayMediaFileName(m.url)}</div>
-                  <Badge variant="outline" className="text-[10px]">{m.kind}</Badge>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <Badge variant="outline" className="text-[10px]">{m.kind}</Badge>
+                    {form.offer_image_url === m.url && <Badge className="text-[10px]">Angebotsbild</Badge>}
+                  </div>
+                  {canWrite && m.media_type === 'image' && form.offer_image_url !== m.url && (
+                    <Button size="sm" variant="outline" className="w-full h-7 text-[10px]"
+                      onClick={() => set('offer_image_url', m.url)}>
+                      Als Angebotsbild
+                    </Button>
+                  )}
                 </div>
               ))}
               {media.length === 0 && <div className="text-sm text-muted-foreground">Keine Medien.</div>}
             </div>
           </CardContent></Card>
         </TabsContent>
+
 
 
         <TabsContent value="dokumente">

@@ -24,7 +24,7 @@ import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalo
 import { BookOpen } from 'lucide-react';
 import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
 import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/producthub/DeviceConfigDialog';
-import { deviceConfigLines, type DeviceConfig } from '@/lib/producthub/deviceConfig';
+import { deviceConfigLines, deviceConfigComplete, type DeviceConfig } from '@/lib/producthub/deviceConfig';
 
 
 
@@ -43,6 +43,8 @@ type LineItem = {
   // Gerätekonfiguration (Snapshot je Position, aus dem Product Hub)
   ph_product_id?: string | null;
   ph_product_name?: string | null;
+  product_image_url?: string | null;
+
   device_color?: string | null;
   ral_color_code?: string | null;
   laser_module_power?: string | null;
@@ -476,11 +478,13 @@ export default function AngebotErstellen() {
     (async () => {
       const { data } = await (supabase as any)
         .from('ph_products')
-        .select('id, name, model, sku, hero_image_url, status, config_colors, config_powers, config_required')
+        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required')
         .neq('status', 'archived');
       setPhDevices((data ?? []).map((p: any) => ({
         id: p.id ?? null,
-        name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url ?? null,
+        name: p.name || '', model: p.model || '', sku: p.sku || '',
+        url: p.offer_image_url ?? p.hero_image_url ?? null,
+
         colors: Array.isArray(p.config_colors) ? p.config_colors : [],
         powers: Array.isArray(p.config_powers) ? p.config_powers : [],
         configRequired: p.config_required !== false,
@@ -508,7 +512,10 @@ export default function AngebotErstellen() {
 
 
   const resolveLineImage = (l: LineItem): string | null => {
+    if (l.product_image_url) return l.product_image_url;
     if (l.image_url) return l.image_url;
+    const dev = matchPhDevice(l);
+    if (dev?.url) return dev.url;
     const cands = [l.name, l.sku].map(norm).filter(Boolean);
     if (!cands.length) return null;
     for (const p of phImages) {
@@ -730,24 +737,30 @@ export default function AngebotErstellen() {
   }
 
 
-  const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => ({
-    id: crypto.randomUUID(),
-    item_id: it.id,
-    name: it.name || '',
-    description: it.description || '',
-    sku: it.sku || '',
-    quantity: 1,
-    rate: Number(it.rate || 0),
-    tax_percentage: Number(it.tax_percentage || 19),
-    image_url: it.image_url || it.hero_image_url || undefined,
-    ph_product_id: cfg?.product_id ?? null,
-    ph_product_name: cfg?.product_name ?? null,
-    device_color: cfg?.device_color ?? null,
-    ral_color_code: cfg?.ral_color_code ?? null,
-    laser_module_power: cfg?.laser_module_power ?? null,
-    config_colors: it._phColors ?? matchPhDevice(it)?.colors ?? undefined,
-    config_powers: it._phPowers ?? matchPhDevice(it)?.powers ?? undefined,
-  });
+  const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => {
+    const dev = matchPhDevice(it);
+    // Bild-Snapshot: bevorzugt das im Product Hub festgelegte Angebotsbild
+    const img = it.image_url || it.hero_image_url || dev?.url || undefined;
+    return {
+      id: crypto.randomUUID(),
+      item_id: it.id,
+      name: it.name || '',
+      description: it.description || '',
+      sku: it.sku || '',
+      quantity: 1,
+      rate: Number(it.rate || 0),
+      tax_percentage: Number(it.tax_percentage || 19),
+      image_url: img,
+      ph_product_id: cfg?.product_id ?? dev?.id ?? null,
+      ph_product_name: cfg?.product_name ?? (dev ? (it.name || dev.name) : null),
+      product_image_url: img ?? null,
+      device_color: cfg?.device_color ?? null,
+      ral_color_code: cfg?.ral_color_code ?? null,
+      laser_module_power: cfg?.laser_module_power ?? null,
+      config_colors: it._phColors ?? dev?.colors ?? undefined,
+      config_powers: it._phPowers ?? dev?.powers ?? undefined,
+    };
+  };
 
   const appendLine = (line: LineItem) => {
     setLines(prev => [...prev.filter(l => l.name || l.sku || l.rate), line]);
@@ -756,16 +769,21 @@ export default function AngebotErstellen() {
   const addItem = (it: any) => {
     const dev: any = it._ph
       ? (it._phId !== undefined
-        ? { id: it._phId, name: it.name, colors: it._phColors, powers: it._phPowers, configRequired: it._phRequired !== false }
+        ? { id: it._phId, name: it.name, colors: it._phColors, powers: it._phPowers, configRequired: it._phRequired !== false, url: it.image_url ?? null }
         : matchPhDevice(it))
       : matchPhDevice(it);
     if (dev && dev.configRequired !== false) {
+      const img = it.image_url || dev.url || null;
+      if (!img) {
+        toast.warning('Für dieses Gerät ist im Product Hub noch kein Angebotsbild hinterlegt.');
+      }
       // Gerät: erst konfigurieren, dann in das Angebot übernehmen
       setConfigTarget({
         productId: dev.id ?? null,
         productName: it.name || dev.name,
         colors: dev.colors,
         powers: dev.powers,
+        imageUrl: img,
       });
       setPendingItem(it);
       setConfigLineId(null);
@@ -776,6 +794,7 @@ export default function AngebotErstellen() {
     appendLine(buildLineFromItem(it));
     setItemSearch('');
   };
+
 
 
   const applyDeviceConfig = (cfg: DeviceConfig) => {
@@ -802,6 +821,8 @@ export default function AngebotErstellen() {
       productName: l.name,
       colors: l.config_colors ?? dev?.colors ?? null,
       powers: l.config_powers ?? dev?.powers ?? null,
+      imageUrl: l.product_image_url ?? l.image_url ?? dev?.url ?? null,
+
       initial: {
         device_color: l.device_color,
         ral_color_code: l.ral_color_code,
@@ -903,6 +924,21 @@ export default function AngebotErstellen() {
       toast.error('Bitte mindestens eine Position erfassen.');
       return null;
     }
+
+    // Geräte aus dem Product Hub: ohne Bild und ohne vollständige Konfiguration kein Kundenangebot
+    const deviceLines = validLines.filter(l => l.ph_product_id || matchPhDevice(l));
+    const missingImage = deviceLines.filter(l => !(l.product_image_url || l.image_url || matchPhDevice(l)?.url));
+    if (missingImage.length) {
+      toast.error(`Kein Angebotsbild hinterlegt für: ${missingImage.map(l => l.name).join(', ')}`);
+      return null;
+    }
+    const missingCfg = deviceLines.filter(l => !deviceConfigComplete(l));
+    if (missingCfg.length) {
+      toast.error(`Gerätekonfiguration fehlt für: ${missingCfg.map(l => l.name).join(', ')}`);
+      return null;
+    }
+
+
 
     const doc = createPDF({ unit: 'mm', format: 'a4' });
     const PAGE_W = 210;
@@ -1039,8 +1075,9 @@ export default function AngebotErstellen() {
       rowImages.push(u ? await toDataUrl(u) : null);
     }
     const hasImages = rowImages.some(Boolean);
-    const IMG_COL_W = 22;
-    const IMG_SIZE = 18;
+    const IMG_COL_W = 34;
+    const IMG_SIZE = 30;
+
 
     autoTable(doc, {
       startY: cy,
@@ -1087,8 +1124,19 @@ export default function AngebotErstellen() {
         if (!img) return;
         try {
           const fmt = img.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-          doc.addImage(img, fmt, data.cell.x + 2, data.cell.y + 1.5, IMG_SIZE, IMG_SIZE, undefined, 'FAST');
+          // proportional einpassen – nie verzerrt, nie abgeschnitten
+          let w = IMG_SIZE, h = IMG_SIZE;
+          try {
+            const props: any = (doc as any).getImageProperties(img);
+            const ratio = (props?.width || 1) / (props?.height || 1);
+            if (ratio >= 1) { w = IMG_SIZE; h = IMG_SIZE / ratio; }
+            else { h = IMG_SIZE; w = IMG_SIZE * ratio; }
+          } catch { /* Standardmaße verwenden */ }
+          const x = data.cell.x + (IMG_COL_W - w) / 2;
+          const y = data.cell.y + Math.max(1.5, (data.cell.height - h) / 2);
+          doc.addImage(img, fmt, x, y, w, h, undefined, 'FAST');
         } catch { /* ignore */ }
+
       },
       willDrawPage: () => {
         // Draw template as background BEFORE row content on each new page
@@ -1619,6 +1667,7 @@ export default function AngebotErstellen() {
         // Gerätekonfiguration als dauerhafter Snapshot der Position
         ph_product_id: l.ph_product_id || null,
         ph_product_name: l.ph_product_name || null,
+        product_image_url: l.product_image_url || l.image_url || null,
         device_color: l.device_color || null,
         ral_color_code: l.ral_color_code || null,
         laser_module_power: l.laser_module_power || null,
@@ -1626,6 +1675,7 @@ export default function AngebotErstellen() {
           device_config: {
             product_id: l.ph_product_id || null,
             product_name: l.ph_product_name || l.name,
+            product_image_url: l.product_image_url || l.image_url || null,
             device_color: l.device_color || null,
             ral_color_code: l.ral_color_code || null,
             laser_module_power: l.laser_module_power || null,
@@ -2216,20 +2266,28 @@ export default function AngebotErstellen() {
                   <button
                     key={i.id}
                     onClick={() => addItem(i)}
-                    className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
+                    className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm flex items-center gap-3"
                   >
-                    <p className="font-medium text-foreground">
-                      {i.name}
-                      {i._ph && (
-                        <span className="ml-2 text-[10px] uppercase text-primary border border-primary/50 rounded px-1 py-0.5">Gerät</span>
-                      )}
-                      {i.status && i.status !== 'active' && (
-                        <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
-                      )}
-                    </p>
-
-                    <p className="text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</p>
+                    {(i as any).image_url ? (
+                      <img src={(i as any).image_url} alt={i.name} loading="lazy"
+                        className="h-10 w-12 rounded bg-white object-contain shrink-0 p-0.5" />
+                    ) : i._ph ? (
+                      <div className="h-10 w-12 rounded border border-dashed border-amber-500/50 shrink-0" />
+                    ) : null}
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium text-foreground truncate">
+                        {i.name}
+                        {i._ph && (
+                          <span className="ml-2 text-[10px] uppercase text-primary border border-primary/50 rounded px-1 py-0.5">Gerät</span>
+                        )}
+                        {i.status && i.status !== 'active' && (
+                          <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
+                        )}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</span>
+                    </span>
                   </button>
+
                 ))}
               </ScrollArea>
             </div>
@@ -2322,21 +2380,49 @@ export default function AngebotErstellen() {
                         rows={Math.max(2, (l.description?.split('\n').length || 1))}
                         className="bg-secondary border-border text-xs min-h-[3.5rem] whitespace-pre-wrap resize-y leading-snug w-full"
                       />
-                      {(l.device_color || l.laser_module_power || matchPhDevice(l)) && (
-                        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
-                          {deviceConfigLines(l).length > 0 ? (
-                            <div className="text-[11px] leading-tight text-foreground">
-                              {deviceConfigLines(l).map(t => <div key={t}>{t}</div>)}
+                      {(l.device_color || l.laser_module_power || matchPhDevice(l)) && (() => {
+                        const dev = matchPhDevice(l);
+                        const img = l.product_image_url || l.image_url || dev?.url || null;
+                        const phId = l.ph_product_id || dev?.id || null;
+                        return (
+                          <div className="mt-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              {img ? (
+                                <img src={img} alt={l.name} loading="lazy"
+                                  className="h-16 w-full sm:w-20 rounded bg-background object-contain" />
+                              ) : (
+                                <div className="h-16 w-full sm:w-20 rounded border border-dashed border-amber-500/60 bg-background flex items-center justify-center text-[10px] text-amber-500 text-center px-1">
+                                  kein Bild
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                {deviceConfigLines(l).length > 0 ? (
+                                  <div className="text-[11px] leading-tight text-foreground">
+                                    {deviceConfigLines(l).map(t => <div key={t}>{t}</div>)}
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-amber-500">Gerätekonfiguration fehlt</span>
+                                )}
+                                {!img && (
+                                  <div className="text-[11px] text-amber-500 mt-1">
+                                    Für dieses Gerät ist im Product Hub noch kein Angebotsbild hinterlegt.
+                                    {phId && (
+                                      <a href={`/product-hub/geraete/${phId}`} target="_blank" rel="noreferrer" className="ml-1 underline">
+                                        Produktbild im Product Hub hinterlegen
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] sm:ml-auto self-start"
+                                onClick={() => openLineConfig(l)}>
+                                <Pencil className="w-3 h-3 mr-1" /> Konfiguration
+                              </Button>
                             </div>
-                          ) : (
-                            <span className="text-[11px] text-amber-500">Gerätekonfiguration fehlt</span>
-                          )}
-                          <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] ml-auto"
-                            onClick={() => openLineConfig(l)}>
-                            <Pencil className="w-3 h-3 mr-1" /> Konfiguration
-                          </Button>
-                        </div>
-                      )}
+                          </div>
+                        );
+                      })()}
+
                     </td>
 
                   </tr>

@@ -13,8 +13,10 @@ export type DeviceConfigTarget = {
   productName: string;
   colors?: string[] | null;
   powers?: string[] | null;
+  imageUrl?: string | null;
   initial?: DeviceConfig | null;
 };
+
 
 export function DeviceConfigDialog({
   open, target, onOpenChange, onConfirm,
@@ -56,6 +58,31 @@ export function DeviceConfigDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {target?.imageUrl ? (
+            <div className="flex items-center justify-center rounded-md border border-border bg-secondary/40 p-2">
+              <img
+                src={target.imageUrl}
+                alt={target.productName}
+                loading="lazy"
+                className="max-h-40 w-auto object-contain"
+              />
+            </div>
+          ) : (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-500">
+              Für dieses Gerät ist im Product Hub noch kein Angebotsbild hinterlegt.
+              {target?.productId && (
+                <a
+                  href={`/product-hub/geraete/${target.productId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-1 underline"
+                >
+                  Produktbild im Product Hub hinterlegen
+                </a>
+              )}
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label className="text-xs">Farbe des Gerätes *</Label>
             <Select value={color} onValueChange={setColor}>

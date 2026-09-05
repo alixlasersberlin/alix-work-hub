@@ -35012,6 +35012,7 @@ export type Database = {
           order_id: string
           ph_product_id: string | null
           ph_product_name: string | null
+          product_image_url: string | null
           quantity: number | null
           ral_color_code: string | null
           rate: number | null
@@ -35035,6 +35036,7 @@ export type Database = {
           order_id: string
           ph_product_id?: string | null
           ph_product_name?: string | null
+          product_image_url?: string | null
           quantity?: number | null
           ral_color_code?: string | null
           rate?: number | null
@@ -35058,6 +35060,7 @@ export type Database = {
           order_id?: string
           ph_product_id?: string | null
           ph_product_name?: string | null
+          product_image_url?: string | null
           quantity?: number | null
           ral_color_code?: string | null
           rate?: number | null
@@ -36928,6 +36931,7 @@ export type Database = {
           model: string | null
           name: string
           notes: string | null
+          offer_image_url: string | null
           plm_device_id: string | null
           power: string | null
           product_family: string | null
@@ -36997,6 +37001,7 @@ export type Database = {
           model?: string | null
           name: string
           notes?: string | null
+          offer_image_url?: string | null
           plm_device_id?: string | null
           power?: string | null
           product_family?: string | null
@@ -37066,6 +37071,7 @@ export type Database = {
           model?: string | null
           name?: string
           notes?: string | null
+          offer_image_url?: string | null
           plm_device_id?: string | null
           power?: string | null
           product_family?: string | null

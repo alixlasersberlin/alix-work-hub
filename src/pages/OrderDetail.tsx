@@ -1087,11 +1087,24 @@ export default function OrderDetail() {
                     <TableRow key={item.id}>
                       <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                       <TableCell>
-                        <div className="font-medium text-foreground">{item.item_name || '—'}</div>
-                        {item.description && <div className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">{item.description}</div>}
-                        {deviceConfigLines(item as any).map((t: string) => (
-                          <div key={t} className="text-xs text-primary mt-0.5">{t}</div>
-                        ))}
+                        <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                          {(item as any).product_image_url && (
+                            <img
+                              src={(item as any).product_image_url}
+                              alt={item.item_name || 'Gerät'}
+                              loading="lazy"
+                              className="h-16 w-full sm:w-20 rounded bg-background object-contain shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <div className="font-medium text-foreground">{item.item_name || '—'}</div>
+                            {item.description && <div className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">{item.description}</div>}
+                            {deviceConfigLines(item as any).map((t: string) => (
+                              <div key={t} className="text-xs text-primary mt-0.5">{t}</div>
+                            ))}
+                          </div>
+                        </div>
+
 
                       </TableCell>
                       <TableCell className="text-muted-foreground">{item.sku || '—'}</TableCell>
