@@ -757,6 +757,9 @@ export default function AngebotErstellen() {
     const dev = matchPhDevice(it);
     // Bild-Snapshot: bevorzugt das im Product Hub festgelegte Angebotsbild
     const img = it.image_url || it.hero_image_url || dev?.url || undefined;
+    // Aktueller Preis aus dem Product Hub hat Vorrang
+    const hubPrice = Number(it._phPrice ?? dev?.netPrice ?? 0);
+
     return {
       id: crypto.randomUUID(),
       item_id: it.id,
