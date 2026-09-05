@@ -17,18 +17,62 @@ const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 const PUBLIC_FIELDS =
-  "alix_product_id,name,model,sku,slug,status,product_group,categories,applications,short_description,long_description,features,smart_ki,tech_specs,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling,laser_class,intended_use,manufacturer,ce_status,mdr_status,iso_status,standards,hero_image_url,seo_title,seo_description,sort_order,featured,active_de,active_com,active_at,active_usa,active_dubai,updated_at,price_public,price_uvp,vk_min_mode,vk_min_value,vk_max_mode,vk_max_value,promo_active,promo_name";
+  "alix_product_id,name,model,sku,slug,status,product_group,categories,applications,short_description,long_description,features,smart_ki,tech_specs,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling,laser_class,intended_use,manufacturer,ce_status,mdr_status,iso_status,standards,hero_image_url,seo_title,seo_description,sort_order,featured,active_de,active_com,active_at,active_usa,active_dubai,updated_at,price_public,price_uvp,vk_min_mode,vk_min_value,vk_max_mode,vk_max_value,promo_active,promo_name,price_countries";
 
 const PRICE_FIELDS = ["price_uvp", "vk_min_mode", "vk_min_value", "vk_max_mode", "vk_max_value", "promo_active", "promo_name"];
 
-/** Preise sind standardmäßig nicht öffentlich – nur bei price_public=true ausliefern. */
-function stripPrices<T extends Record<string, unknown>>(row: T): T {
+/** Kanal -> Länderschlüssel in price_countries */
+const CHANNEL_COUNTRY: Record<string, string> = {
+  de: "de", com: "de", at: "at", usa: "usa", vietnam: "vietnam", dubai: "dubai",
+};
+
+/**
+ * Preise sind standardmäßig nicht öffentlich.
+ * Länderpreise werden nur ausgeliefert, wenn das jeweilige Land freigeschaltet ist;
+ * bei gesetztem Kanal wird auf dessen Land reduziert. Brutto-/Nettowerte werden mitgeliefert.
+ */
+function stripPrices<T extends Record<string, unknown>>(row: T, channel?: string | null): T {
   if (!row) return row;
-  if (row.price_public === true) return row;
   const out: Record<string, unknown> = { ...row };
-  for (const f of PRICE_FIELDS) delete out[f];
+
+  const all = (row.price_countries && typeof row.price_countries === "object")
+    ? row.price_countries as Record<string, any>
+    : {};
+  const wanted = channel ? [CHANNEL_COUNTRY[channel]].filter(Boolean) : Object.keys(all);
+  const pub: Record<string, unknown> = {};
+  for (const code of wanted) {
+    const p = all[code];
+    if (!p || p.public !== true) continue;
+    const vat = Number(p.vat_rate || 0);
+    const f = 1 + vat / 100;
+    const conv = (v: unknown) => {
+      const n = Number(v || 0);
+      if (!n) return null;
+      return p.input_mode === "gross"
+        ? { gross: n, net: +(n / f).toFixed(2) }
+        : { net: n, gross: +(n * f).toFixed(2) };
+    };
+    const uvp = Number(p.uvp || 0);
+    const eff = (mode: string, val: unknown) =>
+      mode === "percent" ? uvp * (1 + Number(val || 0) / 100) : Number(val || 0);
+    pub[code] = {
+      currency: p.currency, vat_rate: vat,
+      uvp: conv(p.uvp),
+      vk_min: conv(eff(p.vk_min_mode, p.vk_min_value)),
+      vk_max: conv(eff(p.vk_max_mode, p.vk_max_value)),
+      promo_active: p.promo_active === true,
+      promo_name: p.promo_active === true ? (p.promo_name || null) : null,
+    };
+  }
+  out.prices = pub;
+  delete out.price_countries;
+
+  if (row.price_public !== true) {
+    for (const f of PRICE_FIELDS) delete out[f];
+  }
   return out as T;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
