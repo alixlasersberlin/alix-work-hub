@@ -25,6 +25,8 @@ import { SeoAiButton } from '@/components/producthub/SeoAiButton';
 import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
 import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
+import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
+
 
 /** Editor für eine Werteliste (Farben / Leistungen), die im Angebot zur Auswahl steht. */
 function OptionListEditor({ label, values, defaults, disabled, onChange }: {
