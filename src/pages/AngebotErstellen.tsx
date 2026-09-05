@@ -447,6 +447,38 @@ export default function AngebotErstellen() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [itemSearch]);
 
+  // Produktfotos aus dem Gerätestamm (Product Hub) für Angebots-PDF
+  const [phImages, setPhImages] = useState<Array<{ name: string; model: string; sku: string; url: string }>>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('ph_products')
+        .select('name, model, sku, hero_image_url')
+        .not('hero_image_url', 'is', null);
+      setPhImages((data ?? []).map((p: any) => ({
+        name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url,
+      })));
+    })();
+  }, []);
+
+  const norm = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const resolveLineImage = (l: LineItem): string | null => {
+    if (l.image_url) return l.image_url;
+    const cands = [l.name, l.sku].map(norm).filter(Boolean);
+    if (!cands.length) return null;
+    for (const p of phImages) {
+      const keys = [norm(p.name), norm(p.model), norm(p.sku)].filter(Boolean);
+      for (const k of keys) {
+        for (const c of cands) {
+          if (k.length >= 5 && (c === k || c.includes(k))) return p.url;
+        }
+      }
+    }
+    return null;
+  };
+
+
   const filteredItems = useMemo(() => {
     const q = itemSearch.toLowerCase().trim();
     if (!q) return items.slice(0, 30);
@@ -613,6 +645,8 @@ export default function AngebotErstellen() {
         quantity: 1,
         rate: Number(it.rate || 0),
         tax_percentage: Number(it.tax_percentage || 19),
+        image_url: it.image_url || it.hero_image_url || undefined,
+
       },
     ]);
     setItemSearch('');
@@ -822,30 +856,76 @@ export default function AngebotErstellen() {
     }
 
 
+    // Produktfotos je Position laden (Artikelliste / Gerätestamm)
+    const toDataUrl = async (url: string): Promise<string | null> => {
+      try {
+        const r = await fetch(url);
+        const b = await r.blob();
+        return await new Promise((res, rej) => {
+          const fr = new FileReader();
+          fr.onload = () => res(fr.result as string);
+          fr.onerror = rej;
+          fr.readAsDataURL(b);
+        });
+      } catch { return null; }
+    };
+    const rowImages: Array<string | null> = [];
+    for (const l of validLines) {
+      const u = resolveLineImage(l);
+      rowImages.push(u ? await toDataUrl(u) : null);
+    }
+    const hasImages = rowImages.some(Boolean);
+    const IMG_COL_W = 22;
+    const IMG_SIZE = 18;
+
     autoTable(doc, {
       startY: cy,
       margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
-      head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
-      body: validLines.map((l, idx) => [
-        idx + 1,
-        `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}`,
-        l.quantity,
-        fmtMoney(l.rate),
-        `${l.tax_percentage}%`,
-        fmtMoney(l.quantity * l.rate),
-      ]),
+      head: [hasImages
+        ? ['Pos', 'Foto', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']
+        : ['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
+      body: validLines.map((l, idx) => {
+        const base = [
+          idx + 1,
+          `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}`,
+          l.quantity,
+          fmtMoney(l.rate),
+          `${l.tax_percentage}%`,
+          fmtMoney(l.quantity * l.rate),
+        ];
+        return hasImages ? [base[0], '', ...base.slice(1)] : base;
+      }),
       styles: { font: 'Inter', fontStyle: 'normal', fontSize: 9, cellPadding: 2 },
       headStyles: { font: 'Inter', fontStyle: 'bold', fillColor: [183, 217, 255], textColor: [20, 60, 110] },
       bodyStyles: { font: 'Inter', fontStyle: 'normal' },
       alternateRowStyles: { fillColor: [245, 249, 255] },
-      columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        2: { halign: 'right', cellWidth: 16 },
-        3: { halign: 'right', cellWidth: 25 },
-        4: { halign: 'right', cellWidth: 16 },
-        5: { halign: 'right', cellWidth: 25 },
-      },
+      columnStyles: hasImages
+        ? {
+            0: { cellWidth: 10, halign: 'center' },
+            1: { cellWidth: IMG_COL_W, minCellHeight: IMG_SIZE + 3 },
+            3: { halign: 'right', cellWidth: 16 },
+            4: { halign: 'right', cellWidth: 23 },
+            5: { halign: 'right', cellWidth: 14 },
+            6: { halign: 'right', cellWidth: 23 },
+          }
+        : {
+            0: { cellWidth: 10, halign: 'center' },
+            2: { halign: 'right', cellWidth: 16 },
+            3: { halign: 'right', cellWidth: 25 },
+            4: { halign: 'right', cellWidth: 16 },
+            5: { halign: 'right', cellWidth: 25 },
+          },
       rowPageBreak: 'auto',
+      didDrawCell: (data: any) => {
+        if (!hasImages) return;
+        if (data.section !== 'body' || data.column.index !== 1) return;
+        const img = rowImages[data.row.index];
+        if (!img) return;
+        try {
+          const fmt = img.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+          doc.addImage(img, fmt, data.cell.x + 2, data.cell.y + 1.5, IMG_SIZE, IMG_SIZE, undefined, 'FAST');
+        } catch { /* ignore */ }
+      },
       willDrawPage: () => {
         // Draw template as background BEFORE row content on each new page
         const pageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
@@ -853,6 +933,7 @@ export default function AngebotErstellen() {
       },
 
     });
+
 
     let finalY = (doc as any).lastAutoTable.finalY + 8;
     if (finalY > BOTTOM_LIMIT - 40) {
