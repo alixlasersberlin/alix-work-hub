@@ -460,3 +460,4 @@ verify_jwt = false
 
 [functions.announce-capa-cockpit]
 verify_jwt = false
+
