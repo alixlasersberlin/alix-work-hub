@@ -1764,6 +1764,109 @@ export default function AngebotErstellen() {
     }
   };
 
+  // ---- Schritt-für-Schritt-Assistent -------------------------------------
+  const STEP_TITLES = ['Angebotsdaten', 'Kunde', 'Positionen', 'Zahlung & Abschluss'];
+
+  const stepValid = (s: number): string | null => {
+    if (s === 1) {
+      if (!offerNumber.trim()) return 'Bitte eine Nummer vergeben.';
+      if (!offerDate) return 'Bitte ein Datum wählen.';
+      return null;
+    }
+    if (s === 2) {
+      if (!selectedCustomer) return 'Bitte einen Kunden auswählen oder neu anlegen.';
+      return null;
+    }
+    if (s === 3) {
+      if (!lines.some(l => l.name && Number(l.quantity) > 0)) return 'Bitte mindestens eine Position erfassen.';
+      const incomplete = lines.find(l => l.name && (l.ph_product_id || matchPhDevice(l)) && !deviceConfigComplete(l));
+      if (incomplete) return `Bitte die Gerätekonfiguration für „${incomplete.name}" vervollständigen.`;
+      return null;
+    }
+    return null;
+  };
+
+  const goNext = async () => {
+    const err = stepValid(step);
+    if (err) { toast.error(err); return; }
+    // Ab Schritt 3 lässt sich der Entwurf speichern (Kunde + Position vorhanden)
+    if (step === 3 && !sofortMode && !isLockedForEdit) {
+      setStepSaving(true);
+      try { await saveOffer(true); } catch { /* Entwurf bleibt lokal erhalten */ }
+      setStepSaving(false);
+    }
+    setStep(s => Math.min(4, s + 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goStep = (s: number) => {
+    if (s > step) {
+      for (let i = step; i < s; i++) {
+        const err = stepValid(i);
+        if (err) { toast.error(err); return; }
+      }
+    }
+    setStep(s);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderStepper = () => (
+    <div className="rounded-xl border border-border bg-card card-glow p-3">
+      <div className="flex items-center gap-2 overflow-x-auto">
+        {STEP_TITLES.map((title, idx) => {
+          const n = idx + 1;
+          const active = n === step;
+          const done = n < step;
+          return (
+            <Fragment key={title}>
+              <button
+                type="button"
+                onClick={() => goStep(n)}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors ${
+                  active ? 'bg-primary/15 text-primary font-semibold'
+                  : done ? 'text-foreground hover:bg-secondary/60'
+                  : 'text-muted-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                  active ? 'bg-primary text-primary-foreground'
+                  : done ? 'bg-emerald-600 text-white'
+                  : 'bg-secondary text-muted-foreground'
+                }`}>
+                  {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : n}
+                </span>
+                <span className="hidden sm:inline">{title}</span>
+              </button>
+              {n < STEP_TITLES.length && <div className="h-px flex-1 min-w-[12px] bg-border" />}
+            </Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const renderStepNav = () => (
+    <div className="flex items-center justify-between gap-3 pt-1">
+      <Button
+        variant="outline"
+        className="gap-2 border-border min-h-[48px]"
+        onClick={() => goStep(Math.max(1, step - 1))}
+        disabled={step === 1}
+      >
+        <ArrowLeft className="w-4 h-4" /> Zurück
+      </Button>
+      <span className="text-xs text-muted-foreground hidden sm:block">
+        Schritt {step} von {STEP_TITLES.length} · {STEP_TITLES[step - 1]}
+      </span>
+      {step < 4 ? (
+        <Button onClick={goNext} disabled={stepSaving} className="gold-gradient text-primary-foreground gap-2 min-h-[48px]">
+          {stepSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          {step === 3 ? 'Speichern & weiter' : 'Weiter'}
+        </Button>
+      ) : <span />}
+    </div>
+  );
+
 
   if (loading) {
     return (
