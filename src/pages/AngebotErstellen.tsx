@@ -922,6 +922,21 @@ export default function AngebotErstellen() {
       return null;
     }
 
+    // Geräte aus dem Product Hub: ohne Bild und ohne vollständige Konfiguration kein Kundenangebot
+    const deviceLines = validLines.filter(l => l.ph_product_id || matchPhDevice(l));
+    const missingImage = deviceLines.filter(l => !(l.product_image_url || l.image_url || matchPhDevice(l)?.url));
+    if (missingImage.length) {
+      toast.error(`Kein Angebotsbild hinterlegt für: ${missingImage.map(l => l.name).join(', ')}`);
+      return null;
+    }
+    const missingCfg = deviceLines.filter(l => !deviceConfigComplete(l));
+    if (missingCfg.length) {
+      toast.error(`Gerätekonfiguration fehlt für: ${missingCfg.map(l => l.name).join(', ')}`);
+      return null;
+    }
+
+
+
     const doc = createPDF({ unit: 'mm', format: 'a4' });
     const PAGE_W = 210;
     const PAGE_H = 297;
