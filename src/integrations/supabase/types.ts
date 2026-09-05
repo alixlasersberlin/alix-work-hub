@@ -35002,13 +35002,18 @@ export type Database = {
           amount: number | null
           created_at: string
           description: string | null
+          device_color: string | null
           discount: number | null
           external_item_id: string | null
           id: string
           item_name: string | null
           item_order: number | null
+          laser_module_power: string | null
           order_id: string
+          ph_product_id: string | null
+          ph_product_name: string | null
           quantity: number | null
+          ral_color_code: string | null
           rate: number | null
           raw_data: Json | null
           sku: string | null
@@ -35020,13 +35025,18 @@ export type Database = {
           amount?: number | null
           created_at?: string
           description?: string | null
+          device_color?: string | null
           discount?: number | null
           external_item_id?: string | null
           id?: string
           item_name?: string | null
           item_order?: number | null
+          laser_module_power?: string | null
           order_id: string
+          ph_product_id?: string | null
+          ph_product_name?: string | null
           quantity?: number | null
+          ral_color_code?: string | null
           rate?: number | null
           raw_data?: Json | null
           sku?: string | null
@@ -35038,13 +35048,18 @@ export type Database = {
           amount?: number | null
           created_at?: string
           description?: string | null
+          device_color?: string | null
           discount?: number | null
           external_item_id?: string | null
           id?: string
           item_name?: string | null
           item_order?: number | null
+          laser_module_power?: string | null
           order_id?: string
+          ph_product_id?: string | null
+          ph_product_name?: string | null
           quantity?: number | null
+          ral_color_code?: string | null
           rate?: number | null
           raw_data?: Json | null
           sku?: string | null
@@ -36887,6 +36902,9 @@ export type Database = {
           catalog_item_id: string | null
           categories: string[]
           ce_status: string | null
+          config_colors: string[]
+          config_powers: string[]
+          config_required: boolean
           cooling: string | null
           created_at: string
           created_by: string | null
@@ -36953,6 +36971,9 @@ export type Database = {
           catalog_item_id?: string | null
           categories?: string[]
           ce_status?: string | null
+          config_colors?: string[]
+          config_powers?: string[]
+          config_required?: boolean
           cooling?: string | null
           created_at?: string
           created_by?: string | null
@@ -37019,6 +37040,9 @@ export type Database = {
           catalog_item_id?: string | null
           categories?: string[]
           ce_status?: string | null
+          config_colors?: string[]
+          config_powers?: string[]
+          config_required?: boolean
           cooling?: string | null
           created_at?: string
           created_by?: string | null
