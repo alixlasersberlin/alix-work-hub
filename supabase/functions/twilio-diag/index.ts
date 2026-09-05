@@ -30,10 +30,10 @@ Deno.serve(async (req) => {
     const user = userData?.user;
     if (!user) return json({ error: "Unauthorized" }, 401);
 
-    const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
-    const names = (roles ?? []).map((r: any) => r.role);
+    const { data: roles } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+    const names = (roles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
     if (!names.some((n: string) => n === "Super Admin" || n === "super_admin")) {
-      return json({ error: "Forbidden" }, 403);
+      return json({ error: "Forbidden", roles: names }, 403);
     }
 
     if (!ENV_SID || !ENV_TOKEN) return json({ error: "twilio_not_configured", have_sid: !!ENV_SID, have_token: !!ENV_TOKEN, env_from: ENV_FROM || null }, 500);
