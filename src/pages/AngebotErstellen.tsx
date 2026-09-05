@@ -732,24 +732,30 @@ export default function AngebotErstellen() {
   }
 
 
-  const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => ({
-    id: crypto.randomUUID(),
-    item_id: it.id,
-    name: it.name || '',
-    description: it.description || '',
-    sku: it.sku || '',
-    quantity: 1,
-    rate: Number(it.rate || 0),
-    tax_percentage: Number(it.tax_percentage || 19),
-    image_url: it.image_url || it.hero_image_url || undefined,
-    ph_product_id: cfg?.product_id ?? null,
-    ph_product_name: cfg?.product_name ?? null,
-    device_color: cfg?.device_color ?? null,
-    ral_color_code: cfg?.ral_color_code ?? null,
-    laser_module_power: cfg?.laser_module_power ?? null,
-    config_colors: it._phColors ?? matchPhDevice(it)?.colors ?? undefined,
-    config_powers: it._phPowers ?? matchPhDevice(it)?.powers ?? undefined,
-  });
+  const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => {
+    const dev = matchPhDevice(it);
+    // Bild-Snapshot: bevorzugt das im Product Hub festgelegte Angebotsbild
+    const img = it.image_url || it.hero_image_url || dev?.url || undefined;
+    return {
+      id: crypto.randomUUID(),
+      item_id: it.id,
+      name: it.name || '',
+      description: it.description || '',
+      sku: it.sku || '',
+      quantity: 1,
+      rate: Number(it.rate || 0),
+      tax_percentage: Number(it.tax_percentage || 19),
+      image_url: img,
+      ph_product_id: cfg?.product_id ?? dev?.id ?? null,
+      ph_product_name: cfg?.product_name ?? (dev ? (it.name || dev.name) : null),
+      product_image_url: img ?? null,
+      device_color: cfg?.device_color ?? null,
+      ral_color_code: cfg?.ral_color_code ?? null,
+      laser_module_power: cfg?.laser_module_power ?? null,
+      config_colors: it._phColors ?? dev?.colors ?? undefined,
+      config_powers: it._phPowers ?? dev?.powers ?? undefined,
+    };
+  };
 
   const appendLine = (line: LineItem) => {
     setLines(prev => [...prev.filter(l => l.name || l.sku || l.rate), line]);
@@ -758,16 +764,21 @@ export default function AngebotErstellen() {
   const addItem = (it: any) => {
     const dev: any = it._ph
       ? (it._phId !== undefined
-        ? { id: it._phId, name: it.name, colors: it._phColors, powers: it._phPowers, configRequired: it._phRequired !== false }
+        ? { id: it._phId, name: it.name, colors: it._phColors, powers: it._phPowers, configRequired: it._phRequired !== false, url: it.image_url ?? null }
         : matchPhDevice(it))
       : matchPhDevice(it);
     if (dev && dev.configRequired !== false) {
+      const img = it.image_url || dev.url || null;
+      if (!img) {
+        toast.warning('Für dieses Gerät ist im Product Hub noch kein Angebotsbild hinterlegt.');
+      }
       // Gerät: erst konfigurieren, dann in das Angebot übernehmen
       setConfigTarget({
         productId: dev.id ?? null,
         productName: it.name || dev.name,
         colors: dev.colors,
         powers: dev.powers,
+        imageUrl: img,
       });
       setPendingItem(it);
       setConfigLineId(null);
@@ -778,6 +789,7 @@ export default function AngebotErstellen() {
     appendLine(buildLineFromItem(it));
     setItemSearch('');
   };
+
 
 
   const applyDeviceConfig = (cfg: DeviceConfig) => {
