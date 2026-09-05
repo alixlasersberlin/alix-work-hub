@@ -324,7 +324,7 @@ export default function ProductHubEditor() {
 
       <Tabs defaultValue="allgemein">
         <TabsList className="flex-wrap h-auto">
-          {['allgemein', 'technik', 'anwendungen', 'smartki', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'historie'].map(t => (
+          {['allgemein', 'technik', 'konfiguration', 'anwendungen', 'smartki', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'historie'].map(t => (
             <TabsTrigger key={t} value={t} className="capitalize">{t === 'smartki' ? 'Smart KI' : t}</TabsTrigger>
           ))}
         </TabsList>
