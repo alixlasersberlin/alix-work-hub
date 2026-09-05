@@ -1946,9 +1946,10 @@ export default function AngebotErstellen() {
         )}
       </div>
 
-      {/* Customer */}
+      {step === 2 && (
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
         <h2 className="font-semibold text-foreground">Kunde</h2>
+
         {selectedCustomer ? (
           <div className="p-4 rounded-lg bg-secondary border border-border space-y-3">
             <div className="flex items-start justify-between gap-3">
