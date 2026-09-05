@@ -463,6 +463,12 @@ export default function AngebotErstellen() {
   };
   const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
+  // Gerätekonfiguration (Farbe / Lasermodul) beim Hinzufügen einer Geräteposition
+  const [configOpen, setConfigOpen] = useState(false);
+  const [configTarget, setConfigTarget] = useState<DeviceConfigTarget | null>(null);
+  const [pendingItem, setPendingItem] = useState<any | null>(null);
+  const [configLineId, setConfigLineId] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       const { data } = await (supabase as any)
