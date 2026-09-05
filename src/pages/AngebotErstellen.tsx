@@ -645,6 +645,8 @@ export default function AngebotErstellen() {
         quantity: 1,
         rate: Number(it.rate || 0),
         tax_percentage: Number(it.tax_percentage || 19),
+        image_url: it.image_url || it.hero_image_url || undefined,
+
       },
     ]);
     setItemSearch('');
