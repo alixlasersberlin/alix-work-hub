@@ -468,6 +468,7 @@ export default function AngebotErstellen() {
   type PhDevice = {
     id: string | null; name: string; model: string; sku: string; url: string | null;
     colors: string[]; powers: string[]; configRequired: boolean;
+    netPrice: number | null; promoName: string | null;
   };
   const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
@@ -481,19 +482,29 @@ export default function AngebotErstellen() {
     (async () => {
       const { data } = await (supabase as any)
         .from('ph_products')
-        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required')
+        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp')
         .neq('status', 'archived');
-      setPhDevices((data ?? []).map((p: any) => ({
-        id: p.id ?? null,
-        name: p.name || '', model: p.model || '', sku: p.sku || '',
-        url: p.offer_image_url ?? p.hero_image_url ?? null,
+      setPhDevices((data ?? []).map((p: any) => {
+        // Aktueller Preis: Deutschland (Netto) aus dem Product Hub
+        const de = (p.price_countries && typeof p.price_countries === 'object') ? (p.price_countries.de || {}) : {};
+        const raw = Number(de.uvp ?? p.price_uvp ?? 0);
+        const vat = Number(de.vat_rate ?? 19);
+        const net = raw > 0 ? (de.input_mode === 'gross' ? raw / (1 + vat / 100) : raw) : 0;
+        return {
+          id: p.id ?? null,
+          name: p.name || '', model: p.model || '', sku: p.sku || '',
+          url: p.offer_image_url ?? p.hero_image_url ?? null,
 
-        colors: Array.isArray(p.config_colors) ? p.config_colors : [],
-        powers: Array.isArray(p.config_powers) ? p.config_powers : [],
-        configRequired: p.config_required !== false,
-      })));
+          colors: Array.isArray(p.config_colors) ? p.config_colors : [],
+          powers: Array.isArray(p.config_powers) ? p.config_powers : [],
+          configRequired: p.config_required !== false,
+          netPrice: net > 0 ? Math.round(net * 100) / 100 : null,
+          promoName: de.promo_active === true ? (de.promo_name || null) : null,
+        };
+      }));
     })();
   }, []);
+
 
   const phImages = useMemo(() => phDevices.filter(p => !!p.url) as Array<{ name: string; model: string; sku: string; url: string }>, [phDevices]);
 
@@ -569,7 +580,7 @@ export default function AngebotErstellen() {
           name: p.name || p.model,
           sku: p.sku || '',
           description: '',
-          rate: 0,
+          rate: p.netPrice ?? 0,
           tax_percentage: 19,
           unit: 'Stk',
           status: 'active',
@@ -579,6 +590,8 @@ export default function AngebotErstellen() {
           _phColors: p.colors,
           _phPowers: p.powers,
           _phRequired: p.configRequired,
+          _phPrice: p.netPrice,
+          _phPromo: p.promoName,
 
         });
       }
@@ -744,6 +757,9 @@ export default function AngebotErstellen() {
     const dev = matchPhDevice(it);
     // Bild-Snapshot: bevorzugt das im Product Hub festgelegte Angebotsbild
     const img = it.image_url || it.hero_image_url || dev?.url || undefined;
+    // Aktueller Preis aus dem Product Hub hat Vorrang
+    const hubPrice = Number(it._phPrice ?? dev?.netPrice ?? 0);
+
     return {
       id: crypto.randomUUID(),
       item_id: it.id,
@@ -751,7 +767,7 @@ export default function AngebotErstellen() {
       description: it.description || '',
       sku: it.sku || '',
       quantity: 1,
-      rate: Number(it.rate || 0),
+      rate: hubPrice > 0 ? hubPrice : Number(it.rate || 0),
       tax_percentage: Number(it.tax_percentage || 19),
       image_url: img,
       ph_product_id: cfg?.product_id ?? dev?.id ?? null,
@@ -2403,7 +2419,19 @@ export default function AngebotErstellen() {
                           <span className="ml-2 text-[10px] uppercase text-muted-foreground border border-border rounded px-1 py-0.5">inaktiv</span>
                         )}
                       </span>
-                      <span className="block text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</span>
+                      {(() => {
+                        const hub = Number((i as any)._phPrice ?? matchPhDevice(i)?.netPrice ?? 0);
+                        const promo = (i as any)._phPromo ?? matchPhDevice(i)?.promoName ?? null;
+                        const shown = hub > 0 ? hub : Number(i.rate || 0);
+                        return (
+                          <span className="block text-xs text-muted-foreground">
+                            {i.sku} · {fmtMoney(shown)} netto
+                            {hub > 0 && <span className="ml-1 text-primary">(Product Hub)</span>}
+                            {promo && <span className="ml-1 text-amber-500">· {promo}</span>}
+                          </span>
+                        );
+                      })()}
+
                     </span>
                   </button>
 
