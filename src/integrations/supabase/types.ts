@@ -36934,6 +36934,7 @@ export type Database = {
           offer_image_url: string | null
           plm_device_id: string | null
           power: string | null
+          price_countries: Json
           price_public: boolean
           price_uvp: number | null
           product_family: string | null
@@ -37012,6 +37013,7 @@ export type Database = {
           offer_image_url?: string | null
           plm_device_id?: string | null
           power?: string | null
+          price_countries?: Json
           price_public?: boolean
           price_uvp?: number | null
           product_family?: string | null
@@ -37090,6 +37092,7 @@ export type Database = {
           offer_image_url?: string | null
           plm_device_id?: string | null
           power?: string | null
+          price_countries?: Json
           price_public?: boolean
           price_uvp?: number | null
           product_family?: string | null

@@ -25,6 +25,8 @@ import { SeoAiButton } from '@/components/producthub/SeoAiButton';
 import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
 import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
+import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
+
 
 /** Editor für eine Werteliste (Farben / Leistungen), die im Angebot zur Auswahl steht. */
 function OptionListEditor({ label, values, defaults, disabled, onChange }: {
@@ -354,68 +356,28 @@ export default function ProductHubEditor() {
         </TabsList>
 
         <TabsContent value="preise">
-          <Card><CardContent className="p-4 space-y-6">
-            <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
-              <div>
-                <Label className="text-sm">Preise auf der Webseite anzeigen</Label>
-                <p className="text-xs text-muted-foreground">Standard: unsichtbar. Nur wenn aktiviert, werden Preise an die Webseiten ausgeliefert.</p>
-              </div>
-              <Switch checked={form.price_public === true} disabled={!canWrite}
-                onCheckedChange={v => set('price_public', v)} />
-            </div>
-
-            <div className="space-y-1.5 max-w-xs">
-              <Label className="text-xs">UVP (EUR)</Label>
-              <Input type="number" step="0.01" value={form.price_uvp ?? ''} disabled={!canWrite}
-                onChange={e => set('price_uvp', e.target.value === '' ? null : Number(e.target.value))} />
-            </div>
-
-            {([
-              { label: 'VK Minimal', mode: 'vk_min_mode', val: 'vk_min_value' },
-              { label: 'VK Maximal', mode: 'vk_max_mode', val: 'vk_max_value' },
-            ] as const).map(row => {
-              const isPct = form[row.mode] === 'percent';
-              const uvp = Number(form.price_uvp || 0);
-              const v = Number(form[row.val] || 0);
-              const eff = isPct ? uvp * (1 + v / 100) : v;
-              return (
-                <div key={row.mode} className="grid md:grid-cols-3 gap-3 items-end rounded-lg border border-border p-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">{row.label} – Regulierung</Label>
-                    <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                      value={form[row.mode] || 'fixed'} disabled={!canWrite}
-                      onChange={e => set(row.mode, e.target.value)}>
-                      <option value="fixed">Festpreis (EUR)</option>
-                      <option value="percent">Prozent vom UVP (%)</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">{isPct ? 'Abweichung in % (z. B. -15)' : 'Festpreis in EUR'}</Label>
-                    <Input type="number" step="0.01" value={form[row.val] ?? ''} disabled={!canWrite}
-                      onChange={e => set(row.val, e.target.value === '' ? null : Number(e.target.value))} />
-                  </div>
-                  <p className="text-xs text-muted-foreground pb-2">
-                    Ergibt: {eff ? eff.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '—'}
-                  </p>
-                </div>
-              );
-            })}
-
-            <div className="space-y-3 rounded-lg border border-border p-3">
-              <div className="flex items-center gap-3">
-                <Switch checked={form.promo_active === true} disabled={!canWrite}
-                  onCheckedChange={v => set('promo_active', v)} />
-                <Label className="text-xs">Sonderaktion aktiv</Label>
-              </div>
-              <div className="space-y-1.5 max-w-md">
-                <Label className="text-xs">Name der Sonderaktion</Label>
-                <Input value={form.promo_name ?? ''} disabled={!canWrite || form.promo_active !== true}
-                  placeholder="z. B. Sommeraktion 2026"
-                  onChange={e => set('promo_name', e.target.value)} />
-              </div>
-            </div>
-          </CardContent></Card>
+          <CountryPricingTab
+            value={form.price_countries}
+            disabled={!canWrite}
+            onChange={next => {
+              const de = next?.de || {};
+              setForm((f: any) => ({
+                ...f,
+                price_countries: next,
+                // Kompatibilität: Deutschland spiegelt die bisherigen Preisfelder
+                price_public: de.public === true,
+                price_uvp: de.uvp ?? null,
+                vk_min_mode: de.vk_min_mode || 'fixed',
+                vk_min_value: de.vk_min_value ?? null,
+                vk_max_mode: de.vk_max_mode || 'fixed',
+                vk_max_value: de.vk_max_value ?? null,
+                promo_active: de.promo_active === true,
+                promo_name: de.promo_name || null,
+              }));
+            }}
+          />
         </TabsContent>
+
 
 
         <TabsContent value="allgemein">
