@@ -1121,8 +1121,19 @@ export default function AngebotErstellen() {
         if (!img) return;
         try {
           const fmt = img.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-          doc.addImage(img, fmt, data.cell.x + 2, data.cell.y + 1.5, IMG_SIZE, IMG_SIZE, undefined, 'FAST');
+          // proportional einpassen – nie verzerrt, nie abgeschnitten
+          let w = IMG_SIZE, h = IMG_SIZE;
+          try {
+            const props: any = (doc as any).getImageProperties(img);
+            const ratio = (props?.width || 1) / (props?.height || 1);
+            if (ratio >= 1) { w = IMG_SIZE; h = IMG_SIZE / ratio; }
+            else { h = IMG_SIZE; w = IMG_SIZE * ratio; }
+          } catch { /* Standardmaße verwenden */ }
+          const x = data.cell.x + (IMG_COL_W - w) / 2;
+          const y = data.cell.y + Math.max(1.5, (data.cell.height - h) / 2);
+          doc.addImage(img, fmt, x, y, w, h, undefined, 'FAST');
         } catch { /* ignore */ }
+
       },
       willDrawPage: () => {
         // Draw template as background BEFORE row content on each new page
