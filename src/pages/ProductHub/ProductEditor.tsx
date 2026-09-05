@@ -369,17 +369,18 @@ export default function ProductHubEditor() {
           <Card><CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <p className="text-xs text-muted-foreground">
-                KI erzeugt Titel, Beschreibung und Keywords aus den Gerätedaten – bitte vor dem Speichern prüfen.
+                Keywords können manuell gepflegt oder per KI vorgeschlagen werden – sie werden mit „Speichern“ übernommen.
               </p>
               {canWrite && (
                 <SeoAiButton
                   productId={form.id}
-                  current={{ seo_title: form.seo_title, meta_description: form.seo_description, url_slug: form.slug, main_keyword: form.seo_keywords }}
+                  current={{ seo_title: form.seo_title, meta_description: form.seo_description, url_slug: form.slug, main_keyword: mainKeyword, secondary_keywords: keywords }}
                   onApply={r => {
                     if (r.seo_title) set('seo_title', r.seo_title);
                     if (r.meta_description) set('seo_description', r.meta_description);
                     if (!form.slug && r.url_slug) set('slug', r.url_slug);
-                    setKeywords([r.main_keyword, ...(r.secondary_keywords || [])].filter(Boolean));
+                    if (r.main_keyword) setMainKeyword(r.main_keyword);
+                    setKeywords(prev => Array.from(new Set([...prev, ...(r.secondary_keywords || [])].filter(Boolean))));
                   }}
                 />
               )}
@@ -392,20 +393,51 @@ export default function ProductHubEditor() {
               </div>
             </div>
 
-            {keywords.length > 0 && (
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs">KI-Keyword-Vorschläge</Label>
-                <div className="flex flex-wrap gap-1">
-                  {keywords.map(k => (
-                    <Badge key={k} variant="outline" className="text-[10px] cursor-pointer"
-                      onClick={() => navigator.clipboard?.writeText(k)}>{k}</Badge>
-                  ))}
-                </div>
-                <p className="text-[11px] text-muted-foreground">Klick kopiert das Keyword. Dauerhaft pflegen: Artikel &gt; Produktakte &gt; SEO.</p>
+                <Label className="text-xs">Hauptkeyword</Label>
+                <Input value={mainKeyword} disabled={!canWrite}
+                  placeholder="z. B. Diodenlaser Haarentfernung"
+                  onChange={e => setMainKeyword(e.target.value)} />
               </div>
-            )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Keyword hinzufügen</Label>
+                <div className="flex gap-2">
+                  <Input value={kwInput} disabled={!canWrite}
+                    placeholder="Keyword eingeben, Enter oder Komma"
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v.includes(',')) { v.split(',').forEach(addKeyword); setKwInput(''); }
+                      else setKwInput(v);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { e.preventDefault(); addKeyword(kwInput); setKwInput(''); }
+                    }} />
+                  <Button type="button" size="sm" variant="outline" disabled={!canWrite || !kwInput.trim()}
+                    onClick={() => { addKeyword(kwInput); setKwInput(''); }}>Hinzufügen</Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Keywords ({keywords.length})</Label>
+              <div className="flex flex-wrap gap-1">
+                {keywords.map(k => (
+                  <Badge key={k} variant="outline" className="text-[10px] gap-1">
+                    <span className="cursor-pointer" title="Kopieren"
+                      onClick={() => navigator.clipboard?.writeText(k)}>{k}</span>
+                    {canWrite && (
+                      <button type="button" aria-label={`${k} entfernen`} className="hover:text-destructive"
+                        onClick={() => setKeywords(prev => prev.filter(x => x !== k))}>×</button>
+                    )}
+                  </Badge>
+                ))}
+                {keywords.length === 0 && <span className="text-xs text-muted-foreground">Noch keine Keywords hinterlegt.</span>}
+              </div>
+            </div>
           </CardContent></Card>
         </TabsContent>
+
 
 
         <TabsContent value="historie">
