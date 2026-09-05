@@ -500,6 +500,7 @@ export default function AngebotErstellen() {
           configRequired: p.config_required !== false,
           netPrice: net > 0 ? Math.round(net * 100) / 100 : null,
           promoName: de.promo_active === true ? (de.promo_name || null) : null,
+          description: String(p.short_description || p.long_description || '').trim(),
         };
       }));
     })();
