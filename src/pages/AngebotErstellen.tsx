@@ -447,6 +447,38 @@ export default function AngebotErstellen() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [itemSearch]);
 
+  // Produktfotos aus dem Gerätestamm (Product Hub) für Angebots-PDF
+  const [phImages, setPhImages] = useState<Array<{ name: string; model: string; sku: string; url: string }>>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('ph_products')
+        .select('name, model, sku, hero_image_url')
+        .not('hero_image_url', 'is', null);
+      setPhImages((data ?? []).map((p: any) => ({
+        name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url,
+      })));
+    })();
+  }, []);
+
+  const norm = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const resolveLineImage = (l: LineItem): string | null => {
+    if (l.image_url) return l.image_url;
+    const cands = [l.name, l.sku].map(norm).filter(Boolean);
+    if (!cands.length) return null;
+    for (const p of phImages) {
+      const keys = [norm(p.name), norm(p.model), norm(p.sku)].filter(Boolean);
+      for (const k of keys) {
+        for (const c of cands) {
+          if (k.length >= 5 && (c === k || c.includes(k))) return p.url;
+        }
+      }
+    }
+    return null;
+  };
+
+
   const filteredItems = useMemo(() => {
     const q = itemSearch.toLowerCase().trim();
     if (!q) return items.slice(0, 30);
