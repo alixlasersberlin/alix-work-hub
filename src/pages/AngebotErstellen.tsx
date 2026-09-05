@@ -468,7 +468,7 @@ export default function AngebotErstellen() {
   type PhDevice = {
     id: string | null; name: string; model: string; sku: string; url: string | null;
     colors: string[]; powers: string[]; configRequired: boolean;
-    netPrice: number | null; promoName: string | null;
+    netPrice: number | null; promoName: string | null; description: string;
   };
   const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
