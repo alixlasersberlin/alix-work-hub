@@ -468,6 +468,7 @@ export default function AngebotErstellen() {
   type PhDevice = {
     id: string | null; name: string; model: string; sku: string; url: string | null;
     colors: string[]; powers: string[]; configRequired: boolean;
+    netPrice: number | null; promoName: string | null;
   };
   const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
@@ -481,19 +482,29 @@ export default function AngebotErstellen() {
     (async () => {
       const { data } = await (supabase as any)
         .from('ph_products')
-        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required')
+        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp')
         .neq('status', 'archived');
-      setPhDevices((data ?? []).map((p: any) => ({
-        id: p.id ?? null,
-        name: p.name || '', model: p.model || '', sku: p.sku || '',
-        url: p.offer_image_url ?? p.hero_image_url ?? null,
+      setPhDevices((data ?? []).map((p: any) => {
+        // Aktueller Preis: Deutschland (Netto) aus dem Product Hub
+        const de = (p.price_countries && typeof p.price_countries === 'object') ? (p.price_countries.de || {}) : {};
+        const raw = Number(de.uvp ?? p.price_uvp ?? 0);
+        const vat = Number(de.vat_rate ?? 19);
+        const net = raw > 0 ? (de.input_mode === 'gross' ? raw / (1 + vat / 100) : raw) : 0;
+        return {
+          id: p.id ?? null,
+          name: p.name || '', model: p.model || '', sku: p.sku || '',
+          url: p.offer_image_url ?? p.hero_image_url ?? null,
 
-        colors: Array.isArray(p.config_colors) ? p.config_colors : [],
-        powers: Array.isArray(p.config_powers) ? p.config_powers : [],
-        configRequired: p.config_required !== false,
-      })));
+          colors: Array.isArray(p.config_colors) ? p.config_colors : [],
+          powers: Array.isArray(p.config_powers) ? p.config_powers : [],
+          configRequired: p.config_required !== false,
+          netPrice: net > 0 ? Math.round(net * 100) / 100 : null,
+          promoName: de.promo_active === true ? (de.promo_name || null) : null,
+        };
+      }));
     })();
   }, []);
+
 
   const phImages = useMemo(() => phDevices.filter(p => !!p.url) as Array<{ name: string; model: string; sku: string; url: string }>, [phDevices]);
 
