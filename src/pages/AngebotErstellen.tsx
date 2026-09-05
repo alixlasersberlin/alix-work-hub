@@ -1806,7 +1806,12 @@ export default function AngebotErstellen() {
         </div>
       )}
 
+      {renderStepper()}
+
+      {step === 1 && (
+      <>
       <div className="rounded-xl border border-border bg-card card-glow p-4 grid gap-3 md:grid-cols-3">
+
         <div>
           <Label>{sofortMode ? 'Auftragsnummer' : 'Angebotsnummer'}</Label>
           <Input value={offerNumber} onChange={e => setOfferNumber(e.target.value)} className="bg-secondary border-border mt-1.5" />
