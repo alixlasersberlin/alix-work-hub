@@ -293,6 +293,7 @@ export default function ProductHubEditor() {
 
         <TabsContent value="allgemein">
           <Card><CardContent className="p-4 grid md:grid-cols-3 gap-4">
+            <CopyFromProduct currentId={id} disabled={!canWrite} onApply={patch => setForm((f: any) => ({ ...f, ...patch }))} />
             {['name', 'internal_name', 'model', 'sku', 'slug', 'alix_product_id', 'product_group'].map(k => (
               <Field key={k} k={k} form={form} set={set} productId={id} disabled={!canWrite} />
             ))}
