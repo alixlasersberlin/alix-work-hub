@@ -476,11 +476,13 @@ export default function AngebotErstellen() {
     (async () => {
       const { data } = await (supabase as any)
         .from('ph_products')
-        .select('id, name, model, sku, hero_image_url, status, config_colors, config_powers, config_required')
+        .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required')
         .neq('status', 'archived');
       setPhDevices((data ?? []).map((p: any) => ({
         id: p.id ?? null,
-        name: p.name || '', model: p.model || '', sku: p.sku || '', url: p.hero_image_url ?? null,
+        name: p.name || '', model: p.model || '', sku: p.sku || '',
+        url: p.offer_image_url ?? p.hero_image_url ?? null,
+
         colors: Array.isArray(p.config_colors) ? p.config_colors : [],
         powers: Array.isArray(p.config_powers) ? p.config_powers : [],
         configRequired: p.config_required !== false,
