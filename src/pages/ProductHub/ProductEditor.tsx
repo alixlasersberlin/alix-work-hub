@@ -314,7 +314,18 @@ export default function ProductHubEditor() {
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
-  const save = async () => {
+  const TEXT_LABELS: Record<string, string> = {
+    short_description: 'Kurzbeschreibung',
+    long_description: 'Langbeschreibung',
+  };
+
+  /** Ermittelt, welche geschützten Texte überschrieben würden. */
+  const changedProtectedTexts = () => {
+    if (!original) return [];
+    return Object.keys(TEXT_LABELS).filter(k => (form?.[k] ?? '') !== (original?.[k] ?? ''));
+  };
+
+  const doSave = async () => {
     if (!id || !form) return;
     setSaving(true);
     try {
@@ -334,6 +345,25 @@ export default function ProductHubEditor() {
       await load();
     } catch (e: any) { toast.error(e.message); }
     setSaving(false);
+  };
+
+  const save = async () => {
+    if (!id || !form) return;
+    const changed = changedProtectedTexts();
+    if (changed.length) {
+      if (!isSuperAdmin) {
+        toast.error('Kurz- und Langbeschreibung dürfen nur vom Super Admin geändert werden.');
+        setForm((f: any) => ({
+          ...f,
+          short_description: original?.short_description ?? '',
+          long_description: original?.long_description ?? '',
+        }));
+        return;
+      }
+      setConfirmTexts(changed);
+      return;
+    }
+    await doSave();
   };
 
 
