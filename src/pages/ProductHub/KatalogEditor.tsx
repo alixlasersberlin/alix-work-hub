@@ -156,6 +156,19 @@ export default function KatalogEditor() {
   const delPage = async (pid: string) => {
     await catPageDelete(pid); setPages(ps => ps.filter(p => p.id !== pid));
   };
+  const dragPageId = useRef<string | null>(null);
+  const onDropPage = async (targetId: string) => {
+    if (!dragPageId.current || dragPageId.current === targetId) return;
+    const list = [...pages];
+    const from = list.findIndex(p => p.id === dragPageId.current);
+    const to = list.findIndex(p => p.id === targetId);
+    if (from < 0 || to < 0) return;
+    const [m] = list.splice(from, 1);
+    list.splice(to, 0, m);
+    setPages(list.map((p, i) => ({ ...p, sort_order: i + 1 })));
+    dragPageId.current = null;
+    await Promise.all(list.map((p, i) => catPageUpdate(p.id, { sort_order: i + 1 })));
+  };
 
   /* ---------- Medien ---------- */
   const onFile = async (f: File) => {
