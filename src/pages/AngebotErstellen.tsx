@@ -2498,13 +2498,33 @@ export default function AngebotErstellen() {
         </div>
 
 
+        <div className="flex items-center justify-end gap-2 pb-2">
+          <span className="text-xs text-muted-foreground">Preiseingabe:</span>
+          <div className="inline-flex rounded-lg border border-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setPriceMode('gross')}
+              className={`px-3 py-1 text-xs ${priceMode === 'gross' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+            >
+              Brutto
+            </button>
+            <button
+              type="button"
+              onClick={() => setPriceMode('net')}
+              className={`px-3 py-1 text-xs ${priceMode === 'net' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+            >
+              Netto
+            </button>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/40 text-muted-foreground">
                 <th className="text-left p-2 font-medium">Artikel</th>
                 <th className="text-left p-2 font-medium w-24">Menge</th>
-                <th className="text-left p-2 font-medium w-32">Einzelpreis</th>
+                <th className="text-left p-2 font-medium w-32">Einzelpreis ({priceMode === 'gross' ? 'brutto' : 'netto'})</th>
                 <th className="text-left p-2 font-medium w-20">MwSt %</th>
                 <th className="text-right p-2 font-medium w-32">Summe</th>
                 <th className="w-10"></th>
