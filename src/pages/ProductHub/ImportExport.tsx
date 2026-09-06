@@ -11,9 +11,9 @@ import { ArrowDownToLine, ArrowUpFromLine, FileSpreadsheet, FileText, Loader2, L
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePrice } from '@/lib/producthub/countryPricing';
+import { PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePrice, uvpForPower } from '@/lib/producthub/countryPricing';
 import {
-  buildPriceRows, rowsToCsv, parseImportFile, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, powerTiersText,
+  buildPriceRows, rowsToCsv, parseImportFile, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, PH_POWER_COLUMNS,
 } from '@/lib/producthub/priceExport';
 
 const db = supabase as any;
@@ -80,13 +80,14 @@ export default function ProductHubImportExport() {
             formatMoney(Number(p.uvp || 0), def, p.currency),
             formatMoney(effectivePrice(p, 'min'), def, p.currency),
             formatMoney(effectivePrice(p, 'max'), def, p.currency),
-            powerTiersText(p) || '—',
+            ...PH_POWER_COLUMNS.map(({ power }) =>
+              Number(p.uvp || 0) ? formatMoney(uvpForPower(p, power), def, p.currency) : '—'),
           ]);
         }
       }
       autoTable(doc, {
         startY: 70,
-        head: [['Gerät', 'UVP', 'VK Minimal', 'VK Maximal', 'Staffelung Leistung Lasermodul']],
+        head: [['Gerät', 'UVP', 'VK Minimal', 'VK Maximal', ...PH_POWER_COLUMNS.map(c => c.column)]],
         body,
         styles: { fontSize: 7.5, cellPadding: 3 },
         headStyles: { fillColor: [20, 20, 20] },
@@ -157,7 +158,7 @@ export default function ProductHubImportExport() {
   };
 
   const template = () => downloadFile(
-    '\uFEFF' + PH_EXPORT_COLUMNS.join(';'), `product-hub-preise-vorlage.csv`, 'text/csv;charset=utf-8');
+    '\uFEFF' + PH_EXPORT_COLUMNS.map(c => `"${c}"`).join(';'), `product-hub-preise-vorlage.csv`, 'text/csv;charset=utf-8');
 
   return (
     <div className="space-y-6">
@@ -193,7 +194,8 @@ export default function ProductHubImportExport() {
             </div>
             <p className="text-xs text-muted-foreground">
               Enthalten: Gerätename, Modell, SKU, Land, Währung, Steuersatz, UVP, VK Minimal/Maximal (inkl. errechneter Werte),
-              Sonderaktion, Miete je Laufzeit, Kaution und die Staffelung nach Leistung Lasermodul.
+              Sonderaktion, Miete je Laufzeit, Kaution sowie je eine Spalte für die Staffelpreise
+              {' '}{PH_POWER_COLUMNS.map(c => c.column).join(', ')}.
             </p>
           </CardContent>
         </Card>
