@@ -49,6 +49,11 @@ export interface PhCountryPrice {
   rent_base: 'vk_min' | 'vk_max' | 'uvp';
   rent_terms: Record<string, PhRentTermConfig>;
   rent_note: string;
+  /** Kaution */
+  deposit_active: boolean;
+  deposit_mode: 'percent' | 'fixed';
+  deposit_value: number | null;
+  deposit_note: string;
 }
 
 export function emptyRentTerms(): Record<string, PhRentTermConfig> {
@@ -75,6 +80,10 @@ export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
     rent_base: 'vk_min',
     rent_terms: emptyRentTerms(),
     rent_note: '',
+    deposit_active: false,
+    deposit_mode: 'percent',
+    deposit_value: null,
+    deposit_note: '',
   };
 }
 
@@ -97,6 +106,10 @@ export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
     rent_public: raw.rent_public === true,
     rent_base: raw.rent_base === 'vk_max' || raw.rent_base === 'uvp' ? raw.rent_base : 'vk_min',
     rent_note: raw.rent_note || '',
+    deposit_active: raw.deposit_active === true,
+    deposit_mode: raw.deposit_mode === 'fixed' ? 'fixed' : 'percent',
+    deposit_value: raw.deposit_value === null || raw.deposit_value === undefined || raw.deposit_value === '' ? null : Number(raw.deposit_value),
+    deposit_note: raw.deposit_note || '',
     rent_terms: (() => {
       const out = emptyRentTerms();
       const src = raw.rent_terms && typeof raw.rent_terms === 'object' ? raw.rent_terms : {};
@@ -128,6 +141,14 @@ export function rentMonthly(p: PhCountryPrice, term: PhRentTerm): number {
   return cfg.mode === 'fixed' ? val : (rentBaseAmount(p) * val) / 100;
 }
 
+
+/** Kaution: Prozent der Mietbasis oder fester Betrag. */
+export function depositAmount(p: PhCountryPrice): number {
+  if (!p.deposit_active) return 0;
+  const val = Number(p.deposit_value || 0);
+  if (!val) return 0;
+  return p.deposit_mode === 'fixed' ? val : (rentBaseAmount(p) * val) / 100;
+}
 
 /** Rechnet einen eingetragenen Betrag in die gewünschte Anzeigeart um. */
 export function convertAmount(
