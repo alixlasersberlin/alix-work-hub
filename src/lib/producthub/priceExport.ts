@@ -14,6 +14,8 @@ export interface PhPriceRow {
 const num = (v: any) => (v === null || v === undefined || v === '' ? '' : Number(v));
 const bool = (v: any) => (v === true ? 'ja' : 'nein');
 
+export const PH_POWER_COLUMNS = PH_DEFAULT_POWERS.map(p => ({ power: p as string, column: p.replace(/\s+/g, '') }));
+
 export const PH_PRICE_COLUMNS = [
   'product_id', 'alix_product_id', 'name', 'model', 'sku',
   'land', 'land_code', 'waehrung', 'steuersatz', 'eingabe_modus', 'sichtbar_webseite',
@@ -40,7 +42,6 @@ export const PH_EXPORT_COLUMNS = [
 
 /** Staffelspalten je Lasermodul-Leistung: Spaltenname = Leistung (z. B. "1600W"),
  *  Wert = UVP fuer diese Leistung. */
-export const PH_POWER_COLUMNS = PH_DEFAULT_POWERS.map(p => ({ power: p as string, column: p.replace(/\s+/g, '') }));
 
 const TIER_LABEL: Record<string, string> = {
   surcharge_percent: 'Aufschlag %',
@@ -203,6 +204,13 @@ export function csvRowToCountryPrice(row: Record<string, string>, def: PhCountry
   }
   if (termsTouched) out.rent_terms = terms;
 
+  if (has('staffel_leistung_json') && row.staffel_leistung_json) {
+    try {
+      const tiers = JSON.parse(row.staffel_leistung_json);
+      if (tiers && typeof tiers === 'object') out.power_tiers = tiers;
+    } catch { /* Wert unveraendert lassen */ }
+  }
+
   for (const { power, column } of PH_POWER_COLUMNS) {
     if (!has(column)) continue;
     const n = toNum(row[column]);
@@ -210,13 +218,6 @@ export function csvRowToCountryPrice(row: Record<string, string>, def: PhCountry
     if (n === null) tiers[power] = { ...(tiers[power] || {}), enabled: false, mode: tiers[power]?.mode || 'price_fixed', value: tiers[power]?.value ?? null };
     else tiers[power] = { enabled: true, mode: 'price_fixed', value: n };
     out.power_tiers = tiers;
-  }
-
-  if (has('staffel_leistung_json') && row.staffel_leistung_json) {
-    try {
-      const tiers = JSON.parse(row.staffel_leistung_json);
-      if (tiers && typeof tiers === 'object') out.power_tiers = tiers;
-    } catch { /* Wert unveraendert lassen */ }
   }
 
   return out as PhCountryPrice;
