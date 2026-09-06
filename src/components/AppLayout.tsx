@@ -659,6 +659,39 @@ export default function AppLayout() {
     [favorites, allowedLeafMap],
   );
 
+  // KI WATCH – meistgenutzte Programme des Benutzers (automatisch gelernt)
+  useEffect(() => {
+    const path = location.pathname;
+    if (!path || path === '/' || path === '/willkommen') return;
+    // besten passenden Menüeintrag suchen (längster Präfix)
+    let best: { path: string; label: string } | null = null;
+    allowedLeafMap.forEach((meta, p) => {
+      if (p !== '/' && !p.startsWith('#') && path.startsWith(p)) {
+        if (!best || p.length > best.path.length) best = { path: p, label: meta.label };
+      }
+    });
+    if (!best) return;
+    const entry = best as { path: string; label: string };
+    trackPageUsage(entry.path, entry.label, null);
+    const t = window.setTimeout(() => { void reloadTopPages(); }, 2000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, allowedLeafMap]);
+
+  const kiWatchItems = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { path: string; label: string; icon: typeof LayoutDashboard; hits: number }[] = [];
+    for (const p of topPages) {
+      const meta = allowedLeafMap.get(p.path);
+      if (!meta || seen.has(p.path)) continue;
+      seen.add(p.path);
+      out.push({ path: p.path, label: meta.label, icon: meta.icon, hits: p.hits });
+      if (out.length >= 10) break;
+    }
+    return out;
+  }, [topPages, allowedLeafMap]);
+
+
   const FavStar = ({ path, label }: { path: string; label: string }) => {
     const fav = isFavorite(path);
     return (
