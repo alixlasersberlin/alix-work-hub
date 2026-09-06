@@ -19,6 +19,9 @@ export const PH_PRICE_COUNTRIES: PhCountryDef[] = [
   { code: 'dubai', label: 'Dubai', flag: '🇦🇪', currency: 'AED', locale: 'en-AE', vat: 5 },
 ];
 
+/** Standard-Abschlag vom UVP für VK Minimal (in %). */
+export const PH_DEFAULT_VK_MIN_DISCOUNT_PCT = 10;
+
 export const PH_RENT_TERMS = [12, 24, 36] as const;
 export type PhRentTerm = (typeof PH_RENT_TERMS)[number];
 
