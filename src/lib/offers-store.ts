@@ -52,7 +52,6 @@ function rowToSnapshot(row: any): OfferSnapshot {
     approvedAt: row.approved_at || null,
     approvedBy: row.approved_by || null,
     approvalNote: row.approval_note || null,
-  };
     listNote: row.list_note ?? null,
   };
 }
