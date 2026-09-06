@@ -564,51 +564,18 @@ export default function Angebote() {
       <Card>
         <CardHeader className="flex flex-col gap-3">
           <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
-            <CardTitle>Liste ({(() => {
-              const q = search.trim().toLowerCase();
-              const now = Date.now();
-              const rangeMs =
-                dateRange === 'month' ? 30 * 86400000 :
-                dateRange === '3months' ? 90 * 86400000 :
-                dateRange === 'year' ? 365 * 86400000 : null;
-              return offers.filter(o => {
-                if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
-                if (rangeMs !== null) {
-                  const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
-                  if (!d || now - d > rangeMs) return false;
-                }
-                if (orderFilter !== 'alle') {
-                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
-                  if (orderFilter === 'auftrag' && !hasOrder) return false;
-                  if (orderFilter === 'offen' && hasOrder) return false;
-                  if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
-                }
-                if (dealFilter !== 'alle') {
-                  const approval = (o.approvalStatus || 'pending');
-                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
-                  const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
-                  const abgelehnt = approval === 'rejected';
-                  if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
-                  if (dealFilter === 'angenommen' && !angenommen) return false;
-                  if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
-                }
-                if (!q) return true;
-                return (
-                  (o.offerNumber || '').toLowerCase().includes(q) ||
-                  (o.customer?.company_name || '').toLowerCase().includes(q) ||
-                  (o.customer?.contact_name || '').toLowerCase().includes(q) ||
-                  (o.customer?.email || '').toLowerCase().includes(q)
-                );
-              }).length;
-            })()})</CardTitle>
-            <div className="relative w-full max-w-xs">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Suche: Name oder Angebotsnr."
-                className="pl-8"
-              />
+            <CardTitle>Liste ({filteredOffers.length})</CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative w-full max-w-xs">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Suche: Name oder Angebotsnr."
+                  className="pl-8"
+                />
+              </div>
+              <ViewToggle value={viewMode} onChange={setViewMode} />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
