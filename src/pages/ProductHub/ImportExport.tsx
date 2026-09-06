@@ -99,7 +99,7 @@ export default function ProductHubImportExport() {
 
   const onFile = async (file: File) => {
     try {
-      const parsedAll = parseCsv(await file.text());
+      const parsedAll = await parseImportFile(file);
       if (!parsedAll.length) throw new Error('Keine Zeilen gefunden');
       const parsed = parsedAll.filter(matchesImportCountry);
       if (!parsed.length) throw new Error('Keine Zeilen für das gewählte Land in dieser Datei');
