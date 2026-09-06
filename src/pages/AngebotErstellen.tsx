@@ -1893,7 +1893,7 @@ export default function AngebotErstellen() {
   );
 
   const renderStepNav = () => (
-    <div className="flex items-center justify-between gap-3 pt-1">
+    <div className="sticky bottom-0 z-30 -mx-4 lg:-mx-5 px-4 lg:px-5 py-3 mt-2 border-t border-border bg-background/95 backdrop-blur flex items-center justify-between gap-3">
       <Button
         variant="outline"
         className="gap-2 border-border min-h-[48px]"
@@ -2609,7 +2609,7 @@ export default function AngebotErstellen() {
       </div>
       )}
 
-      {renderStepNav()}
+      
 
       {step === 4 && (
       <>
@@ -2894,7 +2894,10 @@ export default function AngebotErstellen() {
       )}
       </>
       )}
+
+      {renderStepNav()}
     </div>
+
 
   );
 }
