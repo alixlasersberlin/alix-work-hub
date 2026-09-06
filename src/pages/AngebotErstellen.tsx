@@ -130,6 +130,8 @@ export default function AngebotErstellen() {
   const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Miete' | 'Alix Flex' | 'Alix Smart Impulse'>('Direktkauf');
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
+  const [payDiscount, setPayDiscount] = useState<string>('');
+
   const [payTerm, setPayTerm] = useState<number>(24);
   const [payRate, setPayRate] = useState<string>('');
   const [loading, setLoading] = useState(true);
