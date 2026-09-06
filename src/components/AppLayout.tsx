@@ -892,6 +892,69 @@ export default function AppLayout() {
               </div>
             );
           })()}
+          {/* KI WATCH – automatisch gelernte, meistgenutzte Programme */}
+          {(() => {
+            const isCollapsedView = collapsed && !mobileOpen;
+            const watchOpen = openGroups['__kiwatch'] ?? true;
+            return (
+              <div className="mb-2">
+                <div
+                  className={cn(
+                    "w-full flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 bg-amber-500/5 text-amber-300",
+                    isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5"
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup('__kiwatch')}
+                    title={isCollapsedView ? 'KI WATCH' : undefined}
+                    className="flex items-center gap-2.5 flex-1 min-w-0"
+                  >
+                    <Brain className="w-5 h-5 flex-shrink-0 text-amber-300" />
+                    {!isCollapsedView && (
+                      <span className="truncate flex-1 text-left">
+                        KI WATCH <span className="text-muted-foreground">({kiWatchItems.length})</span>
+                      </span>
+                    )}
+                  </button>
+                  {!isCollapsedView && (
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", watchOpen && "rotate-180")} />
+                  )}
+                </div>
+                {!isCollapsedView && watchOpen && (
+                  <div className="mt-0.5 ml-3 pl-3 border-l border-amber-400/30 space-y-0.5">
+                    {kiWatchItems.length === 0 ? (
+                      <p className="px-3.5 py-2 text-[12px] text-muted-foreground italic">
+                        Wird automatisch gefüllt – hier erscheinen deine meistgenutzten Programme.
+                      </p>
+                    ) : kiWatchItems.map(w => {
+                      const Icon = w.icon;
+                      const wActive = isActive(w.path);
+                      return (
+                        <div key={w.path} className="group flex items-center gap-1">
+                          <Link
+                            to={w.path}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-2.5 flex-1 min-w-0",
+                              wActive
+                                ? "bg-amber-500/10 text-amber-300 shadow-[inset_0_0_0_1px_hsl(45_93%_58%/0.2)]"
+                                : "text-sidebar-foreground hover:text-amber-300 hover:bg-amber-500/10"
+                            )}
+                          >
+                            <Icon className={cn("w-5 h-5 flex-shrink-0", wActive && "text-amber-300")} />
+                            <span className="truncate flex-1">{labelWithCount(w.path, w.label)}</span>
+                            <span className="text-[10px] text-muted-foreground shrink-0">{w.hits}</span>
+                          </Link>
+                          <FavStar path={w.path} label={w.label} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {visibleItems.map(item => {
             const active = isActive(item.path);
             const hasChildren = item.children && item.children.length > 0;
