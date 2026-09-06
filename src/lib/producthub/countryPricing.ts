@@ -125,27 +125,37 @@ export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
         ? PH_DEFAULT_VK_MIN_DISCOUNT_PCT
         : Number(raw.vk_min_value),
     vk_max_mode: raw.vk_max_mode === 'percent' ? 'percent' : 'fixed',
-    rent_active: raw.rent_active === true,
+    rent_active: raw.rent_active !== false,
     rent_public: raw.rent_public === true,
     rent_base: raw.rent_base === 'vk_max' || raw.rent_base === 'uvp' ? raw.rent_base : 'vk_min',
     rent_note: raw.rent_note || '',
-    deposit_active: raw.deposit_active === true,
+    deposit_active: raw.deposit_active !== false,
     deposit_mode: raw.deposit_mode === 'fixed' ? 'fixed' : 'percent',
-    deposit_value: raw.deposit_value === null || raw.deposit_value === undefined || raw.deposit_value === '' ? null : Number(raw.deposit_value),
+    deposit_value:
+      raw.deposit_value === null || raw.deposit_value === undefined || raw.deposit_value === ''
+        ? PH_DEFAULT_DEPOSIT_PCT
+        : Number(raw.deposit_value),
     deposit_note: raw.deposit_note || '',
     rent_terms: (() => {
       const out = emptyRentTerms();
       const src = raw.rent_terms && typeof raw.rent_terms === 'object' ? raw.rent_terms : {};
       for (const t of PH_RENT_TERMS) {
         const r = src[String(t)] || {};
+        const mode = r.mode === 'fixed' ? 'fixed' : 'percent';
+        const hasValue = !(r.value === null || r.value === undefined || r.value === '');
         out[String(t)] = {
-          enabled: r.enabled === true,
-          mode: r.mode === 'fixed' ? 'fixed' : 'percent',
-          value: r.value === null || r.value === undefined || r.value === '' ? null : Number(r.value),
+          enabled: r.enabled !== false,
+          mode,
+          value: hasValue
+            ? Number(r.value)
+            : mode === 'percent'
+              ? PH_DEFAULT_RENT_FACTORS[String(t)] ?? null
+              : null,
         };
       }
       return out;
     })(),
+
   };
 }
 
