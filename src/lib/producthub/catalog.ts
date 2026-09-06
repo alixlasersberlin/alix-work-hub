@@ -65,6 +65,7 @@ export const PH_LAYOUTS = [
 
 export const PH_PAGE_TYPES = [
   { key: 'cover', label: 'Cover' },
+  { key: 'toc', label: 'Inhaltsverzeichnis' },
   { key: 'category', label: 'Kategorie-Seite' },
   { key: 'products', label: 'Produktseiten' },
   { key: 'overview', label: 'Produktübersicht' },
