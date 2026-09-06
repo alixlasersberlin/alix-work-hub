@@ -910,13 +910,17 @@ export default function AngebotErstellen() {
     setLines(prev => (prev.length === 1 ? [newLine()] : prev.filter(l => l.id !== id)));
   };
 
-  // Wenn MwSt > 0: eingegebener Einzelpreis ist BRUTTO (inkl. MwSt).
-  // Wenn MwSt = 0: Einzelpreis ist Netto.
+  // Preisbasis wählbar: Einzelpreise sind entweder Brutto (inkl. MwSt) oder Netto.
   const lineCalc = (l: LineItem) => {
     const qty = Number(l.quantity) || 0;
     const rate = Number(l.rate) || 0;
     const tax = Number(l.tax_percentage) || 0;
     if (tax > 0) {
+      if (priceMode === 'net') {
+        const net = qty * rate;
+        const gross = net * (1 + tax / 100);
+        return { net, tax: gross - net, gross };
+      }
       const gross = qty * rate;
       const net = gross / (1 + tax / 100);
       return { net, tax: gross - net, gross };
