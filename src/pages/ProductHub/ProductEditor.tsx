@@ -26,6 +26,7 @@ import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
 import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
 import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
+import { catalogsForProduct } from '@/lib/producthub/catalog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -276,6 +277,8 @@ export default function ProductHubEditor() {
   const isSuperAdmin = (roles || []).includes('Super Admin');
   const [form, setForm] = useState<any>(null);
   const [original, setOriginal] = useState<any>(null);
+  const [productCatalogs, setProductCatalogs] = useState<any[]>([]);
+
   const [confirmTexts, setConfirmTexts] = useState<string[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
@@ -309,6 +312,7 @@ export default function ProductHubEditor() {
     setHistory(h.data || []); setMedia(m.data || []); setDocs(d.data || []); setChannels(c);
     setMainKeyword(seo?.data?.main_keyword || '');
     setKeywords(seo?.data?.secondary_keywords || []);
+    setProductCatalogs(await catalogsForProduct(id));
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
 
@@ -388,7 +392,7 @@ export default function ProductHubEditor() {
 
       <Tabs defaultValue="allgemein">
         <TabsList className="flex-wrap h-auto">
-          {['allgemein', 'technik', 'konfiguration', 'preise', 'anwendungen', 'smartki', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'historie'].map(t => (
+          {['allgemein', 'technik', 'konfiguration', 'preise', 'anwendungen', 'smartki', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'preislisten', 'historie'].map(t => (
             <TabsTrigger key={t} value={t} className="capitalize">{t === 'smartki' ? 'Smart KI' : t}</TabsTrigger>
           ))}
         </TabsList>
@@ -674,6 +678,22 @@ export default function ProductHubEditor() {
             <p className="text-xs text-muted-foreground">
               Technische Kerndaten bleiben zentral. Marketingtexte/SEO können je Kanal abweichen (Tab SEO bzw. Kanal-Content).
             </p>
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="preislisten">
+          <Card><CardContent className="p-4 space-y-2">
+            <p className="text-xs text-muted-foreground">Preislisten und Kataloge, in denen dieses Gerät verwendet wird.</p>
+            {productCatalogs.map((c: any) => (
+              <div key={c.id} className="flex items-center justify-between border rounded p-2 text-sm">
+                <span>{c.name}</span>
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {c.country?.toUpperCase()} · {c.status}{c.valid_to ? ` · bis ${c.valid_to}` : ''}
+                  <Button size="sm" variant="outline" onClick={() => nav(`/product-hub/preislisten/${c.id}`)}>Öffnen</Button>
+                </span>
+              </div>
+            ))}
+            {productCatalogs.length === 0 && <div className="text-sm text-muted-foreground">Dieses Gerät ist in keiner Preisliste enthalten.</div>}
           </CardContent></Card>
         </TabsContent>
 

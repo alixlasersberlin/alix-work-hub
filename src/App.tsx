@@ -704,6 +704,9 @@ const PhMasterReview = lazy(() => import("./pages/ProductHub/MasterReview"));
 const PhCanary = lazy(() => import("./pages/ProductHub/Canary"));
 const PhComCanary = lazy(() => import("./pages/ProductHub/ComCanary"));
 const PhVeroeffentlichungen = lazy(() => import("./pages/ProductHub/Veroeffentlichungen"));
+const PhPreislisten = lazy(() => import("./pages/ProductHub/Preislisten"));
+const PhKatalogEditor = lazy(() => import("./pages/ProductHub/KatalogEditor"));
+const KatalogPublic = lazy(() => import("./pages/KatalogPublic"));
 const PmDashboard = lazy(() => import("./pages/Artikel/Dashboard"));
 const PmListe = lazy(() => import("./pages/Artikel/Liste"));
 const ChCockpit = lazy(() => import("./pages/ContentHub/Cockpit"));
@@ -2282,6 +2285,8 @@ function AppRoutes() {
           <Route path="/product-hub/master-review" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/master-review/:id" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/veroeffentlichungen" element={<ProtectedRoute><PhVeroeffentlichungen /></ProtectedRoute>} />
+          <Route path="/product-hub/preislisten" element={<ProtectedRoute><PhPreislisten /></ProtectedRoute>} />
+          <Route path="/product-hub/preislisten/:id" element={<ProtectedRoute><PhKatalogEditor /></ProtectedRoute>} />
 
           {/* ALIX PRODUCT MASTER – Artikel & Produkte */}
           <Route path="/artikel" element={<ProtectedRoute><PmDashboard /></ProtectedRoute>} />
@@ -2386,6 +2391,7 @@ function AppRoutes() {
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/help" element={<SelfServicePortal />} />
+        <Route path="/preisliste/:slug" element={<KatalogPublic />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/check" element={<PortalCheckDelivery />} />
 
