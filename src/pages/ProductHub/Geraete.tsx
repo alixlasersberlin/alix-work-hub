@@ -169,7 +169,7 @@ export default function ProductHubGeraete() {
             </TableHeader>
             <TableBody>
               {loading && <TableRow><TableCell colSpan={12} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
-              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">Keine Geräte. Import unter „Einstellungen“ starten.</TableCell></TableRow>}
+              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">Keine Geräte. Bitte manuell über „Neues Gerät“ anlegen.</TableCell></TableRow>}
               {filtered.map(p => {
                 const t = phTone(p, { conflicts: conf[p.id], media: media[p.id], documents: docs[p.id], pending: pendingFor(p.id) });
                 return (
