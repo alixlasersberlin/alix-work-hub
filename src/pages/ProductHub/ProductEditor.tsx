@@ -771,6 +771,32 @@ export default function ProductHubEditor() {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={!!confirmTexts} onOpenChange={(o) => { if (!o) setConfirmTexts(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Geschützte Texte überschreiben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sie ändern {confirmTexts?.map(k => TEXT_LABELS[k]).join(' und ')} von „{form?.name}“.
+              Diese Texte werden auf Angeboten und auf den Webseiten verwendet. Nur der Super Admin darf sie ändern.
+              Die bisherige Fassung bleibt im Änderungsverlauf erhalten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setConfirmTexts(null);
+              setForm((f: any) => ({
+                ...f,
+                short_description: original?.short_description ?? '',
+                long_description: original?.long_description ?? '',
+              }));
+            }}>Abbrechen und zurücksetzen</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => { setConfirmTexts(null); await doSave(); }}>
+              Ja, überschreiben
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
