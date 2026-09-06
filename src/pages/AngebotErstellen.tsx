@@ -772,11 +772,13 @@ export default function AngebotErstellen() {
 
 
   const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => {
-    const dev = matchPhDevice(it);
+    const dev = matchPhDevice(it) || (it._phId ? phDevices.find(p => p.id === it._phId) || null : null);
     // Bild-Snapshot: bevorzugt das im Product Hub festgelegte Angebotsbild
     const img = it.image_url || it.hero_image_url || dev?.url || undefined;
-    // Aktueller Preis aus dem Product Hub hat Vorrang
-    const hubPrice = Number(it._phPrice ?? dev?.netPrice ?? 0);
+    // Aktueller Preis aus dem Product Hub hat Vorrang – inkl. Staffelung nach Lasermodul-Leistung
+    const tiered = phNetPriceForPower(dev, cfg?.laser_module_power);
+    const hubPrice = Number(tiered ?? it._phPrice ?? dev?.netPrice ?? 0);
+
 
     return {
       id: crypto.randomUUID(),
