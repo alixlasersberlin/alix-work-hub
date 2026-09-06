@@ -53,6 +53,17 @@ function rowToSnapshot(row: any): OfferSnapshot {
     approvedBy: row.approved_by || null,
     approvalNote: row.approval_note || null,
   };
+    listNote: row.list_note ?? null,
+  };
+}
+
+/** Kurznotiz zu einem Angebot speichern (Zeile in der Angebotsliste). */
+export async function setOfferListNote(offerNumber: string, note: string): Promise<void> {
+  const { error } = await supabase
+    .from('offers')
+    .update({ list_note: note.trim() || null } as any)
+    .eq('offer_number', offerNumber);
+  if (error) throw error;
 }
 
 export async function setOfferApproval(
