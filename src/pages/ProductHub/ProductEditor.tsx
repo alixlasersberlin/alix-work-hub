@@ -273,7 +273,10 @@ export default function ProductHubEditor() {
   const nav = useNavigate();
   const { roles } = useAuth();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
+  const isSuperAdmin = (roles || []).includes('Super Admin');
   const [form, setForm] = useState<any>(null);
+  const [original, setOriginal] = useState<any>(null);
+  const [confirmTexts, setConfirmTexts] = useState<string[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [media, setMedia] = useState<any[]>([]);
