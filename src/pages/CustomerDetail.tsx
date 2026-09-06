@@ -21,7 +21,7 @@ import { withAt } from '@/lib/atSuffix';
 
 /** Nur die in der Übersicht angezeigten Spalten — `raw_data` (im Schnitt 3 KB pro Kunde) bleibt draußen. */
 const CUSTOMER_COLS =
-  'id, company_name, contact_name, email, phone, source_system, external_customer_id, billing_address, shipping_address, created_at, is_vip';
+  'id, company_name, contact_name, email, phone, birth_date, source_system, external_customer_id, billing_address, shipping_address, created_at, is_vip';
 const ORDER_COLS = 'id, order_number, order_date, order_status, total_amount, currency, source_system';
 
 export default function CustomerDetail() {
@@ -157,6 +157,7 @@ export default function CustomerDetail() {
                   ['Kontakt', customer.contact_name],
                   ['E-Mail', customer.email],
                   ['Telefon', customer.phone],
+                  ['Geburtstag', customer.birth_date ? new Date(customer.birth_date).toLocaleDateString('de-DE') : null],
                   ['Quelle', customer.source_system],
                   ['Ext. Kunden-ID', withAt(customer.external_customer_id, customer.source_system)],
                   ['IBAN', customer.iban],
