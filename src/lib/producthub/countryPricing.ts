@@ -19,6 +19,9 @@ export const PH_PRICE_COUNTRIES: PhCountryDef[] = [
   { code: 'dubai', label: 'Dubai', flag: '🇦🇪', currency: 'AED', locale: 'en-AE', vat: 5 },
 ];
 
+/** Standard-Abschlag vom UVP für VK Minimal (in %). */
+export const PH_DEFAULT_VK_MIN_DISCOUNT_PCT = 10;
+
 export const PH_RENT_TERMS = [12, 24, 36] as const;
 export type PhRentTerm = (typeof PH_RENT_TERMS)[number];
 
@@ -69,8 +72,9 @@ export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
     input_mode: 'net',
     public: false,
     uvp: null,
-    vk_min_mode: 'fixed',
-    vk_min_value: null,
+    // Standard: VK Minimal als Abschlag vom UVP mit 10 %
+    vk_min_mode: 'percent',
+    vk_min_value: PH_DEFAULT_VK_MIN_DISCOUNT_PCT,
     vk_max_mode: 'fixed',
     vk_max_value: null,
     promo_active: false,
@@ -100,7 +104,17 @@ export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
     public: raw.public === true,
     promo_active: raw.promo_active === true,
     promo_name: raw.promo_name || '',
-    vk_min_mode: raw.vk_min_mode === 'percent' ? 'percent' : 'fixed',
+    // Kein VK-Minimal gepflegt → Standard: 10 % Abschlag vom UVP
+    vk_min_mode:
+      raw.vk_min_value === null || raw.vk_min_value === undefined || raw.vk_min_value === ''
+        ? 'percent'
+        : raw.vk_min_mode === 'percent'
+          ? 'percent'
+          : 'fixed',
+    vk_min_value:
+      raw.vk_min_value === null || raw.vk_min_value === undefined || raw.vk_min_value === ''
+        ? PH_DEFAULT_VK_MIN_DISCOUNT_PCT
+        : Number(raw.vk_min_value),
     vk_max_mode: raw.vk_max_mode === 'percent' ? 'percent' : 'fixed',
     rent_active: raw.rent_active === true,
     rent_public: raw.rent_public === true,
