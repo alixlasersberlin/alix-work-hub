@@ -312,6 +312,7 @@ export default function ProductHubEditor() {
     setHistory(h.data || []); setMedia(m.data || []); setDocs(d.data || []); setChannels(c);
     setMainKeyword(seo?.data?.main_keyword || '');
     setKeywords(seo?.data?.secondary_keywords || []);
+    setProductCatalogs(await catalogsForProduct(id));
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
 
