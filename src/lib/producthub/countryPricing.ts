@@ -230,17 +230,20 @@ export interface PhPowerTier {
 }
 
 export function emptyPowerTier(): PhPowerTier {
-  return { enabled: true, mode: 'price_fixed', value: null };
+  return { enabled: false, mode: 'price_fixed', value: null };
 }
 
 export function readPowerTier(p: PhCountryPrice, power: string): PhPowerTier {
   const raw = ((p as any).power_tiers || {})[power] || {};
+  const value = raw.value === null || raw.value === undefined || raw.value === '' ? null : Number(raw.value);
   return {
-    enabled: raw.enabled !== false,
+    // Staffelung gilt nur, wenn für die Stufe auch ein Preis hinterlegt ist
+    enabled: raw.enabled !== false && value !== null && value !== 0,
     mode: raw.mode === 'surcharge_fixed' || raw.mode === 'surcharge_percent' ? raw.mode : 'price_fixed',
-    value: raw.value === null || raw.value === undefined || raw.value === '' ? null : Number(raw.value),
+    value,
   };
 }
+
 
 
 /** UVP für eine bestimmte Lasermodul-Leistung. */
