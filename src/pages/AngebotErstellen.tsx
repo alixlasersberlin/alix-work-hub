@@ -1586,6 +1586,7 @@ export default function AngebotErstellen() {
       email: selectedCustomer.email,
       phone: selectedCustomer.phone,
     } : null,
+    priceMode,
     lines: lines.filter(l => l.name && l.quantity > 0),
     totals,
     payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, discount: parseFloat(payDiscount) || 0, term: payTerm, rate: parseFloat(payRate) || 0 },
