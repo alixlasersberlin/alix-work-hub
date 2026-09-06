@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePrice } from '@/lib/producthub/countryPricing';
 import {
-  buildPriceRows, rowsToCsv, parseCsv, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, powerTiersText,
+  buildPriceRows, rowsToCsv, parseImportFile, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, powerTiersText,
 } from '@/lib/producthub/priceExport';
 
 const db = supabase as any;
