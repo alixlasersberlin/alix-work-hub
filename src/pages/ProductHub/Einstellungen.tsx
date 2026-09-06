@@ -52,37 +52,8 @@ export default function ProductHubEinstellungen() {
     toast.success(`Migrationsphase ${p} gesetzt`);
   };
 
-  const runImport = async (payload: any) => {
-    setBusy(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('product-hub-import', { body: payload });
-      if (error) throw error;
-      if (data?.result) setResult(data.result);
-      toast.success(`Import abgeschlossen: ${data?.result?.created ?? 0} neu · ${data?.result?.merged ?? 0} zusammengeführt`);
-    } catch (e: any) { toast.error(e.message || 'Import fehlgeschlagen'); }
-    setBusy(false);
-  };
+  // Geräte-Import ist bewusst entfernt: Product Hub · Geräte wird ausschließlich manuell gepflegt.
 
-  const run = async (mode: 'test' | 'preview' | 'import') => {
-    setBusy(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await supabase.functions.invoke('product-hub-import', {
-        body: { mode, channel: 'de', endpoint: sourceUrl, user_id: user?.id ?? null },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setChecks({ ok: data.ok, checks: data.checks });
-      if (mode === 'preview') { setPreview(data.preview); setResult(null); }
-      if (mode === 'import') {
-        setResult(data.result);
-        toast.success(`Import: ${data.result.created} neu · ${data.result.merged} zusammengeführt · ${data.result.conflicts} Konflikte`);
-      }
-      if (mode === 'test') toast[data.ok ? 'success' : 'error'](data.ok ? 'Verbindung und Schema geprüft' : 'Abweichung – kein Import');
-    } catch (e: any) { toast.error(e.message || 'Fehlgeschlagen'); }
-    setBusy(false);
-
-  };
 
   const addRole = async () => {
     if (!newUser) return;
