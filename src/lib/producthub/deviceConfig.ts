@@ -11,7 +11,7 @@ export const PH_DEFAULT_COLORS = [
   'Sonderfarbe RAL',
 ] as const;
 
-export const PH_DEFAULT_POWERS = ['1600 W', '2000 W', '2400 W', '3000 W'] as const;
+export const PH_DEFAULT_POWERS = ['1600 W', '2000 W', '2400 W', '3000 W', '5000 W'] as const;
 
 export const PH_RAL_OPTION = 'Sonderfarbe RAL';
 
