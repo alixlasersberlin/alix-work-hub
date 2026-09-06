@@ -571,6 +571,7 @@ export default function Angebote() {
         </Card>
       )}
 
+      {!loading && <OfferCreatorChart stats={creatorStats} />}
 
 
       <Card>
