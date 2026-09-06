@@ -298,6 +298,7 @@ export default function ProductHubEditor() {
     if (!id) return;
     const p = await phGetProduct(id);
     setForm(p);
+    setOriginal(p);
     const [h, m, d, c, seo] = await Promise.all([
       db.from('ph_field_history').select('*').eq('product_id', id).order('created_at', { ascending: false }).limit(200),
       db.from('ph_media').select('*').eq('product_id', id).order('sort_order'),
