@@ -204,7 +204,10 @@ export default function AppLayout() {
   const atOnly = useAtOnly();
 
   const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
+  const trackPageUsage = usePageUsageTracker();
+  const { pages: topPages, reload: reloadTopPages } = useTopPages(30);
   useNotificationFeed();
+
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
   const SIDEBAR_MIN = 180;
   const SIDEBAR_MAX = 480;
