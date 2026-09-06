@@ -103,20 +103,24 @@ export function buildPriceRows(products: any[], countries = PH_PRICE_COUNTRIES):
 
 /* ------------------------- CSV ------------------------- */
 
+/** Jedes Feld wird gequotet, damit Excel niemals an Leerzeichen/Trennzeichen zerlegt.
+ *  Zahlen werden mit deutschem Dezimalkomma ausgegeben. */
 const esc = (v: any) => {
-  const s = v === null || v === undefined ? '' : String(v);
-  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  if (v === null || v === undefined) return '""';
+  const s = typeof v === 'number' ? String(v).replace('.', ',') : String(v);
+  return `"${s.replace(/"/g, '""')}"`;
 };
 
 export function rowsToCsv(rows: PhPriceRow[], columns: string[] = PH_EXPORT_COLUMNS): string {
-  const head = columns.join(';');
+  const head = columns.map(esc).join(';');
   const body = rows.map(r => columns.map(c => esc(r[c])).join(';'));
-  return '\uFEFF' + [head, ...body].join('\n');
+  return '\uFEFF' + ['sep=;', head, ...body].join('\r\n') + '\r\n';
 }
 
 /** Einfacher CSV-Parser (Trennzeichen ; oder ,) mit Quote-Unterstützung. */
 export function parseCsv(text: string): Record<string, string>[] {
-  const clean = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  let clean = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  if (/^sep=.\s*$/i.test(clean.split('\n')[0] || '')) clean = clean.split('\n').slice(1).join('\n');
   const delim = (clean.split('\n')[0].match(/;/g) || []).length >= (clean.split('\n')[0].match(/,/g) || []).length ? ';' : ',';
   const rows: string[][] = [];
   let cur: string[] = [], field = '', q = false;
