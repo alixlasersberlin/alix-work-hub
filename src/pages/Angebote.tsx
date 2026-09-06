@@ -103,6 +103,46 @@ export default function Angebote() {
   const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
   const pendingCount = pendingOffers.length;
 
+  // Gefilterte Angebote (Basis für Zeilen- und Kachel-Ansicht)
+  const filteredOffers = (() => {
+    const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const rangeMs =
+      dateRange === 'month' ? 30 * 86400000 :
+      dateRange === '3months' ? 90 * 86400000 :
+      dateRange === 'year' ? 365 * 86400000 : null;
+    return offers.filter(o => {
+      if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
+      if (rangeMs !== null) {
+        const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
+        if (!d || now - d > rangeMs) return false;
+      }
+      if (orderFilter !== 'alle') {
+        const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+        if (orderFilter === 'auftrag' && !hasOrder) return false;
+        if (orderFilter === 'offen' && hasOrder) return false;
+        if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
+      }
+      if (dealFilter !== 'alle') {
+        const approval = (o.approvalStatus || 'pending');
+        const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+        const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
+        const abgelehnt = approval === 'rejected';
+        if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
+        if (dealFilter === 'angenommen' && !angenommen) return false;
+        if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
+      }
+      if (!q) return true;
+      return (
+        (o.offerNumber || '').toLowerCase().includes(q) ||
+        (o.customer?.company_name || '').toLowerCase().includes(q) ||
+        (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+        (o.customer?.email || '').toLowerCase().includes(q)
+      );
+    });
+  })();
+  const visibleOffers = pageSize === 'all' ? filteredOffers : filteredOffers.slice(0, parseInt(pageSize, 10));
+
   const clearStalePointerLock = () => {
     try {
       if (document.body.style.pointerEvents === 'none') document.body.style.pointerEvents = '';
