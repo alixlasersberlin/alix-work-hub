@@ -5,6 +5,7 @@ import {
 import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
 import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch, MessagesSquare, ExternalLink } from 'lucide-react';
 import { Smartphone as SmartphoneIcon, Contact as ContactIcon } from 'lucide-react';
+import { FileSpreadsheet } from 'lucide-react';
 
 
 export type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
