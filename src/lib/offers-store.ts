@@ -87,7 +87,7 @@ export async function setOfferApproval(
  * Angebotsübersicht drastisch.
  */
 const LIST_COLUMNS =
-  'id, offer_number, case_number, offer_date, valid_until, customer_id, customer_name, customer_email, total_net, total_tax, total_gross, status, signed_at, created_at, created_by_name, approval_status, approved_at, approved_by, approval_note';
+  'id, offer_number, case_number, offer_date, valid_until, customer_id, customer_name, customer_email, total_net, total_tax, total_gross, status, signed_at, created_at, created_by_name, approval_status, approved_at, approved_by, approval_note, list_note';
 
 export async function listOffers(): Promise<OfferSnapshot[]> {
   const { data, error } = await supabase
