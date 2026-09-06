@@ -148,6 +148,12 @@ export default function Angebote() {
   })();
   const visibleOffers = pageSize === 'all' ? filteredOffers : filteredOffers.slice(0, parseInt(pageSize, 10));
 
+  const creatorStats = buildCreatorStats(offers, (o) =>
+    o.status === 'signed' || o.status === 'order' || orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, '')),
+  );
+
+
+
   const clearStalePointerLock = () => {
     try {
       if (document.body.style.pointerEvents === 'none') document.body.style.pointerEvents = '';
