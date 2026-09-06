@@ -134,6 +134,78 @@ export function CountryPricingTab({ value, disabled, onChange }: Props) {
         );
       })}
 
+      {/* Miete */}
+      <div className="space-y-4 rounded-lg border border-border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Switch checked={price.rent_active} disabled={disabled}
+              onCheckedChange={v => patch({ rent_active: v })} />
+            <div>
+              <Label className="text-sm">Miete anbieten ({def.label})</Label>
+              <p className="text-xs text-muted-foreground">Laufzeiten 12, 24 oder 36 Monate – Preis aus dem VK-Preis.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Auf der Webseite anzeigen</span>
+            <Switch checked={price.rent_public} disabled={disabled || !price.rent_active}
+              onCheckedChange={v => patch({ rent_public: v })} />
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Berechnungsbasis</Label>
+            <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              value={price.rent_base} disabled={disabled || !price.rent_active}
+              onChange={e => patch({ rent_base: e.target.value as any })}>
+              <option value="vk_min">VK Minimal</option>
+              <option value="vk_max">VK Maximal</option>
+              <option value="uvp">UVP</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Basis ({view === 'net' ? 'netto' : 'brutto'}): {show(rentBaseAmount(price))}
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Hinweis zur Miete (optional)</Label>
+            <Input value={price.rent_note} disabled={disabled || !price.rent_active}
+              placeholder="z. B. inkl. Wartung, zzgl. Verbrauchsmaterial"
+              onChange={e => patch({ rent_note: e.target.value })} />
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-3">
+          {PH_RENT_TERMS.map(term => {
+            const cfg = price.rent_terms[String(term)];
+            const setTerm = (p: any) => patch({
+              rent_terms: { ...price.rent_terms, [String(term)]: { ...cfg, ...p } },
+            });
+            return (
+              <div key={term} className="space-y-2 rounded-md border border-border p-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">{term} Monate</Label>
+                  <Switch checked={cfg.enabled} disabled={disabled || !price.rent_active}
+                    onCheckedChange={v => setTerm({ enabled: v })} />
+                </div>
+                <select className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  value={cfg.mode} disabled={disabled || !price.rent_active || !cfg.enabled}
+                  onChange={e => setTerm({ mode: e.target.value })}>
+                  <option value="percent">% der Basis pro Monat</option>
+                  <option value="fixed">Fester Monatsbetrag ({price.currency})</option>
+                </select>
+                <Input type="number" step="0.01" value={cfg.value ?? ''}
+                  disabled={disabled || !price.rent_active || !cfg.enabled}
+                  placeholder={cfg.mode === 'percent' ? 'z. B. 3.5' : `Betrag in ${price.currency}`}
+                  onChange={e => setTerm({ value: e.target.value === '' ? null : Number(e.target.value) })} />
+                <p className="text-xs text-muted-foreground">
+                  Monatlich ({view === 'net' ? 'netto' : 'brutto'}): {show(rentMonthly(price, term))}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="space-y-3 rounded-lg border border-border p-3">
         <div className="flex items-center gap-3">
           <Switch checked={price.promo_active} disabled={disabled}
@@ -147,6 +219,7 @@ export function CountryPricingTab({ value, disabled, onChange }: Props) {
             onChange={e => patch({ promo_name: e.target.value })} />
         </div>
       </div>
+
     </CardContent></Card>
   );
 }
