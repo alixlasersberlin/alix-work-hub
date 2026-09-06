@@ -26,6 +26,10 @@ import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
 import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
 import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 /** Editor für eine Werteliste (Farben / Leistungen), die im Angebot zur Auswahl steht. */
