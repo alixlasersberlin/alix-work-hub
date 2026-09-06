@@ -2704,7 +2704,8 @@ export default function AngebotErstellen() {
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Basis (€)</Label>
               <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
-                {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
+                {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (payType === 'Direktkauf' ? (parseFloat(payDiscount) || 0) : 0)))}
+
               </div>
             </div>
           )}
