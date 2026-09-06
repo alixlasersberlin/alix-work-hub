@@ -650,7 +650,7 @@ export default function KatalogEditor() {
       </div>
 
       {/* Druckansicht */}
-      <div className="hidden print:block">
+      <div className="hidden print:block ph-print-root">
         <CatalogView catalog={cat} items={items} products={products} pages={pages} device="pdf" publicUrl={publicUrl} />
       </div>
 
@@ -660,10 +660,30 @@ export default function KatalogEditor() {
       <style>{`
         @media print {
           @page { size: A4 ${settings.pdf?.orientation === 'landscape' ? 'landscape' : 'portrait'}; margin: 0; }
-          body { background: #fff; }
-          .ph-cat-page { break-after: page; box-shadow: none !important; border-radius: 0 !important; width: 100% !important; margin: 0 !important; }
+          html, body { background: #fff; height: auto !important; max-height: none !important; overflow: visible !important; }
+          body * { visibility: hidden !important; }
+          .ph-print-root, .ph-print-root * { visibility: visible !important; }
+          .ph-print-root {
+            position: absolute !important; top: 0 !important; left: 0 !important;
+            width: 100% !important; height: auto !important; overflow: visible !important;
+          }
+          #root, #root > div, main, .scroll-touch, [data-radix-scroll-area-viewport] {
+            height: auto !important; max-height: none !important; overflow: visible !important;
+            position: static !important; display: block !important;
+          }
+          .ph-catalog-view { width: 100% !important; max-width: none !important; margin: 0 !important; }
+          .ph-cat-page {
+            break-after: page; page-break-after: always; break-inside: avoid; page-break-inside: avoid;
+            box-shadow: none !important; border-radius: 0 !important; margin: 0 !important;
+            aspect-ratio: auto !important;
+            width: ${settings.pdf?.orientation === 'landscape' ? '297mm' : '210mm'} !important;
+            height: ${settings.pdf?.orientation === 'landscape' ? '210mm' : '297mm'} !important;
+            overflow: hidden !important;
+          }
+          .ph-cat-page:last-child { break-after: auto; page-break-after: auto; }
         }
       `}</style>
+
     </div>
   );
 }
