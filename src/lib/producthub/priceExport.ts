@@ -3,7 +3,9 @@
 import {
   PH_PRICE_COUNTRIES, PH_RENT_TERMS, readCountryPrice, effectivePrice,
   rentMonthly, depositAmount, type PhCountryDef, type PhCountryPrice,
+  uvpForPower,
 } from './countryPricing';
+import { PH_DEFAULT_POWERS } from './deviceConfig';
 
 export interface PhPriceRow {
   [key: string]: string | number;
@@ -32,8 +34,13 @@ export const PH_EXPORT_COLUMNS = [
   'uvp',
   'vk_min_modus', 'vk_min_wert', 'vk_min_effektiv',
   'vk_max_modus', 'vk_max_wert', 'vk_max_effektiv',
+  ...PH_POWER_COLUMNS.map(c => c.column),
   'staffel_leistung', 'staffel_leistung_json',
 ];
+
+/** Staffelspalten je Lasermodul-Leistung: Spaltenname = Leistung (z. B. "1600W"),
+ *  Wert = UVP fuer diese Leistung. */
+export const PH_POWER_COLUMNS = PH_DEFAULT_POWERS.map(p => ({ power: p as string, column: p.replace(/\s+/g, '') }));
 
 const TIER_LABEL: Record<string, string> = {
   surcharge_percent: 'Aufschlag %',
@@ -85,6 +92,10 @@ export function priceRow(product: any, def: PhCountryDef): PhPriceRow {
     staffel_leistung_json: JSON.stringify((p as any).power_tiers || {}),
     staffel_leistung: powerTiersText(p),
   };
+  for (const { power, column } of PH_POWER_COLUMNS) {
+    const v = Number(p.uvp || 0) ? Math.round(uvpForPower(p, power) * 100) / 100 : '';
+    row[column] = v;
+  }
   for (const t of PH_RENT_TERMS) {
     const cfg = p.rent_terms?.[String(t)] || { enabled: false, mode: 'percent', value: null };
     row[`miete_${t}m_aktiv`] = bool(cfg.enabled);
@@ -191,6 +202,15 @@ export function csvRowToCountryPrice(row: Record<string, string>, def: PhCountry
     termsTouched = true;
   }
   if (termsTouched) out.rent_terms = terms;
+
+  for (const { power, column } of PH_POWER_COLUMNS) {
+    if (!has(column)) continue;
+    const n = toNum(row[column]);
+    const tiers: Record<string, any> = { ...((out.power_tiers || {}) as Record<string, any>) };
+    if (n === null) tiers[power] = { ...(tiers[power] || {}), enabled: false, mode: tiers[power]?.mode || 'price_fixed', value: tiers[power]?.value ?? null };
+    else tiers[power] = { enabled: true, mode: 'price_fixed', value: n };
+    out.power_tiers = tiers;
+  }
 
   if (has('staffel_leistung_json') && row.staffel_leistung_json) {
     try {
