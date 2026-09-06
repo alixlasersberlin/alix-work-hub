@@ -26,6 +26,10 @@ import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
 import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
 import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 /** Editor für eine Werteliste (Farben / Leistungen), die im Angebot zur Auswahl steht. */
@@ -269,7 +273,10 @@ export default function ProductHubEditor() {
   const nav = useNavigate();
   const { roles } = useAuth();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
+  const isSuperAdmin = (roles || []).includes('Super Admin');
   const [form, setForm] = useState<any>(null);
+  const [original, setOriginal] = useState<any>(null);
+  const [confirmTexts, setConfirmTexts] = useState<string[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [media, setMedia] = useState<any[]>([]);
@@ -291,6 +298,7 @@ export default function ProductHubEditor() {
     if (!id) return;
     const p = await phGetProduct(id);
     setForm(p);
+    setOriginal(p);
     const [h, m, d, c, seo] = await Promise.all([
       db.from('ph_field_history').select('*').eq('product_id', id).order('created_at', { ascending: false }).limit(200),
       db.from('ph_media').select('*').eq('product_id', id).order('sort_order'),
@@ -306,7 +314,18 @@ export default function ProductHubEditor() {
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
-  const save = async () => {
+  const TEXT_LABELS: Record<string, string> = {
+    short_description: 'Kurzbeschreibung',
+    long_description: 'Langbeschreibung',
+  };
+
+  /** Ermittelt, welche geschützten Texte überschrieben würden. */
+  const changedProtectedTexts = () => {
+    if (!original) return [];
+    return Object.keys(TEXT_LABELS).filter(k => (form?.[k] ?? '') !== (original?.[k] ?? ''));
+  };
+
+  const doSave = async () => {
     if (!id || !form) return;
     setSaving(true);
     try {
@@ -326,6 +345,25 @@ export default function ProductHubEditor() {
       await load();
     } catch (e: any) { toast.error(e.message); }
     setSaving(false);
+  };
+
+  const save = async () => {
+    if (!id || !form) return;
+    const changed = changedProtectedTexts();
+    if (changed.length) {
+      if (!isSuperAdmin) {
+        toast.error('Kurz- und Langbeschreibung dürfen nur vom Super Admin geändert werden.');
+        setForm((f: any) => ({
+          ...f,
+          short_description: original?.short_description ?? '',
+          long_description: original?.long_description ?? '',
+        }));
+        return;
+      }
+      setConfirmTexts(changed);
+      return;
+    }
+    await doSave();
   };
 
 
@@ -395,8 +433,14 @@ export default function ProductHubEditor() {
             </div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.featured} disabled={!canWrite} onCheckedChange={v => set('featured', v)} /><Label className="text-xs">Featured</Label></div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.protected} disabled={!canWrite} onCheckedChange={v => set('protected', v)} /><Label className="text-xs">Geschützt</Label></div>
-            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
-            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
+            {!isSuperAdmin && (
+              <div className="md:col-span-3 flex items-start gap-2 rounded-md border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-primary" />
+                <span>Kurz- und Langbeschreibung sind geschützt und dürfen nur vom Super Admin geändert werden.</span>
+              </div>
+            )}
+            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} productId={id} disabled={!isSuperAdmin} area /></div>
+            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} productId={id} disabled={!isSuperAdmin} area /></div>
           </CardContent></Card>
         </TabsContent>
 
@@ -727,6 +771,32 @@ export default function ProductHubEditor() {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={!!confirmTexts} onOpenChange={(o) => { if (!o) setConfirmTexts(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Geschützte Texte überschreiben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sie ändern {confirmTexts?.map(k => TEXT_LABELS[k]).join(' und ')} von „{form?.name}“.
+              Diese Texte werden auf Angeboten und auf den Webseiten verwendet. Nur der Super Admin darf sie ändern.
+              Die bisherige Fassung bleibt im Änderungsverlauf erhalten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setConfirmTexts(null);
+              setForm((f: any) => ({
+                ...f,
+                short_description: original?.short_description ?? '',
+                long_description: original?.long_description ?? '',
+              }));
+            }}>Abbrechen und zurücksetzen</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => { setConfirmTexts(null); await doSave(); }}>
+              Ja, überschreiben
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
