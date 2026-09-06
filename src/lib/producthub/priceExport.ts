@@ -114,7 +114,8 @@ const esc = (v: any) => {
 export function rowsToCsv(rows: PhPriceRow[], columns: string[] = PH_EXPORT_COLUMNS): string {
   const head = columns.map(esc).join(';');
   const body = rows.map(r => columns.map(c => esc(r[c])).join(';'));
-  return '\uFEFF' + ['sep=;', head, ...body].join('\r\n') + '\r\n';
+  // Kein "sep=;"-Prefix: Excel ignoriert sonst die UTF-8-Kennung (BOM) und zerstoert Umlaute.
+  return '\uFEFF' + [head, ...body].join('\r\n') + '\r\n';
 }
 
 /** Einfacher CSV-Parser (Trennzeichen ; oder ,) mit Quote-Unterstützung. */
