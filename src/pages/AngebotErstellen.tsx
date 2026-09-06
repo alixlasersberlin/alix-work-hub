@@ -2561,7 +2561,7 @@ export default function AngebotErstellen() {
                         className="bg-secondary border-border h-8"
                       />
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {Number(l.tax_percentage) > 0 ? 'inkl. MwSt' : 'netto'}
+                        {Number(l.tax_percentage) > 0 ? (priceMode === 'gross' ? 'inkl. MwSt' : 'zzgl. MwSt') : 'netto'}
                       </p>
                     </td>
                     <td className="p-2">
