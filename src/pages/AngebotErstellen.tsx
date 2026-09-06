@@ -838,17 +838,25 @@ export default function AngebotErstellen() {
 
   const applyDeviceConfig = (cfg: DeviceConfig) => {
     if (configLineId) {
-      setLines(prev => prev.map(l => (l.id === configLineId ? {
-        ...l,
-        ph_product_id: cfg.product_id ?? l.ph_product_id ?? null,
-        ph_product_name: cfg.product_name ?? l.ph_product_name ?? null,
-        device_color: cfg.device_color ?? null,
-        ral_color_code: cfg.ral_color_code ?? null,
-        laser_module_power: cfg.laser_module_power ?? null,
-      } : l)));
+      setLines(prev => prev.map(l => {
+        if (l.id !== configLineId) return l;
+        const pid = cfg.product_id ?? l.ph_product_id ?? null;
+        const dev = (pid ? phDevices.find(p => p.id === pid) : null) || matchPhDevice(l);
+        const tiered = phNetPriceForPower(dev, cfg.laser_module_power);
+        return {
+          ...l,
+          ph_product_id: pid,
+          ph_product_name: cfg.product_name ?? l.ph_product_name ?? null,
+          device_color: cfg.device_color ?? null,
+          ral_color_code: cfg.ral_color_code ?? null,
+          laser_module_power: cfg.laser_module_power ?? null,
+          rate: tiered && tiered > 0 ? tiered : l.rate,
+        };
+      }));
     } else if (pendingItem) {
       appendLine(buildLineFromItem(pendingItem, cfg));
     }
+
     setPendingItem(null);
     setConfigLineId(null);
   };
