@@ -144,7 +144,7 @@ export default function ProductHubImportExport() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Import / Export" description="Alle Gerätepreise als CSV oder PDF exportieren und per CSV zurückspielen" icon={FileSpreadsheet} />
+      <PageHeader title="Import / Export" subtitle="Alle Gerätepreise als CSV oder PDF exportieren und per CSV zurückspielen" icon={FileSpreadsheet} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
