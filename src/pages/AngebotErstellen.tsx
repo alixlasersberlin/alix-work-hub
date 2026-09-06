@@ -1230,12 +1230,17 @@ export default function AngebotErstellen() {
     doc.setTextColor(60, 60, 60);
     py += 5;
     if (payType === 'Direktkauf') {
-      const amount = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+      const rabatt = parseFloat(payDiscount) || 0;
+      const amount = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - rabatt);
       if (parseFloat(payDown) > 0) {
         doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5;
       }
+      if (rabatt > 0) {
+        doc.text(`Rabatt: -${fmtMoney(rabatt)}`, LEFT, py); py += 5;
+      }
       doc.text(`Einmalzahlung: ${fmtMoney(amount > 0 ? amount : totals.gross)}`, LEFT, py); py += 5;
     } else if (payType === 'Miete') {
+
       const kaution = parseFloat(payDown) || 0;
       const monatlich = parseFloat(payRate) || 0;
       const restwert = Math.max(0, (parseFloat(payPrice) || 0) - kaution - monatlich * payTerm);
