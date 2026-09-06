@@ -11,6 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { ViewToggle } from '@/components/ViewToggle';
+import { useViewMode } from '@/hooks/useViewMode';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,6 +82,7 @@ export default function Angebote() {
   const [orderCustomerNames, setOrderCustomerNames] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useViewMode();
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
@@ -102,6 +106,46 @@ export default function Angebote() {
 
   const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
   const pendingCount = pendingOffers.length;
+
+  // Gefilterte Angebote (Basis für Zeilen- und Kachel-Ansicht)
+  const filteredOffers = (() => {
+    const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const rangeMs =
+      dateRange === 'month' ? 30 * 86400000 :
+      dateRange === '3months' ? 90 * 86400000 :
+      dateRange === 'year' ? 365 * 86400000 : null;
+    return offers.filter(o => {
+      if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
+      if (rangeMs !== null) {
+        const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
+        if (!d || now - d > rangeMs) return false;
+      }
+      if (orderFilter !== 'alle') {
+        const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+        if (orderFilter === 'auftrag' && !hasOrder) return false;
+        if (orderFilter === 'offen' && hasOrder) return false;
+        if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
+      }
+      if (dealFilter !== 'alle') {
+        const approval = (o.approvalStatus || 'pending');
+        const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+        const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
+        const abgelehnt = approval === 'rejected';
+        if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
+        if (dealFilter === 'angenommen' && !angenommen) return false;
+        if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
+      }
+      if (!q) return true;
+      return (
+        (o.offerNumber || '').toLowerCase().includes(q) ||
+        (o.customer?.company_name || '').toLowerCase().includes(q) ||
+        (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+        (o.customer?.email || '').toLowerCase().includes(q)
+      );
+    });
+  })();
+  const visibleOffers = pageSize === 'all' ? filteredOffers : filteredOffers.slice(0, parseInt(pageSize, 10));
 
   const clearStalePointerLock = () => {
     try {
@@ -524,51 +568,18 @@ export default function Angebote() {
       <Card>
         <CardHeader className="flex flex-col gap-3">
           <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
-            <CardTitle>Liste ({(() => {
-              const q = search.trim().toLowerCase();
-              const now = Date.now();
-              const rangeMs =
-                dateRange === 'month' ? 30 * 86400000 :
-                dateRange === '3months' ? 90 * 86400000 :
-                dateRange === 'year' ? 365 * 86400000 : null;
-              return offers.filter(o => {
-                if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
-                if (rangeMs !== null) {
-                  const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
-                  if (!d || now - d > rangeMs) return false;
-                }
-                if (orderFilter !== 'alle') {
-                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
-                  if (orderFilter === 'auftrag' && !hasOrder) return false;
-                  if (orderFilter === 'offen' && hasOrder) return false;
-                  if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
-                }
-                if (dealFilter !== 'alle') {
-                  const approval = (o.approvalStatus || 'pending');
-                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
-                  const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
-                  const abgelehnt = approval === 'rejected';
-                  if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
-                  if (dealFilter === 'angenommen' && !angenommen) return false;
-                  if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
-                }
-                if (!q) return true;
-                return (
-                  (o.offerNumber || '').toLowerCase().includes(q) ||
-                  (o.customer?.company_name || '').toLowerCase().includes(q) ||
-                  (o.customer?.contact_name || '').toLowerCase().includes(q) ||
-                  (o.customer?.email || '').toLowerCase().includes(q)
-                );
-              }).length;
-            })()})</CardTitle>
-            <div className="relative w-full max-w-xs">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Suche: Name oder Angebotsnr."
-                className="pl-8"
-              />
+            <CardTitle>Liste ({filteredOffers.length})</CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative w-full max-w-xs">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Suche: Name oder Angebotsnr."
+                  className="pl-8"
+                />
+              </div>
+              <ViewToggle value={viewMode} onChange={setViewMode} />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -626,6 +637,45 @@ export default function Angebote() {
             <div className="p-8">
               <EmptyState icon={FileText} title="Noch keine Angebote" description="Sobald Angebote erstellt wurden, erscheinen sie hier." compact />
             </div>
+          ) : viewMode === 'cards' ? (
+            <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+              {visibleOffers.map(o => {
+                const approval = (o.approvalStatus || 'pending') as 'pending' | 'approved' | 'rejected';
+                const canEditOrSign = approval === 'approved' || isSuperAdmin;
+                return (
+                  <button
+                    key={o.offerNumber}
+                    type="button"
+                    onClick={() => {
+                      if (!canEditOrSign) {
+                        toast.info('Angebot wartet auf Freigabe durch den Super Admin.');
+                        return;
+                      }
+                      navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`);
+                    }}
+                    className="text-left rounded-xl border border-border bg-card/60 p-4 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-mono text-xs text-muted-foreground">{o.offerNumber}</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {approval === 'approved' ? 'Freigegeben' : approval === 'rejected' ? 'Abgelehnt' : 'Wartet'}
+                      </Badge>
+                    </div>
+                    <div className="mt-2 font-medium truncate">
+                      {o.customer?.company_name || o.customer?.contact_name || '—'}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{o.customer?.email || '—'}</div>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <span className="text-xs text-muted-foreground">
+                        {o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}
+                      </span>
+                      <span className="font-semibold tabular-nums">{fmtMoney(o.totals?.gross || 0)}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground truncate">{o.createdByName || '—'}</div>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -642,45 +692,7 @@ export default function Angebote() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(() => {
-                  const q = search.trim().toLowerCase();
-                  const now = Date.now();
-                  const rangeMs =
-                    dateRange === 'month' ? 30 * 86400000 :
-                    dateRange === '3months' ? 90 * 86400000 :
-                    dateRange === 'year' ? 365 * 86400000 : null;
-                  const filtered = offers.filter(o => {
-                    if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
-                    if (rangeMs !== null) {
-                      const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
-                      if (!d || now - d > rangeMs) return false;
-                    }
-                    if (orderFilter !== 'alle') {
-                      const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
-                      if (orderFilter === 'auftrag' && !hasOrder) return false;
-                      if (orderFilter === 'offen' && hasOrder) return false;
-                      if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
-                    }
-                    if (dealFilter !== 'alle') {
-                      const approval = (o.approvalStatus || 'pending');
-                      const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
-                      const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
-                      const abgelehnt = approval === 'rejected';
-                      if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
-                      if (dealFilter === 'angenommen' && !angenommen) return false;
-                      if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
-                    }
-                    if (!q) return true;
-                    return (
-                      (o.offerNumber || '').toLowerCase().includes(q) ||
-                      (o.customer?.company_name || '').toLowerCase().includes(q) ||
-                      (o.customer?.contact_name || '').toLowerCase().includes(q) ||
-                      (o.customer?.email || '').toLowerCase().includes(q)
-                    );
-                  });
-                  const limit = pageSize === 'all' ? filtered.length : parseInt(pageSize, 10);
-                  return filtered.slice(0, limit);
-                })().map(o => {
+                {visibleOffers.map(o => {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
                   const approval = (o.approvalStatus || 'pending') as 'pending' | 'approved' | 'rejected';
