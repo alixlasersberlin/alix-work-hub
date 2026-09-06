@@ -936,7 +936,7 @@ export default function AngebotErstellen() {
       net += c.net; tax += c.tax; gross += c.gross;
     }
     return { net, tax, gross };
-  }, [lines]);
+  }, [lines, priceMode]);
 
   const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
