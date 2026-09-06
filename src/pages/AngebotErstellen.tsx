@@ -2717,9 +2717,13 @@ export default function AngebotErstellen() {
               <>
                 <div className="text-xs text-muted-foreground">Zu zahlen ({payType})</div>
                 <div className="text-2xl font-bold text-primary">
-                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
+                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (parseFloat(payDiscount) || 0)))}
                 </div>
+                {(parseFloat(payDiscount) || 0) > 0 && (
+                  <div className="text-xs text-emerald-400">abzüglich Rabatt {fmtMoney(parseFloat(payDiscount) || 0)}</div>
+                )}
                 <div className="text-xs text-muted-foreground mt-1">Einmalzahlung</div>
+
               </>
             ) : payType === 'Miete' ? (
               <>
