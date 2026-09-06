@@ -277,6 +277,8 @@ export default function ProductHubEditor() {
   const isSuperAdmin = (roles || []).includes('Super Admin');
   const [form, setForm] = useState<any>(null);
   const [original, setOriginal] = useState<any>(null);
+  const [productCatalogs, setProductCatalogs] = useState<any[]>([]);
+
   const [confirmTexts, setConfirmTexts] = useState<string[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
