@@ -2609,7 +2609,7 @@ export default function AngebotErstellen() {
       </div>
       )}
 
-      {renderStepNav()}
+      
 
       {step === 4 && (
       <>
