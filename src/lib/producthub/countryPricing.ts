@@ -19,6 +19,16 @@ export const PH_PRICE_COUNTRIES: PhCountryDef[] = [
   { code: 'dubai', label: 'Dubai', flag: '🇦🇪', currency: 'AED', locale: 'en-AE', vat: 5 },
 ];
 
+export const PH_RENT_TERMS = [12, 24, 36] as const;
+export type PhRentTerm = (typeof PH_RENT_TERMS)[number];
+
+export interface PhRentTermConfig {
+  enabled: boolean;
+  /** Prozent der VK-Basis pro Monat oder fester Monatsbetrag */
+  mode: 'percent' | 'fixed';
+  value: number | null;
+}
+
 export interface PhCountryPrice {
   currency: string;
   vat_rate: number;
@@ -32,6 +42,19 @@ export interface PhCountryPrice {
   vk_max_value: number | null;
   promo_active: boolean;
   promo_name: string;
+  /** Miete */
+  rent_active: boolean;
+  rent_public: boolean;
+  /** Basis für die Mietberechnung */
+  rent_base: 'vk_min' | 'vk_max' | 'uvp';
+  rent_terms: Record<string, PhRentTermConfig>;
+  rent_note: string;
+}
+
+export function emptyRentTerms(): Record<string, PhRentTermConfig> {
+  const out: Record<string, PhRentTermConfig> = {};
+  for (const t of PH_RENT_TERMS) out[String(t)] = { enabled: false, mode: 'percent', value: null };
+  return out;
 }
 
 export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
@@ -47,8 +70,14 @@ export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
     vk_max_value: null,
     promo_active: false,
     promo_name: '',
+    rent_active: false,
+    rent_public: false,
+    rent_base: 'vk_min',
+    rent_terms: emptyRentTerms(),
+    rent_note: '',
   };
 }
+
 
 export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
   const raw = (all && typeof all === 'object' ? all[def.code] : null) || {};
