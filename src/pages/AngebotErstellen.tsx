@@ -2663,7 +2663,20 @@ export default function AngebotErstellen() {
               className="bg-secondary border-border"
             />
           </div>
+          {payType === 'Direktkauf' && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Rabatt (€)</Label>
+              <Input
+                type="number" min={0} step="0.01"
+                value={payDiscount}
+                onChange={e => setPayDiscount(e.target.value)}
+                placeholder="0,00"
+                className="bg-secondary border-border"
+              />
+            </div>
+          )}
           {payType !== 'Direktkauf' && (
+
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Laufzeit (Monate)</Label>
               <Select value={String(payTerm)} onValueChange={v => setPayTerm(Number(v))}>
