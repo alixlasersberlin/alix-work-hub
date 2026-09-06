@@ -123,9 +123,10 @@ export default function Angebote() {
       }
       if (orderFilter !== 'alle') {
         const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+        const signed = o.status === 'signed' || o.status === 'order' || hasOrder;
         if (orderFilter === 'auftrag' && !hasOrder) return false;
-        if (orderFilter === 'offen' && hasOrder) return false;
-        if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
+        if (orderFilter === 'offen' && signed) return false;
+        if (orderFilter === 'signed' && !signed) return false;
       }
       if (dealFilter !== 'alle') {
         const approval = (o.approvalStatus || 'pending');
