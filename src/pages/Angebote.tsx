@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { OfferCreatorChart, buildCreatorStats } from '@/components/sales/OfferCreatorChart';
 import {
   listOffers,
   getOffer,
