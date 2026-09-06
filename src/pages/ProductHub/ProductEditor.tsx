@@ -433,8 +433,14 @@ export default function ProductHubEditor() {
             </div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.featured} disabled={!canWrite} onCheckedChange={v => set('featured', v)} /><Label className="text-xs">Featured</Label></div>
             <div className="flex items-center gap-2 pt-6"><Switch checked={form.protected} disabled={!canWrite} onCheckedChange={v => set('protected', v)} /><Label className="text-xs">Geschützt</Label></div>
-            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
-            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} productId={id} disabled={!canWrite} area /></div>
+            {!isSuperAdmin && (
+              <div className="md:col-span-3 flex items-start gap-2 rounded-md border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-primary" />
+                <span>Kurz- und Langbeschreibung sind geschützt und dürfen nur vom Super Admin geändert werden.</span>
+              </div>
+            )}
+            <div className="md:col-span-3"><Field k="short_description" form={form} set={set} productId={id} disabled={!isSuperAdmin} area /></div>
+            <div className="md:col-span-3"><Field k="long_description" form={form} set={set} productId={id} disabled={!isSuperAdmin} area /></div>
           </CardContent></Card>
         </TabsContent>
 
