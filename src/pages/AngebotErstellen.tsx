@@ -25,6 +25,8 @@ import { BookOpen } from 'lucide-react';
 import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
 import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/producthub/DeviceConfigDialog';
 import { deviceConfigLines, deviceConfigComplete, type DeviceConfig } from '@/lib/producthub/deviceConfig';
+import { PH_PRICE_COUNTRIES, readCountryPrice, uvpForPower, type PhCountryPrice } from '@/lib/producthub/countryPricing';
+
 
 
 
@@ -469,6 +471,7 @@ export default function AngebotErstellen() {
     id: string | null; name: string; model: string; sku: string; url: string | null;
     colors: string[]; powers: string[]; configRequired: boolean;
     netPrice: number | null; promoName: string | null; description: string;
+    price: PhCountryPrice | null;
   };
   const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
@@ -484,12 +487,13 @@ export default function AngebotErstellen() {
         .from('ph_products')
         .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp, short_description, long_description')
         .neq('status', 'archived');
+      const deDef = PH_PRICE_COUNTRIES.find(c => c.code === 'de')!;
       setPhDevices((data ?? []).map((p: any) => {
         // Aktueller Preis: Deutschland (Netto) aus dem Product Hub
-        const de = (p.price_countries && typeof p.price_countries === 'object') ? (p.price_countries.de || {}) : {};
-        const raw = Number(de.uvp ?? p.price_uvp ?? 0);
-        const vat = Number(de.vat_rate ?? 19);
-        const net = raw > 0 ? (de.input_mode === 'gross' ? raw / (1 + vat / 100) : raw) : 0;
+        const price = readCountryPrice(p.price_countries, deDef);
+        const raw = Number(price.uvp ?? p.price_uvp ?? 0);
+        const vat = Number(price.vat_rate ?? 19);
+        const net = raw > 0 ? (price.input_mode === 'gross' ? raw / (1 + vat / 100) : raw) : 0;
         return {
           id: p.id ?? null,
           name: p.name || '', model: p.model || '', sku: p.sku || '',
@@ -499,12 +503,25 @@ export default function AngebotErstellen() {
           powers: Array.isArray(p.config_powers) ? p.config_powers : [],
           configRequired: p.config_required !== false,
           netPrice: net > 0 ? Math.round(net * 100) / 100 : null,
-          promoName: de.promo_active === true ? (de.promo_name || null) : null,
+          promoName: price.promo_active === true ? (price.promo_name || null) : null,
           description: String(p.short_description || p.long_description || '').trim(),
+          price: raw > 0 ? { ...price, uvp: raw } : price,
         };
       }));
     })();
   }, []);
+
+  /** Netto-Preis eines Product-Hub-Geräts für eine bestimmte Lasermodul-Leistung. */
+  const phNetPriceForPower = useCallback((dev: PhDevice | null | undefined, power?: string | null): number | null => {
+    if (!dev) return null;
+    if (!dev.price || !power) return dev.netPrice;
+    const gross = uvpForPower(dev.price, power);
+    if (!gross) return dev.netPrice;
+    const vat = Number(dev.price.vat_rate ?? 19);
+    const net = dev.price.input_mode === 'gross' ? gross / (1 + vat / 100) : gross;
+    return net > 0 ? Math.round(net * 100) / 100 : dev.netPrice;
+  }, []);
+
 
 
   const phImages = useMemo(() => phDevices.filter(p => !!p.url) as Array<{ name: string; model: string; sku: string; url: string }>, [phDevices]);
@@ -755,11 +772,13 @@ export default function AngebotErstellen() {
 
 
   const buildLineFromItem = (it: any, cfg?: DeviceConfig | null): LineItem => {
-    const dev = matchPhDevice(it);
+    const dev = matchPhDevice(it) || (it._phId ? phDevices.find(p => p.id === it._phId) || null : null);
     // Bild-Snapshot: bevorzugt das im Product Hub festgelegte Angebotsbild
     const img = it.image_url || it.hero_image_url || dev?.url || undefined;
-    // Aktueller Preis aus dem Product Hub hat Vorrang
-    const hubPrice = Number(it._phPrice ?? dev?.netPrice ?? 0);
+    // Aktueller Preis aus dem Product Hub hat Vorrang – inkl. Staffelung nach Lasermodul-Leistung
+    const tiered = phNetPriceForPower(dev, cfg?.laser_module_power);
+    const hubPrice = Number(tiered ?? it._phPrice ?? dev?.netPrice ?? 0);
+
 
     return {
       id: crypto.randomUUID(),
@@ -819,17 +838,25 @@ export default function AngebotErstellen() {
 
   const applyDeviceConfig = (cfg: DeviceConfig) => {
     if (configLineId) {
-      setLines(prev => prev.map(l => (l.id === configLineId ? {
-        ...l,
-        ph_product_id: cfg.product_id ?? l.ph_product_id ?? null,
-        ph_product_name: cfg.product_name ?? l.ph_product_name ?? null,
-        device_color: cfg.device_color ?? null,
-        ral_color_code: cfg.ral_color_code ?? null,
-        laser_module_power: cfg.laser_module_power ?? null,
-      } : l)));
+      setLines(prev => prev.map(l => {
+        if (l.id !== configLineId) return l;
+        const pid = cfg.product_id ?? l.ph_product_id ?? null;
+        const dev = (pid ? phDevices.find(p => p.id === pid) : null) || matchPhDevice(l);
+        const tiered = phNetPriceForPower(dev, cfg.laser_module_power);
+        return {
+          ...l,
+          ph_product_id: pid,
+          ph_product_name: cfg.product_name ?? l.ph_product_name ?? null,
+          device_color: cfg.device_color ?? null,
+          ral_color_code: cfg.ral_color_code ?? null,
+          laser_module_power: cfg.laser_module_power ?? null,
+          rate: tiered && tiered > 0 ? tiered : l.rate,
+        };
+      }));
     } else if (pendingItem) {
       appendLine(buildLineFromItem(pendingItem, cfg));
     }
+
     setPendingItem(null);
     setConfigLineId(null);
   };
