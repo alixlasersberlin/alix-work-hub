@@ -2894,7 +2894,10 @@ export default function AngebotErstellen() {
       )}
       </>
       )}
+
+      {renderStepNav()}
     </div>
+
 
   );
 }
