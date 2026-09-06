@@ -91,6 +91,7 @@
 - [RATEN PRÜFUNG](mem://features/raten-pruefung) — Versandstopp-Bereich /finance/raten-pruefung, Status pruefung_hold, Nachversand via pruefung-release
 - [ALIX Premium Beratung](mem://features/beratung-premium) — Zweite öffentliche Beratungsstrecke /beratung/premium (Pearl/Chrome), gleiche Lead-Logik wie /beratung
 - [Product Hub](mem://features/product-hub) — Zentraler Gerätestamm /product-hub (ph_* Tabellen), Master für alix-lasers.com/.de, Migrationsphase A/B/C, COM→DE Sync bleibt vorerst aktiv
+- [Product Hub Textschutz](mem://features/product-hub-text-protection) — Kurz-/Langbeschreibung nur Super Admin, Warn- und Bestätigungsabfrage vor Überschreiben
 - [ALIX Product Master](mem://features/alix-product-master) — /artikel: Artikelliste, Produktakte mit 15 Tabs, Attribut-Engine, Preise, Compliance-Freigabe, SEO, Datenqualitäts-Score
 - [Software & Compliance Workspace](mem://features/compliance-workspace) — Eigener Login /compliance-login, abgeschotteter Workspace /software-compliance, compliance_* Profilfelder, RLS-Helfer, Route-Guard
 - [Mobile Push & Eskalationen](mem://features/mobile-push-eskalationen) — send-mobile-notification, escalation-engine (Cron 2 Min.), Notification Center /mobil/benachrichtigungen, Push-Diagnose; APNs/FCM-Secrets fehlen noch
