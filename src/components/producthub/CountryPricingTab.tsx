@@ -6,9 +6,10 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  PH_PRICE_COUNTRIES, PhCountryPrice, convertAmount, effectivePrice,
-  formatMoney, readCountryPrice,
+  PH_PRICE_COUNTRIES, PH_RENT_TERMS, PhCountryPrice, convertAmount, effectivePrice,
+  formatMoney, readCountryPrice, rentBaseAmount, rentMonthly,
 } from '@/lib/producthub/countryPricing';
+
 
 interface Props {
   value: any;
