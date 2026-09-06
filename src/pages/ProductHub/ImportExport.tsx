@@ -220,8 +220,13 @@ export default function ProductHubImportExport() {
                   </Select>
                   <p className="text-[11px] text-muted-foreground">Es werden ausschließlich Zeilen dieses Landes übernommen.</p>
                 </div>
-                <Input type="file" accept=".csv,text/csv" onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+                <Input
+                  type="file"
+                  accept=".csv,.xlsx,.xlsm,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }}
+                />
                 <p className="text-xs text-muted-foreground">
+                  Unterstützt <b>CSV</b> und <b>Excel (.xlsx/.xls)</b> – bei Excel wird das erste Tabellenblatt gelesen.
                   Zuordnung über <b>product_id</b>, sonst ALIX Product ID oder Gerätename. Es werden ausschließlich Preise
                   aktualisiert – Geräte werden nie angelegt oder gelöscht.
                 </p>
