@@ -25,6 +25,8 @@ export type OfferSnapshot = {
   approvedAt?: string | null;
   approvedBy?: string | null;
   approvalNote?: string | null;
+  // Kurznotiz direkt in der Angebotsliste
+  listNote?: string | null;
   // List-only enrichments
   createdByName?: string | null;
 };
@@ -50,7 +52,17 @@ function rowToSnapshot(row: any): OfferSnapshot {
     approvedAt: row.approved_at || null,
     approvedBy: row.approved_by || null,
     approvalNote: row.approval_note || null,
+    listNote: row.list_note ?? null,
   };
+}
+
+/** Kurznotiz zu einem Angebot speichern (Zeile in der Angebotsliste). */
+export async function setOfferListNote(offerNumber: string, note: string): Promise<void> {
+  const { error } = await supabase
+    .from('offers')
+    .update({ list_note: note.trim() || null } as any)
+    .eq('offer_number', offerNumber);
+  if (error) throw error;
 }
 
 export async function setOfferApproval(
@@ -75,7 +87,7 @@ export async function setOfferApproval(
  * Angebotsübersicht drastisch.
  */
 const LIST_COLUMNS =
-  'id, offer_number, case_number, offer_date, valid_until, customer_id, customer_name, customer_email, total_net, total_tax, total_gross, status, signed_at, created_at, created_by_name, approval_status, approved_at, approved_by, approval_note';
+  'id, offer_number, case_number, offer_date, valid_until, customer_id, customer_name, customer_email, total_net, total_tax, total_gross, status, signed_at, created_at, created_by_name, approval_status, approved_at, approved_by, approval_note, list_note';
 
 export async function listOffers(): Promise<OfferSnapshot[]> {
   const { data, error } = await supabase

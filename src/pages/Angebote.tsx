@@ -1,10 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search, AlertTriangle, XCircle } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search, AlertTriangle, XCircle, Save } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -23,8 +23,49 @@ import {
   updateOfferStatus,
   setOfferApproval,
   migrateLegacyOffersOnce,
+  setOfferListNote,
   type OfferSnapshot,
 } from '@/lib/offers-store';
+
+function OfferNoteRow({ offerNumber, initial }: { offerNumber: string; initial: string }) {
+  const [value, setValue] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const dirty = value !== initial;
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await setOfferListNote(offerNumber, value);
+      toast.success('Notiz gespeichert');
+    } catch (e: any) {
+      toast.error(e?.message || 'Notiz konnte nicht gespeichert werden');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } }}
+        placeholder="Notiz zu diesem Angebot…"
+        className="h-8 text-sm"
+      />
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={save}
+        disabled={saving || !dirty}
+        title="Notiz speichern"
+        className={dirty ? 'text-primary' : ''}
+      >
+        <Save className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
 
 const fmtMoney = (n: number) =>
   (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
@@ -646,8 +687,8 @@ export default function Angebote() {
                   const isApproved = approval === 'approved';
                   const canEditOrSign = isApproved || isSuperAdmin;
                   return (
+                  <Fragment key={o.offerNumber}>
                   <TableRow
-                    key={o.offerNumber}
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => {
                       if (!canEditOrSign) {
@@ -773,6 +814,12 @@ export default function Angebote() {
                       </Button>
                     </TableCell>
                   </TableRow>
+                  <TableRow key={`${o.offerNumber}-note`} className="hover:bg-transparent border-b">
+                    <TableCell colSpan={9} className="pt-0 pb-3" onClick={(e) => e.stopPropagation()}>
+                      <OfferNoteRow offerNumber={o.offerNumber} initial={o.listNote || ''} />
+                    </TableCell>
+                  </TableRow>
+                  </Fragment>
                   );
 
                 })}

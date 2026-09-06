@@ -34209,6 +34209,7 @@ export type Database = {
           id: string
           last_contact_at: string | null
           lead_source: string | null
+          list_note: string | null
           loss_reason: string | null
           next_followup_at: string | null
           offer_date: string | null
@@ -34263,6 +34264,7 @@ export type Database = {
           id?: string
           last_contact_at?: string | null
           lead_source?: string | null
+          list_note?: string | null
           loss_reason?: string | null
           next_followup_at?: string | null
           offer_date?: string | null
@@ -34317,6 +34319,7 @@ export type Database = {
           id?: string
           last_contact_at?: string | null
           lead_source?: string | null
+          list_note?: string | null
           loss_reason?: string | null
           next_followup_at?: string | null
           offer_date?: string | null
