@@ -15,11 +15,17 @@ export function usePageUsageTracker() {
   const { user } = useAuth();
   return useCallback((path: string, label?: string, workspaceCode?: string | null) => {
     if (!user || !path || path === '/' || path === '/willkommen') return;
-    void supabase.rpc('page_usage_track' as any, {
-      _path: path,
-      _label: label ?? null,
-      _workspace_code: workspaceCode ?? null,
-    });
+    // WICHTIG: supabase.rpc() ist "lazy" – ohne .then() wird die Anfrage nie gesendet.
+    supabase
+      .rpc('page_usage_track' as any, {
+        _path: path,
+        _label: label ?? null,
+        _workspace_code: workspaceCode ?? null,
+      })
+      .then(
+        ({ error }: any) => { if (error) console.warn('[KI WATCH] Zählung fehlgeschlagen:', error.message); },
+        () => {},
+      );
   }, [user?.id]);
 }
 
