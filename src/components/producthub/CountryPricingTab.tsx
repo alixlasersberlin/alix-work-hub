@@ -141,6 +141,53 @@ export function CountryPricingTab({ value, disabled, onChange }: Props) {
         );
       })}
 
+      {/* Staffelung nach Leistung Lasermodul */}
+      <div className="space-y-3 rounded-lg border border-border p-3">
+        <div>
+          <Label className="text-sm">Staffelung nach „Leistung Lasermodul“</Label>
+          <p className="text-xs text-muted-foreground">
+            Je Leistung ein Aufschlag auf den UVP oder ein eigener UVP. Nicht aktivierte Leistungen nutzen den Standard-UVP.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          {powerOptions.map(pw => {
+            const t = readPowerTier(price, pw);
+            const setTier = (patchTier: Partial<PhPowerTier>) => patch({
+              power_tiers: { ...((price as any).power_tiers || {}), [pw]: { ...t, ...patchTier } },
+            } as any);
+            const uvpPw = uvpForPower(price, pw);
+            return (
+              <div key={pw} className="space-y-2 rounded-md border border-border p-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">{pw}</Label>
+                  <Switch checked={t.enabled} disabled={disabled}
+                    onCheckedChange={v => setTier({ enabled: v })} />
+                </div>
+                <select className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  value={t.mode} disabled={disabled || !t.enabled}
+                  onChange={e => setTier({ mode: e.target.value as PhPowerTier['mode'] })}>
+                  <option value="surcharge_percent">Aufschlag in % vom UVP</option>
+                  <option value="surcharge_fixed">Aufschlag als Betrag ({price.currency})</option>
+                  <option value="price_fixed">Eigener UVP ({price.currency})</option>
+                </select>
+                <Input type="number" step="0.01" value={t.value ?? ''} disabled={disabled || !t.enabled}
+                  placeholder={t.mode === 'surcharge_percent' ? 'z. B. 7.5' : `Betrag in ${price.currency}`}
+                  onChange={e => setTier({ value: e.target.value === '' ? null : Number(e.target.value) })} />
+                <p className="text-xs text-muted-foreground">
+                  UVP: {show(uvpPw)} · VK Min: {show(effectivePriceForPower(price, 'min', pw))} · VK Max: {show(effectivePriceForPower(price, 'max', pw))}
+                </p>
+              </div>
+            );
+          })}
+          {powerOptions.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              Für dieses Gerät sind unter „Konfiguration“ noch keine Leistungen hinterlegt.
+            </p>
+          )}
+        </div>
+      </div>
+
+
       {/* Miete */}
       <div className="space-y-4 rounded-lg border border-border p-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
