@@ -156,6 +156,19 @@ export default function KatalogEditor() {
   const delPage = async (pid: string) => {
     await catPageDelete(pid); setPages(ps => ps.filter(p => p.id !== pid));
   };
+  const dragPageId = useRef<string | null>(null);
+  const onDropPage = async (targetId: string) => {
+    if (!dragPageId.current || dragPageId.current === targetId) return;
+    const list = [...pages];
+    const from = list.findIndex(p => p.id === dragPageId.current);
+    const to = list.findIndex(p => p.id === targetId);
+    if (from < 0 || to < 0) return;
+    const [m] = list.splice(from, 1);
+    list.splice(to, 0, m);
+    setPages(list.map((p, i) => ({ ...p, sort_order: i + 1 })));
+    dragPageId.current = null;
+    await Promise.all(list.map((p, i) => catPageUpdate(p.id, { sort_order: i + 1 })));
+  };
 
   /* ---------- Medien ---------- */
   const onFile = async (f: File) => {
@@ -182,6 +195,7 @@ export default function KatalogEditor() {
     const existing = pages.map(p => p.page_type);
     const plan = [
       { page_type: 'cover', title: 'Cover' },
+      { page_type: 'toc', title: 'Inhalt' },
       { page_type: 'overview', title: 'Produktübersicht' },
       { page_type: 'products', title: 'Produktseiten' },
       { page_type: 'pricelist', title: 'Preisübersicht' },
@@ -262,15 +276,20 @@ export default function KatalogEditor() {
             <div className="space-y-1">
               {pages.map(p => (
                 <div key={p.id}
+                  draggable={canWrite}
+                  onDragStart={() => { dragPageId.current = p.id; }}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={() => onDropPage(p.id)}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer ${selPage === p.id ? 'bg-secondary' : 'hover:bg-secondary/50'}`}
                   onClick={() => setSelPage(p.id)}>
-                  <GripVertical className="w-3.5 h-3.5 opacity-40" />
+                  <GripVertical className="w-3.5 h-3.5 opacity-40 cursor-grab" />
                   <span className="flex-1 truncate">{p.title}</span>
                   <Badge variant="outline" className="text-[10px]">{PH_PAGE_TYPES.find(t => t.key === p.page_type)?.label}</Badge>
                   {canWrite && <Trash2 className="w-3.5 h-3.5 opacity-50 hover:opacity-100" onClick={e => { e.stopPropagation(); delPage(p.id); }} />}
                 </div>
               ))}
               {pages.length === 0 && <div className="text-xs text-muted-foreground">Ohne Seiten wird automatisch je Gerät eine Produktseite erzeugt.</div>}
+              {pages.length > 1 && canWrite && <div className="text-[10px] text-muted-foreground">Seiten per Ziehen sortieren.</div>}
             </div>
             {canWrite && (
               <Select value="" onValueChange={addPage}>
@@ -519,6 +538,18 @@ export default function KatalogEditor() {
                         <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>{PH_PAGE_TYPES.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}</SelectContent>
                       </Select></div>
+                    {selectedPage.page_type === 'category' && (
+                      <div><Label className="text-xs">Kategorie</Label>
+                        <Select value={selectedPage.config?.category || ''} disabled={!canWrite}
+                          onValueChange={v => updPage(selectedPage.id, { config: { ...(selectedPage.config || {}), category: v } })}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
+                          <SelectContent>
+                            {Array.from(new Set(products.map(p => p.category).filter(Boolean))).map((c: any) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select></div>
+                    )}
                     <div><Label className="text-xs">Text</Label>
                       <Textarea rows={5} value={selectedPage.config?.text || ''} disabled={!canWrite}
                         onChange={e => updPage(selectedPage.id, { config: { ...(selectedPage.config || {}), text: e.target.value } })} /></div>

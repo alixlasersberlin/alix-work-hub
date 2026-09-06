@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import {
-  PH_PRODUCT_FIELDS, applyPriceRule, catalogMoney, defaultCover, defaultSettings, hubPrices,
+  PH_PRODUCT_FIELDS, PH_PAGE_TYPES, applyPriceRule, catalogMoney, defaultCover, defaultSettings, hubPrices,
   type PhCatalogCover, type PhCatalogSettings, PH_PRICE_KINDS,
 } from '@/lib/producthub/catalog';
 
@@ -320,36 +320,144 @@ export function CatalogOverviewPage({ catalog, items, products, page, perPage = 
   );
 }
 
+/** Inhaltsverzeichnis – Seitenzahlen werden automatisch berechnet. */
+export function CatalogTocPage({ catalog, entries, page, title }: any) {
+  const s: PhCatalogSettings = { ...defaultSettings(), ...(catalog.settings || {}) };
+  const theme = s.theme;
+  return (
+    <Page style={{ background: theme.bg, color: theme.text }}>
+      <Header catalog={catalog} />
+      <div className="absolute inset-0 pt-[10%] pb-[12%] px-[8%]">
+        <div className="text-3xl font-bold mb-5">{title || 'Inhalt'}</div>
+        <div className="space-y-1.5">
+          {(entries || []).map((e: any, i: number) => (
+            <div key={i} className={`flex items-baseline gap-2 ${e.level === 2 ? 'pl-5 text-[11px] opacity-80' : 'text-sm font-medium'}`}>
+              <span className="truncate">{e.label}</span>
+              <span className="flex-1 border-b border-dotted border-current/30 translate-y-[-3px]" />
+              <span className="tabular-nums opacity-80">{e.page}</span>
+            </div>
+          ))}
+          {(!entries || entries.length === 0) && <div className="text-xs opacity-60">Noch keine Seiten angelegt.</div>}
+        </div>
+      </div>
+      <Footer catalog={catalog} page={page} />
+    </Page>
+  );
+}
+
+/** Kategorie-Trennseite mit großem Titel, Bild und Geräten dieser Kategorie. */
+export function CatalogCategoryPage({ catalog, page, index, items, products }: any) {
+  const s: PhCatalogSettings = { ...defaultSettings(), ...(catalog.settings || {}) };
+  const cfg = page.config || {};
+  const theme = s.theme;
+  const cat = cfg.category || '';
+  const inCat = (items || []).filter((it: any) => {
+    const p = products.find((x: any) => x.id === it.product_id);
+    return p && (!cat || (p.category || '') === cat);
+  });
+  return (
+    <Page style={{ background: theme.bg, color: theme.text }}>
+      {cfg.image && <img src={cfg.image} alt={page.title || cat} className="absolute inset-0 w-full h-full object-cover" />}
+      {cfg.image && <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${(cfg.overlay ?? 55) / 100})` }} />}
+      <Header catalog={catalog} />
+      <div className="absolute inset-0 pt-[16%] pb-[12%] px-[8%] flex flex-col gap-4">
+        <div className="text-[10px] uppercase tracking-[0.3em]" style={{ color: theme.accent }}>Kategorie</div>
+        <div className="text-5xl font-bold leading-none">{page.title || cat || 'Kategorie'}</div>
+        <div className="h-1 w-24" style={{ background: theme.accent }} />
+        {cfg.text && <div className="text-sm whitespace-pre-line opacity-90 max-w-[75%]">{cfg.text}</div>}
+        {cfg.showProducts !== false && inCat.length > 0 && (
+          <ul className="mt-auto grid grid-cols-2 gap-x-6 gap-y-1 text-[11px] opacity-90">
+            {inCat.slice(0, 16).map((it: any) => {
+              const p = products.find((x: any) => x.id === it.product_id);
+              return <li key={it.id} className="truncate border-b border-current/10 py-0.5">{p?.name}</li>;
+            })}
+          </ul>
+        )}
+      </div>
+      <Footer catalog={catalog} page={index} />
+    </Page>
+  );
+}
+
+/** Rückseite – Kontakt, Claim, QR-Code. */
+export function CatalogBackPage({ catalog, page, index, publicUrl }: any) {
+  const s: PhCatalogSettings = { ...defaultSettings(), ...(catalog.settings || {}) };
+  const cfg = page.config || {};
+  const theme = s.theme;
+  const qr = useQr(cfg.qr !== false && publicUrl ? publicUrl : undefined);
+  const f = s.footer || ({} as any);
+  return (
+    <Page style={{ background: cfg.bg || theme.bg, color: cfg.color || theme.text }}>
+      {cfg.image && <img src={cfg.image} alt={page.title || 'Rückseite'} className="absolute inset-0 w-full h-full object-cover" />}
+      {cfg.image && <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${(cfg.overlay ?? 60) / 100})` }} />}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-4 px-[10%]">
+        <div className="text-3xl font-bold">{page.title || f.company || 'Kontakt'}</div>
+        <div className="h-1 w-16" style={{ background: theme.accent }} />
+        {cfg.text && <div className="text-sm whitespace-pre-line opacity-90">{cfg.text}</div>}
+        <div className="text-sm space-y-0.5 opacity-90">
+          {f.address && <div>{f.address}</div>}
+          {f.phone && <div>{f.phone}</div>}
+          {f.email && <div>{f.email}</div>}
+          {f.website && <div style={{ color: theme.accent }}>{f.website}</div>}
+        </div>
+        {qr && <img src={qr} alt="QR-Code zum Online-Katalog" className="w-24 h-24 bg-white p-1 rounded" />}
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 px-[8%] pb-[4%] text-[9px] opacity-60 text-center">{s.legal}</div>
+    </Page>
+  );
+}
+
 /** Kompletter Katalog – identische Darstellung für Vorschau, Online-Katalog und PDF. */
 export function CatalogView({ catalog, items, products, pages, device = 'desktop', publicUrl }: CatalogRenderProps) {
   const width = device === 'mobile' ? 380 : device === 'tablet' ? 640 : 820;
   const visible = items.filter(i => i.visible !== false);
-  let counter = 1;
 
   const ordered = [...(pages || [])].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
   const hasCover = ordered.some(p => p.page_type === 'cover');
 
+  // 1. Durchgang: Seitenplan mit Seitenzahlen + Inhaltsverzeichnis-Einträgen
+  type Slot = { kind: string; key: string; pg?: any; item?: any; page: number };
+  const plan: Slot[] = [];
+  const toc: { label: string; page: number; level: number }[] = [];
+  let counter = 1;
+  if (!hasCover) plan.push({ kind: 'cover', key: 'auto-cover', page: counter++ });
+  const source = ordered.length ? ordered : visible.map(it => ({ id: `auto-${it.id}`, page_type: 'products', title: '' }));
+  for (const pg of source) {
+    if (pg.page_type === 'products') {
+      const first = counter;
+      for (const it of visible) {
+        const p = products.find((x: any) => x.id === it.product_id);
+        if (!p) continue;
+        plan.push({ kind: 'product', key: it.id, item: it, page: counter });
+        toc.push({ label: p.name, page: counter, level: 2 });
+        counter++;
+      }
+      if (counter > first) toc.splice(toc.length - (counter - first), 0, { label: pg.title || 'Geräte', page: first, level: 1 });
+      continue;
+    }
+    const page = counter++;
+    plan.push({ kind: pg.page_type, key: pg.id, pg, page });
+    if (pg.page_type !== 'cover' && pg.page_type !== 'toc') {
+      toc.push({ label: pg.title || PH_PAGE_TYPES.find(t => t.key === pg.page_type)?.label || 'Seite', page, level: 1 });
+    }
+  }
+  toc.sort((a, b) => a.page - b.page || b.level - a.level);
+
   return (
     <div className="ph-catalog-view mx-auto" style={{ width, maxWidth: '100%' }}>
-      {!hasCover && <CatalogCover catalog={catalog} publicUrl={publicUrl} />}
-      {ordered.map(pg => {
-        const idx = counter++;
-        if (pg.page_type === 'cover') return <CatalogCover key={pg.id} catalog={catalog} publicUrl={publicUrl} />;
-        if (pg.page_type === 'pricelist') return <CatalogPricelistPage key={pg.id} catalog={catalog} items={visible} products={products} page={idx} />;
-        if (pg.page_type === 'overview') return <CatalogOverviewPage key={pg.id} catalog={catalog} items={visible} products={products} page={idx} perPage={pg.config?.perPage || 4} />;
-        if (pg.page_type === 'products') {
-          return visible.map(it => {
-            const p = products.find((x: any) => x.id === it.product_id);
-            if (!p) return null;
-            return <CatalogProductPage key={it.id} catalog={catalog} item={it} product={p} publicUrl={publicUrl} page={counter++} />;
-          });
+      {plan.map(slot => {
+        if (slot.kind === 'cover') return <CatalogCover key={slot.key} catalog={catalog} publicUrl={publicUrl} />;
+        if (slot.kind === 'toc') return <CatalogTocPage key={slot.key} catalog={catalog} entries={toc} page={slot.page} title={slot.pg?.title} />;
+        if (slot.kind === 'pricelist') return <CatalogPricelistPage key={slot.key} catalog={catalog} items={visible} products={products} page={slot.page} />;
+        if (slot.kind === 'overview') return <CatalogOverviewPage key={slot.key} catalog={catalog} items={visible} products={products} page={slot.page} perPage={slot.pg?.config?.perPage || 4} />;
+        if (slot.kind === 'category') return <CatalogCategoryPage key={slot.key} catalog={catalog} page={slot.pg} index={slot.page} items={visible} products={products} />;
+        if (slot.kind === 'back') return <CatalogBackPage key={slot.key} catalog={catalog} page={slot.pg} index={slot.page} publicUrl={publicUrl} />;
+        if (slot.kind === 'product') {
+          const p = products.find((x: any) => x.id === slot.item.product_id);
+          if (!p) return null;
+          return <CatalogProductPage key={slot.key} catalog={catalog} item={slot.item} product={p} publicUrl={publicUrl} page={slot.page} />;
         }
-        return <CatalogContentPage key={pg.id} catalog={catalog} page={pg} index={idx} />;
-      })}
-      {ordered.length === 0 && visible.map(it => {
-        const p = products.find((x: any) => x.id === it.product_id);
-        if (!p) return null;
-        return <CatalogProductPage key={it.id} catalog={catalog} item={it} product={p} publicUrl={publicUrl} page={counter++} />;
+        return <CatalogContentPage key={slot.key} catalog={catalog} page={slot.pg} index={slot.page} />;
       })}
     </div>
   );
