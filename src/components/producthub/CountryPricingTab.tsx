@@ -8,20 +8,25 @@ import { Button } from '@/components/ui/button';
 import {
   PH_PRICE_COUNTRIES, PH_RENT_TERMS, PhCountryPrice, convertAmount, effectivePrice,
   formatMoney, readCountryPrice, rentBaseAmount, rentMonthly, depositAmount,
+  readPowerTier, uvpForPower, effectivePriceForPower, type PhPowerTier,
 } from '@/lib/producthub/countryPricing';
+import { PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
 
 
 interface Props {
   value: any;
   disabled?: boolean;
+  /** Auswahl aus dem Reiter „Konfiguration“ (ph_products.config_powers) */
+  powers?: string[] | null;
   onChange: (next: any) => void;
 }
 
 /** Preise je Land (Deutschland, Österreich, USA, Vietnam, Dubai) mit Brutto/Netto-Umschalter. */
-export function CountryPricingTab({ value, disabled, onChange }: Props) {
+export function CountryPricingTab({ value, disabled, powers, onChange }: Props) {
   const [active, setActive] = useState(PH_PRICE_COUNTRIES[0].code);
   const [view, setView] = useState<'net' | 'gross'>('net');
 
+  const powerOptions = (powers && powers.length ? powers : [...PH_DEFAULT_POWERS]) as string[];
   const def = PH_PRICE_COUNTRIES.find(c => c.code === active)!;
   const price = readCountryPrice(value, def);
 
