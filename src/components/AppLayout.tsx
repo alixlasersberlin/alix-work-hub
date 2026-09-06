@@ -44,6 +44,8 @@ import CallScreenPop from '@/components/telephony/CallScreenPop';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
+import { usePageUsageTracker, useTopPages } from '@/hooks/usePageUsage';
+
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
 import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
