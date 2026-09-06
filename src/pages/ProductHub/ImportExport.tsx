@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePrice } from '@/lib/producthub/countryPricing';
 import {
-  buildPriceRows, rowsToCsv, parseCsv, csvRowToCountryPrice, downloadFile, PH_PRICE_COLUMNS,
+  buildPriceRows, rowsToCsv, parseCsv, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, powerTiersText,
 } from '@/lib/producthub/priceExport';
 
 const db = supabase as any;
@@ -76,20 +76,17 @@ export default function ProductHubImportExport() {
           const p = readCountryPrice(prod.price_countries, def);
           if (!p.uvp && !p.vk_min_value && !p.vk_max_value) continue;
           body.push([
-            prod.name, prod.model || '—', `${def.flag} ${def.label}`,
-            p.input_mode === 'net' ? 'Netto' : 'Brutto',
+            prod.name,
             formatMoney(Number(p.uvp || 0), def, p.currency),
             formatMoney(effectivePrice(p, 'min'), def, p.currency),
             formatMoney(effectivePrice(p, 'max'), def, p.currency),
-            p.promo_active ? (p.promo_name || 'Aktion') : '—',
-            p.rent_active ? 'ja' : 'nein',
-            p.public ? 'ja' : 'nein',
+            powerTiersText(p) || '—',
           ]);
         }
       }
       autoTable(doc, {
         startY: 70,
-        head: [['Gerät', 'Modell', 'Land', 'Basis', 'UVP', 'VK Minimal', 'VK Maximal', 'Sonderaktion', 'Miete', 'Web']],
+        head: [['Gerät', 'UVP', 'VK Minimal', 'VK Maximal', 'Staffelung Leistung Lasermodul']],
         body,
         styles: { fontSize: 7.5, cellPadding: 3 },
         headStyles: { fillColor: [20, 20, 20] },
@@ -160,7 +157,7 @@ export default function ProductHubImportExport() {
   };
 
   const template = () => downloadFile(
-    '\uFEFF' + PH_PRICE_COLUMNS.join(';'), `product-hub-preise-vorlage.csv`, 'text/csv;charset=utf-8');
+    '\uFEFF' + PH_EXPORT_COLUMNS.join(';'), `product-hub-preise-vorlage.csv`, 'text/csv;charset=utf-8');
 
   return (
     <div className="space-y-6">

@@ -25,6 +25,31 @@ export const PH_PRICE_COLUMNS = [
   'staffel_leistung_json',
 ];
 
+/** Reduzierte Spalten fuer den Export: nur Geraetename, UVP, VK Min/Max und Leistungsstaffel.
+ *  product_id/land_code bleiben als technische Zuordnung fuer den Re-Import erhalten. */
+export const PH_EXPORT_COLUMNS = [
+  'product_id', 'land_code', 'name',
+  'uvp',
+  'vk_min_modus', 'vk_min_wert', 'vk_min_effektiv',
+  'vk_max_modus', 'vk_max_wert', 'vk_max_effektiv',
+  'staffel_leistung', 'staffel_leistung_json',
+];
+
+const TIER_LABEL: Record<string, string> = {
+  surcharge_percent: 'Aufschlag %',
+  surcharge_fixed: 'Aufschlag fix',
+  price_fixed: 'eigener UVP',
+};
+
+/** Lesbare Darstellung der Leistungsstaffel. */
+export function powerTiersText(p: PhCountryPrice): string {
+  const tiers = ((p as any).power_tiers || {}) as Record<string, any>;
+  return Object.entries(tiers)
+    .filter(([, t]) => t && t.enabled && t.value !== null && t.value !== undefined && t.value !== '')
+    .map(([power, t]) => `${power}: ${TIER_LABEL[t.mode] || t.mode} ${t.value}`)
+    .join(' | ');
+}
+
 export function priceRow(product: any, def: PhCountryDef): PhPriceRow {
   const p: PhCountryPrice = readCountryPrice(product.price_countries, def);
   const row: PhPriceRow = {
@@ -58,6 +83,7 @@ export function priceRow(product: any, def: PhCountryDef): PhPriceRow {
     kaution_betrag: Math.round(depositAmount(p) * 100) / 100,
     kaution_hinweis: p.deposit_note || '',
     staffel_leistung_json: JSON.stringify((p as any).power_tiers || {}),
+    staffel_leistung: powerTiersText(p),
   };
   for (const t of PH_RENT_TERMS) {
     const cfg = p.rent_terms?.[String(t)] || { enabled: false, mode: 'percent', value: null };
@@ -82,9 +108,9 @@ const esc = (v: any) => {
   return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-export function rowsToCsv(rows: PhPriceRow[]): string {
-  const head = PH_PRICE_COLUMNS.join(';');
-  const body = rows.map(r => PH_PRICE_COLUMNS.map(c => esc(r[c])).join(';'));
+export function rowsToCsv(rows: PhPriceRow[], columns: string[] = PH_EXPORT_COLUMNS): string {
+  const head = columns.join(';');
+  const body = rows.map(r => columns.map(c => esc(r[c])).join(';'));
   return '\uFEFF' + [head, ...body].join('\n');
 }
 
