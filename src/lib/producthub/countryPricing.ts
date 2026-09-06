@@ -49,6 +49,11 @@ export interface PhCountryPrice {
   rent_base: 'vk_min' | 'vk_max' | 'uvp';
   rent_terms: Record<string, PhRentTermConfig>;
   rent_note: string;
+  /** Kaution */
+  deposit_active: boolean;
+  deposit_mode: 'percent' | 'fixed';
+  deposit_value: number | null;
+  deposit_note: string;
 }
 
 export function emptyRentTerms(): Record<string, PhRentTermConfig> {
