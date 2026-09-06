@@ -148,45 +148,57 @@ const toNum = (v: string) => {
 };
 const toBool = (v: string) => ['ja', 'true', '1', 'yes', 'x'].includes((v || '').toLowerCase());
 
-/** Baut aus einer CSV-Zeile das Preisobjekt für ein Land. */
+/** Baut aus einer CSV-Zeile das Preisobjekt für ein Land.
+ *  Wichtig: Nur Spalten, die in der Datei tatsächlich vorhanden sind, werden übernommen.
+ *  Alles andere (Miete, Kaution, Sonderaktion, Netto/Brutto, Webseiten-Freigabe) bleibt unverändert. */
 export function csvRowToCountryPrice(row: Record<string, string>, def: PhCountryDef, existing: any): PhCountryPrice {
   const base = readCountryPrice(existing, def);
-  const terms: Record<string, any> = { ...base.rent_terms };
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(row, k) && row[k] !== undefined;
+  const out: any = { ...base };
+
+  if (has('waehrung') && row.waehrung) out.currency = row.waehrung.toUpperCase();
+  if (has('steuersatz')) out.vat_rate = toNum(row.steuersatz) ?? base.vat_rate;
+  if (has('eingabe_modus') && row.eingabe_modus) out.input_mode = row.eingabe_modus === 'gross' ? 'gross' : 'net';
+  if (has('sichtbar_webseite')) out.public = toBool(row.sichtbar_webseite);
+  if (has('uvp')) out.uvp = toNum(row.uvp);
+  if (has('vk_min_modus') && row.vk_min_modus) out.vk_min_mode = row.vk_min_modus === 'percent' ? 'percent' : 'fixed';
+  if (has('vk_min_wert')) out.vk_min_value = toNum(row.vk_min_wert);
+  if (has('vk_max_modus') && row.vk_max_modus) out.vk_max_mode = row.vk_max_modus === 'percent' ? 'percent' : 'fixed';
+  if (has('vk_max_wert')) out.vk_max_value = toNum(row.vk_max_wert);
+  if (has('aktion_aktiv')) out.promo_active = toBool(row.aktion_aktiv);
+  if (has('aktion_name')) out.promo_name = row.aktion_name || '';
+  if (has('miete_aktiv')) out.rent_active = toBool(row.miete_aktiv);
+  if (has('miete_sichtbar')) out.rent_public = toBool(row.miete_sichtbar);
+  if (has('miete_basis') && ['vk_min', 'vk_max', 'uvp'].includes(row.miete_basis)) out.rent_base = row.miete_basis;
+  if (has('miete_hinweis')) out.rent_note = row.miete_hinweis || '';
+  if (has('kaution_aktiv')) out.deposit_active = toBool(row.kaution_aktiv);
+  if (has('kaution_modus') && row.kaution_modus) out.deposit_mode = row.kaution_modus === 'fixed' ? 'fixed' : 'percent';
+  if (has('kaution_wert')) out.deposit_value = toNum(row.kaution_wert);
+  if (has('kaution_hinweis')) out.deposit_note = row.kaution_hinweis || '';
+
+  const terms: Record<string, any> = { ...(base.rent_terms || {}) };
+  let termsTouched = false;
   for (const t of PH_RENT_TERMS) {
+    const k = `miete_${t}m`;
+    if (!has(`${k}_aktiv`) && !has(`${k}_modus`) && !has(`${k}_wert`)) continue;
+    const cur = terms[String(t)] || { enabled: false, mode: 'percent', value: null };
     terms[String(t)] = {
-      enabled: toBool(row[`miete_${t}m_aktiv`]),
-      mode: row[`miete_${t}m_modus`] === 'fixed' ? 'fixed' : 'percent',
-      value: toNum(row[`miete_${t}m_wert`]),
+      enabled: has(`${k}_aktiv`) ? toBool(row[`${k}_aktiv`]) : cur.enabled,
+      mode: has(`${k}_modus`) && row[`${k}_modus`] ? (row[`${k}_modus`] === 'fixed' ? 'fixed' : 'percent') : cur.mode,
+      value: has(`${k}_wert`) ? toNum(row[`${k}_wert`]) : cur.value,
     };
+    termsTouched = true;
   }
-  let tiers = (base as any).power_tiers || {};
-  if (row.staffel_leistung_json) {
-    try { tiers = JSON.parse(row.staffel_leistung_json); } catch { /* Wert unverändert lassen */ }
+  if (termsTouched) out.rent_terms = terms;
+
+  if (has('staffel_leistung_json') && row.staffel_leistung_json) {
+    try {
+      const tiers = JSON.parse(row.staffel_leistung_json);
+      if (tiers && typeof tiers === 'object') out.power_tiers = tiers;
+    } catch { /* Wert unveraendert lassen */ }
   }
-  return {
-    ...base,
-    currency: (row.waehrung || base.currency).toUpperCase(),
-    vat_rate: toNum(row.steuersatz) ?? base.vat_rate,
-    input_mode: row.eingabe_modus === 'gross' ? 'gross' : 'net',
-    public: toBool(row.sichtbar_webseite),
-    uvp: toNum(row.uvp),
-    vk_min_mode: row.vk_min_modus === 'percent' ? 'percent' : 'fixed',
-    vk_min_value: toNum(row.vk_min_wert),
-    vk_max_mode: row.vk_max_modus === 'percent' ? 'percent' : 'fixed',
-    vk_max_value: toNum(row.vk_max_wert),
-    promo_active: toBool(row.aktion_aktiv),
-    promo_name: row.aktion_name || '',
-    rent_active: toBool(row.miete_aktiv),
-    rent_public: toBool(row.miete_sichtbar),
-    rent_base: (['vk_min', 'vk_max', 'uvp'].includes(row.miete_basis) ? row.miete_basis : base.rent_base) as any,
-    rent_terms: terms,
-    rent_note: row.miete_hinweis || '',
-    deposit_active: toBool(row.kaution_aktiv),
-    deposit_mode: row.kaution_modus === 'fixed' ? 'fixed' : 'percent',
-    deposit_value: toNum(row.kaution_wert),
-    deposit_note: row.kaution_hinweis || '',
-    ...(Object.keys(tiers).length ? { power_tiers: tiers } : {}),
-  } as PhCountryPrice;
+
+  return out as PhCountryPrice;
 }
 
 export function downloadFile(content: BlobPart, filename: string, mime: string) {
