@@ -25,6 +25,8 @@ export type OfferSnapshot = {
   approvedAt?: string | null;
   approvedBy?: string | null;
   approvalNote?: string | null;
+  // Kurznotiz direkt in der Angebotsliste
+  listNote?: string | null;
   // List-only enrichments
   createdByName?: string | null;
 };
