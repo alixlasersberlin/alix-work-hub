@@ -471,6 +471,7 @@ export default function AngebotErstellen() {
     id: string | null; name: string; model: string; sku: string; url: string | null;
     colors: string[]; powers: string[]; configRequired: boolean;
     netPrice: number | null; promoName: string | null; description: string;
+    price: PhCountryPrice | null;
   };
   const [phDevices, setPhDevices] = useState<PhDevice[]>([]);
   const [onlyPhDevices, setOnlyPhDevices] = useState(false);
@@ -486,12 +487,13 @@ export default function AngebotErstellen() {
         .from('ph_products')
         .select('id, name, model, sku, hero_image_url, offer_image_url, status, config_colors, config_powers, config_required, price_countries, price_uvp, short_description, long_description')
         .neq('status', 'archived');
+      const deDef = PH_PRICE_COUNTRIES.find(c => c.code === 'de')!;
       setPhDevices((data ?? []).map((p: any) => {
         // Aktueller Preis: Deutschland (Netto) aus dem Product Hub
-        const de = (p.price_countries && typeof p.price_countries === 'object') ? (p.price_countries.de || {}) : {};
-        const raw = Number(de.uvp ?? p.price_uvp ?? 0);
-        const vat = Number(de.vat_rate ?? 19);
-        const net = raw > 0 ? (de.input_mode === 'gross' ? raw / (1 + vat / 100) : raw) : 0;
+        const price = readCountryPrice(p.price_countries, deDef);
+        const raw = Number(price.uvp ?? p.price_uvp ?? 0);
+        const vat = Number(price.vat_rate ?? 19);
+        const net = raw > 0 ? (price.input_mode === 'gross' ? raw / (1 + vat / 100) : raw) : 0;
         return {
           id: p.id ?? null,
           name: p.name || '', model: p.model || '', sku: p.sku || '',
@@ -501,12 +503,25 @@ export default function AngebotErstellen() {
           powers: Array.isArray(p.config_powers) ? p.config_powers : [],
           configRequired: p.config_required !== false,
           netPrice: net > 0 ? Math.round(net * 100) / 100 : null,
-          promoName: de.promo_active === true ? (de.promo_name || null) : null,
+          promoName: price.promo_active === true ? (price.promo_name || null) : null,
           description: String(p.short_description || p.long_description || '').trim(),
+          price: raw > 0 ? { ...price, uvp: raw } : price,
         };
       }));
     })();
   }, []);
+
+  /** Netto-Preis eines Product-Hub-Geräts für eine bestimmte Lasermodul-Leistung. */
+  const phNetPriceForPower = useCallback((dev: PhDevice | null | undefined, power?: string | null): number | null => {
+    if (!dev) return null;
+    if (!dev.price || !power) return dev.netPrice;
+    const gross = uvpForPower(dev.price, power);
+    if (!gross) return dev.netPrice;
+    const vat = Number(dev.price.vat_rate ?? 19);
+    const net = dev.price.input_mode === 'gross' ? gross / (1 + vat / 100) : gross;
+    return net > 0 ? Math.round(net * 100) / 100 : dev.netPrice;
+  }, []);
+
 
 
   const phImages = useMemo(() => phDevices.filter(p => !!p.url) as Array<{ name: string; model: string; sku: string; url: string }>, [phDevices]);
