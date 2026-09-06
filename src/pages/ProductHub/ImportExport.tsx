@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowDownToLine, ArrowUpFromLine, FileSpreadsheet, FileText, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,6 +25,8 @@ export default function ProductHubImportExport() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<Record<string, string>[] | null>(null);
+  const [exportCountry, setExportCountry] = useState<string>('de');
+  const [importCountry, setImportCountry] = useState<string>('de');
 
   const load = async () => {
     setLoading(true);
@@ -34,11 +38,24 @@ export default function ProductHubImportExport() {
   };
   useEffect(() => { load(); }, []);
 
-  const rows = useMemo(() => buildPriceRows(products), [products]);
+  const exportCountries = useMemo(
+    () => (exportCountry === 'all' ? PH_PRICE_COUNTRIES : PH_PRICE_COUNTRIES.filter(c => c.code === exportCountry)),
+    [exportCountry]);
+  const exportLabel = exportCountry === 'all'
+    ? 'alle-laender'
+    : (PH_PRICE_COUNTRIES.find(c => c.code === exportCountry)?.code || exportCountry);
+  const rows = useMemo(() => buildPriceRows(products, exportCountries), [products, exportCountries]);
   const stamp = new Date().toISOString().slice(0, 10);
 
+  const matchesImportCountry = (r: Record<string, string>) => {
+    if (importCountry === 'all') return true;
+    const def = PH_PRICE_COUNTRIES.find(c => c.code === importCountry)!;
+    return (r.land_code || '').toLowerCase() === def.code
+      || (r.land || '').trim().toLowerCase() === def.label.toLowerCase();
+  };
+
   const exportCsv = () => {
-    downloadFile(rowsToCsv(rows), `product-hub-preise-${stamp}.csv`, 'text/csv;charset=utf-8');
+    downloadFile(rowsToCsv(rows), `product-hub-preise-${exportLabel}-${stamp}.csv`, 'text/csv;charset=utf-8');
     toast.success(`${rows.length} Preiszeilen exportiert`);
   };
 
@@ -51,11 +68,11 @@ export default function ProductHubImportExport() {
       doc.setFontSize(14);
       doc.text('ALIX Product Hub – Preisliste', 40, 40);
       doc.setFontSize(9);
-      doc.text(`Stand: ${new Date().toLocaleString('de-DE')} · ${products.length} Geräte`, 40, 56);
+      doc.text(`Stand: ${new Date().toLocaleString('de-DE')} · ${products.length} Geräte · ${exportCountry === 'all' ? 'Alle Länder' : exportCountries[0]?.label}`, 40, 56);
 
       const body: any[] = [];
       for (const prod of products) {
-        for (const def of PH_PRICE_COUNTRIES) {
+        for (const def of exportCountries) {
           const p = readCountryPrice(prod.price_countries, def);
           if (!p.uvp && !p.vk_min_value && !p.vk_max_value) continue;
           body.push([
@@ -77,7 +94,7 @@ export default function ProductHubImportExport() {
         styles: { fontSize: 7.5, cellPadding: 3 },
         headStyles: { fillColor: [20, 20, 20] },
       });
-      doc.save(`product-hub-preise-${stamp}.pdf`);
+      doc.save(`product-hub-preise-${exportLabel}-${stamp}.pdf`);
       toast.success('PDF erstellt');
     } catch (e: any) { toast.error(e.message || 'PDF fehlgeschlagen'); }
     finally { setBusy(false); }
@@ -85,10 +102,13 @@ export default function ProductHubImportExport() {
 
   const onFile = async (file: File) => {
     try {
-      const parsed = parseCsv(await file.text());
-      if (!parsed.length) throw new Error('Keine Zeilen gefunden');
+      const parsedAll = parseCsv(await file.text());
+      if (!parsedAll.length) throw new Error('Keine Zeilen gefunden');
+      const parsed = parsedAll.filter(matchesImportCountry);
+      if (!parsed.length) throw new Error('Keine Zeilen für das gewählte Land in dieser Datei');
       setPreview(parsed);
-      toast.success(`${parsed.length} Zeilen gelesen – bitte prüfen und übernehmen`);
+      const ignored = parsedAll.length - parsed.length;
+      toast.success(`${parsed.length} Zeilen gelesen${ignored ? `, ${ignored} anderes Land ignoriert` : ''} – bitte prüfen und übernehmen`);
     } catch (e: any) { toast.error(e.message); setPreview(null); }
   };
 
@@ -98,7 +118,7 @@ export default function ProductHubImportExport() {
     let ok = 0, skipped = 0;
     try {
       const byProduct = new Map<string, Record<string, string>[]>();
-      for (const r of preview) {
+      for (const r of preview.filter(matchesImportCountry)) {
         const prod = products.find(p =>
           (r.product_id && p.id === r.product_id) ||
           (r.alix_product_id && p.alix_product_id === r.alix_product_id) ||
@@ -115,7 +135,7 @@ export default function ProductHubImportExport() {
         for (const r of list) {
           const def = PH_PRICE_COUNTRIES.find(c => c.code === (r.land_code || '').toLowerCase())
             || PH_PRICE_COUNTRIES.find(c => c.label.toLowerCase() === (r.land || '').toLowerCase());
-          if (!def) { skipped++; continue; }
+          if (!def || (importCountry !== 'all' && def.code !== importCountry)) { skipped++; continue; }
           next[def.code] = csvRowToCountryPrice(r, def, prod.price_countries);
         }
         const de: any = next.de || {};
@@ -150,6 +170,18 @@ export default function ProductHubImportExport() {
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><ArrowDownToLine className="h-4 w-4" />Export</CardTitle></CardHeader>
           <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Land für den Export</Label>
+              <Select value={exportCountry} onValueChange={setExportCountry}>
+                <SelectTrigger className="w-full sm:w-64"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PH_PRICE_COUNTRIES.map(c => (
+                    <SelectItem key={c.code} value={c.code}>{c.flag} {c.label}</SelectItem>
+                  ))}
+                  <SelectItem value="all">🌍 Alle Länder</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <p className="text-sm text-muted-foreground">
               {loading ? 'Lade Geräte …' : `${products.length} Geräte · ${rows.length} Preiszeilen (je Gerät und Land)`}
             </p>
@@ -178,6 +210,19 @@ export default function ProductHubImportExport() {
               </p>
             ) : (
               <>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Land für den Import</Label>
+                  <Select value={importCountry} onValueChange={v => { setImportCountry(v); setPreview(null); }}>
+                    <SelectTrigger className="w-full sm:w-64"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PH_PRICE_COUNTRIES.map(c => (
+                        <SelectItem key={c.code} value={c.code}>{c.flag} {c.label}</SelectItem>
+                      ))}
+                      <SelectItem value="all">🌍 Alle Länder</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">Es werden ausschließlich Zeilen dieses Landes übernommen.</p>
+                </div>
                 <Input type="file" accept=".csv,text/csv" onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
                 <p className="text-xs text-muted-foreground">
                   Zuordnung über <b>product_id</b>, sonst ALIX Product ID oder Gerätename. Es werden ausschließlich Preise
