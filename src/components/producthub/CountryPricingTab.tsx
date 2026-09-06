@@ -26,7 +26,10 @@ export function CountryPricingTab({ value, disabled, powers, onChange }: Props) 
   const [active, setActive] = useState(PH_PRICE_COUNTRIES[0].code);
   const [view, setView] = useState<'net' | 'gross'>('net');
 
-  const powerOptions = (powers && powers.length ? powers : [...PH_DEFAULT_POWERS]) as string[];
+  // Immer alle Standard-Leistungsstufen anbieten (inkl. 5000 W), ergänzt um produktspezifische Werte.
+  const powerOptions = Array.from(
+    new Set([...(PH_DEFAULT_POWERS as readonly string[]), ...((powers || []) as string[])].map(p => String(p).trim()).filter(Boolean)),
+  );
   const def = PH_PRICE_COUNTRIES.find(c => c.code === active)!;
   const price = readCountryPrice(value, def);
 
