@@ -131,6 +131,8 @@ export default function AngebotErstellen() {
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
   const [payDiscount, setPayDiscount] = useState<string>('');
+  // Preiseingabe: 'gross' = Einzelpreise sind Bruttopreise (inkl. MwSt), 'net' = Nettopreise
+  const [priceMode, setPriceMode] = useState<'gross' | 'net'>('gross');
 
   const [payTerm, setPayTerm] = useState<number>(24);
   const [payRate, setPayRate] = useState<string>('');
@@ -309,6 +311,7 @@ export default function AngebotErstellen() {
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
             if (snap.customer?.id) { setCustomerId(snap.customer.id); ensureCustomer(snap.customer.id).catch(() => {}); }
+            if (snap.priceMode === 'net' || snap.priceMode === 'gross') setPriceMode(snap.priceMode);
             if (Array.isArray(snap.lines) && snap.lines.length > 0) {
               setLines(snap.lines.map((l: any) => ({
                 id: l.id || crypto.randomUUID(),
@@ -319,12 +322,25 @@ export default function AngebotErstellen() {
                 quantity: Number(l.quantity) || 1,
                 rate: Number(l.rate) || 0,
                 tax_percentage: Number(l.tax_percentage) || 0,
+                snapshot_id: l.snapshot_id,
+                long_text: l.long_text,
+                image_url: l.image_url,
+                // Gerätekonfiguration wiederherstellen
+                ph_product_id: l.ph_product_id ?? null,
+                ph_product_name: l.ph_product_name ?? null,
+                product_image_url: l.product_image_url ?? null,
+                device_color: l.device_color ?? null,
+                ral_color_code: l.ral_color_code ?? null,
+                laser_module_power: l.laser_module_power ?? null,
+                config_colors: l.config_colors,
+                config_powers: l.config_powers,
               })));
             }
             if (snap.payment) {
               if (snap.payment.type) setPayType(snap.payment.type);
               if (snap.payment.price) setPayPrice(String(snap.payment.price));
               if (snap.payment.down) setPayDown(String(snap.payment.down));
+              if (snap.payment.discount) setPayDiscount(String(snap.payment.discount));
               if (snap.payment.term) setPayTerm(Number(snap.payment.term));
               if ((snap.payment as any).rate) setPayRate(String((snap.payment as any).rate));
             }
@@ -894,13 +910,17 @@ export default function AngebotErstellen() {
     setLines(prev => (prev.length === 1 ? [newLine()] : prev.filter(l => l.id !== id)));
   };
 
-  // Wenn MwSt > 0: eingegebener Einzelpreis ist BRUTTO (inkl. MwSt).
-  // Wenn MwSt = 0: Einzelpreis ist Netto.
+  // Preisbasis wählbar: Einzelpreise sind entweder Brutto (inkl. MwSt) oder Netto.
   const lineCalc = (l: LineItem) => {
     const qty = Number(l.quantity) || 0;
     const rate = Number(l.rate) || 0;
     const tax = Number(l.tax_percentage) || 0;
     if (tax > 0) {
+      if (priceMode === 'net') {
+        const net = qty * rate;
+        const gross = net * (1 + tax / 100);
+        return { net, tax: gross - net, gross };
+      }
       const gross = qty * rate;
       const net = gross / (1 + tax / 100);
       return { net, tax: gross - net, gross };
@@ -916,7 +936,7 @@ export default function AngebotErstellen() {
       net += c.net; tax += c.tax; gross += c.gross;
     }
     return { net, tax, gross };
-  }, [lines]);
+  }, [lines, priceMode]);
 
   const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
@@ -1566,6 +1586,7 @@ export default function AngebotErstellen() {
       email: selectedCustomer.email,
       phone: selectedCustomer.phone,
     } : null,
+    priceMode,
     lines: lines.filter(l => l.name && l.quantity > 0),
     totals,
     payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, discount: parseFloat(payDiscount) || 0, term: payTerm, rate: parseFloat(payRate) || 0 },
@@ -2477,13 +2498,33 @@ export default function AngebotErstellen() {
         </div>
 
 
+        <div className="flex items-center justify-end gap-2 pb-2">
+          <span className="text-xs text-muted-foreground">Preiseingabe:</span>
+          <div className="inline-flex rounded-lg border border-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setPriceMode('gross')}
+              className={`px-3 py-1 text-xs ${priceMode === 'gross' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+            >
+              Brutto
+            </button>
+            <button
+              type="button"
+              onClick={() => setPriceMode('net')}
+              className={`px-3 py-1 text-xs ${priceMode === 'net' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+            >
+              Netto
+            </button>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/40 text-muted-foreground">
                 <th className="text-left p-2 font-medium">Artikel</th>
                 <th className="text-left p-2 font-medium w-24">Menge</th>
-                <th className="text-left p-2 font-medium w-32">Einzelpreis</th>
+                <th className="text-left p-2 font-medium w-32">Einzelpreis ({priceMode === 'gross' ? 'brutto' : 'netto'})</th>
                 <th className="text-left p-2 font-medium w-20">MwSt %</th>
                 <th className="text-right p-2 font-medium w-32">Summe</th>
                 <th className="w-10"></th>
@@ -2520,7 +2561,7 @@ export default function AngebotErstellen() {
                         className="bg-secondary border-border h-8"
                       />
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {Number(l.tax_percentage) > 0 ? 'inkl. MwSt' : 'netto'}
+                        {Number(l.tax_percentage) > 0 ? (priceMode === 'gross' ? 'inkl. MwSt' : 'zzgl. MwSt') : 'netto'}
                       </p>
                     </td>
                     <td className="p-2">
