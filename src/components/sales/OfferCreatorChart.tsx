@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronDown } from 'lucide-react';
 import {
   Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -34,14 +35,23 @@ export function buildCreatorStats(offers: OfferSnapshot[], isSigned: (o: OfferSn
 }
 
 export function OfferCreatorChart({ stats }: { stats: CreatorStat[] }) {
+  const [open, setOpen] = useState(true);
   const data = useMemo(() => stats.map((s) => ({ ...s, label: s.name })), [stats]);
   if (!data.length) return null;
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>Angebote nach Ersteller</CardTitle>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-2 text-left"
+        >
+          <CardTitle>Angebote nach Ersteller</CardTitle>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
+        </button>
       </CardHeader>
+      {open && (
       <CardContent className="space-y-4">
         <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -93,6 +103,7 @@ export function OfferCreatorChart({ stats }: { stats: CreatorStat[] }) {
           </table>
         </div>
       </CardContent>
+      )}
     </Card>
   );
 }
