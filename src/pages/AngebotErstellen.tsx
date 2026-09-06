@@ -309,6 +309,7 @@ export default function AngebotErstellen() {
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
             if (snap.customer?.id) { setCustomerId(snap.customer.id); ensureCustomer(snap.customer.id).catch(() => {}); }
+            if (snap.priceMode === 'net' || snap.priceMode === 'gross') setPriceMode(snap.priceMode);
             if (Array.isArray(snap.lines) && snap.lines.length > 0) {
               setLines(snap.lines.map((l: any) => ({
                 id: l.id || crypto.randomUUID(),
@@ -319,12 +320,25 @@ export default function AngebotErstellen() {
                 quantity: Number(l.quantity) || 1,
                 rate: Number(l.rate) || 0,
                 tax_percentage: Number(l.tax_percentage) || 0,
+                snapshot_id: l.snapshot_id,
+                long_text: l.long_text,
+                image_url: l.image_url,
+                // Gerätekonfiguration wiederherstellen
+                ph_product_id: l.ph_product_id ?? null,
+                ph_product_name: l.ph_product_name ?? null,
+                product_image_url: l.product_image_url ?? null,
+                device_color: l.device_color ?? null,
+                ral_color_code: l.ral_color_code ?? null,
+                laser_module_power: l.laser_module_power ?? null,
+                config_colors: l.config_colors,
+                config_powers: l.config_powers,
               })));
             }
             if (snap.payment) {
               if (snap.payment.type) setPayType(snap.payment.type);
               if (snap.payment.price) setPayPrice(String(snap.payment.price));
               if (snap.payment.down) setPayDown(String(snap.payment.down));
+              if (snap.payment.discount) setPayDiscount(String(snap.payment.discount));
               if (snap.payment.term) setPayTerm(Number(snap.payment.term));
               if ((snap.payment as any).rate) setPayRate(String((snap.payment as any).rate));
             }
