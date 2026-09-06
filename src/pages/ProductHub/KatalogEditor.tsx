@@ -276,15 +276,20 @@ export default function KatalogEditor() {
             <div className="space-y-1">
               {pages.map(p => (
                 <div key={p.id}
+                  draggable={canWrite}
+                  onDragStart={() => { dragPageId.current = p.id; }}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={() => onDropPage(p.id)}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer ${selPage === p.id ? 'bg-secondary' : 'hover:bg-secondary/50'}`}
                   onClick={() => setSelPage(p.id)}>
-                  <GripVertical className="w-3.5 h-3.5 opacity-40" />
+                  <GripVertical className="w-3.5 h-3.5 opacity-40 cursor-grab" />
                   <span className="flex-1 truncate">{p.title}</span>
                   <Badge variant="outline" className="text-[10px]">{PH_PAGE_TYPES.find(t => t.key === p.page_type)?.label}</Badge>
                   {canWrite && <Trash2 className="w-3.5 h-3.5 opacity-50 hover:opacity-100" onClick={e => { e.stopPropagation(); delPage(p.id); }} />}
                 </div>
               ))}
               {pages.length === 0 && <div className="text-xs text-muted-foreground">Ohne Seiten wird automatisch je Gerät eine Produktseite erzeugt.</div>}
+              {pages.length > 1 && canWrite && <div className="text-[10px] text-muted-foreground">Seiten per Ziehen sortieren.</div>}
             </div>
             {canWrite && (
               <Select value="" onValueChange={addPage}>
