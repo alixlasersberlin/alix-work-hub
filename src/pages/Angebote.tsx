@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -646,9 +646,8 @@ export default function Angebote() {
                   const isApproved = approval === 'approved';
                   const canEditOrSign = isApproved || isSuperAdmin;
                   return (
-                  <>
+                  <Fragment key={o.offerNumber}>
                   <TableRow
-                    key={o.offerNumber}
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => {
                       if (!canEditOrSign) {
@@ -779,7 +778,7 @@ export default function Angebote() {
                       <OfferNoteRow offerNumber={o.offerNumber} initial={o.listNote || ''} />
                     </TableCell>
                   </TableRow>
-                  </>
+                  </Fragment>
                   );
 
                 })}
