@@ -195,6 +195,7 @@ export default function KatalogEditor() {
     const existing = pages.map(p => p.page_type);
     const plan = [
       { page_type: 'cover', title: 'Cover' },
+      { page_type: 'toc', title: 'Inhalt' },
       { page_type: 'overview', title: 'Produktübersicht' },
       { page_type: 'products', title: 'Produktseiten' },
       { page_type: 'pricelist', title: 'Preisübersicht' },
