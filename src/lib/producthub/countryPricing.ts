@@ -230,17 +230,18 @@ export interface PhPowerTier {
 }
 
 export function emptyPowerTier(): PhPowerTier {
-  return { enabled: false, mode: 'surcharge_percent', value: null };
+  return { enabled: true, mode: 'price_fixed', value: null };
 }
 
 export function readPowerTier(p: PhCountryPrice, power: string): PhPowerTier {
   const raw = ((p as any).power_tiers || {})[power] || {};
   return {
-    enabled: raw.enabled === true,
-    mode: raw.mode === 'surcharge_fixed' || raw.mode === 'price_fixed' ? raw.mode : 'surcharge_percent',
+    enabled: raw.enabled !== false,
+    mode: raw.mode === 'surcharge_fixed' || raw.mode === 'surcharge_percent' ? raw.mode : 'price_fixed',
     value: raw.value === null || raw.value === undefined || raw.value === '' ? null : Number(raw.value),
   };
 }
+
 
 /** UVP für eine bestimmte Lasermodul-Leistung. */
 export function uvpForPower(p: PhCountryPrice, power?: string | null): number {
