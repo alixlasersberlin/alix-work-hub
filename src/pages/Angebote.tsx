@@ -19,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { OfferCreatorChart, buildCreatorStats } from '@/components/sales/OfferCreatorChart';
+import { OfferCreatorChart } from '@/components/sales/OfferCreatorChart';
 import {
   listOffers,
   getOffer,
@@ -149,9 +149,9 @@ export default function Angebote() {
   })();
   const visibleOffers = pageSize === 'all' ? filteredOffers : filteredOffers.slice(0, parseInt(pageSize, 10));
 
-  const creatorStats = buildCreatorStats(offers, (o) =>
-    o.status === 'signed' || o.status === 'order' || orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, '')),
-  );
+  const isSignedOffer = (o: typeof offers[number]) =>
+    o.status === 'signed' || o.status === 'order' || orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+
 
 
 
@@ -571,7 +571,7 @@ export default function Angebote() {
         </Card>
       )}
 
-      {!loading && <OfferCreatorChart stats={creatorStats} />}
+      {!loading && <OfferCreatorChart offers={offers} isSigned={isSignedOffer} />}
 
 
       <Card>
