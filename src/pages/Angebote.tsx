@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { OfferCreatorChart, buildCreatorStats } from '@/components/sales/OfferCreatorChart';
 import {
   listOffers,
   getOffer,
@@ -86,7 +87,7 @@ export default function Angebote() {
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
-  const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag' | 'signed'>('alle');
+  const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag' | 'signed'>('offen');
   const [dealFilter, setDealFilter] = useState<'alle' | 'offen' | 'angenommen' | 'abgelehnt'>('alle');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
@@ -123,9 +124,10 @@ export default function Angebote() {
       }
       if (orderFilter !== 'alle') {
         const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+        const signed = o.status === 'signed' || o.status === 'order' || hasOrder;
         if (orderFilter === 'auftrag' && !hasOrder) return false;
-        if (orderFilter === 'offen' && hasOrder) return false;
-        if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
+        if (orderFilter === 'offen' && signed) return false;
+        if (orderFilter === 'signed' && !signed) return false;
       }
       if (dealFilter !== 'alle') {
         const approval = (o.approvalStatus || 'pending');
@@ -146,6 +148,12 @@ export default function Angebote() {
     });
   })();
   const visibleOffers = pageSize === 'all' ? filteredOffers : filteredOffers.slice(0, parseInt(pageSize, 10));
+
+  const creatorStats = buildCreatorStats(offers, (o) =>
+    o.status === 'signed' || o.status === 'order' || orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, '')),
+  );
+
+
 
   const clearStalePointerLock = () => {
     try {
@@ -563,6 +571,7 @@ export default function Angebote() {
         </Card>
       )}
 
+      {!loading && <OfferCreatorChart stats={creatorStats} />}
 
 
       <Card>
