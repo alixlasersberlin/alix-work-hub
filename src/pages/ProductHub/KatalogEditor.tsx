@@ -59,7 +59,7 @@ export default function KatalogEditor() {
 
   const cover = { ...defaultCover(), ...(cat?.cover || {}) };
   const settings = { ...defaultSettings(), ...(cat?.settings || {}) };
-  const publicUrl = cat?.slug ? `${window.location.origin}/katalog/${cat.slug}` : undefined;
+  const publicUrl = cat?.slug ? `${window.location.origin}/preisliste/${cat.slug}` : undefined;
 
   const load = async () => {
     if (!id) return;

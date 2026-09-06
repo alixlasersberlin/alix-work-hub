@@ -2391,7 +2391,7 @@ function AppRoutes() {
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/help" element={<SelfServicePortal />} />
-        <Route path="/katalog/:slug" element={<KatalogPublic />} />
+        <Route path="/preisliste/:slug" element={<KatalogPublic />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/check" element={<PortalCheckDelivery />} />
 

@@ -161,7 +161,7 @@ export default function ProductHubPreislisten() {
               <Button size="sm" variant="outline" onClick={() => setStatus(row, 'archived')}><Archive className="w-3.5 h-3.5" /></Button>
             )}
             {row.status === 'published' && row.is_public && row.slug && (
-              <Button size="sm" variant="outline" onClick={() => window.open(`/katalog/${row.slug}`, '_blank')}>
+              <Button size="sm" variant="outline" onClick={() => window.open(`/preisliste/${row.slug}`, '_blank')}>
                 <ExternalLink className="w-3.5 h-3.5" />
               </Button>
             )}
