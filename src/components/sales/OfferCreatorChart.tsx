@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronDown } from 'lucide-react';
 import {
   Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -102,6 +103,7 @@ export function OfferCreatorChart({ stats }: { stats: CreatorStat[] }) {
           </table>
         </div>
       </CardContent>
+      )}
     </Card>
   );
 }
