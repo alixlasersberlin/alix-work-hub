@@ -36164,6 +36164,309 @@ export type Database = {
           },
         ]
       }
+      ph_catalog_items: {
+        Row: {
+          badges: string[]
+          catalog_id: string
+          created_at: string
+          fields: Json
+          id: string
+          image_mode: string
+          image_url: string | null
+          layout: string
+          prices: Json
+          product_id: string
+          sort_order: number
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          badges?: string[]
+          catalog_id: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          image_mode?: string
+          image_url?: string | null
+          layout?: string
+          prices?: Json
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          badges?: string[]
+          catalog_id?: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          image_mode?: string
+          image_url?: string | null
+          layout?: string
+          prices?: Json
+          product_id?: string
+          sort_order?: number
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_catalog_items_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "ph_catalogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ph_catalog_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_catalog_media: {
+        Row: {
+          catalog_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          title: string | null
+          url: string
+        }
+        Insert: {
+          catalog_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          title?: string | null
+          url: string
+        }
+        Update: {
+          catalog_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          title?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_catalog_media_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "ph_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_catalog_pages: {
+        Row: {
+          catalog_id: string
+          config: Json
+          created_at: string
+          id: string
+          page_type: string
+          sort_order: number
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          catalog_id: string
+          config?: Json
+          created_at?: string
+          id?: string
+          page_type?: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          catalog_id?: string
+          config?: Json
+          created_at?: string
+          id?: string
+          page_type?: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_catalog_pages_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "ph_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_catalog_templates: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          key: string
+          name: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          key: string
+          name: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          key?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      ph_catalog_versions: {
+        Row: {
+          catalog_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          snapshot: Json
+          version: number
+          version_label: string | null
+        }
+        Insert: {
+          catalog_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot?: Json
+          version: number
+          version_label?: string | null
+        }
+        Update: {
+          catalog_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot?: Json
+          version?: number
+          version_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_catalog_versions_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "ph_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_catalogs: {
+        Row: {
+          access_password: string | null
+          contact: string | null
+          country: string
+          cover: Json
+          created_at: string
+          created_by: string | null
+          currency: string
+          expires_at: string | null
+          id: string
+          internal_name: string | null
+          is_public: boolean
+          language: string
+          name: string
+          noindex: boolean
+          notes: string | null
+          pdf_generated_at: string | null
+          pdf_stale: boolean
+          settings: Json
+          slug: string | null
+          status: string
+          template_key: string | null
+          updated_at: string
+          updated_by: string | null
+          valid_from: string | null
+          valid_to: string | null
+          variant: string
+          version: number
+          version_label: string | null
+        }
+        Insert: {
+          access_password?: string | null
+          contact?: string | null
+          country?: string
+          cover?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          internal_name?: string | null
+          is_public?: boolean
+          language?: string
+          name: string
+          noindex?: boolean
+          notes?: string | null
+          pdf_generated_at?: string | null
+          pdf_stale?: boolean
+          settings?: Json
+          slug?: string | null
+          status?: string
+          template_key?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          variant?: string
+          version?: number
+          version_label?: string | null
+        }
+        Update: {
+          access_password?: string | null
+          contact?: string | null
+          country?: string
+          cover?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          internal_name?: string | null
+          is_public?: boolean
+          language?: string
+          name?: string
+          noindex?: boolean
+          notes?: string | null
+          pdf_generated_at?: string | null
+          pdf_stale?: boolean
+          settings?: Json
+          slug?: string | null
+          status?: string
+          template_key?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          variant?: string
+          version?: number
+          version_label?: string | null
+        }
+        Relationships: []
+      }
       ph_channels: {
         Row: {
           base_url: string | null
@@ -54999,6 +55302,7 @@ export type Database = {
         }[]
       }
       ph_can_edit: { Args: never; Returns: boolean }
+      ph_catalog_public: { Args: { _catalog_id: string }; Returns: boolean }
       plm_can_write: { Args: never; Returns: boolean }
       plm_merge_manufacturers: {
         Args: { p_source: string; p_target: string }
