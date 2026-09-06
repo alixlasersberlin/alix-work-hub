@@ -538,6 +538,18 @@ export default function KatalogEditor() {
                         <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>{PH_PAGE_TYPES.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}</SelectContent>
                       </Select></div>
+                    {selectedPage.page_type === 'category' && (
+                      <div><Label className="text-xs">Kategorie</Label>
+                        <Select value={selectedPage.config?.category || ''} disabled={!canWrite}
+                          onValueChange={v => updPage(selectedPage.id, { config: { ...(selectedPage.config || {}), category: v } })}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
+                          <SelectContent>
+                            {Array.from(new Set(products.map(p => p.category).filter(Boolean))).map((c: any) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select></div>
+                    )}
                     <div><Label className="text-xs">Text</Label>
                       <Textarea rows={5} value={selectedPage.config?.text || ''} disabled={!canWrite}
                         onChange={e => updPage(selectedPage.id, { config: { ...(selectedPage.config || {}), text: e.target.value } })} /></div>
