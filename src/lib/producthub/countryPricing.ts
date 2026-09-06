@@ -184,3 +184,47 @@ export function formatMoney(value: number, def: PhCountryDef, currency?: string)
     return `${value.toFixed(2)} ${currency || def.currency}`;
   }
 }
+
+/* ---------------- Staffelung nach "Leistung Lasermodul" ---------------- */
+
+export type PhPowerTierMode = 'surcharge_percent' | 'surcharge_fixed' | 'price_fixed';
+
+export interface PhPowerTier {
+  enabled: boolean;
+  /** Aufschlag in % vom UVP, fester Aufschlag oder eigener UVP */
+  mode: PhPowerTierMode;
+  value: number | null;
+}
+
+export function emptyPowerTier(): PhPowerTier {
+  return { enabled: false, mode: 'surcharge_percent', value: null };
+}
+
+export function readPowerTier(p: PhCountryPrice, power: string): PhPowerTier {
+  const raw = ((p as any).power_tiers || {})[power] || {};
+  return {
+    enabled: raw.enabled === true,
+    mode: raw.mode === 'surcharge_fixed' || raw.mode === 'price_fixed' ? raw.mode : 'surcharge_percent',
+    value: raw.value === null || raw.value === undefined || raw.value === '' ? null : Number(raw.value),
+  };
+}
+
+/** UVP für eine bestimmte Lasermodul-Leistung. */
+export function uvpForPower(p: PhCountryPrice, power?: string | null): number {
+  const base = Number(p.uvp || 0);
+  if (!power) return base;
+  const t = readPowerTier(p, power);
+  if (!t.enabled || t.value === null) return base;
+  if (t.mode === 'price_fixed') return Number(t.value);
+  if (t.mode === 'surcharge_fixed') return base + Number(t.value);
+  return base * (1 + Number(t.value) / 100);
+}
+
+/** VK Minimal / Maximal für eine bestimmte Leistung (Staffel wirkt über den UVP). */
+export function effectivePriceForPower(
+  p: PhCountryPrice,
+  which: 'min' | 'max',
+  power?: string | null,
+): number {
+  return effectivePrice({ ...p, uvp: uvpForPower(p, power) }, which);
+}
