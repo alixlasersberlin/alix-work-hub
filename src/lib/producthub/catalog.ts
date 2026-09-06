@@ -4,8 +4,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import {
   PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePriceForPower,
-  uvpForPower, rentMonthly, depositAmount, convertAmount, type PhCountryDef,
+  uvpForPower, rentMonthly, depositAmount, convertAmount, readPowerTier, type PhCountryDef,
 } from './countryPricing';
+import { PH_DEFAULT_POWERS } from './deviceConfig';
 
 const db = supabase as any;
 
@@ -29,7 +30,20 @@ export const PH_CATALOG_VARIANTS = [
 
 export type PhPriceKind =
   | 'uvp' | 'vk' | 'promo' | 'fair' | 'dealer' | 'distributor' | 'purchase'
-  | 'rent' | 'leasing' | 'installment' | 'special' | 'custom' | 'deposit';
+  | 'rent' | 'leasing' | 'installment' | 'special' | 'custom' | 'deposit'
+  | `power_${string}`;
+
+/** Preisarten für die Staffelung nach „Leistung Lasermodul“ */
+export const PH_POWER_PRICE_KINDS: { key: PhPriceKind; label: string; power: string; auto: true }[] =
+  PH_DEFAULT_POWERS.map(pw => ({
+    key: `power_${pw.replace(/\s+/g, '')}` as PhPriceKind,
+    label: `Preis ${pw}`,
+    power: pw,
+    auto: true as const,
+  }));
+
+export const powerOfPriceKind = (kind: string): string | null =>
+  PH_POWER_PRICE_KINDS.find(k => k.key === kind)?.power || null;
 
 export const PH_PRICE_KINDS: { key: PhPriceKind; label: string; auto?: boolean }[] = [
   { key: 'uvp', label: 'UVP', auto: true },
@@ -45,6 +59,7 @@ export const PH_PRICE_KINDS: { key: PhPriceKind; label: string; auto?: boolean }
   { key: 'deposit', label: 'Kaution', auto: true },
   { key: 'special', label: 'Sonderpreis' },
   { key: 'custom', label: 'Katalogpreis' },
+  ...PH_POWER_PRICE_KINDS.map(k => ({ key: k.key, label: k.label, auto: true })),
 ];
 
 export const PH_PRICE_DISPLAY = [
@@ -192,6 +207,15 @@ export function hubPrices(product: any, country: string, power?: string | null) 
     deposit: depositAmount({ ...p, uvp } as any),
     inputMode: p.input_mode,
   };
+}
+
+/** Preis einer Leistungsstufe – 0, wenn für die Stufe nichts gepflegt ist. */
+export function powerTierPrice(product: any, country: string, power: string, which: 'uvp' | 'vk' = 'vk') {
+  const def = countryDef(country);
+  const p = readCountryPrice(product?.price_countries, def);
+  const tier = readPowerTier(p, power);
+  if (!tier.enabled) return 0;
+  return which === 'uvp' ? uvpForPower(p, power) : effectivePriceForPower(p, 'min', power);
 }
 
 /** Wendet die katalogweite Preisregel an (verändert nie den Masterpreis). */

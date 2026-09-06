@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import {
   PH_PRODUCT_FIELDS, PH_PAGE_TYPES, applyPriceRule, catalogMoney, defaultCover, defaultSettings, hubPrices,
-  type PhCatalogCover, type PhCatalogSettings, PH_PRICE_KINDS,
+  type PhCatalogCover, type PhCatalogSettings, PH_PRICE_KINDS, powerOfPriceKind, powerTierPrice,
 } from '@/lib/producthub/catalog';
 
 export interface CatalogRenderProps {
@@ -38,6 +38,7 @@ export function itemPrices(catalog: any, item: any, product: any) {
     else if (kind === 'vk') raw = applyPriceRule(h.vk, s.priceRule);
     else if (kind === 'rent') raw = h.rent;
     else if (kind === 'deposit') raw = h.deposit;
+    else if (powerOfPriceKind(kind)) raw = applyPriceRule(powerTierPrice(product, catalog.country, powerOfPriceKind(kind)!, 'vk'), s.priceRule);
     const display = s.priceDisplay?.[kind] || 'show';
     if (display === 'hidden') continue;
     if (!raw && display !== 'request') continue;
