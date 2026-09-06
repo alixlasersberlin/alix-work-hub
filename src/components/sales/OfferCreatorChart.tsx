@@ -34,10 +34,38 @@ export function buildCreatorStats(offers: OfferSnapshot[], isSigned: (o: OfferSn
     .sort((a, b) => b.total - a.total);
 }
 
-export function OfferCreatorChart({ stats }: { stats: CreatorStat[] }) {
+const PERIODS = [
+  { key: 'week', label: 'Woche', days: 7 },
+  { key: 'month', label: 'Monat', days: 30 },
+  { key: 'q', label: '3 Monate', days: 90 },
+  { key: 'year', label: 'Jahr', days: 365 },
+  { key: 'all', label: 'Alle', days: 0 },
+] as const;
+
+export function OfferCreatorChart({
+  offers,
+  isSigned,
+}: {
+  offers: OfferSnapshot[];
+  isSigned: (o: OfferSnapshot) => boolean;
+}) {
   const [open, setOpen] = useState(true);
+  const [period, setPeriod] = useState<string>('all');
+
+  const stats = useMemo(() => {
+    const days = PERIODS.find((p) => p.key === period)?.days ?? 0;
+    const from = days ? Date.now() - days * 86400000 : 0;
+    const list = from
+      ? offers.filter((o) => {
+          const raw = o.offerDate || o.createdAt;
+          const t = raw ? new Date(raw).getTime() : 0;
+          return t >= from;
+        })
+      : offers;
+    return buildCreatorStats(list, isSigned);
+  }, [offers, isSigned, period]);
+
   const data = useMemo(() => stats.map((s) => ({ ...s, label: s.name })), [stats]);
-  if (!data.length) return null;
 
   return (
     <Card>
@@ -53,6 +81,22 @@ export function OfferCreatorChart({ stats }: { stats: CreatorStat[] }) {
       </CardHeader>
       {open && (
       <CardContent className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {PERIODS.map((p) => (
+            <Button
+              key={p.key}
+              size="sm"
+              variant={period === p.key ? 'default' : 'outline'}
+              onClick={() => setPeriod(p.key)}
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+        {!data.length && (
+          <p className="text-sm text-muted-foreground">Keine Angebote in diesem Zeitraum.</p>
+        )}
+
         <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
