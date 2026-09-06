@@ -208,3 +208,23 @@ export function downloadFile(content: BlobPart, filename: string, mime: string) 
   a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
+
+/** Liest eine Excel-Datei (.xlsx/.xls) und liefert Zeilen wie parseCsv. */
+export async function parseXlsx(file: File | ArrayBuffer): Promise<Record<string, string>[]> {
+  const XLSX = await import('xlsx');
+  const buf = file instanceof ArrayBuffer ? file : await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  if (!sheet) return [];
+  const raw = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: '', raw: false });
+  return raw.map(r => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(r)) out[String(k).trim()] = v === null || v === undefined ? '' : String(v).trim();
+    return out;
+  }).filter(r => Object.values(r).some(v => v !== ''));
+}
+
+/** Liest CSV oder XLSX anhand der Dateiendung. */
+export async function parseImportFile(file: File): Promise<Record<string, string>[]> {
+  return /\.(xlsx|xlsm|xls)$/i.test(file.name) ? parseXlsx(file) : parseCsv(await file.text());
+}
