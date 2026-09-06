@@ -211,6 +211,44 @@ export function CountryPricingTab({ value, disabled, onChange }: Props) {
             );
           })}
         </div>
+
+        {/* Kaution */}
+        <div className="space-y-3 rounded-md border border-border p-3">
+          <div className="flex items-center gap-3">
+            <Switch checked={price.deposit_active} disabled={disabled || !price.rent_active}
+              onCheckedChange={v => patch({ deposit_active: v })} />
+            <Label className="text-sm">Kaution ({def.label})</Label>
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Berechnung</Label>
+              <select className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                value={price.deposit_mode}
+                disabled={disabled || !price.rent_active || !price.deposit_active}
+                onChange={e => patch({ deposit_mode: e.target.value as any })}>
+                <option value="percent">% der Basis</option>
+                <option value="fixed">Fester Betrag ({price.currency})</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Wert</Label>
+              <Input type="number" step="0.01" value={price.deposit_value ?? ''}
+                disabled={disabled || !price.rent_active || !price.deposit_active}
+                placeholder={price.deposit_mode === 'percent' ? 'z. B. 10' : `Betrag in ${price.currency}`}
+                onChange={e => patch({ deposit_value: e.target.value === '' ? null : Number(e.target.value) })} />
+              <p className="text-xs text-muted-foreground">
+                Kaution ({view === 'net' ? 'netto' : 'brutto'}): {show(depositAmount(price))}
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Hinweis zur Kaution (optional)</Label>
+              <Input value={price.deposit_note}
+                disabled={disabled || !price.rent_active || !price.deposit_active}
+                placeholder="z. B. Rückzahlung nach Rückgabe"
+                onChange={e => patch({ deposit_note: e.target.value })} />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3 rounded-lg border border-border p-3">
