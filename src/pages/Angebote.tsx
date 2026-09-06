@@ -646,6 +646,7 @@ export default function Angebote() {
                   const isApproved = approval === 'approved';
                   const canEditOrSign = isApproved || isSuperAdmin;
                   return (
+                  <>
                   <TableRow
                     key={o.offerNumber}
                     className="cursor-pointer hover:bg-muted/50"
