@@ -93,8 +93,41 @@ export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
     promo_name: raw.promo_name || '',
     vk_min_mode: raw.vk_min_mode === 'percent' ? 'percent' : 'fixed',
     vk_max_mode: raw.vk_max_mode === 'percent' ? 'percent' : 'fixed',
+    rent_active: raw.rent_active === true,
+    rent_public: raw.rent_public === true,
+    rent_base: raw.rent_base === 'vk_max' || raw.rent_base === 'uvp' ? raw.rent_base : 'vk_min',
+    rent_note: raw.rent_note || '',
+    rent_terms: (() => {
+      const out = emptyRentTerms();
+      const src = raw.rent_terms && typeof raw.rent_terms === 'object' ? raw.rent_terms : {};
+      for (const t of PH_RENT_TERMS) {
+        const r = src[String(t)] || {};
+        out[String(t)] = {
+          enabled: r.enabled === true,
+          mode: r.mode === 'fixed' ? 'fixed' : 'percent',
+          value: r.value === null || r.value === undefined || r.value === '' ? null : Number(r.value),
+        };
+      }
+      return out;
+    })(),
   };
 }
+
+/** Basisbetrag für die Mietberechnung (Platzhalter-Logik, wird später ersetzt). */
+export function rentBaseAmount(p: PhCountryPrice): number {
+  if (p.rent_base === 'uvp') return Number(p.uvp || 0);
+  return effectivePrice(p, p.rent_base === 'vk_max' ? 'max' : 'min');
+}
+
+/** Vorläufige Monatsrate je Laufzeit. */
+export function rentMonthly(p: PhCountryPrice, term: PhRentTerm): number {
+  const cfg = p.rent_terms?.[String(term)];
+  if (!cfg || !cfg.enabled) return 0;
+  const val = Number(cfg.value || 0);
+  if (!val) return 0;
+  return cfg.mode === 'fixed' ? val : (rentBaseAmount(p) * val) / 100;
+}
+
 
 /** Rechnet einen eingetragenen Betrag in die gewünschte Anzeigeart um. */
 export function convertAmount(
