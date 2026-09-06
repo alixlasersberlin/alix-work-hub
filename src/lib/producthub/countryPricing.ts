@@ -19,6 +19,16 @@ export const PH_PRICE_COUNTRIES: PhCountryDef[] = [
   { code: 'dubai', label: 'Dubai', flag: '🇦🇪', currency: 'AED', locale: 'en-AE', vat: 5 },
 ];
 
+export const PH_RENT_TERMS = [12, 24, 36] as const;
+export type PhRentTerm = (typeof PH_RENT_TERMS)[number];
+
+export interface PhRentTermConfig {
+  enabled: boolean;
+  /** Prozent der VK-Basis pro Monat oder fester Monatsbetrag */
+  mode: 'percent' | 'fixed';
+  value: number | null;
+}
+
 export interface PhCountryPrice {
   currency: string;
   vat_rate: number;
@@ -32,6 +42,19 @@ export interface PhCountryPrice {
   vk_max_value: number | null;
   promo_active: boolean;
   promo_name: string;
+  /** Miete */
+  rent_active: boolean;
+  rent_public: boolean;
+  /** Basis für die Mietberechnung */
+  rent_base: 'vk_min' | 'vk_max' | 'uvp';
+  rent_terms: Record<string, PhRentTermConfig>;
+  rent_note: string;
+}
+
+export function emptyRentTerms(): Record<string, PhRentTermConfig> {
+  const out: Record<string, PhRentTermConfig> = {};
+  for (const t of PH_RENT_TERMS) out[String(t)] = { enabled: false, mode: 'percent', value: null };
+  return out;
 }
 
 export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
@@ -47,8 +70,14 @@ export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
     vk_max_value: null,
     promo_active: false,
     promo_name: '',
+    rent_active: false,
+    rent_public: false,
+    rent_base: 'vk_min',
+    rent_terms: emptyRentTerms(),
+    rent_note: '',
   };
 }
+
 
 export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
   const raw = (all && typeof all === 'object' ? all[def.code] : null) || {};
@@ -64,8 +93,41 @@ export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
     promo_name: raw.promo_name || '',
     vk_min_mode: raw.vk_min_mode === 'percent' ? 'percent' : 'fixed',
     vk_max_mode: raw.vk_max_mode === 'percent' ? 'percent' : 'fixed',
+    rent_active: raw.rent_active === true,
+    rent_public: raw.rent_public === true,
+    rent_base: raw.rent_base === 'vk_max' || raw.rent_base === 'uvp' ? raw.rent_base : 'vk_min',
+    rent_note: raw.rent_note || '',
+    rent_terms: (() => {
+      const out = emptyRentTerms();
+      const src = raw.rent_terms && typeof raw.rent_terms === 'object' ? raw.rent_terms : {};
+      for (const t of PH_RENT_TERMS) {
+        const r = src[String(t)] || {};
+        out[String(t)] = {
+          enabled: r.enabled === true,
+          mode: r.mode === 'fixed' ? 'fixed' : 'percent',
+          value: r.value === null || r.value === undefined || r.value === '' ? null : Number(r.value),
+        };
+      }
+      return out;
+    })(),
   };
 }
+
+/** Basisbetrag für die Mietberechnung (Platzhalter-Logik, wird später ersetzt). */
+export function rentBaseAmount(p: PhCountryPrice): number {
+  if (p.rent_base === 'uvp') return Number(p.uvp || 0);
+  return effectivePrice(p, p.rent_base === 'vk_max' ? 'max' : 'min');
+}
+
+/** Vorläufige Monatsrate je Laufzeit. */
+export function rentMonthly(p: PhCountryPrice, term: PhRentTerm): number {
+  const cfg = p.rent_terms?.[String(term)];
+  if (!cfg || !cfg.enabled) return 0;
+  const val = Number(cfg.value || 0);
+  if (!val) return 0;
+  return cfg.mode === 'fixed' ? val : (rentBaseAmount(p) * val) / 100;
+}
+
 
 /** Rechnet einen eingetragenen Betrag in die gewünschte Anzeigeart um. */
 export function convertAmount(
