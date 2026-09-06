@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   PH_PRICE_COUNTRIES, PH_RENT_TERMS, PhCountryPrice, convertAmount, effectivePrice,
-  formatMoney, readCountryPrice, rentBaseAmount, rentMonthly,
+  formatMoney, readCountryPrice, rentBaseAmount, rentMonthly, depositAmount,
 } from '@/lib/producthub/countryPricing';
 
 
