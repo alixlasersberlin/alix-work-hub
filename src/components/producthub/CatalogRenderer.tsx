@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import {
-  PH_PRODUCT_FIELDS, applyPriceRule, catalogMoney, defaultCover, defaultSettings, hubPrices,
+  PH_PRODUCT_FIELDS, PH_PAGE_TYPES, applyPriceRule, catalogMoney, defaultCover, defaultSettings, hubPrices,
   type PhCatalogCover, type PhCatalogSettings, PH_PRICE_KINDS,
 } from '@/lib/producthub/catalog';
 
