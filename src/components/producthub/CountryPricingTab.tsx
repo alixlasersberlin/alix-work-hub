@@ -51,6 +51,12 @@ export function CountryPricingTab({ value, disabled, onChange }: Props) {
         })}
       </div>
 
+      {disabled && (
+        <p className="rounded-md border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
+          Preise sind für alle sichtbar. Änderungen darf ausschließlich der Super Admin vornehmen.
+        </p>
+      )}
+
       {/* Brutto / Netto Umschalter */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
         <div>

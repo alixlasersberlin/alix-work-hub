@@ -396,7 +396,7 @@ export default function ProductHubEditor() {
         <TabsContent value="preise">
           <CountryPricingTab
             value={form.price_countries}
-            disabled={!canWrite}
+            disabled={!isSuperAdmin}
             onChange={next => {
               const de = next?.de || {};
               setForm((f: any) => ({
