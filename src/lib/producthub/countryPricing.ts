@@ -59,9 +59,16 @@ export interface PhCountryPrice {
   deposit_note: string;
 }
 
+/** Standard-Mietfaktoren (% der Basis pro Monat) je Laufzeit. */
+export const PH_DEFAULT_RENT_FACTORS: Record<string, number> = { '12': 3, '24': 2.5, '36': 2 };
+/** Standard-Kaution in % der Mietbasis. */
+export const PH_DEFAULT_DEPOSIT_PCT = 20;
+
 export function emptyRentTerms(): Record<string, PhRentTermConfig> {
   const out: Record<string, PhRentTermConfig> = {};
-  for (const t of PH_RENT_TERMS) out[String(t)] = { enabled: false, mode: 'percent', value: null };
+  for (const t of PH_RENT_TERMS) {
+    out[String(t)] = { enabled: true, mode: 'percent', value: PH_DEFAULT_RENT_FACTORS[String(t)] ?? null };
+  }
   return out;
 }
 
@@ -79,17 +86,19 @@ export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
     vk_max_value: null,
     promo_active: false,
     promo_name: '',
-    rent_active: false,
+    // Miete standardmäßig intern aktiv, aber nicht auf der Webseite sichtbar
+    rent_active: true,
     rent_public: false,
     rent_base: 'vk_min',
     rent_terms: emptyRentTerms(),
     rent_note: '',
-    deposit_active: false,
+    deposit_active: true,
     deposit_mode: 'percent',
-    deposit_value: null,
+    deposit_value: PH_DEFAULT_DEPOSIT_PCT,
     deposit_note: '',
   };
 }
+
 
 
 export function readCountryPrice(all: any, def: PhCountryDef): PhCountryPrice {
