@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePrice } from '@/lib/producthub/countryPricing';
 import {
-  buildPriceRows, rowsToCsv, parseCsv, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, powerTiersText,
+  buildPriceRows, rowsToCsv, parseImportFile, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, powerTiersText,
 } from '@/lib/producthub/priceExport';
 
 const db = supabase as any;
@@ -99,7 +99,7 @@ export default function ProductHubImportExport() {
 
   const onFile = async (file: File) => {
     try {
-      const parsedAll = parseCsv(await file.text());
+      const parsedAll = await parseImportFile(file);
       if (!parsedAll.length) throw new Error('Keine Zeilen gefunden');
       const parsed = parsedAll.filter(matchesImportCountry);
       if (!parsed.length) throw new Error('Keine Zeilen für das gewählte Land in dieser Datei');
@@ -199,7 +199,7 @@ export default function ProductHubImportExport() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><ArrowUpFromLine className="h-4 w-4" />Import (CSV)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><ArrowUpFromLine className="h-4 w-4" />Import (CSV / Excel)</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {!isSuperAdmin ? (
               <p className="flex items-center gap-2 rounded-md border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
@@ -220,8 +220,13 @@ export default function ProductHubImportExport() {
                   </Select>
                   <p className="text-[11px] text-muted-foreground">Es werden ausschließlich Zeilen dieses Landes übernommen.</p>
                 </div>
-                <Input type="file" accept=".csv,text/csv" onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+                <Input
+                  type="file"
+                  accept=".csv,.xlsx,.xlsm,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }}
+                />
                 <p className="text-xs text-muted-foreground">
+                  Unterstützt <b>CSV</b> und <b>Excel (.xlsx/.xls)</b> – bei Excel wird das erste Tabellenblatt gelesen.
                   Zuordnung über <b>product_id</b>, sonst ALIX Product ID oder Gerätename. Es werden ausschließlich Preise
                   aktualisiert – Geräte werden nie angelegt oder gelöscht.
                 </p>
