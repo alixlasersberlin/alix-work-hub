@@ -199,7 +199,7 @@ export default function ProductHubImportExport() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><ArrowUpFromLine className="h-4 w-4" />Import (CSV)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><ArrowUpFromLine className="h-4 w-4" />Import (CSV / Excel)</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {!isSuperAdmin ? (
               <p className="flex items-center gap-2 rounded-md border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
