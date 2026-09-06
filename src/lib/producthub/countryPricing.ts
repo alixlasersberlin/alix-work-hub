@@ -145,7 +145,10 @@ export function effectivePrice(p: PhCountryPrice, which: 'min' | 'max'): number 
   const uvp = Number(p.uvp || 0);
   const mode = which === 'min' ? p.vk_min_mode : p.vk_max_mode;
   const val = Number((which === 'min' ? p.vk_min_value : p.vk_max_value) || 0);
-  return mode === 'percent' ? uvp * (1 + val / 100) : val;
+  if (mode !== 'percent') return val;
+  // VK Minimal ist immer ein Abschlag vom UVP
+  if (which === 'min') return uvp * (1 - Math.abs(val) / 100);
+  return uvp * (1 + val / 100);
 }
 
 export function formatMoney(value: number, def: PhCountryDef, currency?: string): string {

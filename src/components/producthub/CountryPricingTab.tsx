@@ -122,7 +122,7 @@ export function CountryPricingTab({ value, disabled, onChange }: Props) {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">{isPct ? 'Abweichung in % (z. B. -15)' : `Festpreis in ${price.currency}`}</Label>
+              <Label className="text-xs">{isPct ? (row.which === 'min' ? 'Abschlag vom UVP in % (z. B. 15)' : 'Abweichung in % (z. B. -15)') : `Festpreis in ${price.currency}`}</Label>
               <Input type="number" step="0.01" value={price[row.val] ?? ''} disabled={disabled}
                 onChange={e => patch({ [row.val]: e.target.value === '' ? null : Number(e.target.value) } as any)} />
             </div>
