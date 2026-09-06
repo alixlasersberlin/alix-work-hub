@@ -69,8 +69,9 @@ export function emptyCountryPrice(def: PhCountryDef): PhCountryPrice {
     input_mode: 'net',
     public: false,
     uvp: null,
-    vk_min_mode: 'fixed',
-    vk_min_value: null,
+    // Standard: VK Minimal als Abschlag vom UVP mit 10 %
+    vk_min_mode: 'percent',
+    vk_min_value: PH_DEFAULT_VK_MIN_DISCOUNT_PCT,
     vk_max_mode: 'fixed',
     vk_max_value: null,
     promo_active: false,
