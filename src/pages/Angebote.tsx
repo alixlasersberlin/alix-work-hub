@@ -773,6 +773,12 @@ export default function Angebote() {
                       </Button>
                     </TableCell>
                   </TableRow>
+                  <TableRow key={`${o.offerNumber}-note`} className="hover:bg-transparent border-b">
+                    <TableCell colSpan={9} className="pt-0 pb-3" onClick={(e) => e.stopPropagation()}>
+                      <OfferNoteRow offerNumber={o.offerNumber} initial={o.listNote || ''} />
+                    </TableCell>
+                  </TableRow>
+                  </>
                   );
 
                 })}
