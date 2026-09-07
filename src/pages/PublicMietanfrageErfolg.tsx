@@ -64,9 +64,9 @@ export default function PublicMietanfrageErfolg() {
               <div>
                 <p className="text-slate-900 font-light">{state.product_name}</p>
                 <p className="text-[13px] !text-slate-500 font-light">
-                  {money(state.monthly) ? `${money(state.monthly)} / Monat` : 'Preis auf Anfrage'}
-                  {state.term ? ` · ${state.term} Monate` : ''}
+                  {state.term ? `${state.term} Monate` : 'Mietanfrage'}
                 </p>
+
               </div>
             </div>
           )}
