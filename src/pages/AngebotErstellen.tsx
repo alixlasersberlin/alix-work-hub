@@ -1264,11 +1264,26 @@ export default function AngebotErstellen() {
     const totalsX = 130;
     doc.setDrawColor(20, 60, 110);
     doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
-    doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(20, 60, 110);
-    doc.text('Gesamt:', totalsX, finalY + 14);
-    doc.text(fmtMoney(totals.gross), RIGHT, finalY + 14, { align: 'right' });
+    if (activeDiscount > 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Zwischensumme:', totalsX, finalY + 13);
+      doc.text(fmtMoney(totals.gross), RIGHT, finalY + 13, { align: 'right' });
+      doc.text('Rabatt:', totalsX, finalY + 18);
+      doc.text(`-${fmtMoney(activeDiscount)}`, RIGHT, finalY + 18, { align: 'right' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('Gesamt:', totalsX, finalY + 25);
+      doc.text(fmtMoney(Math.max(0, totals.gross - activeDiscount)), RIGHT, finalY + 25, { align: 'right' });
+      finalY += 11;
+    } else {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Gesamt:', totalsX, finalY + 14);
+      doc.text(fmtMoney(totals.gross), RIGHT, finalY + 14, { align: 'right' });
+    }
+
 
     // Payment block
     let py = finalY + 24;
@@ -2841,8 +2856,15 @@ export default function AngebotErstellen() {
 
 
         <div className="rounded-xl border border-border bg-card card-glow p-4 flex flex-col items-end gap-1 text-sm">
-          <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(totals.gross)}</span></div>
+          {activeDiscount > 0 && (
+            <>
+              <div className="flex gap-8 text-sm"><span className="text-muted-foreground">Zwischensumme:</span><span className="w-32 text-right text-foreground">{fmtMoney(totals.gross)}</span></div>
+              <div className="flex gap-8 text-sm text-emerald-400"><span>Rabatt:</span><span className="w-32 text-right">-{fmtMoney(activeDiscount)}</span></div>
+            </>
+          )}
+          <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(Math.max(0, totals.gross - activeDiscount))}</span></div>
         </div>
+
 
 
       {/* Notes */}
