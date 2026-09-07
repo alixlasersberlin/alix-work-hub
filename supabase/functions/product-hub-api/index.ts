@@ -160,7 +160,7 @@ function applyLocale<T extends Record<string, any>>(row: T, tr: any, locale: str
   }
   if (tr.slug) out.localized_slug = tr.slug;
   if (tr.alt_texts && Object.keys(tr.alt_texts).length) out.alt_texts = tr.alt_texts;
-  out.locale_status = fallback.length ? "partial" : "translated";
+  out.locale_status = tr.status === "outdated" ? "outdated" : (fallback.length ? "partial" : "translated");
   out.translation_status = tr.status;
   out.translation_updated_at = tr.updated_at ?? null;
   if (fallback.length) out.fallback_locale = "de";
