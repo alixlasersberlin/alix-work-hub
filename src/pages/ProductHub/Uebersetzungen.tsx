@@ -16,6 +16,8 @@ import {
   phLoadGlossary, phSaveGlossaryTerm, phTranslate, type PhGlossaryTerm, type PhTrStatus,
 } from '@/lib/producthub/i18n';
 import { phListProducts } from '@/lib/producthub/api';
+import { WebsiteSyncPanel } from '@/components/producthub/WebsiteSyncPanel';
+
 import type { PhProduct } from '@/lib/producthub/config';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
