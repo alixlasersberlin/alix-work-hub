@@ -199,11 +199,43 @@ Deno.serve(async (req) => {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
     const isRateLimited = (msg?: string) => !!msg && /429|rate.?limit|high demand/i.test(msg)
 
+    // Anhänge (z. B. Angebots-PDF) unterstützt das Lovable-Email-SDK nicht
+    // -> in diesem Fall über den Resend-Gateway senden.
+    const sendWithAttachments = async (r: typeof recipients[number]) => {
+      const resendKey = Deno.env.get('RESEND_API_KEY')
+      if (!resendKey) throw new Error('RESEND_API_KEY not configured (für Anhänge erforderlich)')
+      const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'X-Connection-Api-Key': resendKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Alix Lasers ® <noreply@alixlasers.ai>',
+          to: [r.email],
+          subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
+          html,
+          text: plainText,
+          attachments: attachments.map((a: any) => ({
+            filename: a.filename,
+            content: a.content,
+            content_type: a.contentType || a.content_type || 'application/pdf',
+          })),
+        }),
+      })
+      const txt = await res.text()
+      if (!res.ok) throw new Error(`Resend ${res.status}: ${txt.slice(0, 300)}`)
+      try { return JSON.parse(txt) } catch { return { id: null } }
+    }
+
     const sendOne = async (r: typeof recipients[number], maxAttempts: number) => {
       let attempt = 0
       while (true) {
         try {
+          if (attachments.length > 0) return await sendWithAttachments(r)
           return await sendLovableEmail(
+
             {
               to: r.email,
               from: "Alix Lasers ® <noreply@alixlasers.ai>",
