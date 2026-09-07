@@ -131,7 +131,10 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  const activeCol: Record<string, string> = { com: "active_com", de: "active_de", at: "active_at", usa: "active_usa", dubai: "active_dubai" };
+  const activeCol: Record<string, string> = {
+    com: "active_com", de: "active_de", at: "active_at", usa: "active_usa",
+    dubai: "active_dubai", ae: "active_dubai", uae: "active_dubai",
+  };
 
   // Content Hub: nur freigegebene, veröffentlichte Snapshots ausliefern (EDIT ONCE · PUBLISH EVERYWHERE)
   const CH_ALLOWED = ["website", "offer", "datasheet", "comparison", "portal", "social"];
