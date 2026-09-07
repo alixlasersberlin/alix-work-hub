@@ -470,7 +470,7 @@ export default function AngebotErstellen() {
       const esc = q.replace(/[%,()]/g, ' ');
       const { data } = await supabase
         .from('zoho_items')
-        .select('id, name, sku, description, rate, tax_percentage, unit, status')
+        .select('id, name, sku, description, rate, tax_percentage, unit, status, image_url')
         .or(`name.ilike.%${esc}%,sku.ilike.%${esc}%,description.ilike.%${esc}%`)
         .order('name')
         .limit(50);
