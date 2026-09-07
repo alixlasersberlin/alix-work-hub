@@ -189,7 +189,8 @@ Deno.serve(async (req) => {
       .select(`id,${PUBLIC_FIELDS}`).eq("alix_product_id", productId).maybeSingle();
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
-    const pubProd = stripPrices(prod as any, channel);
+    const comps1 = await complianceMap(supabase, [(prod as any).id]);
+    const pubProd = withUae(stripPrices(prod as any, channel), comps1[(prod as any).id]);
 
     if (sub === "media") {
       const { data } = await supabase.from("ph_media")
