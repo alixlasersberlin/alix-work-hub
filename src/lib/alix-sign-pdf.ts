@@ -34,7 +34,7 @@ type Sig = {
 const fmtMoney = (n: number) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
 
-export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
+export function buildSignedPdfBase64(snap: Snapshot, sig: Sig | null): string {
   const doc = createPDF({ unit: 'mm', format: 'a4' });
   const PAGE_W = doc.internal.pageSize.getWidth();
   const PAGE_H = doc.internal.pageSize.getHeight();
@@ -118,7 +118,8 @@ export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
     doc.text(`Monatliche Rate: ${fmtMoney(_rate)}`, LEFT, py); py += 5;
   }
 
-  // ---------- Signature page ----------
+  // ---------- Signature page (nur beim signierten PDF) ----------
+  if (sig) {
   doc.addPage();
   let sy = 25;
   try {
@@ -182,6 +183,8 @@ export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
     doc.text(ln, LEFT, PAGE_H - 12 + i * 4);
   });
 
+  }
+
   // Page numbers
   const total = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= total; i++) {
@@ -193,4 +196,9 @@ export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
   const dataUri = doc.output('datauristring');
   const base64 = dataUri.split(',')[1] || '';
   return base64;
+}
+
+/** Angebots-PDF ohne Signaturseite – wird der Signatur-Einladung angehängt. */
+export function buildOfferPdfBase64(snap: Snapshot): string {
+  return buildSignedPdfBase64(snap, null);
 }

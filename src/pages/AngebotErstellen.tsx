@@ -26,6 +26,7 @@ import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
 import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/producthub/DeviceConfigDialog';
 import { deviceConfigLines, deviceConfigComplete, type DeviceConfig } from '@/lib/producthub/deviceConfig';
 import { PH_PRICE_COUNTRIES, readCountryPrice, uvpForPower, type PhCountryPrice } from '@/lib/producthub/countryPricing';
+import { buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
 
 
 
@@ -1865,10 +1866,12 @@ export default function AngebotErstellen() {
     const t = toast.loading('Alix Sign Anfrage wird erstellt...');
     try {
       const snap = buildOfferSnapshot();
+      const signPdfBase64 = (() => { try { return buildOfferPdfBase64(snap as any); } catch { return null; } })();
       const { data, error } = await supabase.functions.invoke('alix-sign-create', {
         body: {
           offer_number: offerNumber,
           offer_payload: snap,
+          pdf_base64: signPdfBase64,
           customer_id: selectedCustomer.id,
           customer_email: email,
           customer_name: selectedCustomer.contact_name || selectedCustomer.company_name,

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle2, ShieldCheck, FileSignature, Eraser } from 'lucide-react';
 import { toast } from 'sonner';
-import { buildSignedPdfBase64 } from '@/lib/alix-sign-pdf';
+import { buildSignedPdfBase64, buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
 import alixLogo from '@/assets/alix-lasers-logo.png.asset.json';
 
 const fmt = (n: number) =>
@@ -146,6 +146,20 @@ export default function AlixSignPublic() {
   const payType = snap?.payment?.type || '';
   const requiresCredit = ['Ratenzahlung', 'Leasing', 'Mietkauf', 'Alix Flex'].includes(payType);
 
+  const openOfferPdf = () => {
+    try {
+      const b64 = buildOfferPdfBase64(snap);
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      toast.error('PDF konnte nicht erstellt werden.');
+    }
+  };
+
   const onSubmit = async () => {
     if (!firstName.trim() || !lastName.trim()) return toast.error('Bitte Vor- und Nachname eingeben');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error('Bitte gültige E-Mail-Adresse eingeben');
@@ -219,6 +233,14 @@ export default function AlixSignPublic() {
 
 
         <section className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
+          <button
+            type="button"
+            onClick={openOfferPdf}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-[#14386e] px-4 py-3 text-sm font-semibold text-[#14386e] hover:bg-[#14386e]/5 transition"
+          >
+            <FileSignature className="w-4 h-4" />
+            Angebot als PDF öffnen
+          </button>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">Angebotsnummer</span>
             <span className="font-semibold text-slate-900">{data.offer_number}</span>
