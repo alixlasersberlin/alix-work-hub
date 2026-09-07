@@ -2025,7 +2025,10 @@ export default function AngebotErstellen() {
         </div>
       )}
 
+      {renderStepNav()}
+
       {renderStepper()}
+
 
       {step === 1 && (
       <>
