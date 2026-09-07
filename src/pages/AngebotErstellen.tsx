@@ -26,6 +26,7 @@ import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
 import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/producthub/DeviceConfigDialog';
 import { deviceConfigLines, deviceConfigComplete, type DeviceConfig } from '@/lib/producthub/deviceConfig';
 import { PH_PRICE_COUNTRIES, readCountryPrice, uvpForPower, type PhCountryPrice } from '@/lib/producthub/countryPricing';
+import { buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
 
 
 
