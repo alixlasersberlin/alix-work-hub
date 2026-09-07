@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
   const customerEmail: string | undefined = body?.customer_email
   const customerName: string | undefined = body?.customer_name
   const baseUrl: string = body?.base_url || 'https://alixwork.de'
+  const pdfBase64: string | null = typeof body?.pdf_base64 === 'string' && body.pdf_base64.length > 100 ? body.pdf_base64 : null
   const expiresDays: number = Math.min(Math.max(Number(body?.expires_days) || 14, 1), 60)
 
   if (!offerNumber || !offerPayload || !customerEmail) {
@@ -127,6 +128,9 @@ Deno.serve(async (req) => {
         recipientEmail: customerEmail,
         idempotencyKey: `alix-sign-invite-${ins.id}`,
         bcc: ['rde@alix-lasers.com', 'service@alix-lasers.com'],
+        attachments: pdfBase64
+          ? [{ filename: `Angebot-${offerNumber}.pdf`, content: pdfBase64, content_type: 'application/pdf' }]
+          : undefined,
         templateData: {
           customer_name: customerName,
           offer_number: offerNumber,

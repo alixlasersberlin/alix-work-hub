@@ -272,6 +272,7 @@ export default function Angebote() {
           body: {
             offer_number: offerNumber,
             offer_payload: offer,
+            pdf_base64: (() => { try { return buildOfferPdfBase64(offer as any); } catch { return null; } })(),
             customer_id: offer.customer?.id || null,
             customer_email: customerEmail,
             customer_name: offer.customer?.contact_name || offer.customer?.company_name || null,

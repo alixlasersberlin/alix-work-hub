@@ -1865,10 +1865,12 @@ export default function AngebotErstellen() {
     const t = toast.loading('Alix Sign Anfrage wird erstellt...');
     try {
       const snap = buildOfferSnapshot();
+      const signPdfBase64 = (() => { try { return buildOfferPdfBase64(snap as any); } catch { return null; } })();
       const { data, error } = await supabase.functions.invoke('alix-sign-create', {
         body: {
           offer_number: offerNumber,
           offer_payload: snap,
+          pdf_base64: signPdfBase64,
           customer_id: selectedCustomer.id,
           customer_email: email,
           customer_name: selectedCustomer.contact_name || selectedCustomer.company_name,
