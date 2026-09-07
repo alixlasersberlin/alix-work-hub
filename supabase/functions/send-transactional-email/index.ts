@@ -108,6 +108,10 @@ Deno.serve(async (req) => {
       bccEmails = body.bcc.filter((e: any) => typeof e === 'string' && e.includes('@'))
     }
     if (body.skipDefaultCopies === true) skipDefaultCopies = true
+    if (Array.isArray(body.attachments)) {
+      attachments = body.attachments.filter((a: any) => a && typeof a.filename === 'string' && typeof a.content === 'string')
+    }
+
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
       status: 400,
