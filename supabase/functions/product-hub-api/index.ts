@@ -181,6 +181,9 @@ Deno.serve(async (req) => {
   const rawChannel = url.searchParams.get("channel");
   // alix-lasers.ae darf als ae/uae/dubai angefragt werden – intern immer "dubai"
   const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : rawChannel;
+  const rawLocale = (url.searchParams.get("locale") || "de").toLowerCase();
+  const locale = LOCALES.includes(rawLocale) ? rawLocale : "de";
+
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
