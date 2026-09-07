@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { OfferCreatorChart } from '@/components/sales/OfferCreatorChart';
+import { buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
 import {
   listOffers,
   getOffer,
