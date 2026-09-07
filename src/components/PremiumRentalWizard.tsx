@@ -403,6 +403,12 @@ export default function PremiumRentalWizard() {
                           <p className="mt-3 text-[12px] !text-slate-500">
                             {d.delivery_days ? `Lieferzeit: ${d.delivery_days} Tage` : 'Lieferzeit auf Anfrage'}
                           </p>
+                          {d.from_monthly > 0 && (
+                            <p className="mt-1 text-[15px] text-slate-900 font-light">
+                              ab {money(d.from_monthly, d.currency)} / Monat
+                            </p>
+                          )}
+
 
                         </div>
                       </div>
