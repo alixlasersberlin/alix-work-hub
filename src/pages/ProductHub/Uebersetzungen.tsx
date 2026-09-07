@@ -179,7 +179,10 @@ export default function Uebersetzungen() {
           </div>
         </TabsContent>
 
+        <TabsContent value="websync"><WebsiteSyncPanel canWrite /></TabsContent>
+
         <TabsContent value="glossar"><GlossaryPanel /></TabsContent>
+
       </Tabs>
 
       <AlertDialog open={confirmAll} onOpenChange={setConfirmAll}>
