@@ -50,7 +50,7 @@ export function OfferCreatorChart({
   offers: OfferSnapshot[];
   isSigned: (o: OfferSnapshot) => boolean;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [period, setPeriod] = useState<string>('all');
 
   const stats = useMemo(() => {
