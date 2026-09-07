@@ -1037,7 +1037,7 @@ html[data-aurora="2"] [data-status="offen"]::before {
 }
 
 /* Destructive badge — subtle inner glow */
-html[data-aurora="2"] [class*="bg-destructive"] {
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], [data-slot="badge"])[class~="bg-destructive"] {
   background: linear-gradient(180deg,
     hsl(var(--destructive)) 0%,
     hsl(var(--destructive) / 0.85) 100%);
