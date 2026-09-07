@@ -131,6 +131,7 @@ export default function AngebotErstellen() {
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
   const [payDiscount, setPayDiscount] = useState<string>('');
+  const [payDiscountMode, setPayDiscountMode] = useState<'eur' | 'pct'>('eur');
   // Preiseingabe: 'gross' = Einzelpreise sind Bruttopreise (inkl. MwSt), 'net' = Nettopreise
   const [priceMode, setPriceMode] = useState<'gross' | 'net'>('gross');
 
