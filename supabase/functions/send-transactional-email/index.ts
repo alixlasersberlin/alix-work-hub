@@ -91,6 +91,8 @@ Deno.serve(async (req) => {
   let extraCc: string[] = []
   let bccEmails: string[] = []
   let skipDefaultCopies = false
+  let attachments: Array<{ filename: string; content: string; contentType?: string; content_type?: string }> = []
+
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
