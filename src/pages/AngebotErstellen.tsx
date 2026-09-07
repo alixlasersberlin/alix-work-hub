@@ -1363,7 +1363,7 @@ export default function AngebotErstellen() {
         doc.setFontSize(9);
         doc.setTextColor(90, 90, 90);
         doc.text(
-          `${fmtMoney(l.rate)} · ${l.tax_percentage}% MwSt · Menge ${l.quantity}`,
+          `${fmtMoney(l.rate)} · Menge ${l.quantity}`,
           textX, ay + 9,
         );
 
