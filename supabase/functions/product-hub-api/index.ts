@@ -113,6 +113,57 @@ async function complianceMap(supabase: any, ids: string[]) {
   return Object.fromEntries((data || []).map((r: any) => [r.product_id, r]));
 }
 
+/**
+ * Mehrsprachigkeit: Deutsch ist Master. Für andere Sprachen werden ausschließlich
+ * freigegebene/veröffentlichte Übersetzungen ausgeliefert; fehlende Felder fallen
+ * kontrolliert auf Deutsch zurück und werden in `fallback_fields` benannt.
+ */
+const LOCALES = ["de", "en", "es", "ru", "ar"];
+const TR_TEXT = ["name", "short_description", "long_description", "marketing_text", "notices", "seo_title", "seo_description"];
+const TR_LIST = ["highlights", "benefits", "applications", "treatments", "features"];
+
+async function translationMap(supabase: any, ids: string[], locale: string) {
+  if (!ids.length || locale === "de") return {} as Record<string, any>;
+  const { data } = await supabase.from("ph_product_translations")
+    .select("*").in("product_id", ids).eq("locale", locale).in("status", ["approved", "published"]);
+  return Object.fromEntries((data || []).map((r: any) => [r.product_id, r]));
+}
+
+function applyLocale<T extends Record<string, any>>(row: T, tr: any, locale: string): T {
+  const out: Record<string, any> = { ...row, locale, rtl: locale === "ar" };
+  if (locale === "de") {
+    out.locale_status = "master";
+    out.fallback_fields = [];
+    return out as T;
+  }
+  if (!tr) {
+    out.locale_status = "fallback";
+    out.fallback_locale = "de";
+    out.fallback_fields = [...TR_TEXT, ...TR_LIST].filter((f) => row[f] !== undefined);
+    return out as T;
+  }
+  const fallback: string[] = [];
+  for (const f of TR_TEXT) {
+    const v = tr[f];
+    if (typeof v === "string" && v.trim()) out[f] = v;
+    else if (row[f] !== undefined && row[f] !== null) fallback.push(f);
+  }
+  for (const f of TR_LIST) {
+    const v = tr[f];
+    if (Array.isArray(v) && v.length) out[f] = v;
+  }
+  if (tr.slug) out.localized_slug = tr.slug;
+  if (tr.alt_texts && Object.keys(tr.alt_texts).length) out.alt_texts = tr.alt_texts;
+  out.locale_status = fallback.length ? "partial" : "translated";
+  out.translation_status = tr.status;
+  out.translation_updated_at = tr.updated_at ?? null;
+  if (fallback.length) out.fallback_locale = "de";
+  out.fallback_fields = fallback;
+  return out as T;
+}
+
+
+
 
 
 Deno.serve(async (req) => {
