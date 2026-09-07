@@ -131,11 +131,20 @@ export default function AngebotErstellen() {
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
   const [payDiscount, setPayDiscount] = useState<string>('');
+  const [payDiscountMode, setPayDiscountMode] = useState<'eur' | 'pct'>('eur');
   // Preiseingabe: 'gross' = Einzelpreise sind Bruttopreise (inkl. MwSt), 'net' = Nettopreise
   const [priceMode, setPriceMode] = useState<'gross' | 'net'>('gross');
 
   const [payTerm, setPayTerm] = useState<number>(24);
   const [payRate, setPayRate] = useState<string>('');
+  // Rabatt in € oder % (bei Alix Flex / Direktkauf)
+  const discountAmount = (() => {
+    const v = parseFloat(payDiscount) || 0;
+    const p = parseFloat(payPrice) || 0;
+    return payDiscountMode === 'pct' ? Math.max(0, (p * v) / 100) : Math.max(0, v);
+  })();
+  const discountApplies = payType === 'Direktkauf' || payType === 'Alix Flex';
+  const activeDiscount = discountApplies ? discountAmount : 0;
   const [loading, setLoading] = useState(true);
 
   const [leadsOpen, setLeadsOpen] = useState(false);
@@ -341,6 +350,10 @@ export default function AngebotErstellen() {
               if (snap.payment.price) setPayPrice(String(snap.payment.price));
               if (snap.payment.down) setPayDown(String(snap.payment.down));
               if (snap.payment.discount) setPayDiscount(String(snap.payment.discount));
+              if ((snap.payment as any).discountMode) {
+                setPayDiscountMode((snap.payment as any).discountMode);
+                if ((snap.payment as any).discountInput != null) setPayDiscount(String((snap.payment as any).discountInput));
+              }
               if (snap.payment.term) setPayTerm(Number(snap.payment.term));
               if ((snap.payment as any).rate) setPayRate(String((snap.payment as any).rate));
             }
@@ -1277,7 +1290,7 @@ export default function AngebotErstellen() {
     doc.setTextColor(60, 60, 60);
     py += 5;
     if (payType === 'Direktkauf') {
-      const rabatt = parseFloat(payDiscount) || 0;
+      const rabatt = activeDiscount;
       const amount = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - rabatt);
       if (parseFloat(payDown) > 0) {
         doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5;
@@ -1296,9 +1309,10 @@ export default function AngebotErstellen() {
       doc.text(`Monatliche Miete: ${fmtMoney(monatlich)}`, LEFT, py); py += 5;
       doc.text(`Restwert der Maschine: ${fmtMoney(restwert)}`, LEFT, py); py += 5;
     } else {
-      const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+      const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount);
       const rate = payTerm > 0 ? base / payTerm : 0;
       if (parseFloat(payDown) > 0) { doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5; }
+      if (activeDiscount > 0) { doc.text(`Rabatt: -${fmtMoney(activeDiscount)}`, LEFT, py); py += 5; }
       doc.text(`Basis: ${fmtMoney(base)}`, LEFT, py); py += 5;
       doc.text(`Laufzeit: ${payTerm} Monate`, LEFT, py); py += 5;
       doc.text(`Monatliche Rate: ${fmtMoney(rate)}`, LEFT, py); py += 5;
@@ -1616,7 +1630,7 @@ export default function AngebotErstellen() {
     priceMode,
     lines: lines.filter(l => l.name && l.quantity > 0),
     totals,
-    payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, discount: parseFloat(payDiscount) || 0, term: payTerm, rate: parseFloat(payRate) || 0 },
+    payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, discount: activeDiscount, discountInput: parseFloat(payDiscount) || 0, discountMode: payDiscountMode, term: payTerm, rate: parseFloat(payRate) || 0 },
     createdAt: new Date().toISOString(),
   });
 
@@ -1749,7 +1763,7 @@ export default function AngebotErstellen() {
           billing_address: (selectedCustomer as any).billing_address || null,
           shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
           deposit_amount: parseFloat(payDown) || null,
-          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, offer_date: offerDate, delivery_week: deliveryWeek || null, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, discount: parseFloat(payDiscount) || 0, term: payTerm, rate: parseFloat(payRate) || 0 } } as any,
+          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, offer_date: offerDate, delivery_week: deliveryWeek || null, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, discount: activeDiscount, discountInput: parseFloat(payDiscount) || 0, discountMode: payDiscountMode, term: payTerm, rate: parseFloat(payRate) || 0 } } as any,
         } as any)
         .select('id')
         .single();
@@ -2731,16 +2745,28 @@ export default function AngebotErstellen() {
               className="bg-secondary border-border"
             />
           </div>
-          {payType === 'Direktkauf' && (
+          {discountApplies && (
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Rabatt (€)</Label>
-              <Input
-                type="number" min={0} step="0.01"
-                value={payDiscount}
-                onChange={e => setPayDiscount(e.target.value)}
-                placeholder="0,00"
-                className="bg-secondary border-border"
-              />
+              <Label className="text-xs text-muted-foreground">Rabatt</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number" min={0} step="0.01"
+                  value={payDiscount}
+                  onChange={e => setPayDiscount(e.target.value)}
+                  placeholder="0,00"
+                  className="bg-secondary border-border"
+                />
+                <Select value={payDiscountMode} onValueChange={(v: any) => setPayDiscountMode(v)}>
+                  <SelectTrigger className="w-20 bg-secondary border-border"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="eur">€</SelectItem>
+                    <SelectItem value="pct">%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {activeDiscount > 0 && (
+                <div className="text-xs text-emerald-400">Rabatt: -{fmtMoney(activeDiscount)}</div>
+              )}
             </div>
           )}
           {payType !== 'Direktkauf' && (
@@ -2772,7 +2798,7 @@ export default function AngebotErstellen() {
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Basis (€)</Label>
               <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
-                {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (payType === 'Direktkauf' ? (parseFloat(payDiscount) || 0) : 0)))}
+                {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount))}
 
               </div>
             </div>
@@ -2785,10 +2811,10 @@ export default function AngebotErstellen() {
               <>
                 <div className="text-xs text-muted-foreground">Zu zahlen ({payType})</div>
                 <div className="text-2xl font-bold text-primary">
-                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (parseFloat(payDiscount) || 0)))}
+                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount))}
                 </div>
-                {(parseFloat(payDiscount) || 0) > 0 && (
-                  <div className="text-xs text-emerald-400">abzüglich Rabatt {fmtMoney(parseFloat(payDiscount) || 0)}</div>
+                {activeDiscount > 0 && (
+                  <div className="text-xs text-emerald-400">abzüglich Rabatt {fmtMoney(activeDiscount)}</div>
                 )}
                 <div className="text-xs text-muted-foreground mt-1">Einmalzahlung</div>
 
@@ -2812,11 +2838,14 @@ export default function AngebotErstellen() {
                 <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
                 <div className="text-2xl font-bold text-primary">
                   {(() => {
-                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount);
                     const rate = payTerm > 0 ? base / payTerm : 0;
                     return fmtMoney(rate);
                   })()}
                 </div>
+                {activeDiscount > 0 && (
+                  <div className="text-xs text-emerald-400">abzüglich Rabatt {fmtMoney(activeDiscount)}</div>
+                )}
                 <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate</div>
               </>
             )}
