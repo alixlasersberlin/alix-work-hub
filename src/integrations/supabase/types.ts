@@ -36823,6 +36823,238 @@ export type Database = {
         }
         Relationships: []
       }
+      ph_lang_sync_fields: {
+        Row: {
+          action: string
+          created_at: string
+          field: string
+          id: string
+          message: string | null
+          remote_field: string | null
+          run_id: string
+          value_after: string | null
+          value_before: string | null
+          write_status: string | null
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          field: string
+          id?: string
+          message?: string | null
+          remote_field?: string | null
+          run_id: string
+          value_after?: string | null
+          value_before?: string | null
+          write_status?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          field?: string
+          id?: string
+          message?: string | null
+          remote_field?: string | null
+          run_id?: string
+          value_after?: string | null
+          value_before?: string | null
+          write_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_lang_sync_fields_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ph_lang_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_lang_sync_map: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          product_id: string
+          remote_product_id: string
+          remote_url: string | null
+          site_code: string
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id: string
+          remote_product_id: string
+          remote_url?: string | null
+          site_code: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id?: string
+          remote_product_id?: string
+          remote_url?: string | null
+          site_code?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_lang_sync_map_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_lang_sync_runs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          errors: Json
+          fallback_detected: boolean
+          fields_changed: number
+          fields_checked: number
+          fields_unchanged: number
+          id: string
+          locale: string
+          mode: string
+          product_id: string
+          publish_allowed: boolean
+          remote_product_id: string | null
+          result: string
+          rolled_back_at: string | null
+          rolled_back_run_id: string | null
+          site_code: string
+          site_label: string | null
+          summary: Json
+          target_url: string | null
+          translation_status: string | null
+          warnings: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          errors?: Json
+          fallback_detected?: boolean
+          fields_changed?: number
+          fields_checked?: number
+          fields_unchanged?: number
+          id?: string
+          locale: string
+          mode?: string
+          product_id: string
+          publish_allowed?: boolean
+          remote_product_id?: string | null
+          result?: string
+          rolled_back_at?: string | null
+          rolled_back_run_id?: string | null
+          site_code: string
+          site_label?: string | null
+          summary?: Json
+          target_url?: string | null
+          translation_status?: string | null
+          warnings?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          errors?: Json
+          fallback_detected?: boolean
+          fields_changed?: number
+          fields_checked?: number
+          fields_unchanged?: number
+          id?: string
+          locale?: string
+          mode?: string
+          product_id?: string
+          publish_allowed?: boolean
+          remote_product_id?: string | null
+          result?: string
+          rolled_back_at?: string | null
+          rolled_back_run_id?: string | null
+          site_code?: string
+          site_label?: string | null
+          summary?: Json
+          target_url?: string | null
+          translation_status?: string | null
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_lang_sync_runs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ph_lang_sync_runs_rolled_back_run_id_fkey"
+            columns: ["rolled_back_run_id"]
+            isOneToOne: false
+            referencedRelation: "ph_lang_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_lang_sync_targets: {
+        Row: {
+          base_url: string
+          created_at: string
+          id: string
+          locale: string
+          note: string | null
+          path_prefix: string
+          publish_enabled: boolean
+          site_code: string
+          site_label: string
+          structure_status: string
+          target_system: string
+          updated_at: string
+          write_endpoint: string | null
+          write_secret_name: string | null
+        }
+        Insert: {
+          base_url: string
+          created_at?: string
+          id?: string
+          locale: string
+          note?: string | null
+          path_prefix?: string
+          publish_enabled?: boolean
+          site_code: string
+          site_label: string
+          structure_status?: string
+          target_system?: string
+          updated_at?: string
+          write_endpoint?: string | null
+          write_secret_name?: string | null
+        }
+        Update: {
+          base_url?: string
+          created_at?: string
+          id?: string
+          locale?: string
+          note?: string | null
+          path_prefix?: string
+          publish_enabled?: boolean
+          site_code?: string
+          site_label?: string
+          structure_status?: string
+          target_system?: string
+          updated_at?: string
+          write_endpoint?: string | null
+          write_secret_name?: string | null
+        }
+        Relationships: []
+      }
       ph_marketing: {
         Row: {
           approved: boolean

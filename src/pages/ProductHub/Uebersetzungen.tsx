@@ -16,6 +16,8 @@ import {
   phLoadGlossary, phSaveGlossaryTerm, phTranslate, type PhGlossaryTerm, type PhTrStatus,
 } from '@/lib/producthub/i18n';
 import { phListProducts } from '@/lib/producthub/api';
+import { WebsiteSyncPanel } from '@/components/producthub/WebsiteSyncPanel';
+
 import type { PhProduct } from '@/lib/producthub/config';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -95,8 +97,10 @@ export default function Uebersetzungen() {
       <Tabs defaultValue="uebersicht">
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+          <TabsTrigger value="websync">Website Sync</TabsTrigger>
           <TabsTrigger value="glossar">Translation Glossary</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="uebersicht" className="space-y-4">
           <Card>
@@ -177,7 +181,10 @@ export default function Uebersetzungen() {
           </div>
         </TabsContent>
 
+        <TabsContent value="websync"><WebsiteSyncPanel canWrite /></TabsContent>
+
         <TabsContent value="glossar"><GlossaryPanel /></TabsContent>
+
       </Tabs>
 
       <AlertDialog open={confirmAll} onOpenChange={setConfirmAll}>

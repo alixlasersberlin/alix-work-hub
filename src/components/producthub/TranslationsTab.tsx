@@ -12,6 +12,8 @@ import {
   phApproveTranslation, phIsRtl, phLoadTranslations, phSaveTranslation, phTranslate,
   type PhTranslation, type PhTrStatus,
 } from '@/lib/producthub/i18n';
+import { phLastSyncByLocale } from '@/lib/producthub/websiteSync';
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -48,8 +50,10 @@ export function TranslationsTab({ productId, master, canWrite }: {
   const [saving, setSaving] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<string[] | null>(null);
+  const [lastSync, setLastSync] = useState<Record<string, string>>({});
 
   const rtl = phIsRtl(locale);
+
 
   const load = async () => {
     setLoading(true);
@@ -58,6 +62,8 @@ export function TranslationsTab({ productId, master, canWrite }: {
       const map: Record<string, PhTranslation> = {};
       list.forEach(r => { map[r.locale] = r; });
       setRows(map);
+      setLastSync(await phLastSyncByLocale(productId).catch(() => ({})));
+
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   };
@@ -187,6 +193,17 @@ export function TranslationsTab({ productId, master, canWrite }: {
                 · Freigegeben am {new Date(rows[locale]!.approved_at!).toLocaleDateString('de-DE')}
               </span>
             )}
+            {locale !== 'de' && (
+              <span className="text-xs">
+                {lastSync[locale]
+                  ? <span className="text-emerald-500">· Website synchronisiert ✓ {new Date(lastSync[locale]).toLocaleString('de-DE')}</span>
+                  : <span className="text-muted-foreground">· Nicht synchronisiert</span>}
+                {status === 'outdated' && lastSync[locale] && (
+                  <span className="text-amber-500"> · Website-Version weiterhin online, erneute Prüfung erforderlich</span>
+                )}
+              </span>
+            )}
+
             <div className="flex-1" />
             {canWrite && locale !== 'de' && (
               <Button size="sm" variant="outline" disabled={aiBusy} onClick={() => requestAi([locale])}>
