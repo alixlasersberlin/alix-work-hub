@@ -2411,6 +2411,10 @@ function AppRoutes() {
         <Route path="/beratung/premium" element={<PublicBeratungPremium />} />
         <Route path="/beratung-alix" element={<PublicBeratungPremium />} />
         <Route path="/angebot" element={<PublicBeratung />} />
+        <Route path="/miete" element={<Navigate to="/miete/premium" replace />} />
+        <Route path="/miete/premium" element={<PublicMietanfrage />} />
+        <Route path="/miete/premium/erfolgreich" element={<PublicMietanfrageErfolg />} />
+
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />
         <Route path="/kunde" element={<CustomerPortalLayout />}>
           <Route index element={<CustomerPortalDashboard />} />
