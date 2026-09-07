@@ -127,7 +127,9 @@ Deno.serve(async (req) => {
   const idx = parts.indexOf("products");
   const productId = idx >= 0 ? parts[idx + 1] : undefined;
   const sub = idx >= 0 ? parts[idx + 2] : undefined;
-  const channel = url.searchParams.get("channel");
+  const rawChannel = url.searchParams.get("channel");
+  // alix-lasers.ae darf als ae/uae/dubai angefragt werden – intern immer "dubai"
+  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : rawChannel;
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
