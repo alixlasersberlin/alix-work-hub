@@ -193,6 +193,17 @@ export function TranslationsTab({ productId, master, canWrite }: {
                 · Freigegeben am {new Date(rows[locale]!.approved_at!).toLocaleDateString('de-DE')}
               </span>
             )}
+            {locale !== 'de' && (
+              <span className="text-xs">
+                {lastSync[locale]
+                  ? <span className="text-emerald-500">· Website synchronisiert ✓ {new Date(lastSync[locale]).toLocaleString('de-DE')}</span>
+                  : <span className="text-muted-foreground">· Nicht synchronisiert</span>}
+                {status === 'outdated' && lastSync[locale] && (
+                  <span className="text-amber-500"> · Website-Version weiterhin online, erneute Prüfung erforderlich</span>
+                )}
+              </span>
+            )}
+
             <div className="flex-1" />
             {canWrite && locale !== 'de' && (
               <Button size="sm" variant="outline" disabled={aiBusy} onClick={() => requestAi([locale])}>
