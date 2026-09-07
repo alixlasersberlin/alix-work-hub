@@ -81,7 +81,7 @@ export default function ProductHubImportExport() {
             formatMoney(effectivePrice(p, 'min'), def, p.currency),
             formatMoney(effectivePrice(p, 'max'), def, p.currency),
             ...PH_POWER_COLUMNS.map(({ power }) =>
-              Number(p.uvp || 0) ? formatMoney(uvpForPower(p, power), def, p.currency) : '—'),
+              readPowerTier(p, power).enabled ? formatMoney(uvpForPower(p, power), def, p.currency) : '—'),
           ]);
         }
       }
