@@ -2745,16 +2745,28 @@ export default function AngebotErstellen() {
               className="bg-secondary border-border"
             />
           </div>
-          {payType === 'Direktkauf' && (
+          {discountApplies && (
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Rabatt (€)</Label>
-              <Input
-                type="number" min={0} step="0.01"
-                value={payDiscount}
-                onChange={e => setPayDiscount(e.target.value)}
-                placeholder="0,00"
-                className="bg-secondary border-border"
-              />
+              <Label className="text-xs text-muted-foreground">Rabatt</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number" min={0} step="0.01"
+                  value={payDiscount}
+                  onChange={e => setPayDiscount(e.target.value)}
+                  placeholder="0,00"
+                  className="bg-secondary border-border"
+                />
+                <Select value={payDiscountMode} onValueChange={(v: any) => setPayDiscountMode(v)}>
+                  <SelectTrigger className="w-20 bg-secondary border-border"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="eur">€</SelectItem>
+                    <SelectItem value="pct">%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {activeDiscount > 0 && (
+                <div className="text-xs text-emerald-400">Rabatt: -{fmtMoney(activeDiscount)}</div>
+              )}
             </div>
           )}
           {payType !== 'Direktkauf' && (
