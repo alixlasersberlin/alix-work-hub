@@ -124,10 +124,16 @@ const TR_LIST = ["highlights", "benefits", "applications", "treatments", "featur
 
 async function translationMap(supabase: any, ids: string[], locale: string) {
   if (!ids.length || locale === "de") return {} as Record<string, any>;
+  // Freigegebene/veröffentlichte Sprachfassungen werden ausgeliefert.
+  // "outdated" (deutscher Mastertext wurde geändert) wird nur ausgeliefert, wenn die Fassung
+  // zuvor freigegeben war – damit verschwindet kein Website-Text durch eine kleine DE-Korrektur.
   const { data } = await supabase.from("ph_product_translations")
-    .select("*").in("product_id", ids).eq("locale", locale).in("status", ["approved", "published"]);
-  return Object.fromEntries((data || []).map((r: any) => [r.product_id, r]));
+    .select("*").in("product_id", ids).eq("locale", locale)
+    .in("status", ["approved", "published", "outdated"]);
+  const usable = (data || []).filter((r: any) => r.status !== "outdated" || !!r.approved_at);
+  return Object.fromEntries(usable.map((r: any) => [r.product_id, r]));
 }
+
 
 function applyLocale<T extends Record<string, any>>(row: T, tr: any, locale: string): T {
   const out: Record<string, any> = { ...row, locale, rtl: locale === "ar" };
@@ -154,7 +160,7 @@ function applyLocale<T extends Record<string, any>>(row: T, tr: any, locale: str
   }
   if (tr.slug) out.localized_slug = tr.slug;
   if (tr.alt_texts && Object.keys(tr.alt_texts).length) out.alt_texts = tr.alt_texts;
-  out.locale_status = fallback.length ? "partial" : "translated";
+  out.locale_status = tr.status === "outdated" ? "outdated" : (fallback.length ? "partial" : "translated");
   out.translation_status = tr.status;
   out.translation_updated_at = tr.updated_at ?? null;
   if (fallback.length) out.fallback_locale = "de";
