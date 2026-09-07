@@ -1260,15 +1260,8 @@ export default function AngebotErstellen() {
       finalY = TOP_CONTENT;
     }
 
-    // Totals box
+    // Totals box (ohne MwSt-Ausweis)
     const totalsX = 130;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.text('Netto:', totalsX, finalY);
-    doc.text(fmtMoney(totals.net), RIGHT, finalY, { align: 'right' });
-    doc.text('MwSt:', totalsX, finalY + 5);
-    doc.text(fmtMoney(totals.tax), RIGHT, finalY + 5, { align: 'right' });
     doc.setDrawColor(20, 60, 110);
     doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
     doc.setFont('helvetica', 'bold');
