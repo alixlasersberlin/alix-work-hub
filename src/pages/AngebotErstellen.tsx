@@ -350,7 +350,10 @@ export default function AngebotErstellen() {
               if (snap.payment.price) setPayPrice(String(snap.payment.price));
               if (snap.payment.down) setPayDown(String(snap.payment.down));
               if (snap.payment.discount) setPayDiscount(String(snap.payment.discount));
-              if ((snap.payment as any).discountMode) setPayDiscountMode((snap.payment as any).discountMode);
+              if ((snap.payment as any).discountMode) {
+                setPayDiscountMode((snap.payment as any).discountMode);
+                if ((snap.payment as any).discountInput != null) setPayDiscount(String((snap.payment as any).discountInput));
+              }
               if (snap.payment.term) setPayTerm(Number(snap.payment.term));
               if ((snap.payment as any).rate) setPayRate(String((snap.payment as any).rate));
             }
