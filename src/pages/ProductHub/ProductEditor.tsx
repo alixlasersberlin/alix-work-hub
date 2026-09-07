@@ -26,6 +26,8 @@ import { AiFieldButton } from '@/components/producthub/AiFieldButton';
 import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
 import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
 import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
+import { TranslationsTab } from '@/components/producthub/TranslationsTab';
+
 import { catalogsForProduct } from '@/lib/producthub/catalog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -392,9 +394,10 @@ export default function ProductHubEditor() {
 
       <Tabs defaultValue="allgemein">
         <TabsList className="flex-wrap h-auto">
-          {['allgemein', 'technik', 'konfiguration', 'preise', 'anwendungen', 'smartki', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'preislisten', 'historie'].map(t => (
-            <TabsTrigger key={t} value={t} className="capitalize">{t === 'smartki' ? 'Smart KI' : t}</TabsTrigger>
+          {['allgemein', 'technik', 'konfiguration', 'preise', 'anwendungen', 'smartki', 'sprachen', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'preislisten', 'historie'].map(t => (
+            <TabsTrigger key={t} value={t} className="capitalize">{t === 'smartki' ? 'Smart KI' : t === 'sprachen' ? 'Sprachen' : t}</TabsTrigger>
           ))}
+
         </TabsList>
 
         <TabsContent value="preise">
@@ -791,7 +794,14 @@ export default function ProductHubEditor() {
             </Table>
           </CardContent></Card>
         </TabsContent>
+
+        <TabsContent value="sprachen">
+          {id
+            ? <TranslationsTab productId={id} master={form} canWrite={canWrite} />
+            : <Card><CardContent className="p-6 text-sm text-muted-foreground">Bitte das Gerät zuerst speichern.</CardContent></Card>}
+        </TabsContent>
       </Tabs>
+
 
       <AlertDialog open={!!confirmTexts} onOpenChange={(o) => { if (!o) setConfirmTexts(null); }}>
         <AlertDialogContent>

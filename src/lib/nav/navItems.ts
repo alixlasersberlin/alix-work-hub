@@ -680,7 +680,9 @@ export const navItems: NavItem[] = [
     children: [
       { path: '/product-hub', label: 'Übersicht', icon: LayoutDashboard, roles: null },
       { path: '/product-hub/geraete', label: 'Geräte', icon: Cpu, roles: null },
+      { path: '/product-hub/uebersetzungen', label: 'Übersetzungen', icon: Globe, roles: null },
       { path: '/product-hub/import-export', label: 'Import/Export', icon: FileSpreadsheet, roles: null },
+
       { path: '/product-hub/preislisten', label: 'Preislisten & Kataloge', icon: BookOpen, roles: null },
       { path: '/product-hub/freigaben', label: 'Freigaben', icon: ShieldCheck, roles: null },
       { path: '/product-hub/validierung', label: 'Validierung', icon: ShieldCheck, roles: ['Super Admin', 'Admin'] },
