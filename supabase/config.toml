@@ -461,3 +461,9 @@ verify_jwt = false
 [functions.announce-capa-cockpit]
 verify_jwt = false
 
+
+[functions.rental-devices]
+verify_jwt = false
+
+[functions.rental-request-submit]
+verify_jwt = false

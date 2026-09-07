@@ -98,3 +98,4 @@
 - [Mobile WhatsApp Outbound](mem://features/mobile-whatsapp-outbound) — Edge Function ac-whatsapp-send, Bucket inbox-media, Quick Replies, Statuswebhooks, Ticket aus Chat
 - [ALIX AI Communication Assistant](mem://features/alix-ai-assistant) — Prompt 5: analyze-conversation, ai_classifications/ai_feedback, AlixAiCard, nur Vorschläge, kein Auto-Versand
 - [Product Hub Preislisten & Kataloge](mem://features/product-hub-kataloge) — Katalogmodul /product-hub/preislisten, ph_catalog_*, Online-Katalog /preisliste/:slug, Masterpreise bleiben unverändert
+- [ALIX Premium Mietanfrage](mem://features/mietanfrage-premium) — Miet-Wizard /miete/premium im Beratung-Premium-Design, rental-devices/rental-request-submit, Leads in sales_leads
