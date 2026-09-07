@@ -95,8 +95,10 @@ export default function Uebersetzungen() {
       <Tabs defaultValue="uebersicht">
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+          <TabsTrigger value="websync">Website Sync</TabsTrigger>
           <TabsTrigger value="glossar">Translation Glossary</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="uebersicht" className="space-y-4">
           <Card>
