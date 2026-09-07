@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
       const { data: rbRun } = await admin.from("ph_lang_sync_runs").insert({
         product_id: run.product_id, locale: run.locale, site_code: run.site_code, site_label: run.site_label,
         target_url: run.target_url, remote_product_id: run.remote_product_id, mode: "rollback",
-        result: "pending", rolled_back_run_id: run.id, created_by: user.id,
+        result: "pending", rolled_back_run_id: run.id, created_by: userId,
       }).select().single();
       for (const f of fields || []) {
         const r = await writeCall(target.write_endpoint!, target.write_secret_name!, {
@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
         mode: "dry_run", result: errors.length ? "blocked" : "ok",
         translation_status: trStatus, fallback_detected: fallbackDetected, publish_allowed: publishAllowed,
         fields_checked: plan.length, fields_changed: changed.length, fields_unchanged: unchanged.length,
-        warnings, errors, summary, created_by: user.id,
+        warnings, errors, summary, created_by: userId,
       }).select().single();
       if (run && plan.length) {
         await admin.from("ph_lang_sync_fields").insert(plan.map((p) => ({
@@ -356,7 +356,7 @@ Deno.serve(async (req) => {
           mode: "publish", result: "blocked", translation_status: trStatus,
           fallback_detected: fallbackDetected, publish_allowed: false,
           fields_checked: plan.length, fields_changed: 0, fields_unchanged: unchanged.length,
-          warnings, errors: [...errors, reason], summary, created_by: user.id,
+          warnings, errors: [...errors, reason], summary, created_by: userId,
         });
         return json(409, { error: reason, warnings, errors });
       }
@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
         mode: "publish", result: "pending", translation_status: trStatus,
         fallback_detected: fallbackDetected, publish_allowed: true,
         fields_checked: plan.length, fields_unchanged: unchanged.length,
-        warnings, summary, created_by: user.id,
+        warnings, summary, created_by: userId,
       }).select().single();
       const wErrors: string[] = [];
       let done = 0;
