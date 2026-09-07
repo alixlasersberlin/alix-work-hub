@@ -73,6 +73,47 @@ function stripPrices<T extends Record<string, unknown>>(row: T, channel?: string
   return out as T;
 }
 
+/**
+ * UAE-Freigabe (alix-lasers.ae):
+ * Die Dubai-Markierung (active_dubai) ist die verbindliche Freigabe für die UAE-Webseite.
+ * Ein Gerät ist dort nur öffentlich sichtbar, wenn status = 'published' UND active_dubai = true.
+ * Medizinische Aussagen (CE/MDR/ISO/Zweckbestimmung) dürfen nur veröffentlicht werden,
+ * wenn die Compliance-Freigabe (ph_compliance.approval_status = 'approved') vorliegt.
+ */
+function withUae<T extends Record<string, any>>(row: T, comp?: Record<string, any> | null): T {
+  const published = row.status === "published";
+  const approved = comp?.approval_status === "approved";
+  return {
+    ...row,
+    published_ae: published && row.active_dubai === true,
+    available_in_uae: row.active_dubai === true,
+    medical_claims_approved: approved,
+    medical_claims: approved
+      ? {
+          is_medical_device: comp?.is_medical_device === true,
+          ce_status: row.ce_status ?? comp?.ce_status ?? null,
+          mdr_status: row.mdr_status ?? comp?.mdr_status ?? null,
+          iso_13485: comp?.iso_13485 ?? row.iso_status ?? null,
+          laser_class: row.laser_class ?? comp?.laser_class ?? null,
+          risk_class: comp?.risk_class ?? null,
+          udi_di: comp?.udi_di ?? null,
+          basic_udi_di: comp?.basic_udi_di ?? null,
+          intended_use: row.intended_use ?? null,
+          approved_at: comp?.approved_at ?? null,
+        }
+      : null,
+  } as T;
+}
+
+async function complianceMap(supabase: any, ids: string[]) {
+  if (!ids.length) return {} as Record<string, any>;
+  const { data } = await supabase.from("ph_compliance")
+    .select("product_id,approval_status,approved_at,is_medical_device,ce_status,mdr_status,iso_13485,laser_class,risk_class,udi_di,basic_udi_di")
+    .in("product_id", ids);
+  return Object.fromEntries((data || []).map((r: any) => [r.product_id, r]));
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
