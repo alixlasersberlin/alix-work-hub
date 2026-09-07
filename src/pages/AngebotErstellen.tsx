@@ -579,6 +579,33 @@ export default function AngebotErstellen() {
     return null;
   };
 
+  // Artikel ohne eigenes Bild: passendes Foto aus dem Product Hub übernehmen
+  // und dauerhaft beim Artikel hinterlegen (einmalig je Artikel).
+  const imageBackfilled = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!phDevices.length) return;
+    const pending: Array<{ id: string; url: string }> = [];
+    for (const i of [...items, ...remoteItems]) {
+      if (!i?.id || i.image_url || imageBackfilled.current.has(i.id)) continue;
+      const url = matchPhDevice(i)?.url;
+      if (!url) continue;
+      imageBackfilled.current.add(i.id);
+      pending.push({ id: i.id, url });
+    }
+    if (!pending.length) return;
+    const map = new Map(pending.map(p => [p.id, p.url]));
+    const patch = (list: any[]) => list.map(i => (map.has(i.id) ? { ...i, image_url: map.get(i.id) } : i));
+    setItems(prev => patch(prev));
+    setRemoteItems(prev => patch(prev));
+    (async () => {
+      for (const p of pending) {
+        await (supabase as any).from('zoho_items').update({ image_url: p.url }).eq('id', p.id);
+      }
+    })().catch(() => {});
+  }, [items, remoteItems, phDevices, matchPhDevice]);
+
+
+
 
   const filteredItems = useMemo(() => {
     const q = itemSearch.toLowerCase().trim();
