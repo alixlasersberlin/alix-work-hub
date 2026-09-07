@@ -2841,8 +2841,15 @@ export default function AngebotErstellen() {
 
 
         <div className="rounded-xl border border-border bg-card card-glow p-4 flex flex-col items-end gap-1 text-sm">
-          <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(totals.gross)}</span></div>
+          {activeDiscount > 0 && (
+            <>
+              <div className="flex gap-8 text-sm"><span className="text-muted-foreground">Zwischensumme:</span><span className="w-32 text-right text-foreground">{fmtMoney(totals.gross)}</span></div>
+              <div className="flex gap-8 text-sm text-emerald-400"><span>Rabatt:</span><span className="w-32 text-right">-{fmtMoney(activeDiscount)}</span></div>
+            </>
+          )}
+          <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(Math.max(0, totals.gross - activeDiscount))}</span></div>
         </div>
+
 
 
       {/* Notes */}
