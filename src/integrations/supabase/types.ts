@@ -36787,6 +36787,42 @@ export type Database = {
           },
         ]
       }
+      ph_glossary: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          mode: string
+          note: string | null
+          term: string
+          translations: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          mode?: string
+          note?: string | null
+          term: string
+          translations?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          mode?: string
+          note?: string | null
+          term?: string
+          translations?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ph_marketing: {
         Row: {
           approved: boolean
@@ -37190,6 +37226,110 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ph_product_channels_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_product_translations: {
+        Row: {
+          alt_texts: Json
+          applications: Json
+          approved_at: string | null
+          approved_by: string | null
+          benefits: Json
+          created_at: string
+          faq: Json
+          features: Json
+          highlights: Json
+          id: string
+          locale: string
+          long_description: string | null
+          marketing_text: string | null
+          name: string | null
+          notices: string | null
+          product_id: string
+          reviewed_by: string | null
+          seo_description: string | null
+          seo_title: string | null
+          short_description: string | null
+          slug: string | null
+          source_hash: string | null
+          status: string
+          translated_at: string | null
+          translated_by: string | null
+          translation_source: string | null
+          treatments: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          alt_texts?: Json
+          applications?: Json
+          approved_at?: string | null
+          approved_by?: string | null
+          benefits?: Json
+          created_at?: string
+          faq?: Json
+          features?: Json
+          highlights?: Json
+          id?: string
+          locale: string
+          long_description?: string | null
+          marketing_text?: string | null
+          name?: string | null
+          notices?: string | null
+          product_id: string
+          reviewed_by?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_description?: string | null
+          slug?: string | null
+          source_hash?: string | null
+          status?: string
+          translated_at?: string | null
+          translated_by?: string | null
+          translation_source?: string | null
+          treatments?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          alt_texts?: Json
+          applications?: Json
+          approved_at?: string | null
+          approved_by?: string | null
+          benefits?: Json
+          created_at?: string
+          faq?: Json
+          features?: Json
+          highlights?: Json
+          id?: string
+          locale?: string
+          long_description?: string | null
+          marketing_text?: string | null
+          name?: string | null
+          notices?: string | null
+          product_id?: string
+          reviewed_by?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_description?: string | null
+          slug?: string | null
+          source_hash?: string | null
+          status?: string
+          translated_at?: string | null
+          translated_by?: string | null
+          translation_source?: string | null
+          treatments?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_product_translations_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "ph_products"
