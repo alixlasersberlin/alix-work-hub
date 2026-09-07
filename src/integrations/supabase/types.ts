@@ -53130,6 +53130,7 @@ export type Database = {
           id: string
           image_name: string | null
           image_type: string | null
+          image_url: string | null
           is_spare_part: boolean | null
           item_type: string | null
           lead_time_days: number | null
@@ -53172,6 +53173,7 @@ export type Database = {
           id?: string
           image_name?: string | null
           image_type?: string | null
+          image_url?: string | null
           is_spare_part?: boolean | null
           item_type?: string | null
           lead_time_days?: number | null
@@ -53214,6 +53216,7 @@ export type Database = {
           id?: string
           image_name?: string | null
           image_type?: string | null
+          image_url?: string | null
           is_spare_part?: boolean | null
           item_type?: string | null
           lead_time_days?: number | null
