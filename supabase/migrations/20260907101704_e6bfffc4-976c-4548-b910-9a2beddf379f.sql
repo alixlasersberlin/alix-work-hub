@@ -1,0 +1,1 @@
+ALTER TABLE public.zoho_items ADD COLUMN IF NOT EXISTS image_url text;
