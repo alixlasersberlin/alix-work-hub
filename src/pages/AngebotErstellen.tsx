@@ -1192,15 +1192,14 @@ export default function AngebotErstellen() {
       startY: cy,
       margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
       head: [hasImages
-        ? ['Pos', 'Foto', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']
-        : ['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
+        ? ['Pos', 'Foto', 'Artikel', 'Menge', 'Einzelpreis', 'Summe']
+        : ['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'Summe']],
       body: validLines.map((l, idx) => {
         const base = [
           idx + 1,
           `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}${deviceConfigLines(l).length ? `\n${deviceConfigLines(l).join('\n')}` : ''}`,
           l.quantity,
           fmtMoney(l.rate),
-          `${l.tax_percentage}%`,
           fmtMoney(l.quantity * l.rate),
         ];
         return hasImages ? [base[0], '', ...base.slice(1)] : base;
@@ -1213,17 +1212,15 @@ export default function AngebotErstellen() {
         ? {
             0: { cellWidth: 10, halign: 'center' },
             1: { cellWidth: IMG_COL_W, minCellHeight: IMG_SIZE + 3 },
-            3: { halign: 'right', cellWidth: 16 },
-            4: { halign: 'right', cellWidth: 23 },
-            5: { halign: 'right', cellWidth: 14 },
-            6: { halign: 'right', cellWidth: 23 },
+            3: { halign: 'right', cellWidth: 18 },
+            4: { halign: 'right', cellWidth: 26 },
+            5: { halign: 'right', cellWidth: 26 },
           }
         : {
             0: { cellWidth: 10, halign: 'center' },
-            2: { halign: 'right', cellWidth: 16 },
-            3: { halign: 'right', cellWidth: 25 },
-            4: { halign: 'right', cellWidth: 16 },
-            5: { halign: 'right', cellWidth: 25 },
+            2: { halign: 'right', cellWidth: 18 },
+            3: { halign: 'right', cellWidth: 28 },
+            4: { halign: 'right', cellWidth: 28 },
           },
       rowPageBreak: 'auto',
       didDrawCell: (data: any) => {
