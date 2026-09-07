@@ -237,7 +237,7 @@ export default function AngebotErstellen() {
         for (let from = 0; ; from += CHUNK) {
           const { data: chunk, error } = await supabase
             .from('zoho_items')
-            .select('id, name, sku, description, rate, tax_percentage, unit')
+            .select('id, name, sku, description, rate, tax_percentage, unit, image_url')
             .eq('status', 'active')
             .order('name')
             .range(from, from + CHUNK - 1);
