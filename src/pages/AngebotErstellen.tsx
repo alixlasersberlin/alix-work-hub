@@ -1192,15 +1192,14 @@ export default function AngebotErstellen() {
       startY: cy,
       margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
       head: [hasImages
-        ? ['Pos', 'Foto', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']
-        : ['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
+        ? ['Pos', 'Foto', 'Artikel', 'Menge', 'Einzelpreis', 'Summe']
+        : ['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'Summe']],
       body: validLines.map((l, idx) => {
         const base = [
           idx + 1,
           `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}${deviceConfigLines(l).length ? `\n${deviceConfigLines(l).join('\n')}` : ''}`,
           l.quantity,
           fmtMoney(l.rate),
-          `${l.tax_percentage}%`,
           fmtMoney(l.quantity * l.rate),
         ];
         return hasImages ? [base[0], '', ...base.slice(1)] : base;
@@ -1213,17 +1212,15 @@ export default function AngebotErstellen() {
         ? {
             0: { cellWidth: 10, halign: 'center' },
             1: { cellWidth: IMG_COL_W, minCellHeight: IMG_SIZE + 3 },
-            3: { halign: 'right', cellWidth: 16 },
-            4: { halign: 'right', cellWidth: 23 },
-            5: { halign: 'right', cellWidth: 14 },
-            6: { halign: 'right', cellWidth: 23 },
+            3: { halign: 'right', cellWidth: 18 },
+            4: { halign: 'right', cellWidth: 26 },
+            5: { halign: 'right', cellWidth: 26 },
           }
         : {
             0: { cellWidth: 10, halign: 'center' },
-            2: { halign: 'right', cellWidth: 16 },
-            3: { halign: 'right', cellWidth: 25 },
-            4: { halign: 'right', cellWidth: 16 },
-            5: { halign: 'right', cellWidth: 25 },
+            2: { halign: 'right', cellWidth: 18 },
+            3: { halign: 'right', cellWidth: 28 },
+            4: { halign: 'right', cellWidth: 28 },
           },
       rowPageBreak: 'auto',
       didDrawCell: (data: any) => {
@@ -1263,15 +1260,8 @@ export default function AngebotErstellen() {
       finalY = TOP_CONTENT;
     }
 
-    // Totals box
+    // Totals box (ohne MwSt-Ausweis)
     const totalsX = 130;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.text('Netto:', totalsX, finalY);
-    doc.text(fmtMoney(totals.net), RIGHT, finalY, { align: 'right' });
-    doc.text('MwSt:', totalsX, finalY + 5);
-    doc.text(fmtMoney(totals.tax), RIGHT, finalY + 5, { align: 'right' });
     doc.setDrawColor(20, 60, 110);
     doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
     doc.setFont('helvetica', 'bold');
@@ -1373,7 +1363,7 @@ export default function AngebotErstellen() {
         doc.setFontSize(9);
         doc.setTextColor(90, 90, 90);
         doc.text(
-          `${fmtMoney(l.rate)} · ${l.tax_percentage}% MwSt · Menge ${l.quantity}`,
+          `${fmtMoney(l.rate)} · Menge ${l.quantity}`,
           textX, ay + 9,
         );
 
@@ -2621,15 +2611,7 @@ export default function AngebotErstellen() {
                       {(() => {
                         const c = lineCalc(l);
                         const tax = Number(l.tax_percentage) || 0;
-                        return tax > 0 ? (
-                          <div className="flex flex-col items-end leading-tight">
-                            <span>{fmtMoney(c.gross)}</span>
-                            <span className="text-[10px] text-muted-foreground font-normal">inkl. {tax}% MwSt</span>
-                            <span className="text-[10px] text-muted-foreground font-normal">netto {fmtMoney(c.net)}</span>
-                          </div>
-                        ) : (
-                          <span>{fmtMoney(c.net)}</span>
-                        );
+                        return <span>{fmtMoney(tax > 0 ? c.gross : c.net)}</span>;
                       })()}
                     </td>
                     <td className="p-2" rowSpan={2}>
@@ -2859,8 +2841,6 @@ export default function AngebotErstellen() {
 
 
         <div className="rounded-xl border border-border bg-card card-glow p-4 flex flex-col items-end gap-1 text-sm">
-          <div className="flex gap-8"><span className="text-muted-foreground">Netto:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.net)}</span></div>
-          <div className="flex gap-8"><span className="text-muted-foreground">MwSt:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.tax)}</span></div>
           <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(totals.gross)}</span></div>
         </div>
 
