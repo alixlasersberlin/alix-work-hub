@@ -728,6 +728,8 @@ export default function PremiumRentalWizard() {
 
                 <SummaryCard title="Mietmodell" onEdit={() => setStep(2)}>
                   <Row k="Gewünschte Laufzeit" v={`${effectiveTerm} Monate`} />
+                  {monthly ? <Row k="Monatliche Miete" v={`${money(monthly, device.currency)} / Monat`} /> : null}
+
 
                   <Row k="Gewünschter Beginn" v={[data.requested_start, data.requested_start_date].filter(Boolean).join(' · ')} />
                 </SummaryCard>
