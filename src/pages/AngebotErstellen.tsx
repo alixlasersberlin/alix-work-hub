@@ -1264,11 +1264,26 @@ export default function AngebotErstellen() {
     const totalsX = 130;
     doc.setDrawColor(20, 60, 110);
     doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
-    doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(20, 60, 110);
-    doc.text('Gesamt:', totalsX, finalY + 14);
-    doc.text(fmtMoney(totals.gross), RIGHT, finalY + 14, { align: 'right' });
+    if (activeDiscount > 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Zwischensumme:', totalsX, finalY + 13);
+      doc.text(fmtMoney(totals.gross), RIGHT, finalY + 13, { align: 'right' });
+      doc.text('Rabatt:', totalsX, finalY + 18);
+      doc.text(`-${fmtMoney(activeDiscount)}`, RIGHT, finalY + 18, { align: 'right' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('Gesamt:', totalsX, finalY + 25);
+      doc.text(fmtMoney(Math.max(0, totals.gross - activeDiscount)), RIGHT, finalY + 25, { align: 'right' });
+      finalY += 11;
+    } else {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Gesamt:', totalsX, finalY + 14);
+      doc.text(fmtMoney(totals.gross), RIGHT, finalY + 14, { align: 'right' });
+    }
+
 
     // Payment block
     let py = finalY + 24;
