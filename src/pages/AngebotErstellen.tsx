@@ -2798,7 +2798,7 @@ export default function AngebotErstellen() {
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Basis (€)</Label>
               <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
-                {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (payType === 'Direktkauf' ? (parseFloat(payDiscount) || 0) : 0)))}
+                {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount))}
 
               </div>
             </div>
@@ -2811,10 +2811,10 @@ export default function AngebotErstellen() {
               <>
                 <div className="text-xs text-muted-foreground">Zu zahlen ({payType})</div>
                 <div className="text-2xl font-bold text-primary">
-                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (parseFloat(payDiscount) || 0)))}
+                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount))}
                 </div>
-                {(parseFloat(payDiscount) || 0) > 0 && (
-                  <div className="text-xs text-emerald-400">abzüglich Rabatt {fmtMoney(parseFloat(payDiscount) || 0)}</div>
+                {activeDiscount > 0 && (
+                  <div className="text-xs text-emerald-400">abzüglich Rabatt {fmtMoney(activeDiscount)}</div>
                 )}
                 <div className="text-xs text-muted-foreground mt-1">Einmalzahlung</div>
 
@@ -2838,11 +2838,14 @@ export default function AngebotErstellen() {
                 <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
                 <div className="text-2xl font-bold text-primary">
                   {(() => {
-                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount);
                     const rate = payTerm > 0 ? base / payTerm : 0;
                     return fmtMoney(rate);
                   })()}
                 </div>
+                {activeDiscount > 0 && (
+                  <div className="text-xs text-emerald-400">abzüglich Rabatt {fmtMoney(activeDiscount)}</div>
+                )}
                 <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate</div>
               </>
             )}
