@@ -62,6 +62,8 @@ export function TranslationsTab({ productId, master, canWrite }: {
       const map: Record<string, PhTranslation> = {};
       list.forEach(r => { map[r.locale] = r; });
       setRows(map);
+      setLastSync(await phLastSyncByLocale(productId).catch(() => ({})));
+
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   };
