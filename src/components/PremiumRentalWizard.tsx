@@ -365,7 +365,9 @@ export default function PremiumRentalWizard() {
                 <p className="text-[13px] !text-slate-500 font-light">
                   {device.delivery_days ? `Lieferzeit ca. ${device.delivery_days} Tage` : 'Lieferzeit auf Anfrage'}
                   {effectiveTerm ? ` · Laufzeit ${effectiveTerm} Monate` : ''}
+                  {monthly ? ` · ${money(monthly, device.currency)} / Monat` : ''}
                 </p>
+
 
               </div>
             </div>
