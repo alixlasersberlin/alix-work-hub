@@ -12,6 +12,8 @@ import {
   phApproveTranslation, phIsRtl, phLoadTranslations, phSaveTranslation, phTranslate,
   type PhTranslation, type PhTrStatus,
 } from '@/lib/producthub/i18n';
+import { phLastSyncByLocale } from '@/lib/producthub/websiteSync';
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
