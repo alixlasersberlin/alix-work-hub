@@ -137,6 +137,14 @@ export default function AngebotErstellen() {
 
   const [payTerm, setPayTerm] = useState<number>(24);
   const [payRate, setPayRate] = useState<string>('');
+  // Rabatt in € oder % (bei Alix Flex / Direktkauf)
+  const discountAmount = (() => {
+    const v = parseFloat(payDiscount) || 0;
+    const p = parseFloat(payPrice) || 0;
+    return payDiscountMode === 'pct' ? Math.max(0, (p * v) / 100) : Math.max(0, v);
+  })();
+  const discountApplies = payType === 'Direktkauf' || payType === 'Alix Flex';
+  const activeDiscount = discountApplies ? discountAmount : 0;
   const [loading, setLoading] = useState(true);
 
   const [leadsOpen, setLeadsOpen] = useState(false);
