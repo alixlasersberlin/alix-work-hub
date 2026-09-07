@@ -11,7 +11,7 @@ import { ArrowDownToLine, ArrowUpFromLine, FileSpreadsheet, FileText, Loader2, L
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePrice, uvpForPower } from '@/lib/producthub/countryPricing';
+import { PH_PRICE_COUNTRIES, formatMoney, readCountryPrice, effectivePrice, uvpForPower, readPowerTier } from '@/lib/producthub/countryPricing';
 import {
   buildPriceRows, rowsToCsv, parseImportFile, csvRowToCountryPrice, downloadFile, PH_EXPORT_COLUMNS, PH_POWER_COLUMNS,
 } from '@/lib/producthub/priceExport';
@@ -81,7 +81,7 @@ export default function ProductHubImportExport() {
             formatMoney(effectivePrice(p, 'min'), def, p.currency),
             formatMoney(effectivePrice(p, 'max'), def, p.currency),
             ...PH_POWER_COLUMNS.map(({ power }) =>
-              Number(p.uvp || 0) ? formatMoney(uvpForPower(p, power), def, p.currency) : '—'),
+              readPowerTier(p, power).enabled ? formatMoney(uvpForPower(p, power), def, p.currency) : '—'),
           ]);
         }
       }

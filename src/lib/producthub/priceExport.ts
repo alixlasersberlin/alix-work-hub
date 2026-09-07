@@ -3,7 +3,7 @@
 import {
   PH_PRICE_COUNTRIES, PH_RENT_TERMS, readCountryPrice, effectivePrice,
   rentMonthly, depositAmount, type PhCountryDef, type PhCountryPrice,
-  uvpForPower,
+  uvpForPower, readPowerTier,
 } from './countryPricing';
 import { PH_DEFAULT_POWERS } from './deviceConfig';
 
@@ -94,8 +94,9 @@ export function priceRow(product: any, def: PhCountryDef): PhPriceRow {
     staffel_leistung: powerTiersText(p),
   };
   for (const { power, column } of PH_POWER_COLUMNS) {
-    const v = Number(p.uvp || 0) ? Math.round(uvpForPower(p, power) * 100) / 100 : '';
-    row[column] = v;
+    // Nur exportieren, wenn für die Stufe wirklich ein Staffelpreis gepflegt ist
+    const t = readPowerTier(p, power);
+    row[column] = t.enabled ? Math.round(uvpForPower(p, power) * 100) / 100 : '';
   }
   for (const t of PH_RENT_TERMS) {
     const cfg = p.rent_terms?.[String(t)] || { enabled: false, mode: 'percent', value: null };
