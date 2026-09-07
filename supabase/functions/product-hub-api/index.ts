@@ -23,7 +23,7 @@ const PRICE_FIELDS = ["price_uvp", "vk_min_mode", "vk_min_value", "vk_max_mode",
 
 /** Kanal -> Länderschlüssel in price_countries */
 const CHANNEL_COUNTRY: Record<string, string> = {
-  de: "de", com: "de", at: "at", usa: "usa", vietnam: "vietnam", dubai: "dubai",
+  de: "de", com: "de", at: "at", usa: "usa", vietnam: "vietnam", dubai: "dubai", ae: "dubai", uae: "dubai",
 };
 
 /**
