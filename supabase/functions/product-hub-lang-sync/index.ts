@@ -99,15 +99,22 @@ Deno.serve(async (req) => {
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return json(401, { error: "Nicht angemeldet" });
-    const { data: userRes } = await createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    }).auth.getUser();
-    const user = userRes?.user;
-    if (!user) return json(401, { error: "Nicht angemeldet" });
-    const { data: roleRows } = await admin.from("user_roles").select("roles(name)").eq("user_id", user.id);
-    const roles = (roleRows || []).map((r: any) => r.roles?.name).filter(Boolean);
-    const isAdmin = roles.some((r: string) => ["Super Admin", "Admin", "Product Hub"].includes(r));
-    if (!isAdmin) return json(403, { error: "Keine Berechtigung" });
+    // Interner Server-zu-Server-Aufruf (Selbsttest) mit Service-Role-Key
+    const internal = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    let userId: string | null = null;
+    if (!internal) {
+      const { data: userRes } = await createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      }).auth.getUser();
+      const user = userRes?.user;
+      if (!user) return json(401, { error: "Nicht angemeldet" });
+      userId = user.id;
+      const { data: roleRows } = await admin.from("user_roles").select("roles(name)").eq("user_id", user.id);
+      const roles = (roleRows || []).map((r: any) => r.roles?.name).filter(Boolean);
+      const isAdmin = roles.some((r: string) => ["Super Admin", "Admin", "Product Hub"].includes(r));
+      if (!isAdmin) return json(403, { error: "Keine Berechtigung" });
+    }
+
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "targets");
