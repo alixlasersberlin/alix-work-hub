@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 const STATUS_OPTIONS = [
   'Importiert - Angebot offen',
   'Neu',
+  'NEUE MIETANFRAGE',
   'In Bearbeitung',
   'Angebot erstellt',
   'Nachfassen',

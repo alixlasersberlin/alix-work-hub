@@ -3,7 +3,7 @@
 // Preise werden IMMER serverseitig aus dem Product Hub geprüft.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3";
-import { rentalInfo } from "../rental-devices/index.ts";
+import { rentalInfo } from "./rental.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
