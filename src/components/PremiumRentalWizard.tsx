@@ -763,7 +763,7 @@ export default function PremiumRentalWizard() {
                 </div>
 
                 <div className="pt-2">
-                  <Turnstile onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
+                  <Turnstile onToken={setCaptchaToken} onExpire={() => setCaptchaToken(null)} theme="light" />
                 </div>
 
                 {error && <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-sm text-rose-700">{error}</div>}
