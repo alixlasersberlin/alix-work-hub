@@ -169,11 +169,18 @@ Deno.serve(async (req) => {
     }
 
     if (!productId) {
-      let q = supabase.from("ph_products").select(PUBLIC_FIELDS).eq("status", "published").order("sort_order");
+      let q = supabase.from("ph_products").select(`id,${PUBLIC_FIELDS}`).eq("status", "published").order("sort_order");
       if (channel && activeCol[channel]) q = q.eq(activeCol[channel], true);
       const { data, error } = await q;
       if (error) throw error;
-      return json(200, { products: (data || []).map((r: any) => stripPrices(r, channel)) });
+      const rows = (data || []) as any[];
+      const comps = await complianceMap(supabase, rows.map((r) => r.id));
+      return json(200, {
+        products: rows.map((r) => {
+          const { id, ...rest } = withUae(stripPrices(r, channel), comps[r.id]);
+          return rest;
+        }),
+      });
     }
 
     const { data: prod, error: pe } = await supabase.from("ph_products")
