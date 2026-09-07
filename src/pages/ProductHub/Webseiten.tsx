@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,6 +23,8 @@ export default function ProductHubWebseiten() {
   const [products, setProducts] = useState<any[]>([]);
   const [chan, setChan] = useState<any[]>([]);
   const [compare, setCompare] = useState<any | null>(null);
+  const [bulkChannel, setBulkChannel] = useState<string>('dubai');
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = async () => {
     const [p, c] = await Promise.all([
@@ -44,6 +47,40 @@ export default function ProductHubWebseiten() {
     load();
   };
 
+  const publishAll = async () => {
+    const code = bulkChannel;
+    const chLabel = PH_CHANNELS.find(c => c.code === code)?.label || code;
+    if (!window.confirm(`Wirklich alle ${products.length} Geräte für ${chLabel} freigeben?`)) return;
+    setBulkBusy(true);
+    try {
+      const now = new Date().toISOString();
+      const activeField = PH_ACTIVE_FIELD[code];
+      const { error: e1 } = await db.from('ph_product_channels').upsert(
+        products.map(p => ({
+          product_id: p.id, channel_code: code, status: 'published', publish_state: 'published',
+          has_pending_changes: false, last_sync_at: now, last_sync_status: 'ok',
+        })),
+        { onConflict: 'product_id,channel_code' },
+      );
+      if (e1) throw e1;
+      if (activeField) {
+        const { error: e2 } = await db.from('ph_products')
+          .update({ [activeField]: true }).in('id', products.map(p => p.id));
+        if (e2) throw e2;
+      }
+      await db.from('ph_sync_log').insert(products.map(p => ({
+        channel_code: code, direction: 'export', operation: 'publish', product_id: p.id,
+        status: 'ok', message: `${p.name} für ${chLabel} freigegeben (Sammelfreigabe)`,
+      })));
+      toast.success(`${products.length} Geräte für ${chLabel} freigegeben`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || 'Freigabe fehlgeschlagen');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const diffs = useMemo(() => {
     if (!compare) return [];
     return PH_CHANNELS.filter(c => ['com', 'de'].includes(c.code)).flatMap(ch => {
@@ -58,6 +95,20 @@ export default function ProductHubWebseiten() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Webseiten" subtitle="Veröffentlichungskanäle COM / DE (später AT, USA, Dubai)" icon={Globe} />
+      {canWrite && (
+        <Card><CardContent className="p-4 flex flex-wrap items-center gap-3">
+          <span className="text-sm text-muted-foreground">Sammelfreigabe:</span>
+          <Select value={bulkChannel} onValueChange={setBulkChannel}>
+            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PH_CHANNELS.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button onClick={publishAll} disabled={bulkBusy || products.length === 0}>
+            {bulkBusy ? 'Wird freigegeben…' : `Alle ${products.length} Geräte freigeben`}
+          </Button>
+        </CardContent></Card>
+      )}
       <Card><CardContent className="p-0 overflow-x-auto">
         <Table>
           <TableHeader><TableRow>
