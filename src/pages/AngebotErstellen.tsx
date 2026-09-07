@@ -2611,15 +2611,7 @@ export default function AngebotErstellen() {
                       {(() => {
                         const c = lineCalc(l);
                         const tax = Number(l.tax_percentage) || 0;
-                        return tax > 0 ? (
-                          <div className="flex flex-col items-end leading-tight">
-                            <span>{fmtMoney(c.gross)}</span>
-                            <span className="text-[10px] text-muted-foreground font-normal">inkl. {tax}% MwSt</span>
-                            <span className="text-[10px] text-muted-foreground font-normal">netto {fmtMoney(c.net)}</span>
-                          </div>
-                        ) : (
-                          <span>{fmtMoney(c.net)}</span>
-                        );
+                        return <span>{fmtMoney(tax > 0 ? c.gross : c.net)}</span>;
                       })()}
                     </td>
                     <td className="p-2" rowSpan={2}>
