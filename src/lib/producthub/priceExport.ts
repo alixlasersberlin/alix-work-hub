@@ -3,7 +3,7 @@
 import {
   PH_PRICE_COUNTRIES, PH_RENT_TERMS, readCountryPrice, effectivePrice,
   rentMonthly, depositAmount, type PhCountryDef, type PhCountryPrice,
-  uvpForPower,
+  uvpForPower, readPowerTier,
 } from './countryPricing';
 import { PH_DEFAULT_POWERS } from './deviceConfig';
 
