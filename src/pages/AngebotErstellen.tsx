@@ -1962,7 +1962,7 @@ export default function AngebotErstellen() {
   );
 
   const renderStepNav = () => (
-    <div className="sticky bottom-0 z-30 -mx-4 lg:-mx-5 px-4 lg:px-5 py-3 mt-2 border-t border-border bg-background/95 backdrop-blur flex items-center justify-between gap-3">
+    <div className="sticky top-0 z-30 -mx-4 lg:-mx-5 px-4 lg:px-5 py-3 mb-2 border-b border-border bg-background/95 backdrop-blur flex items-center justify-between gap-3">
       <Button
         variant="outline"
         className="gap-2 border-border min-h-[48px]"
@@ -2025,7 +2025,10 @@ export default function AngebotErstellen() {
         </div>
       )}
 
+      {renderStepNav()}
+
       {renderStepper()}
+
 
       {step === 1 && (
       <>
@@ -3016,8 +3019,6 @@ export default function AngebotErstellen() {
       )}
       </>
       )}
-
-      {renderStepNav()}
     </div>
 
 
