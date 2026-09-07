@@ -233,15 +233,15 @@ Deno.serve(async (req) => {
 
     if (!tr && !isMaster) errors.push(`Keine ${locale.toUpperCase()}-Übersetzung vorhanden – nichts zu synchronisieren`);
     if (tr && !approved)
-      errors.push(`Übersetzung ist „${trStatus}" – nicht freigegeben. KI-Entwurf oder Prüfung wird nie veröffentlicht.`);
+      errors.push(`Übersetzung ist „${trStatus}“ – nicht freigegeben. KI-Entwurf oder Prüfung wird nie veröffentlicht.`);
     if (fallbackDetected)
       warnings.push(`Einzelne Felder haben keine ${locale.toUpperCase()}-Fassung – deutscher Fallback wird NICHT synchronisiert.`);
     if (tr?.status === "outdated")
-      warnings.push("Übersetzung ist als „möglicherweise veraltet" markiert – die bestehende Website-Fassung bleibt online, ein Überschreiben ist gesperrt.");
+      warnings.push("Übersetzung ist als „möglicherweise veraltet“ markiert – die bestehende Website-Fassung bleibt online, ein Überschreiben ist gesperrt.");
 
     if (!map) errors.push("Keine eindeutige Zuordnung Hub-ID → Zielprodukt – Sync nicht möglich");
     if (target.structure_status !== "ready" || !target.publish_enabled)
-      warnings.push(`Zielstruktur „${target.site_label}" ist für produktives Veröffentlichen noch nicht freigegeben (Status: ${target.structure_status}).`);
+      warnings.push(`Zielstruktur „${target.site_label}“ ist für produktives Veröffentlichen noch nicht freigegeben (Status: ${target.structure_status}).`);
 
     // Ziel lesen
     let remote: any = null;
