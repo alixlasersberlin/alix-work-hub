@@ -432,9 +432,15 @@ export default function PremiumRentalWizard() {
               <div className="space-y-8">
                 <Group label="Gewünschte Mietdauer *">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {TERMS.map((t) => (
-                      <Pill key={t} active={data.term === t} onClick={() => set('term', t)}>{t} Monate</Pill>
-                    ))}
+                    {TERMS.map((t) => {
+                      const m = device?.terms.find((x) => x.term === t)?.monthly || 0;
+                      return (
+                        <Pill key={t} active={data.term === t} onClick={() => set('term', t)}>
+                          {t} Monate{m > 0 ? ` · ${money(m, device?.currency)}` : ''}
+                        </Pill>
+                      );
+                    })}
+
                     <Pill active={data.term === -1} onClick={() => set('term', -1)}>Andere Laufzeit</Pill>
                   </div>
                   {data.term === -1 && (
