@@ -365,7 +365,9 @@ export default function PremiumRentalWizard() {
                 <p className="text-[13px] !text-slate-500 font-light">
                   {device.delivery_days ? `Lieferzeit ca. ${device.delivery_days} Tage` : 'Lieferzeit auf Anfrage'}
                   {effectiveTerm ? ` · Laufzeit ${effectiveTerm} Monate` : ''}
+                  {monthly ? ` · ${money(monthly, device.currency)} / Monat` : ''}
                 </p>
+
 
               </div>
             </div>
@@ -401,6 +403,12 @@ export default function PremiumRentalWizard() {
                           <p className="mt-3 text-[12px] !text-slate-500">
                             {d.delivery_days ? `Lieferzeit: ${d.delivery_days} Tage` : 'Lieferzeit auf Anfrage'}
                           </p>
+                          {d.from_monthly > 0 && (
+                            <p className="mt-1 text-[15px] text-slate-900 font-light">
+                              ab {money(d.from_monthly, d.currency)} / Monat
+                            </p>
+                          )}
+
 
                         </div>
                       </div>
@@ -424,9 +432,15 @@ export default function PremiumRentalWizard() {
               <div className="space-y-8">
                 <Group label="Gewünschte Mietdauer *">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {TERMS.map((t) => (
-                      <Pill key={t} active={data.term === t} onClick={() => set('term', t)}>{t} Monate</Pill>
-                    ))}
+                    {TERMS.map((t) => {
+                      const m = device?.terms.find((x) => x.term === t)?.monthly || 0;
+                      return (
+                        <Pill key={t} active={data.term === t} onClick={() => set('term', t)}>
+                          {t} Monate{m > 0 ? ` · ${money(m, device?.currency)}` : ''}
+                        </Pill>
+                      );
+                    })}
+
                     <Pill active={data.term === -1} onClick={() => set('term', -1)}>Andere Laufzeit</Pill>
                   </div>
                   {data.term === -1 && (
@@ -714,6 +728,8 @@ export default function PremiumRentalWizard() {
 
                 <SummaryCard title="Mietmodell" onEdit={() => setStep(2)}>
                   <Row k="Gewünschte Laufzeit" v={`${effectiveTerm} Monate`} />
+                  {monthly ? <Row k="Monatliche Miete" v={`${money(monthly, device.currency)} / Monat`} /> : null}
+
 
                   <Row k="Gewünschter Beginn" v={[data.requested_start, data.requested_start_date].filter(Boolean).join(' · ')} />
                 </SummaryCard>
