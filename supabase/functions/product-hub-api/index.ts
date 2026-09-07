@@ -231,9 +231,11 @@ Deno.serve(async (req) => {
       if (error) throw error;
       const rows = (data || []) as any[];
       const comps = await complianceMap(supabase, rows.map((r) => r.id));
+      const trs = await translationMap(supabase, rows.map((r) => r.id), locale);
       return json(200, {
+        locale,
         products: rows.map((r) => {
-          const { id, ...rest } = withUae(stripPrices(r, channel), comps[r.id]);
+          const { id, ...rest } = applyLocale(withUae(stripPrices(r, channel), comps[r.id]), trs[r.id], locale);
           return rest;
         }),
       });
@@ -244,7 +246,13 @@ Deno.serve(async (req) => {
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
     const comps1 = await complianceMap(supabase, [(prod as any).id]);
-    const pubProd = withUae(stripPrices(prod as any, channel), comps1[(prod as any).id]);
+    const trs1 = await translationMap(supabase, [(prod as any).id], locale);
+    const pubProd = applyLocale(
+      withUae(stripPrices(prod as any, channel), comps1[(prod as any).id]),
+      trs1[(prod as any).id],
+      locale,
+    );
+
 
     if (sub === "media") {
       const { data } = await supabase.from("ph_media")
