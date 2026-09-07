@@ -50,8 +50,10 @@ export function TranslationsTab({ productId, master, canWrite }: {
   const [saving, setSaving] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<string[] | null>(null);
+  const [lastSync, setLastSync] = useState<Record<string, string>>({});
 
   const rtl = phIsRtl(locale);
+
 
   const load = async () => {
     setLoading(true);
