@@ -1286,7 +1286,7 @@ export default function AngebotErstellen() {
     doc.setTextColor(60, 60, 60);
     py += 5;
     if (payType === 'Direktkauf') {
-      const rabatt = parseFloat(payDiscount) || 0;
+      const rabatt = activeDiscount;
       const amount = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - rabatt);
       if (parseFloat(payDown) > 0) {
         doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5;
@@ -1305,9 +1305,10 @@ export default function AngebotErstellen() {
       doc.text(`Monatliche Miete: ${fmtMoney(monatlich)}`, LEFT, py); py += 5;
       doc.text(`Restwert der Maschine: ${fmtMoney(restwert)}`, LEFT, py); py += 5;
     } else {
-      const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+      const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - activeDiscount);
       const rate = payTerm > 0 ? base / payTerm : 0;
       if (parseFloat(payDown) > 0) { doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5; }
+      if (activeDiscount > 0) { doc.text(`Rabatt: -${fmtMoney(activeDiscount)}`, LEFT, py); py += 5; }
       doc.text(`Basis: ${fmtMoney(base)}`, LEFT, py); py += 5;
       doc.text(`Laufzeit: ${payTerm} Monate`, LEFT, py); py += 5;
       doc.text(`Monatliche Rate: ${fmtMoney(rate)}`, LEFT, py); py += 5;
