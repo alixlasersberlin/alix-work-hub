@@ -363,10 +363,10 @@ export default function PremiumRentalWizard() {
                 <p className="text-[10px] tracking-[0.28em] uppercase !text-slate-500">Ihr Mietgerät</p>
                 <p className="truncate text-slate-900 font-light text-base sm:text-lg">{device.name}</p>
                 <p className="text-[13px] !text-slate-500 font-light">
-                  {money(monthly, device.currency)} / Monat · Kaution {device.deposit_fixed ? money(device.deposit_fixed, device.currency) : `${device.deposit_percent} %`}
-                  {device.delivery_days ? ` · Lieferzeit ca. ${device.delivery_days} Tage` : ''}
+                  {device.delivery_days ? `Lieferzeit ca. ${device.delivery_days} Tage` : 'Lieferzeit auf Anfrage'}
                   {effectiveTerm ? ` · Laufzeit ${effectiveTerm} Monate` : ''}
                 </p>
+
               </div>
             </div>
           )}
@@ -398,13 +398,10 @@ export default function PremiumRentalWizard() {
                         <div className="min-w-0">
                           <p className="text-slate-900 font-light text-lg leading-tight">{d.name}</p>
                           {d.technology && <p className="text-[12px] !text-slate-500 uppercase tracking-[0.16em] mt-1">{d.technology}</p>}
-                          <p className="mt-3 text-[11px] uppercase tracking-[0.2em] !text-slate-500">ab</p>
-                          <p className="text-slate-900 text-2xl font-light">{money(d.from_monthly, d.currency)}</p>
-                          <p className="text-[12px] !text-slate-500">pro Monat</p>
-                          <p className="mt-2 text-[12px] !text-slate-500">
-                            Kaution: {d.deposit_fixed ? money(d.deposit_fixed, d.currency) : `${d.deposit_percent} %`}
-                            {d.delivery_days ? ` · Lieferzeit: ${d.delivery_days} Tage` : ''}
+                          <p className="mt-3 text-[12px] !text-slate-500">
+                            {d.delivery_days ? `Lieferzeit: ${d.delivery_days} Tage` : 'Lieferzeit auf Anfrage'}
                           </p>
+
                         </div>
                       </div>
                     </button>
@@ -716,9 +713,8 @@ export default function PremiumRentalWizard() {
                 </SummaryCard>
 
                 <SummaryCard title="Mietmodell" onEdit={() => setStep(2)}>
-                  <Row k="Mietpreis" v={`${money(monthly, device.currency)} / Monat`} />
-                  <Row k="Kaution" v={device.deposit_fixed ? money(device.deposit_fixed, device.currency) : `${device.deposit_percent} %`} />
                   <Row k="Gewünschte Laufzeit" v={`${effectiveTerm} Monate`} />
+
                   <Row k="Gewünschter Beginn" v={[data.requested_start, data.requested_start_date].filter(Boolean).join(' · ')} />
                 </SummaryCard>
 
