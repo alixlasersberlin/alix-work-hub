@@ -23,7 +23,7 @@ const PRICE_FIELDS = ["price_uvp", "vk_min_mode", "vk_min_value", "vk_max_mode",
 
 /** Kanal -> Länderschlüssel in price_countries */
 const CHANNEL_COUNTRY: Record<string, string> = {
-  de: "de", com: "de", at: "at", usa: "usa", vietnam: "vietnam", dubai: "dubai",
+  de: "de", com: "de", at: "at", usa: "usa", vietnam: "vietnam", dubai: "dubai", ae: "dubai", uae: "dubai",
 };
 
 /**
@@ -73,6 +73,47 @@ function stripPrices<T extends Record<string, unknown>>(row: T, channel?: string
   return out as T;
 }
 
+/**
+ * UAE-Freigabe (alix-lasers.ae):
+ * Die Dubai-Markierung (active_dubai) ist die verbindliche Freigabe für die UAE-Webseite.
+ * Ein Gerät ist dort nur öffentlich sichtbar, wenn status = 'published' UND active_dubai = true.
+ * Medizinische Aussagen (CE/MDR/ISO/Zweckbestimmung) dürfen nur veröffentlicht werden,
+ * wenn die Compliance-Freigabe (ph_compliance.approval_status = 'approved') vorliegt.
+ */
+function withUae<T extends Record<string, any>>(row: T, comp?: Record<string, any> | null): T {
+  const published = row.status === "published";
+  const approved = comp?.approval_status === "approved";
+  return {
+    ...row,
+    published_ae: published && row.active_dubai === true,
+    available_in_uae: row.active_dubai === true,
+    medical_claims_approved: approved,
+    medical_claims: approved
+      ? {
+          is_medical_device: comp?.is_medical_device === true,
+          ce_status: row.ce_status ?? comp?.ce_status ?? null,
+          mdr_status: row.mdr_status ?? comp?.mdr_status ?? null,
+          iso_13485: comp?.iso_13485 ?? row.iso_status ?? null,
+          laser_class: row.laser_class ?? comp?.laser_class ?? null,
+          risk_class: comp?.risk_class ?? null,
+          udi_di: comp?.udi_di ?? null,
+          basic_udi_di: comp?.basic_udi_di ?? null,
+          intended_use: row.intended_use ?? null,
+          approved_at: comp?.approved_at ?? null,
+        }
+      : null,
+  } as T;
+}
+
+async function complianceMap(supabase: any, ids: string[]) {
+  if (!ids.length) return {} as Record<string, any>;
+  const { data } = await supabase.from("ph_compliance")
+    .select("product_id,approval_status,approved_at,is_medical_device,ce_status,mdr_status,iso_13485,laser_class,risk_class,udi_di,basic_udi_di")
+    .in("product_id", ids);
+  return Object.fromEntries((data || []).map((r: any) => [r.product_id, r]));
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -86,11 +127,16 @@ Deno.serve(async (req) => {
   const idx = parts.indexOf("products");
   const productId = idx >= 0 ? parts[idx + 1] : undefined;
   const sub = idx >= 0 ? parts[idx + 2] : undefined;
-  const channel = url.searchParams.get("channel");
+  const rawChannel = url.searchParams.get("channel");
+  // alix-lasers.ae darf als ae/uae/dubai angefragt werden – intern immer "dubai"
+  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : rawChannel;
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  const activeCol: Record<string, string> = { com: "active_com", de: "active_de", at: "active_at", usa: "active_usa", dubai: "active_dubai" };
+  const activeCol: Record<string, string> = {
+    com: "active_com", de: "active_de", at: "active_at", usa: "active_usa",
+    dubai: "active_dubai", ae: "active_dubai", uae: "active_dubai",
+  };
 
   // Content Hub: nur freigegebene, veröffentlichte Snapshots ausliefern (EDIT ONCE · PUBLISH EVERYWHERE)
   const CH_ALLOWED = ["website", "offer", "datasheet", "comparison", "portal", "social"];
@@ -125,18 +171,26 @@ Deno.serve(async (req) => {
     }
 
     if (!productId) {
-      let q = supabase.from("ph_products").select(PUBLIC_FIELDS).eq("status", "published").order("sort_order");
+      let q = supabase.from("ph_products").select(`id,${PUBLIC_FIELDS}`).eq("status", "published").order("sort_order");
       if (channel && activeCol[channel]) q = q.eq(activeCol[channel], true);
       const { data, error } = await q;
       if (error) throw error;
-      return json(200, { products: (data || []).map((r: any) => stripPrices(r, channel)) });
+      const rows = (data || []) as any[];
+      const comps = await complianceMap(supabase, rows.map((r) => r.id));
+      return json(200, {
+        products: rows.map((r) => {
+          const { id, ...rest } = withUae(stripPrices(r, channel), comps[r.id]);
+          return rest;
+        }),
+      });
     }
 
     const { data: prod, error: pe } = await supabase.from("ph_products")
       .select(`id,${PUBLIC_FIELDS}`).eq("alix_product_id", productId).maybeSingle();
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
-    const pubProd = stripPrices(prod as any, channel);
+    const comps1 = await complianceMap(supabase, [(prod as any).id]);
+    const pubProd = withUae(stripPrices(prod as any, channel), comps1[(prod as any).id]);
 
     if (sub === "media") {
       const { data } = await supabase.from("ph_media")
