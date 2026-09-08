@@ -69,9 +69,9 @@ export function qaCheck(opts: {
   }
 
   // 3. Zahlen / Messwerte unverändert
-  const srcNums = new Set(numbers(srcAll));
-  const tgtNums = new Set(numbers(tgtAll));
-  const lost = [...srcNums].filter(n => !tgtNums.has(n));
+  const srcNums = new Set([...numbers(srcContent), ...numbers(opts.context ?? "")]);
+  const tgtNums = new Set(numbers(tgtContent));
+  const lost = [...numbers(srcContent)].filter(n => !tgtNums.has(n));
   const added = [...tgtNums].filter(n => !srcNums.has(n));
   if (lost.length) {
     issues.push({ code: "numbers_lost", level: lost.length > 2 ? "blocked" : "warning", message: `Zahlenwerte fehlen in der Übersetzung: ${lost.slice(0, 8).join(", ")}` });
