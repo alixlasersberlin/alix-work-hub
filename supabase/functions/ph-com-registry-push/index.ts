@@ -120,10 +120,12 @@ Deno.serve(async (req) => {
     // 3. Nur Mappings registrieren, die im Dry Run vollständig PASS sind
     const results: any[] = Array.isArray((dry.body as any)?.results) ? (dry.body as any).results : [];
     const okHub = new Set(
-      results.filter((r: any) => r.ok === true || /READY|OK|PASS/i.test(String(r.status ?? r.decision ?? "")))
-        .map((r: any) => String(r.hub_id ?? r.publish_id ?? "")),
+      results.filter((r: any) =>
+        r.ok === true ||
+        /REGISTER_READY|ALREADY_REGISTERED|READY|OK|PASS/i.test(String(r.result ?? r.status ?? r.decision ?? "")))
+        .map((r: any) => String(r.hub_id ?? "")),
     );
-    const toRegister = results.length ? items.filter((i) => okHub.has(i.hub_id) || okHub.has(i.publish_id)) : items;
+    const toRegister = results.length ? items.filter((i) => okHub.has(i.hub_id)) : items;
     const live = await call(found.path, found.method, { dry_run: false, mappings: toRegister });
 
     await admin.from("ph_sync_log").insert({
