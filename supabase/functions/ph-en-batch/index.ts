@@ -1,4 +1,4 @@
-// TEMPORÄR: Interner Batchlauf zur englischen Erstübersetzung des Product-Hub-Katalogs.
+// Interner Batchlauf zur Erstübersetzung des Product-Hub-Katalogs (en, es, ru, ar).
 // Läuft mit Service Role, speichert ausschließlich KI-Entwürfe (ai_draft) + Quality Check.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { qaCheck } from "../_shared/ph-qa.ts";
@@ -17,6 +17,25 @@ const TEXT_FIELDS = [
   "seo_title", "seo_description", "intended_use", "product_group_label",
 ];
 const LIST_FIELDS = ["highlights", "benefits", "applications", "treatments", "features"];
+
+const LOCALES: Record<string, { label: string; style: string }> = {
+  en: {
+    label: "Englisch (en)",
+    style: "Professionelles internationales B2B-Fachenglisch der Beauty-/Medizintechnik.",
+  },
+  es: {
+    label: "Spanisch (es)",
+    style: "Professionelles, neutrales internationales Spanisch (kein regionaler Slang), B2B-Ton der professionellen Kosmetik-/Beauty-Technologie.",
+  },
+  ru: {
+    label: "Russisch (ru)",
+    style: "Natürliches, professionelles Russisch für B2B-Kunden im Bereich Beauty-Technologie und professionelle Kosmetik. Keine wörtliche Übertragung, idiomatisch und verkaufsstark, aber sachlich.",
+  },
+  ar: {
+    label: "Arabisch (ar)",
+    style: "Professionelles modernes Hocharabisch (MSA) für den MENA-/GCC-Markt. Zahlen, Einheiten, Modellnamen und Marken bleiben in lateinischer Schrift und westlichen Ziffern (z. B. 3000 W, 755 nm, −34 °C, 129 J/cm²) und dürfen nicht in arabische Ziffern umgeschrieben werden.",
+  },
+};
 
 async function generate(prompt: string, system: string): Promise<string> {
   const r = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
@@ -58,128 +77,119 @@ function parseJson(raw: string) {
 
 const asList = (v: unknown) => (Array.isArray(v) ? v.slice(0, 30) : []);
 
+const PRODUCT_COLS =
+  "id,name,model,sku,short_description,long_description,features,applications,intended_use,seo_title,seo_description,product_group,laser_class,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling";
+
+function germanSource(p: any, de: any) {
+  return {
+    name: de.name || p.name,
+    short_description: de.short_description || p.short_description,
+    long_description: de.long_description || p.long_description,
+    highlights: de.highlights?.length ? de.highlights : (Array.isArray(p.features) ? p.features : []),
+    benefits: de.benefits ?? [],
+    applications: de.applications?.length ? de.applications : (Array.isArray(p.applications) ? p.applications : []),
+    treatments: de.treatments ?? [],
+    features: de.features?.length ? de.features : (Array.isArray(p.features) ? p.features : []),
+    marketing_text: de.marketing_text ?? null,
+    notices: de.notices ?? null,
+    seo_title: de.seo_title || p.seo_title,
+    seo_description: de.seo_description || p.seo_description,
+    intended_use: de.intended_use || p.intended_use,
+    product_group_label: de.product_group_label || p.product_group,
+  } as Record<string, unknown>;
+}
+
+const ctxOf = (p: any) =>
+  [p.model, p.sku, p.wavelengths, p.power, p.fluence, p.pulse_duration, p.frequency, p.spot_sizes, p.cooling]
+    .filter(Boolean).join(" ");
+
 /** Nur Qualitätscheck neu berechnen – ohne die Übersetzungen zu verändern. */
-async function requalify(admin: any) {
+async function requalify(admin: any, locales: string[]) {
   const { data: glossary } = await admin.from("ph_glossary").select("term,mode").eq("active", true);
   const protectedTerms = (glossary ?? []).filter((g: any) => g.mode === "protected").map((g: any) => g.term);
-  const { data: prods } = await admin.from("ph_products")
-    .select("id,name,model,sku,short_description,long_description,features,applications,intended_use,seo_title,seo_description,product_group,laser_class,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling");
+  const { data: prods } = await admin.from("ph_products").select(PRODUCT_COLS);
   const out: any[] = [];
   for (const p of prods ?? []) {
     const { data: trs } = await admin.from("ph_product_translations").select("*").eq("product_id", p.id);
     const byLocale = Object.fromEntries((trs ?? []).map((r: any) => [r.locale, r]));
-    const en = byLocale["en"];
-    if (!en) continue;
-    const de = byLocale["de"] ?? {};
-    const source = {
-      name: de.name || p.name,
-      short_description: de.short_description || p.short_description,
-      long_description: de.long_description || p.long_description,
-      highlights: de.highlights?.length ? de.highlights : (Array.isArray(p.features) ? p.features : []),
-      benefits: de.benefits ?? [],
-      applications: de.applications?.length ? de.applications : (Array.isArray(p.applications) ? p.applications : []),
-      treatments: de.treatments ?? [],
-      features: de.features?.length ? de.features : (Array.isArray(p.features) ? p.features : []),
-      marketing_text: de.marketing_text ?? null,
-      notices: de.notices ?? null,
-      seo_title: de.seo_title || p.seo_title,
-      seo_description: de.seo_description || p.seo_description,
-      intended_use: de.intended_use || p.intended_use,
-      product_group_label: de.product_group_label || p.product_group,
-    };
-    const context = [p.model, p.sku, p.wavelengths, p.power, p.fluence, p.pulse_duration, p.frequency, p.spot_sizes, p.cooling].filter(Boolean).join(" ");
-    const qa = qaCheck({ source, target: en, locale: "en", model: p.model, brands: protectedTerms, context });
-    await admin.from("ph_translation_qa").upsert({
-      product_id: p.id, locale: "en", status: qa.status, score: qa.score,
-      issues: qa.issues, checked_at: new Date().toISOString(),
-    }, { onConflict: "product_id,locale" });
-    out.push({ name: p.name, qa: qa.status, score: qa.score });
+    const source = germanSource(p, byLocale["de"] ?? {});
+    for (const locale of locales) {
+      const target = byLocale[locale];
+      if (!target) continue;
+      const qa = qaCheck({ source, target, locale, model: p.model, brands: protectedTerms, context: ctxOf(p) });
+      await admin.from("ph_translation_qa").upsert({
+        product_id: p.id, locale, status: qa.status, score: qa.score,
+        issues: qa.issues, checked_at: new Date().toISOString(),
+      }, { onConflict: "product_id,locale" });
+      out.push({ name: p.name, locale, qa: qa.status, score: qa.score });
+    }
   }
   return { requalified: out.length, results: out };
 }
 
-async function runBatch(admin: any, offset: number, limit: number, overwrite: boolean, productIds?: string[]) {
-  {
-    const { data: glossary } = await admin.from("ph_glossary").select("term,mode,translations").eq("active", true);
-    const protectedTerms = (glossary ?? []).filter((g: any) => g.mode === "protected").map((g: any) => g.term);
-    const fixed = (glossary ?? []).filter((g: any) => g.mode === "fixed");
+async function runBatch(admin: any, locale: string, offset: number, limit: number, overwrite: boolean, productIds?: string[]) {
+  const spec = LOCALES[locale];
+  if (!spec) throw new Error(`Sprache nicht unterstützt: ${locale}`);
 
-    let q = admin.from("ph_products")
-      .select("id,name,model,sku,short_description,long_description,features,applications,intended_use,seo_title,seo_description,product_group,laser_class,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling");
-    q = productIds?.length ? q.in("id", productIds) : q.order("name").range(offset, offset + limit - 1);
-    const { data: prods } = await q;
+  const { data: glossary } = await admin.from("ph_glossary").select("term,mode,translations").eq("active", true);
+  const protectedTerms = (glossary ?? []).filter((g: any) => g.mode === "protected").map((g: any) => g.term);
+  const fixed = (glossary ?? []).filter((g: any) => g.mode === "fixed");
 
-    const results: any[] = [];
-    for (const p of prods ?? []) {
-      const { data: existing } = await admin.from("ph_product_translations").select("*").eq("product_id", p.id);
-      const byLocale = Object.fromEntries((existing ?? []).map((r: any) => [r.locale, r]));
-      const cur = byLocale["en"];
-      if (cur && !overwrite && ["review", "approved", "published"].includes(cur.status)) {
-        results.push({ id: p.id, name: p.name, skipped: "manuell_gepflegt" });
-        continue;
-      }
-      const de = byLocale["de"] ?? {};
-      const source = {
-        name: de.name || p.name,
-        short_description: de.short_description || p.short_description,
-        long_description: de.long_description || p.long_description,
-        highlights: de.highlights?.length ? de.highlights : (Array.isArray(p.features) ? p.features : []),
-        benefits: de.benefits ?? [],
-        applications: de.applications?.length ? de.applications : (Array.isArray(p.applications) ? p.applications : []),
-        treatments: de.treatments ?? [],
-        features: de.features?.length ? de.features : (Array.isArray(p.features) ? p.features : []),
-        marketing_text: de.marketing_text ?? null,
-        notices: de.notices ?? null,
-        seo_title: de.seo_title || p.seo_title,
-        seo_description: de.seo_description || p.seo_description,
-        intended_use: de.intended_use || p.intended_use,
-        product_group_label: de.product_group_label || p.product_group,
-      };
+  let q = admin.from("ph_products").select(PRODUCT_COLS);
+  q = productIds?.length ? q.in("id", productIds) : q.order("name").range(offset, offset + limit - 1);
+  const { data: prods } = await q;
 
-      const system =
-        `Du bist professioneller Fachübersetzer für medizinische und ästhetische Lasergeräte der Marke ALIX. ` +
-        `Übersetze aus dem Deutschen nach Englisch (en). ` +
-        `REGELN: Zahlen, Maßeinheiten (W, nm, Hz, ms, J/cm², °C), Modellbezeichnungen, SKU, Produktcodes und Markennamen bleiben unverändert. ` +
-        `Diese Begriffe NIEMALS übersetzen: ${protectedTerms.join(", ") || "ALIX"}. ` +
-        (fixed.length ? `Verbindliche Übersetzungen: ${fixed.map((f: any) => `"${f.term}" → "${f.translations?.en ?? f.term}"`).join("; ")}. ` : "") +
-        `Keine Heilversprechen, keine Zulassungsaussagen (CE, FDA, MDR, ISO) erfinden. Struktur und Listenlänge exakt beibehalten. ` +
-        `Schreibe professionelles internationales B2B-Fachenglisch der Beauty-/Medizintechnik, keine wörtliche Übertragung. ` +
-        `seo_title und seo_description eigenständig auf dieses Gerät zuschneiden (Produktart, Suchintention, tatsächliche Eigenschaften), seo_title 45–65 Zeichen, seo_description 120–165 Zeichen. ` +
-        `Antworte AUSSCHLIESSLICH mit reinem JSON in exakt derselben Feldstruktur wie die Eingabe.`;
-
-      try {
-        const raw = await generate(
-          `Gerätekontext (nicht übersetzen): ${JSON.stringify({ model: p.model, sku: p.sku, laser_class: p.laser_class, wavelengths: p.wavelengths, power: p.power })}\n\n` +
-          `Zu übersetzendes JSON:\n${JSON.stringify(source, null, 2)}`,
-          system,
-        );
-        const out = parseJson(raw);
-        const row: Record<string, unknown> = { product_id: p.id, locale: "en" };
-        for (const f of TEXT_FIELDS) if (typeof out[f] === "string") row[f] = out[f];
-        for (const f of LIST_FIELDS) row[f] = asList(out[f]);
-        row.status = "ai_draft";
-        row.translation_source = "ki";
-        row.translated_at = new Date().toISOString();
-
-        const { error } = await admin.from("ph_product_translations").upsert(row, { onConflict: "product_id,locale" });
-        if (error) throw new Error(error.message);
-
-        const qa = qaCheck({
-          source, target: row, locale: "en", model: p.model, brands: protectedTerms,
-          context: [p.model, p.sku, p.wavelengths, p.power, p.fluence, p.pulse_duration, p.frequency, p.spot_sizes, p.cooling].filter(Boolean).join(" "),
-        });
-        await admin.from("ph_translation_qa").upsert({
-          product_id: p.id, locale: "en", status: qa.status, score: qa.score,
-          issues: qa.issues, checked_at: new Date().toISOString(),
-        }, { onConflict: "product_id,locale" });
-
-        results.push({ id: p.id, name: p.name, ok: true, qa: qa.status, score: qa.score, issues: qa.issues.map((i) => i.code) });
-      } catch (e: any) {
-        results.push({ id: p.id, name: p.name, error: String(e?.message ?? e).slice(0, 200) });
-      }
+  const results: any[] = [];
+  for (const p of prods ?? []) {
+    const { data: existing } = await admin.from("ph_product_translations").select("*").eq("product_id", p.id);
+    const byLocale = Object.fromEntries((existing ?? []).map((r: any) => [r.locale, r]));
+    const cur = byLocale[locale];
+    if (cur && !overwrite && ["review", "approved", "published"].includes(cur.status)) {
+      results.push({ id: p.id, name: p.name, skipped: "manuell_gepflegt" });
+      continue;
     }
-    return { offset, count: (prods ?? []).length, results };
+    const source = germanSource(p, byLocale["de"] ?? {});
+
+    const system =
+      `Du bist professioneller Fachübersetzer für medizinische und ästhetische Lasergeräte der Marke ALIX. ` +
+      `Übersetze aus dem Deutschen nach ${spec.label}. ${spec.style} ` +
+      `REGELN: Zahlen, Maßeinheiten (W, nm, Hz, ms, J/cm², °C, dB), Spotgrößen, Modellbezeichnungen, SKU, Artikelnummern, Produktcodes, Preise, Garantiezeiträume und Markennamen bleiben unverändert. ` +
+      `Diese Begriffe NIEMALS übersetzen: ${protectedTerms.join(", ") || "ALIX"}. ` +
+      (fixed.length ? `Verbindliche Übersetzungen: ${fixed.map((f: any) => `"${f.term}" → "${f.translations?.[locale] ?? f.term}"`).join("; ")}. ` : "") +
+      `Leere Felder bleiben leer (null bzw. leere Liste) – niemals Inhalte erfinden. ` +
+      `Keine Heilversprechen, keine neuen medizinischen Aussagen, keine Zulassungsaussagen (CE, FDA, MDR, ISO) erfinden. Struktur und Listenlänge exakt beibehalten. ` +
+      `seo_title und seo_description eigenständig auf dieses Gerät und die Suchintention der Zielsprache zuschneiden (keine Wort-für-Wort-Übertragung), seo_title 45–65 Zeichen, seo_description 120–165 Zeichen. ` +
+      `Antworte AUSSCHLIESSLICH mit reinem JSON in exakt derselben Feldstruktur wie die Eingabe.`;
+
+    try {
+      const raw = await generate(
+        `Gerätekontext (nicht übersetzen): ${JSON.stringify({ model: p.model, sku: p.sku, laser_class: p.laser_class, wavelengths: p.wavelengths, power: p.power })}\n\n` +
+        `Zu übersetzendes JSON:\n${JSON.stringify(source, null, 2)}`,
+        system,
+      );
+      const out = parseJson(raw);
+      const row: Record<string, unknown> = { product_id: p.id, locale };
+      for (const f of TEXT_FIELDS) if (typeof out[f] === "string") row[f] = out[f];
+      for (const f of LIST_FIELDS) row[f] = asList(out[f]);
+      row.status = "ai_draft";
+      row.translation_source = "ki";
+      row.translated_at = new Date().toISOString();
+
+      const { error } = await admin.from("ph_product_translations").upsert(row, { onConflict: "product_id,locale" });
+      if (error) throw new Error(error.message);
+
+      const qa = qaCheck({ source, target: row, locale, model: p.model, brands: protectedTerms, context: ctxOf(p) });
+      await admin.from("ph_translation_qa").upsert({
+        product_id: p.id, locale, status: qa.status, score: qa.score,
+        issues: qa.issues, checked_at: new Date().toISOString(),
+      }, { onConflict: "product_id,locale" });
+
+      results.push({ id: p.id, name: p.name, ok: true, qa: qa.status, score: qa.score, issues: qa.issues.map((i) => i.code) });
+    } catch (e: any) {
+      results.push({ id: p.id, name: p.name, error: String(e?.message ?? e).slice(0, 200) });
+    }
   }
+  return { locale, offset, count: (prods ?? []).length, results };
 }
 
 Deno.serve(async (req) => {
@@ -190,16 +200,20 @@ Deno.serve(async (req) => {
     const limit = Math.min(Number(body.limit) || 3, 60);
     const offset = Number(body.offset) || 0;
     const overwrite = body.overwrite === true;
+    const locale = String(body.locale ?? "en");
     const productIds: string[] | undefined = Array.isArray(body.productIds) ? body.productIds.map(String) : undefined;
 
-    if (body.action === "requalify") return json(200, await requalify(admin));
+    if (body.action === "requalify") {
+      const locales: string[] = Array.isArray(body.locales) && body.locales.length ? body.locales.map(String) : [locale];
+      return json(200, await requalify(admin, locales));
+    }
 
     if (body.background === true) {
       // @ts-ignore Deno Edge Runtime
-      EdgeRuntime.waitUntil(runBatch(admin, offset, limit, overwrite, productIds));
-      return json(202, { started: true, offset, limit });
+      EdgeRuntime.waitUntil(runBatch(admin, locale, offset, limit, overwrite, productIds));
+      return json(202, { started: true, locale, offset, limit });
     }
-    return json(200, await runBatch(admin, offset, limit, overwrite, productIds));
+    return json(200, await runBatch(admin, locale, offset, limit, overwrite, productIds));
   } catch (e: any) {
     return json(500, { error: e?.message ?? "Fehler" });
   }
