@@ -15,8 +15,8 @@ const KEY = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") ?? "";
 const PROTECTED_HUB_IDS = ["alix-blueice-smart-ki"];
 
 const CANDIDATE_PATHS = [
-  "/api/public/product-hub/registry",
   "/api/public/product-hub/mappings",
+  "/api/public/product-hub/registry",
   "/api/public/product-hub/mapping-registry",
   "/api/public/product-hub/register",
   "/api/public/product-hub-registry",
@@ -89,12 +89,12 @@ Deno.serve(async (req) => {
         continue;
       }
       items.push({
-        product: name,
         hub_id: hubId,
-        publish_id: target,
-        remote_product_id: target,
-        remote_url: m.remote_url,
-        locales: ["en", "es", "ru", "ar"],
+        product_id: target,
+        confidence: "high",
+        confirmed_by: "alixwork",
+        product_name: name,
+        note: "AlixWork confirmed mapping",
       });
     }
 
