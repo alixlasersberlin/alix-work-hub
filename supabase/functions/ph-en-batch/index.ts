@@ -134,7 +134,25 @@ async function runBatch(admin: any, offset: number, limit: number, overwrite: bo
         results.push({ id: p.id, name: p.name, error: String(e?.message ?? e).slice(0, 200) });
       }
     }
-    return json(200, { offset, count: (prods ?? []).length, results });
+    return { offset, count: (prods ?? []).length, results };
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  try {
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const body = await req.json().catch(() => ({}));
+    const limit = Math.min(Number(body.limit) || 3, 60);
+    const offset = Number(body.offset) || 0;
+    const overwrite = body.overwrite === true;
+
+    if (body.background === true) {
+      // @ts-ignore Deno Edge Runtime
+      EdgeRuntime.waitUntil(runBatch(admin, offset, limit, overwrite));
+      return json(202, { started: true, offset, limit });
+    }
+    return json(200, await runBatch(admin, offset, limit, overwrite));
   } catch (e: any) {
     return json(500, { error: e?.message ?? "Fehler" });
   }
