@@ -78,11 +78,19 @@ Deno.serve(async (req) => {
 
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
     if (!token) return json(401, { error: "Nicht angemeldet" });
-    const { data: userRes } = await admin.auth.getUser(token);
-    const uid = userRes?.user?.id;
-    if (!uid) return json(401, { error: "Ungültige Sitzung" });
 
+    // Interner Batchlauf mit Service-Role-Token (Katalogvorbereitung)
+    const serviceToken = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    let uid: string | null = null;
     let allowed = false;
+    if (token === serviceToken) {
+      allowed = true;
+    } else {
+      const { data: userRes } = await admin.auth.getUser(token);
+      uid = userRes?.user?.id ?? null;
+      if (!uid) return json(401, { error: "Ungültige Sitzung" });
+    }
+
     const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { autoRefreshToken: false, persistSession: false },
