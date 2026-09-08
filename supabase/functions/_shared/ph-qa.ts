@@ -33,6 +33,8 @@ export function qaCheck(opts: {
   locale: string;
   model?: string | null;
   brands?: string[];
+  /** Technische Kontextwerte (Wellenlängen, Leistung …) – dort vorkommende Zahlen sind zulässig. */
+  context?: string;
 }): QaResult {
   const { source, target, locale } = opts;
   const issues: QaIssue[] = [];
@@ -41,8 +43,12 @@ export function qaCheck(opts: {
     "seo_title", "seo_description", "intended_use",
     "highlights", "benefits", "applications", "treatments", "features",
   ];
+  // SEO-Texte werden bewusst eigenständig getextet und daher nicht auf Zahlengleichheit geprüft.
+  const contentFields = fields.filter(f => !f.startsWith("seo_"));
   const srcAll = joinAll(source, fields);
   const tgtAll = joinAll(target, fields);
+  const srcContent = joinAll(source, contentFields);
+  const tgtContent = joinAll(target, contentFields);
 
   // 1. Pflichtfelder
   for (const f of ["name", "short_description", "long_description", "seo_title", "seo_description"]) {
