@@ -15,6 +15,7 @@ const KEY = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") ?? "";
 // Hub-Feld -> Feldname der .com-Schnittstelle
 const FIELD_MAP: Record<string, string> = {
   name: "product_name",
+  intended_use: "intended_use",
   short_description: "short_description",
   long_description: "long_description",
   marketing_text: "marketing_text",
