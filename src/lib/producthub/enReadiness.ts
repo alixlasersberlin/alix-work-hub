@@ -85,6 +85,7 @@ export function phBuildAudit(
   translations: PhTranslation[],
   qa: PhQaRow[],
   comMap: Set<string>,
+  locale = 'en',
 ): PhAuditRow[] {
   const trByKey = new Map(translations.map(t => [`${t.product_id}:${t.locale}`, t]));
   const qaByKey = new Map(qa.map(q => [`${q.product_id}:${q.locale}`, q]));
