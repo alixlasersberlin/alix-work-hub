@@ -96,18 +96,19 @@ Deno.serve(async (req) => {
     if (!Object.keys(fields).length) return json(409, { error: "Keine übertragbaren Felder." });
 
     const base = { publish_id: publishId, hub_id: hubId, locale, render: false, publish: false };
+    const fieldList = Object.entries(fields).map(([field, value]) => ({ field, value, status: "approved" }));
 
     if (body.dryRun === true) {
-      const dry = await comFetch({ ...base, dry_run: true, fields });
+      const dry = await comFetch({ ...base, dry_run: true, fields: fieldList });
       return json(200, { dryRun: true, payload: { ...base, fields: Object.keys(fields) }, response: dry });
     }
 
-    const write = await comFetch({ ...base, dry_run: false, fields });
+    const write = await comFetch({ ...base, dry_run: false, fields: fieldList });
     const ok = write.status >= 200 && write.status < 300 && write.body?.error == null;
 
     // Read-back: identische Felder als dry_run senden, previous_value = gespeicherter Wert
     let readback: any = null;
-    if (ok) readback = await comFetch({ ...base, dry_run: true, fields });
+    if (ok) readback = await comFetch({ ...base, dry_run: true, fields: fieldList });
 
     const rows: any[] = readback?.body?.results ?? [];
     const compare = Object.keys(fields).map((rf) => {
