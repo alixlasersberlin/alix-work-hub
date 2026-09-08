@@ -66,6 +66,27 @@ export function qaCheck(opts: {
     } else if (hits.length >= 3) {
       issues.push({ code: "german_leftover", level: "warning", message: `Mögliche deutsche Textreste: ${hits.slice(0, 6).join(", ")}` });
     }
+
+    // 2b. Zielschrift vorhanden? (Russisch = Kyrillisch, Arabisch = arabische Schrift)
+    const body = joinAll(target, ["short_description", "long_description", "marketing_text"]);
+    if (locale === "ru" && body.trim() && !/\p{Script=Cyrillic}/u.test(body)) {
+      issues.push({ code: "wrong_script", level: "blocked", message: "Russische Übersetzung enthält keine kyrillische Schrift." });
+    }
+    if (locale === "ar" && body.trim() && !/\p{Script=Arabic}/u.test(body)) {
+      issues.push({ code: "wrong_script", level: "blocked", message: "Arabische Übersetzung enthält keine arabische Schrift." });
+    }
+    // 2c. Arabische Ziffern statt westlicher Ziffern bei technischen Werten
+    if (locale === "ar" && /[\u0660-\u0669\u06F0-\u06F9]/.test(tgtAll)) {
+      issues.push({ code: "arabic_digits", level: "blocked", message: "Technische Werte wurden in arabisch-indische Ziffern umgeschrieben." });
+    }
+    // 2d. Englische Textreste in ES/RU/AR
+    if (["es", "ru", "ar"].includes(locale)) {
+      const en = ["the", "and", "with", "for", "this", "that", "your", "from", "these", "which"];
+      const hitsEn = en.filter(w => low.includes(` ${w} `));
+      if (hitsEn.length >= 3) {
+        issues.push({ code: "english_leftover", level: "warning", message: `Mögliche englische Textreste: ${hitsEn.slice(0, 6).join(", ")}` });
+      }
+    }
   }
 
   // 3. Zahlen / Messwerte unverändert

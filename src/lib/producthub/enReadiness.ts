@@ -85,14 +85,15 @@ export function phBuildAudit(
   translations: PhTranslation[],
   qa: PhQaRow[],
   comMap: Set<string>,
+  locale = 'en',
 ): PhAuditRow[] {
   const trByKey = new Map(translations.map(t => [`${t.product_id}:${t.locale}`, t]));
   const qaByKey = new Map(qa.map(q => [`${q.product_id}:${q.locale}`, q]));
 
   return products.map(p => {
     const de = trByKey.get(`${p.id}:de`);
-    const en = trByKey.get(`${p.id}:en`);
-    const q = qaByKey.get(`${p.id}:en`);
+    const en = trByKey.get(`${p.id}:${locale}`);
+    const q = qaByKey.get(`${p.id}:${locale}`);
     const src = phGermanSource(p, de);
     const missing = PH_AUDIT_FIELDS.filter(f => !filled(src[f.key])).map(f => f.label);
     const completeness = Math.round(((PH_AUDIT_FIELDS.length - missing.length) / PH_AUDIT_FIELDS.length) * 100);
@@ -129,8 +130,11 @@ export async function phLoadQa(locale = 'en'): Promise<PhQaRow[]> {
   return (data ?? []) as PhQaRow[];
 }
 
-export async function phLoadComMap(): Promise<Set<string>> {
-  const { data } = await db.from('ph_lang_sync_map').select('product_id,site_code').eq('site_code', 'com');
+/** Zielsite je Sprache: EN/ES/RU → alix-lasers.com, AR → alix-lasers.ae */
+export const PH_LOCALE_SITE: Record<string, string> = { en: 'com', es: 'com', ru: 'com', ar: 'ae' };
+
+export async function phLoadComMap(site = 'com'): Promise<Set<string>> {
+  const { data } = await db.from('ph_lang_sync_map').select('product_id,site_code').eq('site_code', site);
   return new Set((data ?? []).map((r: any) => r.product_id));
 }
 
