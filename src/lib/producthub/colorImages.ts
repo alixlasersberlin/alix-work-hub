@@ -16,6 +16,7 @@ const MAP: Record<string, DeviceColorVisual> = {
   rotgold: { image: rotGold.url, swatch: ['#a52426', '#cfa257'] },
   schwarzgold: { image: schwarzGold.url, swatch: ['#2c2c2c', '#e0b53a'] },
   schwarzpink: { image: schwarzPink.url, swatch: ['#1a1a1a', '#e7b9c2'] },
+  weigold: { image: weissGold.url, swatch: ['#f4f4f4', '#e0c02a'] },
   weisgold: { image: weissGold.url, swatch: ['#f4f4f4', '#e0c02a'] },
 };
 
