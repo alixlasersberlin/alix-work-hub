@@ -122,6 +122,27 @@ Deno.serve(async (req) => {
       return json(200, { stage: "probe", probes: out, confirmed_mappings: items.length });
     }
 
+    // Aufgelöste .com-UUIDs zurück in die Zuordnungstabelle schreiben (Slug bleibt in remote_url erhalten)
+    if (action === "resolve") {
+      const path = String(body.endpoint ?? "/api/public/product-hub/mappings");
+      const dry = await call(path, "POST", { dry_run: true, mappings: items });
+      const rows: any[] = Array.isArray((dry.body as any)?.results) ? (dry.body as any).results : [];
+      const byHub = new Map(rows.map((r: any) => [String(r.hub_id ?? ""), r]));
+      const updated: any[] = [];
+      for (const m of maps || []) {
+        const p: any = byId.get(m.product_id);
+        const hubId = String(p?.alix_product_id ?? "").trim();
+        const r: any = byHub.get(hubId);
+        const uuid = String(r?.resolved_product_id ?? "");
+        if (!uuid || uuid === m.remote_product_id) continue;
+        await admin.from("ph_lang_sync_map")
+          .update({ remote_product_id: uuid, note: `slug=${m.remote_product_id}` })
+          .eq("product_id", m.product_id).eq("site_code", "com");
+        updated.push({ name: p?.name, slug: m.remote_product_id, resolved_product_id: uuid });
+      }
+      return json(200, { stage: "resolve", status: dry.status, updated_count: updated.length, updated });
+    }
+
     const found = await discover(endpoint, method);
     if (!found.path) {
       return json(200, {
