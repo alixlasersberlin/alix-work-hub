@@ -190,13 +190,16 @@ Deno.serve(async (req) => {
     const limit = Math.min(Number(body.limit) || 3, 60);
     const offset = Number(body.offset) || 0;
     const overwrite = body.overwrite === true;
+    const productIds: string[] | undefined = Array.isArray(body.productIds) ? body.productIds.map(String) : undefined;
+
+    if (body.action === "requalify") return json(200, await requalify(admin));
 
     if (body.background === true) {
       // @ts-ignore Deno Edge Runtime
-      EdgeRuntime.waitUntil(runBatch(admin, offset, limit, overwrite));
+      EdgeRuntime.waitUntil(runBatch(admin, offset, limit, overwrite, productIds));
       return json(202, { started: true, offset, limit });
     }
-    return json(200, await runBatch(admin, offset, limit, overwrite));
+    return json(200, await runBatch(admin, offset, limit, overwrite, productIds));
   } catch (e: any) {
     return json(500, { error: e?.message ?? "Fehler" });
   }
