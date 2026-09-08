@@ -98,6 +98,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Sonderaktion: Ziel-IDs auf .com auslesen (GET), um Slug -> UUID aufzulösen
+    if (action === "probe") {
+      const paths: string[] = body.paths ?? [
+        "/api/public/product-hub/mappings",
+        "/api/public/product-hub/products",
+        "/api/public/product-hub/export",
+      ];
+      const out: any[] = [];
+      for (const p of paths) {
+        const r = await fetch(`${HOST}${p}`, { headers: { "x-api-key": KEY } });
+        const t = await r.text();
+        let b: any; try { b = JSON.parse(t); } catch { b = t.slice(0, 200); }
+        if (typeof b === "string" && b.startsWith("<!DOCTYPE")) b = "HTML_404_SPA";
+        out.push({ path: p, status: r.status, body: b });
+      }
+      return json(200, { stage: "probe", probes: out, confirmed_mappings: items.length });
+    }
+
     const found = await discover(endpoint, method);
     if (!found.path) {
       return json(200, {
