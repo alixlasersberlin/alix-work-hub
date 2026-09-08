@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     const { data: product } = await admin.from("ph_products")
       .select("id,name,alix_product_id,sku,model").eq("id", productId).maybeSingle();
     if (!product) return json(404, { error: "Gerät nicht gefunden" });
-    const hubId = product.alix_product_id;
+    const hubId = String(body.hubId ?? product.alix_product_id ?? "");
     if (!hubId) return json(400, { error: "Keine stabile Hub-ID am Gerät" });
 
     const { data: map } = await admin.from("ph_lang_sync_map")
