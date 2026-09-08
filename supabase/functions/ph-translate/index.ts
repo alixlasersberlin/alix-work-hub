@@ -91,17 +91,19 @@ Deno.serve(async (req) => {
       if (!uid) return json(401, { error: "Ungültige Sitzung" });
     }
 
-    const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-    try {
-      const { data: isAdmin } = await userClient.rpc("is_admin");
-      allowed = !!isAdmin;
-    } catch { /* ignore */ }
-    if (!allowed) {
-      const { data: phRows } = await admin.from("ph_roles").select("role").eq("user_id", uid);
-      allowed = (phRows ?? []).length > 0;
+    if (!allowed && uid) {
+      const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      try {
+        const { data: isAdmin } = await userClient.rpc("is_admin");
+        allowed = !!isAdmin;
+      } catch { /* ignore */ }
+      if (!allowed) {
+        const { data: phRows } = await admin.from("ph_roles").select("role").eq("user_id", uid);
+        allowed = (phRows ?? []).length > 0;
+      }
     }
     if (!allowed) return json(403, { error: "Keine Berechtigung" });
 
