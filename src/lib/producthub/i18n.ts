@@ -34,6 +34,8 @@ export const PH_TR_TEXT_FIELDS: { key: string; label: string; area?: boolean; ro
   { key: 'long_description', label: 'Ausführliche Beschreibung', area: true, rows: 8 },
   { key: 'marketing_text', label: 'Marketingtext', area: true, rows: 5 },
   { key: 'notices', label: 'Hinweise / Sicherheitstexte', area: true, rows: 4 },
+  { key: 'intended_use', label: 'Zweckbestimmung (sprachabhängiger technischer Textwert)', area: true, rows: 3 },
+  { key: 'product_group_label', label: 'Kategoriebezeichnung (sprachabhängig)' },
 ];
 
 export const PH_TR_LIST_FIELDS: { key: string; label: string }[] = [
