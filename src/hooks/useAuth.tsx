@@ -171,9 +171,11 @@ async function computeMfaState(): Promise<MfaState> {
       // Alternative: SMS-Zweitfaktor (Super Admin)
       if (await hasEnabledSmsFactor()) {
         if (isMfaVerifiedThisTab()) return 'verified';
-        if (!isMfaPrivileged() && isMfaWithinGrace()) return 'verified';
+        // Auch privilegierte Rollen: SMS-Code nur einmal pro 24 Stunden pro Gerät.
+        if (isMfaWithinGrace()) return 'verified';
         return 'challenge_required';
       }
+
       return 'not_enrolled';
     }
 
@@ -185,11 +187,12 @@ async function computeMfaState(): Promise<MfaState> {
       }
       return 'verified';
     }
-    // Nicht-privilegierte Rollen: OTP nur einmal pro 24 Stunden pro Gerät.
-    if (!isMfaPrivileged() && isMfaWithinGrace()) {
+    // OTP nur einmal pro 24 Stunden pro Gerät (auch für privilegierte Rollen).
+    if (isMfaWithinGrace()) {
       try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
       return 'verified';
     }
+
     return 'challenge_required';
   } catch {
     return 'unknown';
