@@ -104,9 +104,10 @@ async function runBatch(admin: any, offset: number, limit: number, overwrite: bo
     const protectedTerms = (glossary ?? []).filter((g: any) => g.mode === "protected").map((g: any) => g.term);
     const fixed = (glossary ?? []).filter((g: any) => g.mode === "fixed");
 
-    const { data: prods } = await admin.from("ph_products")
-      .select("id,name,model,sku,short_description,long_description,features,applications,intended_use,seo_title,seo_description,product_group,laser_class,wavelengths,power")
-      .order("name").range(offset, offset + limit - 1);
+    let q = admin.from("ph_products")
+      .select("id,name,model,sku,short_description,long_description,features,applications,intended_use,seo_title,seo_description,product_group,laser_class,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling");
+    q = productIds?.length ? q.in("id", productIds) : q.order("name").range(offset, offset + limit - 1);
+    const { data: prods } = await q;
 
     const results: any[] = [];
     for (const p of prods ?? []) {
