@@ -1,7 +1,7 @@
 // ALIX PRODUCT HUB – automatischer Qualitätscheck für Übersetzungen
 // Deterministisch, ohne KI: vergleicht Zielsprache gegen deutschen Master.
 
-export type QaIssue = { code: string; level: "warning" | "blocked"; field?: string; message: string };
+export type QaIssue = { code: string; level: "info" | "warning" | "blocked"; field?: string; message: string };
 export type QaResult = { status: "pass" | "warning" | "blocked"; score: number; issues: QaIssue[] };
 
 const GERMAN_WORDS = [
@@ -174,6 +174,7 @@ export function qaCheck(opts: {
   }
 
   const blocked = issues.some(i => i.level === "blocked");
-  const score = Math.max(0, 100 - issues.reduce((n, i) => n + (i.level === "blocked" ? 30 : 8), 0));
-  return { status: blocked ? "blocked" : issues.length ? "warning" : "pass", score, issues };
+  const score = Math.max(0, 100 - issues.reduce((n, i) => n + (i.level === "blocked" ? 30 : i.level === "warning" ? 8 : 0), 0));
+  const warned = issues.some(i => i.level === "warning");
+  return { status: blocked ? "blocked" : warned ? "warning" : "pass", score, issues };
 }
