@@ -56,6 +56,8 @@ export interface PhTranslation {
   id?: string;
   product_id: string;
   locale: PhLocale;
+  intended_use?: string | null;
+  product_group_label?: string | null;
   name?: string | null;
   short_description?: string | null;
   long_description?: string | null;
