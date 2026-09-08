@@ -89,9 +89,10 @@ Deno.serve(async (req) => {
         skipped.push({ name, reason: "PROTECTED_EXISTING", target });
         continue;
       }
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(target);
       items.push({
         hub_id: hubId,
-        product_id: target,
+        ...(isUuid ? { product_id: target } : { product_slug: target }),
         confidence: "high",
         confirmed_by: "alixwork",
         product_name: name,
