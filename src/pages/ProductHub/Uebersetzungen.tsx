@@ -99,9 +99,20 @@ export default function Uebersetzungen() {
       <Tabs defaultValue="uebersicht">
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+          <TabsTrigger value="audit">Katalog-Audit</TabsTrigger>
+          <TabsTrigger value="enfreigabe">EN Freigabe</TabsTrigger>
           <TabsTrigger value="websync">Website Sync</TabsTrigger>
           <TabsTrigger value="glossar">Translation Glossary</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="audit" className="space-y-4">
+          <CatalogAuditPanel onOpen={id => nav(`/product-hub/geraete/${id}`)} />
+        </TabsContent>
+
+        <TabsContent value="enfreigabe" className="space-y-4">
+          <EnApprovalQueue />
+        </TabsContent>
+
 
 
         <TabsContent value="uebersicht" className="space-y-4">
