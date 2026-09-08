@@ -100,7 +100,7 @@ export default function Uebersetzungen() {
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
           <TabsTrigger value="audit">Katalog-Audit</TabsTrigger>
-          <TabsTrigger value="enfreigabe">EN Freigabe</TabsTrigger>
+          <TabsTrigger value="enfreigabe">Freigabe</TabsTrigger>
           <TabsTrigger value="websync">Website Sync</TabsTrigger>
           <TabsTrigger value="glossar">Translation Glossary</TabsTrigger>
         </TabsList>
@@ -110,7 +110,20 @@ export default function Uebersetzungen() {
         </TabsContent>
 
         <TabsContent value="enfreigabe" className="space-y-4">
-          <EnApprovalQueue />
+          <Tabs defaultValue="en">
+            <TabsList>
+              {(['en', 'es', 'ru', 'ar'] as const).map(l => (
+                <TabsTrigger key={l} value={l}>
+                  {PH_LOCALES.find(x => x.code === l)!.flag} {l.toUpperCase()}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {(['en', 'es', 'ru', 'ar'] as const).map(l => (
+              <TabsContent key={l} value={l} className="pt-4">
+                <EnApprovalQueue locale={l} />
+              </TabsContent>
+            ))}
+          </Tabs>
         </TabsContent>
 
 
