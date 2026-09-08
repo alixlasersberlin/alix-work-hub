@@ -12,7 +12,8 @@ const json = (s: number, b: unknown) =>
 
 const HOST = "https://www.alix-lasers.com";
 const KEY = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") ?? "";
-const PROTECTED_HUB_IDS = ["alix-blueice-smart-ki"];
+const PROTECTED_HUB_IDS = ["alix-blueice-smart-ki", "Alix BlueIce Smart KI"];
+const PROTECTED_TARGETS = ["c9f9b7c9-d6b7-4ed6-ac60-913cbdec2dd6"];
 
 const CANDIDATE_PATHS = [
   "/api/public/product-hub/mappings",
@@ -84,7 +85,7 @@ Deno.serve(async (req) => {
       if (seenHub.has(hubId)) { skipped.push({ name, reason: "DUPLICATE_HUB_ID" }); continue; }
       if (seenTarget.has(target)) { skipped.push({ name, reason: "DUPLICATE_TARGET" }); continue; }
       seenHub.add(hubId); seenTarget.add(target);
-      if (PROTECTED_HUB_IDS.includes(target) || PROTECTED_HUB_IDS.includes(hubId)) {
+      if (PROTECTED_TARGETS.includes(target) || PROTECTED_HUB_IDS.includes(target) || PROTECTED_HUB_IDS.includes(hubId)) {
         skipped.push({ name, reason: "PROTECTED_EXISTING", target });
         continue;
       }
