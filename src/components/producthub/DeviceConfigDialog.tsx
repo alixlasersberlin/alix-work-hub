@@ -49,6 +49,7 @@ export function DeviceConfigDialog({
     laser_module_power: power || null,
   };
   const valid = deviceConfigComplete(cfg);
+  const visual = deviceColorVisual(color);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
