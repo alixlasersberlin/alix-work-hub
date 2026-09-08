@@ -27,6 +27,8 @@ import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/produc
 import { deviceConfigLines, deviceConfigComplete, type DeviceConfig } from '@/lib/producthub/deviceConfig';
 import { PH_PRICE_COUNTRIES, readCountryPrice, uvpForPower, type PhCountryPrice } from '@/lib/producthub/countryPricing';
 import { buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
+import { deviceColorVisual } from '@/lib/producthub/colorImages';
+
 
 
 
@@ -576,8 +578,12 @@ export default function AngebotErstellen() {
 
 
   const resolveLineImage = (l: LineItem): string | null => {
+    // Wurde eine Gerätefarbe konfiguriert, hat das passende Farbfoto Vorrang
+    const colorImg = deviceColorVisual((l as any).device_color)?.image;
+    if (colorImg) return colorImg;
     if (l.product_image_url) return l.product_image_url;
     if (l.image_url) return l.image_url;
+
     const dev = matchPhDevice(l);
     if (dev?.url) return dev.url;
     const cands = [l.name, l.sku].map(norm).filter(Boolean);
