@@ -149,6 +149,9 @@ Deno.serve(async (req) => {
         notices: de.notices ?? null,
         seo_title: de.seo_title || p.seo_title,
         seo_description: de.seo_description || p.seo_description,
+        // Sprachabhängige technische Textwerte (Werte, keine Messwerte)
+        intended_use: de.intended_use || p.intended_use,
+        product_group_label: de.product_group_label || p.product_group,
         alt_texts: de.alt_texts ?? {},
       };
 
