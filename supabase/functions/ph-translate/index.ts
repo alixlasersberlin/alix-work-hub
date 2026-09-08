@@ -170,7 +170,10 @@ Deno.serve(async (req) => {
           (fixed.length
             ? `Verbindliche Übersetzungen: ${fixed.map((f: any) => `"${f.term}" → "${f.translations?.[locale] ?? f.term}"`).join("; ")}. `
             : "") +
-          `Keine Heilversprechen, keine Zulassungsaussagen erfinden. Struktur und Listenlänge exakt beibehalten. ` +
+          `Keine Heilversprechen, keine Zulassungsaussagen (CE, FDA, MDR, ISO) erfinden. Struktur und Listenlänge exakt beibehalten. ` +
+          `Schreibe professionelles internationales B2B-Fachenglisch der Beauty-/Medizintechnik, keine wörtliche Übertragung aus dem Deutschen. ` +
+          `seo_title und seo_description müssen eigenständig auf dieses Gerät zugeschnitten sein (Produktart, Suchintention, tatsächliche Eigenschaften) – keine Schablone mit ausgetauschtem Produktnamen; seo_title 45–65 Zeichen, seo_description 120–165 Zeichen. ` +
+          `intended_use (Zweckbestimmung) und product_group_label sind sprachabhängige Textwerte und werden ebenfalls übersetzt – ohne die technischen Messwerte darin zu verändern. ` +
           (locale === "ar" ? `Arabischer Text wird RTL dargestellt; technische Angaben in lateinischer Schrift belassen. ` : "") +
           `Antworte AUSSCHLIESSLICH mit reinem JSON in exakt derselben Feldstruktur wie die Eingabe.`;
 
