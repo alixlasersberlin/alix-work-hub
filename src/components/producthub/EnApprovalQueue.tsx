@@ -1,5 +1,5 @@
-// Product Hub → Übersetzungen → EN Freigabe
-// Manuelle Prüfung und Freigabe der englischen KI-Entwürfe. BLOCKED wird nie freigegeben.
+// Product Hub → Übersetzungen → Freigabe (EN | ES | RU | AR)
+// Manuelle Prüfung und Freigabe der KI-Entwürfe je Sprache. BLOCKED wird nie freigegeben.
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { phListProducts } from '@/lib/producthub/api';
 import { phApproveTranslation, phTranslate, PH_TR_STATUS } from '@/lib/producthub/i18n';
 import {
-  PH_QA_LABEL, PH_READINESS_TONE, phBuildAudit, phGermanSource, phLoadComMap, phLoadQa,
+  PH_LOCALE_SITE, PH_QA_LABEL, PH_READINESS_TONE, phBuildAudit, phGermanSource, phLoadComMap, phLoadQa,
   phLoadTranslationsAllFields, type PhAuditRow,
 } from '@/lib/producthub/enReadiness';
 
@@ -39,8 +39,10 @@ const COMPARE_FIELDS: { key: string; label: string }[] = [
 const show = (v: unknown) =>
   Array.isArray(v) ? v.filter(x => typeof x === 'string').join(' · ') : (typeof v === 'string' ? v : '—');
 
-export function EnApprovalQueue() {
+export function EnApprovalQueue({ locale = 'en' }: { locale?: 'en' | 'es' | 'ru' | 'ar' }) {
   const nav = useNavigate();
+  const LC = locale.toUpperCase();
+  const rtl = locale === 'ar';
   const [rows, setRows] = useState<PhAuditRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -55,13 +57,14 @@ export function EnApprovalQueue() {
     setLoading(true);
     try {
       const [prods, trs, qa, com] = await Promise.all([
-        phListProducts(), phLoadTranslationsAllFields(['de', 'en']), phLoadQa('en'), phLoadComMap(),
+        phListProducts(), phLoadTranslationsAllFields(['de', locale]), phLoadQa(locale),
+        phLoadComMap(PH_LOCALE_SITE[locale] ?? 'com'),
       ]);
-      setRows(phBuildAudit(prods, trs, qa, com));
+      setRows(phBuildAudit(prods, trs, qa, com, locale));
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [locale]);
 
   const filtered = useMemo(() => rows.filter(r => {
     const s = q.trim().toLowerCase();
@@ -78,10 +81,10 @@ export function EnApprovalQueue() {
     try {
       const ids = missingEn.map(r => r.product.id);
       for (let i = 0; i < ids.length; i += 3) {
-        await phTranslate({ productIds: ids.slice(i, i + 3), locales: ['en'], overwrite: false });
+        await phTranslate({ productIds: ids.slice(i, i + 3), locales: [locale], overwrite: false });
         setProgress(Math.round(((i + 3) / ids.length) * 100));
       }
-      toast.success('Englische Entwürfe erstellt – Freigabe erfolgt manuell.');
+      toast.success(`${LC}-Entwürfe erstellt – Freigabe erfolgt manuell.`);
       await load();
     } catch (e: any) { toast.error(e.message); }
     finally { setBatch(false); setProgress(0); }
@@ -90,7 +93,7 @@ export function EnApprovalQueue() {
   const retranslate = async (r: PhAuditRow) => {
     setBusy(r.product.id);
     try {
-      await phTranslate({ productIds: [r.product.id], locales: ['en'], overwrite: true });
+      await phTranslate({ productIds: [r.product.id], locales: [locale], overwrite: true });
       toast.success('Neu übersetzt');
       await load();
     } catch (e: any) { toast.error(e.message); }
@@ -104,8 +107,8 @@ export function EnApprovalQueue() {
     }
     setBusy(r.product.id);
     try {
-      await phApproveTranslation(r.product.id, 'en', status);
-      toast.success(status === 'approved' ? 'Englisch freigegeben' : 'Zurückgestellt');
+      await phApproveTranslation(r.product.id, locale, status);
+      toast.success(status === 'approved' ? `${LC} freigegeben` : 'Zurückgestellt');
       await load();
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(null); }
@@ -116,7 +119,7 @@ export function EnApprovalQueue() {
     if (!targets.length) { toast.error('Keine freigebbaren Geräte ausgewählt.'); return; }
     setBatch(true);
     try {
-      for (const r of targets) await phApproveTranslation(r.product.id, 'en', 'approved');
+      for (const r of targets) await phApproveTranslation(r.product.id, locale, 'approved');
       toast.success(`${targets.length} Geräte freigegeben`);
       setSel([]); await load();
     } catch (e: any) { toast.error(e.message); }
@@ -146,7 +149,7 @@ export function EnApprovalQueue() {
           </div>
           <Button onClick={translateAllEn} disabled={batch || !missingEn.length}>
             {batch ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
-            Englisch für alle offenen Geräte erstellen ({missingEn.length})
+            {LC} für alle offenen Geräte erstellen ({missingEn.length})
           </Button>
           <Button variant="outline" disabled={batch || !sel.length} onClick={approveSelected}>
             <CheckCircle2 className="w-4 h-4 mr-1" /> Auswahl freigeben ({sel.length})
@@ -166,7 +169,7 @@ export function EnApprovalQueue() {
                 <TableHead className="w-[150px]">Vollständigkeit</TableHead>
                 <TableHead>Quality Score</TableHead>
                 <TableHead>Warnungen</TableHead>
-                <TableHead>EN Status</TableHead>
+                <TableHead>{LC} Status</TableHead>
                 <TableHead>Website-Mapping</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
@@ -235,7 +238,7 @@ export function EnApprovalQueue() {
 
       <Dialog open={!!detail} onOpenChange={o => !o && setDetail(null)}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{detail?.product.name} – Deutsch ↔ Englisch</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{detail?.product.name} – Deutsch ↔ {LC}</DialogTitle></DialogHeader>
           {detail && (() => {
             const de = phGermanSource(detail.product, undefined);
             const en = (detail.en ?? {}) as Record<string, unknown>;
@@ -258,8 +261,8 @@ export function EnApprovalQueue() {
                       <div className="text-sm whitespace-pre-wrap">{show(de[f.key]) || '—'}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] uppercase text-muted-foreground">{f.label} · EN</div>
-                      <div className="text-sm whitespace-pre-wrap">{show(en[f.key]) || '—'}</div>
+                      <div className="text-[11px] uppercase text-muted-foreground">{f.label} · {LC}</div>
+                      <div className="text-sm whitespace-pre-wrap" dir={rtl ? 'rtl' : 'ltr'}>{show(en[f.key]) || '—'}</div>
                     </div>
                   </div>
                 ))}
