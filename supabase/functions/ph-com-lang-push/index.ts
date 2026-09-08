@@ -12,22 +12,32 @@ const json = (s: number, b: unknown) =>
 const BASE = "https://www.alix-lasers.com/api/public/product-hub";
 const KEY = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") ?? "";
 
-const TEXT_FIELDS = [
-  "name", "short_description", "long_description", "marketing_text",
-  "seo_title", "seo_description", "intended_use", "product_group_label",
-];
-const LIST_FIELDS = ["highlights", "benefits", "applications", "treatments", "features"];
-const ALLOWED = [...TEXT_FIELDS, ...LIST_FIELDS];
+// Hub-Feld -> Feldname der .com-Schnittstelle
+const FIELD_MAP: Record<string, string> = {
+  name: "product_name",
+  short_description: "short_description",
+  long_description: "long_description",
+  marketing_text: "marketing_text",
+  seo_title: "seo_title",
+  seo_description: "meta_description",
+  highlights: "highlights",
+  benefits: "benefits",
+  applications: "applications",
+  treatments: "treatment_types",
+  features: "features",
+};
+const LIST_HUB_FIELDS = ["highlights", "benefits", "applications", "treatments", "features"];
 const PUBLISHABLE = ["approved", "published"];
-const PLACEHOLDER = /(lorem ipsum|placeholder|platzhalter|dummy|test\s*data|testdaten|tbd|xxx+)/i;
+const PLACEHOLDER = /(lorem ipsum|placeholder|platzhalter|dummy|test\s*data|testdaten|\btbd\b|xxxx+)/i;
 
-async function comFetch(path: string, init: RequestInit) {
-  const r = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: { "content-type": "application/json", "x-api-key": KEY, ...(init.headers ?? {}) },
+async function comFetch(payload: unknown) {
+  const r = await fetch(`${BASE}/translations`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json", "x-api-key": KEY },
+    body: JSON.stringify(payload),
   });
   const text = await r.text();
-  let body: unknown = text;
+  let body: any = text;
   try { body = JSON.parse(text); } catch { /* html/text */ }
   return { status: r.status, body };
 }
@@ -46,14 +56,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({} as any));
     const action = String(body.action ?? "push");
 
-    // Freie Schnittstellen-Sondierung (nur Diagnose)
-    if (action === "probe") {
-      const out: Record<string, unknown> = {};
-      for (const p of body.paths ?? ["/translations"]) {
-        out[p] = await comFetch(p, { method: body.method ?? "PATCH", body: JSON.stringify(body.payload ?? {}) });
-      }
-      return json(200, out);
-    }
+    if (action === "probe") return json(200, await comFetch(body.payload ?? {}));
 
     const productId = String(body.productId ?? "");
     const locale = String(body.locale ?? "");
@@ -67,6 +70,8 @@ Deno.serve(async (req) => {
 
     const { data: map } = await admin.from("ph_lang_sync_map")
       .select("remote_product_id,remote_url").eq("product_id", productId).eq("site_code", "com").maybeSingle();
+    const publishId = String(body.publishId ?? map?.remote_product_id ?? "");
+    if (!publishId) return json(400, { error: "Keine .com-Zuordnung (publish_id) vorhanden" });
 
     const { data: tr } = await admin.from("ph_product_translations")
       .select("*").eq("product_id", productId).eq("locale", locale).maybeSingle();
@@ -77,85 +82,76 @@ Deno.serve(async (req) => {
 
     // Nutzdaten aufbauen (nur echte, gefüllte Werte)
     const fields: Record<string, unknown> = {};
-    for (const f of TEXT_FIELDS) {
-      const v = (tr as any)[f];
-      if (typeof v === "string" && v.trim()) fields[f] = v.trim();
-    }
-    for (const f of LIST_FIELDS) {
-      const v = (tr as any)[f];
-      if (Array.isArray(v) && v.length) fields[f] = v.map((x: unknown) => String(x));
+    const hubByRemote: Record<string, string> = {};
+    for (const [hubField, remoteField] of Object.entries(FIELD_MAP)) {
+      const v = (tr as any)[hubField];
+      if (LIST_HUB_FIELDS.includes(hubField)) {
+        if (Array.isArray(v) && v.length) { fields[remoteField] = v.map((x: unknown) => String(x)); hubByRemote[remoteField] = hubField; }
+      } else if (typeof v === "string" && v.trim()) {
+        fields[remoteField] = v.trim(); hubByRemote[remoteField] = hubField;
+      }
     }
     const placeholders = Object.entries(fields).filter(([, v]) => PLACEHOLDER.test(norm(v))).map(([k]) => k);
     if (placeholders.length) return json(409, { error: "Platzhalter erkannt – nicht geschrieben.", placeholders });
     if (!Object.keys(fields).length) return json(409, { error: "Keine übertragbaren Felder." });
 
-    const payload = {
-      hub_id: hubId,
-      product_id: map?.remote_product_id ?? hubId,
-      slug: map?.remote_product_id ?? undefined,
-      sku: product.sku ?? undefined,
-      locale,
-      status: "draft",
-      render: false,
-      publish: false,
-      translations: { [locale]: fields },
-      fields,
-      ...(body.extra ?? {}),
-    };
+    const base = { publish_id: publishId, hub_id: hubId, locale, render: false, publish: false };
 
-    if (body.dryRun === true) return json(200, { dryRun: true, payload });
-
-    const write = await comFetch("/translations", { method: "PATCH", body: JSON.stringify(payload) });
-    const ok = write.status >= 200 && write.status < 300;
-
-    // Read-back
-    let readback: any = null;
-    if (ok) {
-      readback = await comFetch("/translations", {
-        method: "PATCH",
-        body: JSON.stringify({ hub_id: hubId, locale, action: "read", read_only: true }),
-      });
+    if (body.dryRun === true) {
+      const dry = await comFetch({ ...base, dry_run: true, fields });
+      return json(200, { dryRun: true, payload: { ...base, fields: Object.keys(fields) }, response: dry });
     }
 
-    // Feldvergleich, sofern die Gegenseite Werte zurückgibt
-    const remote = (readback?.body?.translation ?? readback?.body?.translations?.[locale] ?? readback?.body?.data ?? null) as Record<string, unknown> | null;
-    const compare = Object.keys(fields).map((f) => {
-      const a = norm(fields[f]);
-      const b = remote ? norm(remote[f]) : null;
-      return { field: f, match: b == null ? null : a === b, hub_chars: a.length, site_chars: b?.length ?? null };
+    const write = await comFetch({ ...base, dry_run: false, fields });
+    const ok = write.status >= 200 && write.status < 300 && write.body?.error == null;
+
+    // Read-back: identische Felder als dry_run senden, previous_value = gespeicherter Wert
+    let readback: any = null;
+    if (ok) readback = await comFetch({ ...base, dry_run: true, fields });
+
+    const rows: any[] = readback?.body?.results ?? [];
+    const compare = Object.keys(fields).map((rf) => {
+      const row = rows.find((r) => r.field === rf);
+      const a = norm(fields[rf]);
+      const b = row ? norm(row.previous_value) : null;
+      return { field: rf, hub_field: hubByRemote[rf], match: b == null ? null : a === b, hub_chars: a.length, site_chars: b?.length ?? null };
     });
     const mismatches = compare.filter((c) => c.match === false).map((c) => c.field);
+    const unverified = compare.filter((c) => c.match === null).map((c) => c.field);
 
-    // Protokoll
     const { data: run } = await admin.from("ph_lang_sync_runs").insert({
       product_id: productId, locale, site_code: "com", site_label: "alix-lasers.com",
-      target_url: `${BASE}/translations`, remote_product_id: map?.remote_product_id ?? hubId,
+      target_url: `${BASE}/translations`, remote_product_id: publishId,
       mode: "publish", result: ok && !mismatches.length ? "ok" : "failed",
       translation_status: tr.status, fallback_detected: false, publish_allowed: false,
       fields_checked: compare.length,
       fields_changed: ok ? compare.length : 0,
       fields_unchanged: 0,
-      warnings: remote ? [] : ["Read-back lieferte keine Feldwerte zurück"],
-      errors: ok ? (mismatches.length ? [`Abweichungen: ${mismatches.join(", ")}`] : []) : [String(JSON.stringify(write.body)).slice(0, 400)],
-      summary: { write_status: write.status, readback_status: readback?.status ?? null, hub_id: hubId, render: false, publish: false },
+      warnings: unverified.length ? [`Read-back ohne Wert: ${unverified.join(", ")}`] : [],
+      errors: ok ? (mismatches.length ? [`Abweichungen: ${mismatches.join(", ")}`] : []) : [JSON.stringify(write.body).slice(0, 400)],
+      summary: { write_status: write.status, readback_status: readback?.status ?? null, hub_id: hubId, publish_id: publishId, render: false, publish: false },
     }).select("id").maybeSingle();
 
     if (run?.id) {
-      await admin.from("ph_lang_sync_fields").insert(Object.keys(fields).map((f) => ({
-        run_id: run.id, field: f, remote_field: f,
-        value_before: null, value_after: norm(fields[f]).slice(0, 4000),
-        action: ok ? "change" : "failed",
-        write_status: String(write.status),
-        message: compare.find((c) => c.field === f)?.match === false ? "Read-back weicht ab" : null,
-      })));
+      await admin.from("ph_lang_sync_fields").insert(Object.keys(fields).map((rf) => {
+        const row = (write.body?.results ?? []).find((r: any) => r.field === rf);
+        return {
+          run_id: run.id, field: hubByRemote[rf], remote_field: rf,
+          value_before: row ? norm(row.previous_value).slice(0, 4000) : null,
+          value_after: norm(fields[rf]).slice(0, 4000),
+          action: ok ? "change" : "failed",
+          write_status: String(write.status),
+          message: compare.find((c) => c.field === rf)?.match === false ? "Read-back weicht ab" : null,
+        };
+      }));
     }
 
     return json(ok ? 200 : 502, {
-      runId: run?.id ?? null, hub_id: hubId, locale, status: tr.status,
-      write_status: write.status, write_body: write.body,
-      readback_status: readback?.status ?? null, readback_body: readback?.body ?? null,
+      runId: run?.id ?? null, hub_id: hubId, publish_id: publishId, locale, status: tr.status,
+      write_status: write.status, write_summary: { status: write.body?.status, written: (write.body?.results ?? []).length, skipped: (write.body?.skipped ?? []).length },
+      readback_status: readback?.status ?? null,
       fields: Object.keys(fields), field_count: Object.keys(fields).length,
-      compare, mismatches, placeholders: 0, rendered: false, published: false,
+      compare, mismatches, unverified, placeholders: 0, rendered: false, published: false,
     });
   } catch (e) {
     return json(500, { error: (e as Error)?.message ?? "Fehler" });
