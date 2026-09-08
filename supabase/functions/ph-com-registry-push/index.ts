@@ -99,6 +99,10 @@ Deno.serve(async (req) => {
     }
 
     // Sonderaktion: Ziel-IDs auf .com auslesen (GET), um Slug -> UUID aufzulösen
+    if (action === "raw") {
+      const res = await call(String(body.path ?? "/api/public/product-hub/mappings"), method, body.payload ?? {});
+      return json(200, { stage: "raw", ...res });
+    }
     if (action === "probe") {
       const paths: string[] = body.paths ?? [
         "/api/public/product-hub/mappings",
