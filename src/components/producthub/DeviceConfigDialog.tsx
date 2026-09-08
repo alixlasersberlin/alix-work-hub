@@ -58,7 +58,17 @@ export function DeviceConfigDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {target?.imageUrl ? (
+          {visual ? (
+            <div className="flex flex-col items-center gap-2 rounded-md border border-border bg-secondary/40 p-2">
+              <img
+                src={visual.image}
+                alt={`${target?.productName ?? 'Gerät'} – ${color}`}
+                loading="lazy"
+                className="max-h-48 w-auto object-contain"
+              />
+              <span className="text-xs text-muted-foreground">{color}</span>
+            </div>
+          ) : target?.imageUrl ? (
             <div className="flex items-center justify-center rounded-md border border-border bg-secondary/40 p-2">
               <img
                 src={target.imageUrl}
