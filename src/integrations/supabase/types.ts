@@ -37477,11 +37477,13 @@ export type Database = {
           features: Json
           highlights: Json
           id: string
+          intended_use: string | null
           locale: string
           long_description: string | null
           marketing_text: string | null
           name: string | null
           notices: string | null
+          product_group_label: string | null
           product_id: string
           reviewed_by: string | null
           seo_description: string | null
@@ -37508,11 +37510,13 @@ export type Database = {
           features?: Json
           highlights?: Json
           id?: string
+          intended_use?: string | null
           locale: string
           long_description?: string | null
           marketing_text?: string | null
           name?: string | null
           notices?: string | null
+          product_group_label?: string | null
           product_id: string
           reviewed_by?: string | null
           seo_description?: string | null
@@ -37539,11 +37543,13 @@ export type Database = {
           features?: Json
           highlights?: Json
           id?: string
+          intended_use?: string | null
           locale?: string
           long_description?: string | null
           marketing_text?: string | null
           name?: string | null
           notices?: string | null
+          product_group_label?: string | null
           product_id?: string
           reviewed_by?: string | null
           seo_description?: string | null
@@ -38165,6 +38171,47 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      ph_translation_qa: {
+        Row: {
+          checked_at: string
+          created_at: string
+          id: string
+          issues: Json
+          locale: string
+          product_id: string
+          score: number
+          status: string
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          id?: string
+          issues?: Json
+          locale: string
+          product_id: string
+          score?: number
+          status?: string
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          id?: string
+          issues?: Json
+          locale?: string
+          product_id?: string
+          score?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_translation_qa_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ph_validation_runs: {
         Row: {

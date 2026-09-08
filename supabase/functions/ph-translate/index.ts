@@ -2,6 +2,7 @@
 // Technische Werte, Zahlen, Einheiten, SKU, Modell, Hub-ID und Preise werden NICHT übersetzt
 // und auch nicht angefasst – übersetzt werden ausschließlich redaktionelle Textfelder.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { qaCheck } from "../_shared/ph-qa.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +19,7 @@ const LOCALE_NAME: Record<string, string> = {
 
 const TEXT_FIELDS = [
   "name", "short_description", "long_description", "marketing_text", "notices", "seo_title", "seo_description",
+  "intended_use", "product_group_label",
 ];
 const LIST_FIELDS = ["highlights", "benefits", "applications", "treatments", "features"];
 
@@ -76,22 +78,32 @@ Deno.serve(async (req) => {
 
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
     if (!token) return json(401, { error: "Nicht angemeldet" });
-    const { data: userRes } = await admin.auth.getUser(token);
-    const uid = userRes?.user?.id;
-    if (!uid) return json(401, { error: "Ungültige Sitzung" });
 
+    // Interner Batchlauf mit Service-Role-Token (Katalogvorbereitung)
+    const serviceToken = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    let uid: string | null = null;
     let allowed = false;
-    const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-    try {
-      const { data: isAdmin } = await userClient.rpc("is_admin");
-      allowed = !!isAdmin;
-    } catch { /* ignore */ }
-    if (!allowed) {
-      const { data: phRows } = await admin.from("ph_roles").select("role").eq("user_id", uid);
-      allowed = (phRows ?? []).length > 0;
+    if (token === serviceToken) {
+      allowed = true;
+    } else {
+      const { data: userRes } = await admin.auth.getUser(token);
+      uid = userRes?.user?.id ?? null;
+      if (!uid) return json(401, { error: "Ungültige Sitzung" });
+    }
+
+    if (!allowed && uid) {
+      const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      try {
+        const { data: isAdmin } = await userClient.rpc("is_admin");
+        allowed = !!isAdmin;
+      } catch { /* ignore */ }
+      if (!allowed) {
+        const { data: phRows } = await admin.from("ph_roles").select("role").eq("user_id", uid);
+        allowed = (phRows ?? []).length > 0;
+      }
     }
     if (!allowed) return json(403, { error: "Keine Berechtigung" });
 
@@ -137,6 +149,9 @@ Deno.serve(async (req) => {
         notices: de.notices ?? null,
         seo_title: de.seo_title || p.seo_title,
         seo_description: de.seo_description || p.seo_description,
+        // Sprachabhängige technische Textwerte (Werte, keine Messwerte)
+        intended_use: de.intended_use || p.intended_use,
+        product_group_label: de.product_group_label || p.product_group,
         alt_texts: de.alt_texts ?? {},
       };
 
@@ -155,7 +170,10 @@ Deno.serve(async (req) => {
           (fixed.length
             ? `Verbindliche Übersetzungen: ${fixed.map((f: any) => `"${f.term}" → "${f.translations?.[locale] ?? f.term}"`).join("; ")}. `
             : "") +
-          `Keine Heilversprechen, keine Zulassungsaussagen erfinden. Struktur und Listenlänge exakt beibehalten. ` +
+          `Keine Heilversprechen, keine Zulassungsaussagen (CE, FDA, MDR, ISO) erfinden. Struktur und Listenlänge exakt beibehalten. ` +
+          `Schreibe professionelles internationales B2B-Fachenglisch der Beauty-/Medizintechnik, keine wörtliche Übertragung aus dem Deutschen. ` +
+          `seo_title und seo_description müssen eigenständig auf dieses Gerät zugeschnitten sein (Produktart, Suchintention, tatsächliche Eigenschaften) – keine Schablone mit ausgetauschtem Produktnamen; seo_title 45–65 Zeichen, seo_description 120–165 Zeichen. ` +
+          `intended_use (Zweckbestimmung) und product_group_label sind sprachabhängige Textwerte und werden ebenfalls übersetzt – ohne die technischen Messwerte darin zu verändern. ` +
           (locale === "ar" ? `Arabischer Text wird RTL dargestellt; technische Angaben in lateinischer Schrift belassen. ` : "") +
           `Antworte AUSSCHLIESSLICH mit reinem JSON in exakt derselben Feldstruktur wie die Eingabe.`;
 
@@ -184,8 +202,19 @@ Deno.serve(async (req) => {
 
         const { error } = await admin.from("ph_product_translations")
           .upsert(row, { onConflict: "product_id,locale" });
-        if (error) results.push({ product_id: pid, locale, error: error.message });
-        else results.push({ product_id: pid, locale, ok: true });
+        if (error) { results.push({ product_id: pid, locale, error: error.message }); continue; }
+
+        // Automatischer Qualitätscheck
+        const qa = qaCheck({
+          source, target: row, locale,
+          model: p.model, brands: protectedTerms,
+        });
+        await admin.from("ph_translation_qa").upsert({
+          product_id: pid, locale, status: qa.status, score: qa.score,
+          issues: qa.issues, checked_at: new Date().toISOString(),
+        }, { onConflict: "product_id,locale" });
+
+        results.push({ product_id: pid, locale, ok: true, qa: qa.status, score: qa.score, issues: qa.issues.length });
       }
     }
 

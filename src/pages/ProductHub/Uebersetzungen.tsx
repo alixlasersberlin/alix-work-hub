@@ -17,6 +17,8 @@ import {
 } from '@/lib/producthub/i18n';
 import { phListProducts } from '@/lib/producthub/api';
 import { WebsiteSyncPanel } from '@/components/producthub/WebsiteSyncPanel';
+import { CatalogAuditPanel } from '@/components/producthub/CatalogAuditPanel';
+import { EnApprovalQueue } from '@/components/producthub/EnApprovalQueue';
 
 import type { PhProduct } from '@/lib/producthub/config';
 import {
@@ -97,9 +99,20 @@ export default function Uebersetzungen() {
       <Tabs defaultValue="uebersicht">
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+          <TabsTrigger value="audit">Katalog-Audit</TabsTrigger>
+          <TabsTrigger value="enfreigabe">EN Freigabe</TabsTrigger>
           <TabsTrigger value="websync">Website Sync</TabsTrigger>
           <TabsTrigger value="glossar">Translation Glossary</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="audit" className="space-y-4">
+          <CatalogAuditPanel onOpen={id => nav(`/product-hub/geraete/${id}`)} />
+        </TabsContent>
+
+        <TabsContent value="enfreigabe" className="space-y-4">
+          <EnApprovalQueue />
+        </TabsContent>
+
 
 
         <TabsContent value="uebersicht" className="space-y-4">
