@@ -202,8 +202,19 @@ Deno.serve(async (req) => {
 
         const { error } = await admin.from("ph_product_translations")
           .upsert(row, { onConflict: "product_id,locale" });
-        if (error) results.push({ product_id: pid, locale, error: error.message });
-        else results.push({ product_id: pid, locale, ok: true });
+        if (error) { results.push({ product_id: pid, locale, error: error.message }); continue; }
+
+        // Automatischer Qualitätscheck
+        const qa = qaCheck({
+          source, target: row, locale,
+          model: p.model, brands: protectedTerms,
+        });
+        await admin.from("ph_translation_qa").upsert({
+          product_id: pid, locale, status: qa.status, score: qa.score,
+          issues: qa.issues, checked_at: new Date().toISOString(),
+        }, { onConflict: "product_id,locale" });
+
+        results.push({ product_id: pid, locale, ok: true, qa: qa.status, score: qa.score, issues: qa.issues.length });
       }
     }
 
