@@ -17,6 +17,8 @@ import {
 } from '@/lib/producthub/i18n';
 import { phListProducts } from '@/lib/producthub/api';
 import { WebsiteSyncPanel } from '@/components/producthub/WebsiteSyncPanel';
+import { CatalogAuditPanel } from '@/components/producthub/CatalogAuditPanel';
+import { EnApprovalQueue } from '@/components/producthub/EnApprovalQueue';
 
 import type { PhProduct } from '@/lib/producthub/config';
 import {
