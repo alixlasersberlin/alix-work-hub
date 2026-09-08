@@ -102,7 +102,8 @@ export function qaCheck(opts: {
   }
 
   // 4. Einheiten
-  const unitRe = /\b(nm|W|kW|Hz|ms|ns|J\/cm²|°C|bar|kg|mm|cm)\b/g;
+  // Nur Einheiten zählen, die zu einer Zahl gehören – sonst werden Wörter wie „Wärme" fälschlich als Watt gewertet.
+  const unitRe = /\d\s?(nm|kW|W|Hz|ms|ns|J\/cm²|°C|bar|kg|mm|cm|dB|DB)(?![A-Za-zÄÖÜäöüß])/g;
   const cnt = (s: string) => (s.match(unitRe) ?? []).length;
   if (cnt(srcContent) > cnt(tgtContent)) {
     issues.push({ code: "units_lost", level: "warning", message: "Maßeinheiten sind in der Übersetzung seltener als im deutschen Master." });
@@ -156,6 +157,13 @@ export function qaCheck(opts: {
   // 10. Technische Textwerte (sprachabhängig)
   if (txt(source.intended_use).trim() && !txt(target.intended_use).trim()) {
     issues.push({ code: "technical_label_missing", level: "warning", field: "intended_use", message: "Zweckbestimmung wurde nicht übersetzt." });
+  }
+  // Fehlt bereits der deutsche Master, ist das kein Übersetzungsfehler.
+  if (!txt(source.intended_use).trim()) {
+    issues.push({ code: "source_master_missing", level: "info", field: "intended_use", message: "SOURCE MASTER MISSING – Zweckbestimmung ist bereits im deutschen Master leer." });
+  }
+  if (!txt(source.product_group_label).trim() && !txt(target.product_group_label).trim()) {
+    issues.push({ code: "source_master_missing", level: "info", field: "product_group_label", message: "SOURCE MASTER MISSING – Kategoriebezeichnung ist bereits im deutschen Master leer." });
   }
 
   // 11. Listenlängen
