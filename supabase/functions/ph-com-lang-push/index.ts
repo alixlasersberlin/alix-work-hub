@@ -15,7 +15,6 @@ const KEY = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") ?? "";
 // Hub-Feld -> Feldname der .com-Schnittstelle
 const FIELD_MAP: Record<string, string> = {
   name: "product_name",
-  intended_use: "intended_use",
   short_description: "short_description",
   long_description: "long_description",
   marketing_text: "marketing_text",
@@ -150,7 +149,7 @@ Deno.serve(async (req) => {
       let ids: string[] = Array.isArray(body.productIds) ? body.productIds : [];
       if (!ids.length) {
         const { data: maps } = await admin.from("ph_lang_sync_map")
-          .select("product_id").eq("site_code", "com").not("verified_at", "is", null);
+          .select("product_id").eq("site_code", "com").not("verified_at", "is", null).order("product_id");
         ids = (maps ?? []).map((m: any) => m.product_id);
       }
       const offset = Number(body.offset ?? 0);
