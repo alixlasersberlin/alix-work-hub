@@ -58,22 +58,8 @@ function parseJson(raw: string) {
 
 const asList = (v: unknown) => (Array.isArray(v) ? v.slice(0, 30) : []);
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  try {
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const body = await req.json().catch(() => ({}));
-    const limit = Math.min(Number(body.limit) || 3, 60);
-    const offset = Number(body.offset) || 0;
-    const overwrite = body.overwrite === true;
-    const background = body.background === true;
-
-    if (background) {
-      // @ts-ignore Deno Edge Runtime
-      EdgeRuntime.waitUntil(runBatch(admin, offset, limit, overwrite));
-      return json(202, { started: true, offset, limit });
-    }
-
+async function runBatch(admin: any, offset: number, limit: number, overwrite: boolean) {
+  {
     const { data: glossary } = await admin.from("ph_glossary").select("term,mode,translations").eq("active", true);
     const protectedTerms = (glossary ?? []).filter((g: any) => g.mode === "protected").map((g: any) => g.term);
     const fixed = (glossary ?? []).filter((g: any) => g.mode === "fixed");
