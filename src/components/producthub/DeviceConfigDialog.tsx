@@ -100,7 +100,22 @@ export function DeviceConfigDialog({
             <Select value={color} onValueChange={setColor}>
               <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
               <SelectContent className="z-[100]">
-                {colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {colors.map(c => {
+                  const v = deviceColorVisual(c);
+                  return (
+                    <SelectItem key={c} value={c}>
+                      <span className="flex items-center gap-2">
+                        {v && (
+                          <span
+                            className="inline-block h-3.5 w-3.5 rounded-full border border-border"
+                            style={{ background: `linear-gradient(135deg, ${v.swatch[0]} 0 50%, ${v.swatch[1]} 50% 100%)` }}
+                          />
+                        )}
+                        {c}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
