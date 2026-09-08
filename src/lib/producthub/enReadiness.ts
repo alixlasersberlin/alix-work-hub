@@ -7,7 +7,7 @@ import type { PhTranslation } from './i18n';
 const db = supabase as any;
 
 export type PhQaStatus = 'pass' | 'warning' | 'blocked';
-export interface PhQaIssue { code: string; level: 'warning' | 'blocked'; field?: string; message: string }
+export interface PhQaIssue { code: string; level: 'info' | 'warning' | 'blocked'; field?: string; message: string }
 export interface PhQaRow {
   product_id: string; locale: string; status: PhQaStatus; score: number;
   issues: PhQaIssue[]; checked_at: string;
