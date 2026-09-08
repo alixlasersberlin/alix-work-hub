@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   PH_DEFAULT_COLORS, PH_DEFAULT_POWERS, deviceConfigComplete, isRalColor, type DeviceConfig,
 } from '@/lib/producthub/deviceConfig';
+import { deviceColorVisual } from '@/lib/producthub/colorImages';
 
 export type DeviceConfigTarget = {
   productId?: string | null;
