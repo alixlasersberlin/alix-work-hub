@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   PH_DEFAULT_COLORS, PH_DEFAULT_POWERS, deviceConfigComplete, isRalColor, type DeviceConfig,
 } from '@/lib/producthub/deviceConfig';
+import { deviceColorVisual } from '@/lib/producthub/colorImages';
 
 export type DeviceConfigTarget = {
   productId?: string | null;
@@ -48,6 +49,7 @@ export function DeviceConfigDialog({
     laser_module_power: power || null,
   };
   const valid = deviceConfigComplete(cfg);
+  const visual = deviceColorVisual(color);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,7 +60,17 @@ export function DeviceConfigDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {target?.imageUrl ? (
+          {visual ? (
+            <div className="flex flex-col items-center gap-2 rounded-md border border-border bg-secondary/40 p-2">
+              <img
+                src={visual.image}
+                alt={`${target?.productName ?? 'Gerät'} – ${color}`}
+                loading="lazy"
+                className="max-h-48 w-auto object-contain"
+              />
+              <span className="text-xs text-muted-foreground">{color}</span>
+            </div>
+          ) : target?.imageUrl ? (
             <div className="flex items-center justify-center rounded-md border border-border bg-secondary/40 p-2">
               <img
                 src={target.imageUrl}
@@ -88,7 +100,22 @@ export function DeviceConfigDialog({
             <Select value={color} onValueChange={setColor}>
               <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
               <SelectContent className="z-[100]">
-                {colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {colors.map(c => {
+                  const v = deviceColorVisual(c);
+                  return (
+                    <SelectItem key={c} value={c}>
+                      <span className="flex items-center gap-2">
+                        {v && (
+                          <span
+                            className="inline-block h-3.5 w-3.5 rounded-full border border-border"
+                            style={{ background: `linear-gradient(135deg, ${v.swatch[0]} 0 50%, ${v.swatch[1]} 50% 100%)` }}
+                          />
+                        )}
+                        {c}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
