@@ -83,7 +83,7 @@ export function qaCheck(opts: {
   // 4. Einheiten
   const unitRe = /\b(nm|W|kW|Hz|ms|ns|J\/cm²|°C|bar|kg|mm|cm)\b/g;
   const cnt = (s: string) => (s.match(unitRe) ?? []).length;
-  if (cnt(srcAll) > cnt(tgtAll)) {
+  if (cnt(srcContent) > cnt(tgtContent)) {
     issues.push({ code: "units_lost", level: "warning", message: "Maßeinheiten sind in der Übersetzung seltener als im deutschen Master." });
   }
 
