@@ -19,6 +19,7 @@ const LOCALE_NAME: Record<string, string> = {
 
 const TEXT_FIELDS = [
   "name", "short_description", "long_description", "marketing_text", "notices", "seo_title", "seo_description",
+  "intended_use", "product_group_label",
 ];
 const LIST_FIELDS = ["highlights", "benefits", "applications", "treatments", "features"];
 
