@@ -58,7 +58,47 @@ function parseJson(raw: string) {
 
 const asList = (v: unknown) => (Array.isArray(v) ? v.slice(0, 30) : []);
 
-async function runBatch(admin: any, offset: number, limit: number, overwrite: boolean) {
+/** Nur Qualitätscheck neu berechnen – ohne die Übersetzungen zu verändern. */
+async function requalify(admin: any) {
+  const { data: glossary } = await admin.from("ph_glossary").select("term,mode").eq("active", true);
+  const protectedTerms = (glossary ?? []).filter((g: any) => g.mode === "protected").map((g: any) => g.term);
+  const { data: prods } = await admin.from("ph_products")
+    .select("id,name,model,sku,short_description,long_description,features,applications,intended_use,seo_title,seo_description,product_group,laser_class,wavelengths,power,fluence,pulse_duration,frequency,spot_sizes,cooling");
+  const out: any[] = [];
+  for (const p of prods ?? []) {
+    const { data: trs } = await admin.from("ph_product_translations").select("*").eq("product_id", p.id);
+    const byLocale = Object.fromEntries((trs ?? []).map((r: any) => [r.locale, r]));
+    const en = byLocale["en"];
+    if (!en) continue;
+    const de = byLocale["de"] ?? {};
+    const source = {
+      name: de.name || p.name,
+      short_description: de.short_description || p.short_description,
+      long_description: de.long_description || p.long_description,
+      highlights: de.highlights?.length ? de.highlights : (Array.isArray(p.features) ? p.features : []),
+      benefits: de.benefits ?? [],
+      applications: de.applications?.length ? de.applications : (Array.isArray(p.applications) ? p.applications : []),
+      treatments: de.treatments ?? [],
+      features: de.features?.length ? de.features : (Array.isArray(p.features) ? p.features : []),
+      marketing_text: de.marketing_text ?? null,
+      notices: de.notices ?? null,
+      seo_title: de.seo_title || p.seo_title,
+      seo_description: de.seo_description || p.seo_description,
+      intended_use: de.intended_use || p.intended_use,
+      product_group_label: de.product_group_label || p.product_group,
+    };
+    const context = [p.model, p.sku, p.wavelengths, p.power, p.fluence, p.pulse_duration, p.frequency, p.spot_sizes, p.cooling].filter(Boolean).join(" ");
+    const qa = qaCheck({ source, target: en, locale: "en", model: p.model, brands: protectedTerms, context });
+    await admin.from("ph_translation_qa").upsert({
+      product_id: p.id, locale: "en", status: qa.status, score: qa.score,
+      issues: qa.issues, checked_at: new Date().toISOString(),
+    }, { onConflict: "product_id,locale" });
+    out.push({ name: p.name, qa: qa.status, score: qa.score });
+  }
+  return { requalified: out.length, results: out };
+}
+
+async function runBatch(admin: any, offset: number, limit: number, overwrite: boolean, productIds?: string[]) {
   {
     const { data: glossary } = await admin.from("ph_glossary").select("term,mode,translations").eq("active", true);
     const protectedTerms = (glossary ?? []).filter((g: any) => g.mode === "protected").map((g: any) => g.term);
