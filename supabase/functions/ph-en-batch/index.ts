@@ -164,7 +164,10 @@ async function runBatch(admin: any, offset: number, limit: number, overwrite: bo
         const { error } = await admin.from("ph_product_translations").upsert(row, { onConflict: "product_id,locale" });
         if (error) throw new Error(error.message);
 
-        const qa = qaCheck({ source, target: row, locale: "en", model: p.model, brands: protectedTerms });
+        const qa = qaCheck({
+          source, target: row, locale: "en", model: p.model, brands: protectedTerms,
+          context: [p.model, p.sku, p.wavelengths, p.power, p.fluence, p.pulse_duration, p.frequency, p.spot_sizes, p.cooling].filter(Boolean).join(" "),
+        });
         await admin.from("ph_translation_qa").upsert({
           product_id: p.id, locale: "en", status: qa.status, score: qa.score,
           issues: qa.issues, checked_at: new Date().toISOString(),
