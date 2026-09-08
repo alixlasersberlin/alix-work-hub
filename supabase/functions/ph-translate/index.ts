@@ -2,6 +2,7 @@
 // Technische Werte, Zahlen, Einheiten, SKU, Modell, Hub-ID und Preise werden NICHT übersetzt
 // und auch nicht angefasst – übersetzt werden ausschließlich redaktionelle Textfelder.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { qaCheck } from "../_shared/ph-qa.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
