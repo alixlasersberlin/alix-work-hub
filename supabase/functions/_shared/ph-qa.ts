@@ -1,7 +1,7 @@
 // ALIX PRODUCT HUB – automatischer Qualitätscheck für Übersetzungen
 // Deterministisch, ohne KI: vergleicht Zielsprache gegen deutschen Master.
 
-export type QaIssue = { code: string; level: "warning" | "blocked"; field?: string; message: string };
+export type QaIssue = { code: string; level: "info" | "warning" | "blocked"; field?: string; message: string };
 export type QaResult = { status: "pass" | "warning" | "blocked"; score: number; issues: QaIssue[] };
 
 const GERMAN_WORDS = [
@@ -102,7 +102,8 @@ export function qaCheck(opts: {
   }
 
   // 4. Einheiten
-  const unitRe = /\b(nm|W|kW|Hz|ms|ns|J\/cm²|°C|bar|kg|mm|cm)\b/g;
+  // Nur Einheiten zählen, die zu einer Zahl gehören – sonst werden Wörter wie „Wärme" fälschlich als Watt gewertet.
+  const unitRe = /\d\s?(nm|kW|W|Hz|ms|ns|J\/cm²|°C|bar|kg|mm|cm|dB|DB)(?![A-Za-zÄÖÜäöüß])/g;
   const cnt = (s: string) => (s.match(unitRe) ?? []).length;
   if (cnt(srcContent) > cnt(tgtContent)) {
     issues.push({ code: "units_lost", level: "warning", message: "Maßeinheiten sind in der Übersetzung seltener als im deutschen Master." });
@@ -157,6 +158,13 @@ export function qaCheck(opts: {
   if (txt(source.intended_use).trim() && !txt(target.intended_use).trim()) {
     issues.push({ code: "technical_label_missing", level: "warning", field: "intended_use", message: "Zweckbestimmung wurde nicht übersetzt." });
   }
+  // Fehlt bereits der deutsche Master, ist das kein Übersetzungsfehler.
+  if (!txt(source.intended_use).trim()) {
+    issues.push({ code: "source_master_missing", level: "info", field: "intended_use", message: "SOURCE MASTER MISSING – Zweckbestimmung ist bereits im deutschen Master leer." });
+  }
+  if (!txt(source.product_group_label).trim() && !txt(target.product_group_label).trim()) {
+    issues.push({ code: "source_master_missing", level: "info", field: "product_group_label", message: "SOURCE MASTER MISSING – Kategoriebezeichnung ist bereits im deutschen Master leer." });
+  }
 
   // 11. Listenlängen
   for (const f of ["highlights", "benefits", "applications", "treatments", "features"]) {
@@ -166,6 +174,7 @@ export function qaCheck(opts: {
   }
 
   const blocked = issues.some(i => i.level === "blocked");
-  const score = Math.max(0, 100 - issues.reduce((n, i) => n + (i.level === "blocked" ? 30 : 8), 0));
-  return { status: blocked ? "blocked" : issues.length ? "warning" : "pass", score, issues };
+  const score = Math.max(0, 100 - issues.reduce((n, i) => n + (i.level === "blocked" ? 30 : i.level === "warning" ? 8 : 0), 0));
+  const warned = issues.some(i => i.level === "warning");
+  return { status: blocked ? "blocked" : warned ? "warning" : "pass", score, issues };
 }
