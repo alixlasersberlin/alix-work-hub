@@ -27,6 +27,8 @@ import { DeviceConfigDialog, type DeviceConfigTarget } from '@/components/produc
 import { deviceConfigLines, deviceConfigComplete, type DeviceConfig } from '@/lib/producthub/deviceConfig';
 import { PH_PRICE_COUNTRIES, readCountryPrice, uvpForPower, type PhCountryPrice } from '@/lib/producthub/countryPricing';
 import { buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
+import { deviceColorVisual } from '@/lib/producthub/colorImages';
+
 
 
 
