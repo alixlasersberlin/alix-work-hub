@@ -12,11 +12,12 @@ const json = (s: number, b: unknown) =>
 
 const HOST = "https://www.alix-lasers.com";
 const KEY = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") ?? "";
-const PROTECTED_HUB_IDS = ["alix-blueice-smart-ki"];
+const PROTECTED_HUB_IDS = ["alix-blueice-smart-ki", "Alix BlueIce Smart KI"];
+const PROTECTED_TARGETS = ["c9f9b7c9-d6b7-4ed6-ac60-913cbdec2dd6"];
 
 const CANDIDATE_PATHS = [
-  "/api/public/product-hub/registry",
   "/api/public/product-hub/mappings",
+  "/api/public/product-hub/registry",
   "/api/public/product-hub/mapping-registry",
   "/api/public/product-hub/register",
   "/api/public/product-hub-registry",
@@ -84,18 +85,40 @@ Deno.serve(async (req) => {
       if (seenHub.has(hubId)) { skipped.push({ name, reason: "DUPLICATE_HUB_ID" }); continue; }
       if (seenTarget.has(target)) { skipped.push({ name, reason: "DUPLICATE_TARGET" }); continue; }
       seenHub.add(hubId); seenTarget.add(target);
-      if (PROTECTED_HUB_IDS.includes(target) || PROTECTED_HUB_IDS.includes(hubId)) {
+      if (PROTECTED_TARGETS.includes(target) || PROTECTED_HUB_IDS.includes(target) || PROTECTED_HUB_IDS.includes(hubId)) {
         skipped.push({ name, reason: "PROTECTED_EXISTING", target });
         continue;
       }
       items.push({
-        product: name,
         hub_id: hubId,
-        publish_id: target,
-        remote_product_id: target,
-        remote_url: m.remote_url,
-        locales: ["en", "es", "ru", "ar"],
+        product_id: target,
+        confidence: "high",
+        confirmed_by: "alixwork",
+        product_name: name,
+        note: "AlixWork confirmed mapping",
       });
+    }
+
+    // Sonderaktion: Ziel-IDs auf .com auslesen (GET), um Slug -> UUID aufzulösen
+    if (action === "raw") {
+      const res = await call(String(body.path ?? "/api/public/product-hub/mappings"), method, body.payload ?? {});
+      return json(200, { stage: "raw", ...res });
+    }
+    if (action === "probe") {
+      const paths: string[] = body.paths ?? [
+        "/api/public/product-hub/mappings",
+        "/api/public/product-hub/products",
+        "/api/public/product-hub/export",
+      ];
+      const out: any[] = [];
+      for (const p of paths) {
+        const r = await fetch(`${HOST}${p}`, { headers: { "x-api-key": KEY } });
+        const t = await r.text();
+        let b: any; try { b = JSON.parse(t); } catch { b = t.slice(0, 200); }
+        if (typeof b === "string" && b.startsWith("<!DOCTYPE")) b = "HTML_404_SPA";
+        out.push({ path: p, status: r.status, body: b });
+      }
+      return json(200, { stage: "probe", probes: out, confirmed_mappings: items.length });
     }
 
     const found = await discover(endpoint, method);
@@ -120,10 +143,12 @@ Deno.serve(async (req) => {
     // 3. Nur Mappings registrieren, die im Dry Run vollständig PASS sind
     const results: any[] = Array.isArray((dry.body as any)?.results) ? (dry.body as any).results : [];
     const okHub = new Set(
-      results.filter((r: any) => r.ok === true || /READY|OK|PASS/i.test(String(r.status ?? r.decision ?? "")))
-        .map((r: any) => String(r.hub_id ?? r.publish_id ?? "")),
+      results.filter((r: any) =>
+        r.ok === true ||
+        /REGISTER_READY|ALREADY_REGISTERED|READY|OK|PASS/i.test(String(r.result ?? r.status ?? r.decision ?? "")))
+        .map((r: any) => String(r.hub_id ?? "")),
     );
-    const toRegister = results.length ? items.filter((i) => okHub.has(i.hub_id) || okHub.has(i.publish_id)) : items;
+    const toRegister = results.length ? items.filter((i) => okHub.has(i.hub_id)) : items;
     const live = await call(found.path, found.method, { dry_run: false, mappings: toRegister });
 
     await admin.from("ph_sync_log").insert({
