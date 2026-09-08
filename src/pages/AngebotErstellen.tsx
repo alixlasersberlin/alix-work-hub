@@ -576,8 +576,12 @@ export default function AngebotErstellen() {
 
 
   const resolveLineImage = (l: LineItem): string | null => {
+    // Wurde eine Gerätefarbe konfiguriert, hat das passende Farbfoto Vorrang
+    const colorImg = deviceColorVisual((l as any).device_color)?.image;
+    if (colorImg) return colorImg;
     if (l.product_image_url) return l.product_image_url;
     if (l.image_url) return l.image_url;
+
     const dev = matchPhDevice(l);
     if (dev?.url) return dev.url;
     const cands = [l.name, l.sku].map(norm).filter(Boolean);
