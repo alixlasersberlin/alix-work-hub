@@ -256,48 +256,66 @@ export default function AlixSignPublic() {
             <span className="text-slate-900">{payType || '—'}</span>
           </div>
           {(() => {
+            const discount = Number(snap?.payment?.discount) || 0;
             const price = Number(snap?.payment?.price) || Number(snap?.totals?.gross) || 0;
             const down = Number(snap?.payment?.down) || 0;
             const term = Number(snap?.payment?.term) || 0;
             const base = Math.max(0, price - down);
             const isDirect = payType === 'Direktkauf' || !payType;
             const rate = !isDirect && term > 0 ? base / term : 0;
+            const gross = Number(snap?.totals?.gross || 0);
+            const total = Math.max(0, gross - discount);
             return (
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                {down > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Anzahlung</span>
-                    <span className="text-slate-900 font-medium">{fmt(down)}</span>
+              <>
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  {down > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Anzahlung</span>
+                      <span className="text-slate-900 font-medium">{fmt(down)}</span>
+                    </div>
+                  )}
+                  {isDirect ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Einmalzahlung</span>
+                      <span className="text-slate-900 font-medium">{fmt(base > 0 ? base : gross)}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">Finanzierungsbasis</span>
+                        <span className="text-slate-900 font-medium">{fmt(base)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">Laufzeit</span>
+                        <span className="text-slate-900 font-medium">{term} Monate</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">Monatliche Rate</span>
+                        <span className="text-[#14386e] font-semibold">{fmt(rate)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {discount > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Zwischensumme</span>
+                      <span className="text-slate-900">{fmt(gross)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Rabatt</span>
+                      <span className="text-emerald-600 font-medium">− {fmt(discount)}</span>
+                    </div>
                   </div>
                 )}
-                {isDirect ? (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Einmalzahlung</span>
-                    <span className="text-slate-900 font-medium">{fmt(base > 0 ? base : Number(snap?.totals?.gross || 0))}</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Finanzierungsbasis</span>
-                      <span className="text-slate-900 font-medium">{fmt(base)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Laufzeit</span>
-                      <span className="text-slate-900 font-medium">{term} Monate</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Monatliche Rate</span>
-                      <span className="text-[#14386e] font-semibold">{fmt(rate)}</span>
-                    </div>
-                  </>
-                )}
-              </div>
+                <div className="flex justify-between text-base pt-2 border-t border-slate-100">
+                  <span className="font-semibold text-slate-700">Gesamtbetrag</span>
+                  <span className="font-bold text-[#14386e]">{fmt(total)}</span>
+                </div>
+              </>
             );
           })()}
-          <div className="flex justify-between text-base pt-2 border-t border-slate-100">
-            <span className="font-semibold text-slate-700">Gesamtbetrag</span>
-            <span className="font-bold text-[#14386e]">{fmt(Number(snap.totals?.gross || 0))}</span>
-          </div>
+
         </section>
 
         <section className="bg-white rounded-xl border border-slate-200 p-5">
