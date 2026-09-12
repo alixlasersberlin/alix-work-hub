@@ -260,7 +260,7 @@ export default function AlixSignPublic() {
             const price = Number(snap?.payment?.price) || Number(snap?.totals?.gross) || 0;
             const down = Number(snap?.payment?.down) || 0;
             const term = Number(snap?.payment?.term) || 0;
-            const base = Math.max(0, price - down);
+            const base = Math.max(0, price - down - discount);
             const isDirect = payType === 'Direktkauf' || !payType;
             const rate = !isDirect && term > 0 ? base / term : 0;
             const gross = Number(snap?.totals?.gross || 0);
@@ -277,7 +277,7 @@ export default function AlixSignPublic() {
                   {isDirect ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Einmalzahlung</span>
-                      <span className="text-slate-900 font-medium">{fmt(base > 0 ? base : gross)}</span>
+                      <span className="text-slate-900 font-medium">{fmt(base > 0 ? base : total)}</span>
                     </div>
                   ) : (
                     <>
