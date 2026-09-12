@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   PH_DEFAULT_COLORS, PH_DEFAULT_POWERS, deviceConfigComplete, isRalColor, type DeviceConfig,
 } from '@/lib/producthub/deviceConfig';
-import { deviceColorVisual } from '@/lib/producthub/colorImages';
+import { deviceColorVisual, colorPhotoApplies } from '@/lib/producthub/colorImages';
 
 export type DeviceConfigTarget = {
   productId?: string | null;
@@ -49,7 +49,7 @@ export function DeviceConfigDialog({
     laser_module_power: power || null,
   };
   const valid = deviceConfigComplete(cfg);
-  const visual = deviceColorVisual(color);
+  const visual = colorPhotoApplies(target?.productName) ? deviceColorVisual(color) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
