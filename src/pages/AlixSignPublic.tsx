@@ -277,7 +277,7 @@ export default function AlixSignPublic() {
                   {isDirect ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Einmalzahlung</span>
-                      <span className="text-slate-900 font-medium">{fmt(base > 0 ? base : gross)}</span>
+                      <span className="text-slate-900 font-medium">{fmt(base > 0 ? base : total)}</span>
                     </div>
                   ) : (
                     <>
