@@ -24,3 +24,18 @@ export function deviceColorVisual(color?: string | null): DeviceColorVisual | nu
   if (!color) return null;
   return MAP[norm(color)] ?? null;
 }
+
+/**
+ * Die hinterlegten Farbfotos zeigen ausschließlich das BlueIce-Gehäuse.
+ * Für andere Geräte (z. B. Alix Shark) darf daher NIE ein Farbfoto
+ * verwendet werden – dort bleibt das echte Produktfoto sichtbar.
+ */
+export function colorPhotoApplies(productName?: string | null): boolean {
+  return /blue\s*ice/i.test(productName || '');
+}
+
+/** Farbfoto nur liefern, wenn es wirklich zu diesem Gerät gehört. */
+export function deviceColorPhoto(color?: string | null, productName?: string | null): string | null {
+  if (!colorPhotoApplies(productName)) return null;
+  return deviceColorVisual(color)?.image ?? null;
+}
