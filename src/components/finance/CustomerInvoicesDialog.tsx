@@ -41,7 +41,7 @@ export function CustomerInvoicesDialog({ open, onOpenChange, customerId, custome
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const cols = 'id, zoho_invoice_id, invoice_number, invoice_date, due_date, status, total, balance, currency, source_system';
+      const cols = 'id, zoho_invoice_id, invoice_number, legal_invoice_number, beleg_id, invoice_date, due_date, status, total, balance, currency, source_system';
       let q = supabase.from('zoho_invoices').select(cols).order('invoice_date', { ascending: false }).limit(300);
       if (customerId && /^[0-9a-f-]{36}$/i.test(customerId)) q = q.eq('customer_id', customerId);
       else if (customerName) q = q.ilike('customer_name', `%${customerName}%`);
@@ -75,7 +75,7 @@ export function CustomerInvoicesDialog({ open, onOpenChange, customerId, custome
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 text-xs uppercase text-muted-foreground sticky top-0">
                   <tr>
-                    <th className="text-left px-3 py-2">Nummer</th>
+                    <th className="text-left px-3 py-2">Rechnungsnummer</th>
                     <th className="text-left px-3 py-2">Datum</th>
                     <th className="text-left px-3 py-2">Fällig</th>
                     <th className="text-left px-3 py-2">Status</th>
@@ -88,15 +88,20 @@ export function CustomerInvoicesDialog({ open, onOpenChange, customerId, custome
                     <tr key={r.id} className={i % 2 ? 'bg-muted/20' : ''}>
                       <td className="px-3 py-2">
                         <button
-                          className="text-primary hover:underline font-medium"
+                          className="text-primary hover:underline font-medium text-left"
                           onClick={() => setPdf({
                             zoho_invoice_id: r.zoho_invoice_id,
-                            invoice_number: r.invoice_number,
+                            invoice_number: r.legal_invoice_number || r.invoice_number,
                             source_system: r.source_system,
                           })}
                         >
-                          {r.invoice_number || '—'}
+                          {r.legal_invoice_number || r.invoice_number || '—'}
                         </button>
+                        {r.legal_invoice_number && (
+                          <div className="text-[10px] text-muted-foreground">
+                            Beleg-ID: {r.beleg_id || r.invoice_number}
+                          </div>
+                        )}
                       </td>
                       <td className="px-3 py-2">{fmtDate(r.invoice_date)}</td>
                       <td className="px-3 py-2">{fmtDate(r.due_date)}</td>
