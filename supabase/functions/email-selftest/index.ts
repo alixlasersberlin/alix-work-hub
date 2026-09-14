@@ -25,6 +25,8 @@ Deno.serve(async (req) => {
       text: 'Dies ist eine Testmail von Alix Work. Absender: noreply@notify.alixsales.com',
       purpose: 'transactional',
       idempotency_key: crypto.randomUUID(),
+      unsubscribe_token: Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map((b) => b.toString(16).padStart(2, '0')).join(''),
     }, { apiKey })
 
 
