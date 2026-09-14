@@ -20,30 +20,48 @@ export default function DatevExport() {
 
   async function downloadDatev() {
     setBusy(true);
+    const fileName = `EXTF_${region}_${from}_${to}.csv`;
     try {
       const { data, error } = await supabase.functions.invoke('finance-datev-export', { body: { date_from: from, date_to: to, accounting_region: (String(region) === 'ALL' ? 'EU' : region) } });
       if (error) throw error;
       const text = typeof data === 'string' ? data : await (data as Blob).text?.();
       const blob = new Blob([text || ''], { type: 'text/csv;charset=windows-1252' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `EXTF_${region}_${from}_${to}.csv`; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
       URL.revokeObjectURL(url);
-    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+      await logGobdExport({
+        exportType: 'DATEV_EXTF', periodFrom: from, periodTo: to, fileName,
+        recordCount: (text || '').split('\n').length - 1, content: text || '',
+        region: String(region), status: 'CREATED',
+      });
+    } catch (e: any) {
+      toast.error(e.message);
+      await logGobdExport({ exportType: 'DATEV_EXTF', periodFrom: from, periodTo: to, fileName, status: 'FAILED', region: String(region), metadata: { error: e?.message } });
+    } finally { setBusy(false); }
   }
 
   async function downloadJournalCsv() {
     setBusy(true);
+    const fileName = `journal_${region}_${from}_${to}.csv`;
     try {
       const { data, error } = await (supabase as any).from('finance_journal').select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', from).lte('booking_date', to).order('booking_date');
       if (error) throw error;
       const cols = ['journal_number','booking_date','source_module','vorgang','reference','order_number','invoice_number','amount_net','amount_vat','amount_gross','account','contra_account','description','status'];
       const head = cols.join(';');
       const body = (data || []).map((r: any) => cols.map(c => String(r[c] ?? '').replace(/[;\n\r"]/g, ' ')).join(';')).join('\n');
-      const blob = new Blob([head + '\n' + body], { type: 'text/csv;charset=utf-8' });
+      const csv = head + '\n' + body;
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `journal_${region}_${from}_${to}.csv`; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
       URL.revokeObjectURL(url);
-    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+      await logGobdExport({
+        exportType: 'JOURNAL_CSV', periodFrom: from, periodTo: to, fileName,
+        recordCount: (data || []).length, content: csv, region: String(region), status: 'CREATED',
+      });
+    } catch (e: any) {
+      toast.error(e.message);
+      await logGobdExport({ exportType: 'JOURNAL_CSV', periodFrom: from, periodTo: to, fileName, status: 'FAILED', region: String(region), metadata: { error: e?.message } });
+    } finally { setBusy(false); }
   }
 
 
