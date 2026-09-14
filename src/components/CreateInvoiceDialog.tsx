@@ -241,7 +241,9 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
     return null;
   };
 
-  const sendInvoiceEmail = async (to: string) => {
+  const sendInvoiceEmail = async (to: string, legalNumber?: string | null) => {
+    const displayNumber = legalNumber || invoiceNumber;
+
 
     const rows = lineItems.map((it) => `
       <tr>
@@ -253,7 +255,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
 
     const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
       <p>Guten Tag ${customerName || ''},</p>
-      <p>anbei erhalten Sie Ihre Rechnung <strong>${invoiceNumber}</strong> vom ${new Date(invoiceDate).toLocaleDateString('de-DE')}.</p>
+      <p>anbei erhalten Sie Ihre Rechnung <strong>${displayNumber}</strong> vom ${new Date(invoiceDate).toLocaleDateString('de-DE')}.${legalNumber ? `<br><span style="color:#666;font-size:12px">Beleg-ID: ${invoiceNumber}</span>` : ''}</p>
       <table style="border-collapse:collapse;width:100%;margin:16px 0">
         <thead><tr>
           <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333">Position</th>
@@ -275,7 +277,8 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
     let attachments: { filename: string; content: string; contentType: string }[] = [];
     try {
       const base64 = await generateInvoicePdfBase64({
-        invoiceNumber,
+        invoiceNumber: displayNumber,
+        belegId: legalNumber ? invoiceNumber : null,
         invoiceDate,
         dueDate,
         customerName,
@@ -289,7 +292,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
       });
       if (base64) {
         attachments = [{
-          filename: `${invoiceNumber}.pdf`,
+          filename: `${displayNumber}.pdf`,
           content: base64,
           contentType: 'application/pdf',
         }];
@@ -303,11 +306,11 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
         body: {
           to_email: to,
           to_name: customerName || undefined,
-          subject: `Rechnung ${invoiceNumber}`,
-          body_text: `Ihre Rechnung ${invoiceNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}. Die Rechnung finden Sie als PDF im Anhang.`,
+          subject: `Rechnung ${displayNumber}`,
+          body_text: `Ihre Rechnung ${displayNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}. Die Rechnung finden Sie als PDF im Anhang.`,
           body_html: html,
           bcc: ['k.trinh@alix-operation.de'],
-          invoice_number: invoiceNumber,
+          invoice_number: displayNumber,
           attachments,
         },
       });
