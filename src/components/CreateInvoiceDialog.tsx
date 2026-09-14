@@ -409,7 +409,19 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
     if (status === 'draft') {
       toast.success(`Entwurf ${invoiceNumber} gespeichert (keine Übergabe an Finance)`);
     } else {
-      toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+      // Rechtssichere Rechnungsnummer (YYYY-MM-NNNN) serverseitig vergeben und sperren
+      let legalNumber: string | null = null;
+      if (data?.id) {
+        const { data: num, error: numErr } = await (supabase as any)
+          .rpc('assign_invoice_number', { p_invoice_id: data.id });
+        if (numErr) console.error('Rechnungsnummer konnte nicht vergeben werden', numErr);
+        else legalNumber = (num as string) ?? null;
+      }
+      toast.success(
+        legalNumber
+          ? `Rechnung Nr. ${legalNumber} erstellt und festgeschrieben (Beleg-ID ${invoiceNumber})`
+          : `Rechnung ${invoiceNumber} erstellt und festgeschrieben`
+      );
       // Automatischer Versand für jede festgeschriebene Rechnung
       void (async () => {
         const to = await resolveRecipient();
@@ -417,7 +429,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
           toast.error('Keine gültige Kunden-E-Mail hinterlegt – Rechnung wurde nicht versendet.');
           return;
         }
-        await sendInvoiceEmail(to);
+        await sendInvoiceEmail(to, legalNumber);
       })();
     }
 
