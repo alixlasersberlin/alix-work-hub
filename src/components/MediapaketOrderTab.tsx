@@ -256,6 +256,82 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     finally { setEmailing(false); }
   };
 
+  // ---- Erneut zusenden (Verlauf + Einsendung erneut öffnen + Versand) ----
+  const [resendOpen, setResendOpen] = useState(false);
+  const [resendHistory, setResendHistory] = useState<any[] | null>(null);
+  const [resendSubject, setResendSubject] = useState('Ihr Media Paket bei Alix Lasers');
+  const [resendMessage, setResendMessage] = useState('wir senden Ihnen Ihr Media Paket erneut zu. Sie können Ihre Angaben jederzeit ergänzen oder korrigieren.');
+  const [reopenSubmission, setReopenSubmission] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const loadResendHistory = useCallback(async (mpId: string) => {
+    setResendHistory(null);
+    const { data } = await supabase
+      .from('media_package_history')
+      .select('id, action, new_value, created_at, user_id')
+      .eq('media_package_id', mpId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    const rows = data || [];
+    const uids = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean))) as string[];
+    const names: Record<string, string> = {};
+    if (uids.length) {
+      const { data: profs } = await supabase.from('user_profiles').select('id, full_name, email').in('id', uids);
+      (profs || []).forEach((p: any) => { names[p.id] = p.full_name || p.email || 'Mitarbeiter'; });
+    }
+    setResendHistory(rows.map((r: any) => ({ ...r, _name: r.user_id ? (names[r.user_id] || 'Mitarbeiter') : 'System' })));
+  }, []);
+
+  const openResend = () => {
+    if (!mp?.id) return;
+    setReopenSubmission(!!mp.submitted_at);
+    setResendOpen(true);
+    loadResendHistory(mp.id);
+  };
+
+  const doResend = async () => {
+    if (!mp?.id) return;
+    setResending(true);
+    try {
+      if (reopenSubmission) {
+        const { error: upErr } = await supabase
+          .from('media_packages')
+          .update({ status: 'customer_correction' as any, submitted_at: null })
+          .eq('id', mp.id);
+        if (upErr) throw new Error(upErr.message);
+      }
+      const { data, error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: {
+          action: 'notify_customer',
+          mp_id: mp.id,
+          subject: resendSubject,
+          message: resendMessage,
+          base_url: window.location.origin,
+        },
+      });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || 'Fehler');
+      toast.success('Erneut zugesendet an ' + data.email);
+      setResendOpen(false);
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const HISTORY_LABEL: Record<string, string> = {
+    customer_link_sent: 'Kundenlink versendet',
+    submitted: 'Vom Kunden eingereicht',
+    status_changed: 'Status geändert',
+    status_customer_notified: 'Kunde über Status informiert',
+    duplicated_from: 'Kopie erstellt',
+    submit_email_sent: 'Einreichungs-E-Mail versendet',
+    snapshot: 'Zwischenstand gespeichert',
+  };
+
+
+
   // Internal staff-only thread
   const [internalDraft, setInternalDraft] = useState('');
   const [postingInternal, setPostingInternal] = useState(false);
