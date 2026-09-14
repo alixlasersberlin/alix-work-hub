@@ -1837,6 +1837,9 @@ function AppRoutes() {
           <Route path="/finance/steuerkonto" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuerkonto /></ProtectedRoute>} />
           <Route path="/finance/perioden" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinancePerioden /></ProtectedRoute>} />
           <Route path="/finance/rechnungsnummern" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRechnungsnummern /></ProtectedRoute>} />
+          <Route path="/finance/gobd/konflikte" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdKonflikte /></ProtectedRoute>} />
+          <Route path="/finance/gobd/audit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdAudit /></ProtectedRoute>} />
+          <Route path="/finance/gobd/rechnungsnummern" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdRechnungsnummern /></ProtectedRoute>} />
 
 
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
