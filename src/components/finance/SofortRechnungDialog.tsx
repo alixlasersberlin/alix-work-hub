@@ -106,10 +106,21 @@ export function SofortRechnungDialog({
         },
         synced_at: new Date().toISOString(),
       };
-      const { error } = await supabase.from('zoho_invoices').insert(payload as any);
+      const { data: created, error } = await supabase
+        .from('zoho_invoices').insert(payload as any).select('id').single();
       if (error) throw error;
+
+      // Rechtssichere Rechnungsnummer (YYYY-MM-NNNN) serverseitig vergeben und sperren
+      let legalNumber: string | null = null;
+      if (created?.id) {
+        const { data: num, error: numErr } = await (supabase as any)
+          .rpc('assign_invoice_number', { p_invoice_id: created.id });
+        if (numErr) console.error('Rechnungsnummer konnte nicht vergeben werden', numErr);
+        else legalNumber = (num as string) ?? null;
+      }
+
       toast.success(
-        `${mode === 'deposit' ? 'Anzahlungsrechnung' : 'Rechnung'} ${number} erstellt, festgeschrieben und ${customerName} zugeordnet`,
+        `${mode === 'deposit' ? 'Anzahlungsrechnung' : 'Rechnung'} ${legalNumber ? `Nr. ${legalNumber} (Beleg-ID ${number})` : number} erstellt, festgeschrieben und ${customerName} zugeordnet`,
       );
       onOpenChange(false);
       onCreated?.();
