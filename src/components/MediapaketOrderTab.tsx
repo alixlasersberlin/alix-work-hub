@@ -370,6 +370,45 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         <Button onClick={createPackage} disabled={creating} className="gold-gradient text-primary-foreground">
           {creating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
           Mediapaket erstellen
+        </Button>
+      </div>
+    );
+  }
+
+  const statusLabel = STATUS_LABEL[mp.status] ?? mp.status;
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="rounded-xl border border-border bg-card p-4 card-glow">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <PackageIcon className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Mediapaket</h3>
+              <Badge variant="outline">{statusLabel}</Badge>
+              {mp.submitted_at && <Badge className="bg-green-500/20 text-green-500 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Eingereicht</Badge>}
+              {unread.length > 0 && (
+                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse">
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  {unread.length} neue Kundenantwort{unread.length === 1 ? '' : 'en'}
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">ID: {mp.id}</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-2" />Aktualisieren</Button>
+            <Button variant="outline" size="sm" onClick={() => window.open(`/mediapaket/print/${mp.id}`, '_blank')}>
+              <FileText className="w-4 h-4 mr-2" />PDF-Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={emailCustomerLink} disabled={emailing}>
+              {emailing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Per E-Mail senden
+            </Button>
+            <Button size="sm" onClick={copyCustomerLink} disabled={issuing} className="gold-gradient text-primary-foreground">
+              {issuing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+              Kundenlink kopieren
             </Button>
             <Button variant="outline" size="sm" onClick={openResend}>
               <Send className="w-4 h-4 mr-2" />Erneut zusenden
@@ -446,45 +485,6 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
                 </div>
               </DialogContent>
             </Dialog>
-      </div>
-    );
-  }
-
-  const statusLabel = STATUS_LABEL[mp.status] ?? mp.status;
-
-  return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="rounded-xl border border-border bg-card p-4 card-glow">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <PackageIcon className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Mediapaket</h3>
-              <Badge variant="outline">{statusLabel}</Badge>
-              {mp.submitted_at && <Badge className="bg-green-500/20 text-green-500 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Eingereicht</Badge>}
-              {unread.length > 0 && (
-                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse">
-                  <MessageCircle className="w-3 h-3 mr-1" />
-                  {unread.length} neue Kundenantwort{unread.length === 1 ? '' : 'en'}
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">ID: {mp.id}</p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-2" />Aktualisieren</Button>
-            <Button variant="outline" size="sm" onClick={() => window.open(`/mediapaket/print/${mp.id}`, '_blank')}>
-              <FileText className="w-4 h-4 mr-2" />PDF-Export
-            </Button>
-            <Button variant="outline" size="sm" onClick={emailCustomerLink} disabled={emailing}>
-              {emailing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-              Per E-Mail senden
-            </Button>
-            <Button size="sm" onClick={copyCustomerLink} disabled={issuing} className="gold-gradient text-primary-foreground">
-              {issuing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
-              Kundenlink kopieren
-            </Button>
           </div>
         </div>
         {/* Assignment + Due date */}
