@@ -28569,6 +28569,114 @@ export type Database = {
         }
         Relationships: []
       }
+      gobd_export_log: {
+        Row: {
+          accounting_region: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          export_type: string
+          file_hash: string | null
+          file_name: string | null
+          id: string
+          metadata: Json
+          period_from: string | null
+          period_to: string | null
+          record_count: number | null
+          status: string
+          tenant_id: string | null
+        }
+        Insert: {
+          accounting_region?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          export_type: string
+          file_hash?: string | null
+          file_name?: string | null
+          id?: string
+          metadata?: Json
+          period_from?: string | null
+          period_to?: string | null
+          record_count?: number | null
+          status?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          accounting_region?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          export_type?: string
+          file_hash?: string | null
+          file_name?: string | null
+          id?: string
+          metadata?: Json
+          period_from?: string | null
+          period_to?: string | null
+          record_count?: number | null
+          status?: string
+          tenant_id?: string | null
+        }
+        Relationships: []
+      }
+      gobd_sync_conflicts: {
+        Row: {
+          created_at: string
+          detected_at: string
+          external_value: string | null
+          field: string
+          id: string
+          invoice_id: string | null
+          invoice_number: string | null
+          local_value: string | null
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          source: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          zoho_reference: string | null
+        }
+        Insert: {
+          created_at?: string
+          detected_at?: string
+          external_value?: string | null
+          field: string
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          local_value?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          zoho_reference?: string | null
+        }
+        Update: {
+          created_at?: string
+          detected_at?: string
+          external_value?: string | null
+          field?: string
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          local_value?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          zoho_reference?: string | null
+        }
+        Relationships: []
+      }
       goods_receipts: {
         Row: {
           created_at: string
@@ -54520,6 +54628,22 @@ export type Database = {
           },
         ]
       }
+      gobd_audit_unified: {
+        Row: {
+          action: string | null
+          id: string | null
+          metadata: Json | null
+          object_id: string | null
+          object_type: string | null
+          origin: string | null
+          reason: string | null
+          source: string | null
+          tenant_id: string | null
+          ts: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       invoice_number_range_overview: {
         Row: {
           digits: number | null
@@ -55720,7 +55844,33 @@ export type Database = {
       get_mobile_command_center: { Args: never; Returns: Json }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
       gobd_invoice_is_final: { Args: { _status: string }; Returns: boolean }
+      gobd_invoice_number_check: {
+        Args: { _tenant_id?: string }
+        Returns: {
+          check_type: string
+          detail: string
+          invoice_id: string
+          number: string
+          severity: string
+          tenant_id: string
+        }[]
+      }
       gobd_is_service_context: { Args: never; Returns: boolean }
+      gobd_log_export: {
+        Args: {
+          _accounting_region?: string
+          _export_type: string
+          _file_hash?: string
+          _file_name?: string
+          _metadata?: Json
+          _period_from?: string
+          _period_to?: string
+          _record_count?: number
+          _status?: string
+          _tenant_id?: string
+        }
+        Returns: string
+      }
       gobd_log_invoice_event: {
         Args: {
           _action: string
