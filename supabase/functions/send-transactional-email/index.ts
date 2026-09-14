@@ -259,9 +259,9 @@ Deno.serve(async (req) => {
         } catch (err: any) {
           if (isRateLimited(err?.message) && attempt < maxAttempts) {
             attempt++
-            // Backoff: 1.5s, 3s, 6s (cap 8s) + small jitter
-            const backoff = Math.min(8000, 1500 * Math.pow(2, attempt - 1))
-            const jitter = Math.floor(Math.random() * 500)
+            // Backoff: 2s, 4s, 8s, 15s ... (cap 15s) + jitter
+            const backoff = Math.min(15000, 2000 * Math.pow(2, attempt - 1))
+            const jitter = Math.floor(Math.random() * 1000)
             await sleep(backoff + jitter)
             continue
           }
@@ -275,12 +275,12 @@ Deno.serve(async (req) => {
     const results: PromiseSettledResult<any>[] = []
     for (let i = 0; i < recipients.length; i++) {
       try {
-        const value = await sendOne(recipients[i], i === 0 ? 4 : 3)
+        const value = await sendOne(recipients[i], i === 0 ? 6 : 3)
         results.push({ status: 'fulfilled', value } as PromiseFulfilledResult<any>)
       } catch (reason: any) {
         results.push({ status: 'rejected', reason } as PromiseRejectedResult)
       }
-      if (i < recipients.length - 1) await sleep(750)
+      if (i < recipients.length - 1) await sleep(1200)
     }
 
     const failures = results
@@ -339,9 +339,15 @@ Deno.serve(async (req) => {
 
     if (!primaryOk) {
       const err = (results[0] as PromiseRejectedResult).reason
+      const limited = isRateLimited(err?.message)
       return new Response(
-        JSON.stringify({ error: err?.message || 'Failed to send email' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: limited
+            ? 'E-Mail-Anbieter ist gerade überlastet (Rate-Limit). Bitte in einer Minute erneut senden.'
+            : (err?.message || 'Failed to send email'),
+          rate_limited: limited,
+        }),
+        { status: limited ? 429 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
