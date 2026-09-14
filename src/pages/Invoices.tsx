@@ -36,6 +36,7 @@ function SortableTh({ label, sortKey, colSort, onSort, align = 'left' }: {
 
 import { cn } from '@/lib/utils';
 import { postPaymentToJournal } from '@/lib/finance/journal';
+import { isGobdLockError, gobdLockMessage, logInvoiceChangeRejected } from '@/lib/finance/gobd';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
