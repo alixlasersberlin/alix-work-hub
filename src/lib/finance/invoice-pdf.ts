@@ -9,7 +9,10 @@ export type InvoicePdfItem = {
 };
 
 export type InvoicePdfData = {
+  /** Rechtssichere Rechnungsnummer im Format YYYY-MM-NNNN */
   invoiceNumber: string;
+  /** Bisherige Belegnummer (unveränderliche ID), wird zusätzlich ausgewiesen */
+  belegId?: string | null;
   invoiceDate?: string | null;
   dueDate?: string | null;
   customerName: string;
