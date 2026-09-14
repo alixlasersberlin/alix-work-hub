@@ -1833,6 +1833,8 @@ function AppRoutes() {
           <Route path="/finance/meldewesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMeldewesen /></ProtectedRoute>} />
           <Route path="/finance/steuerkonto" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuerkonto /></ProtectedRoute>} />
           <Route path="/finance/perioden" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinancePerioden /></ProtectedRoute>} />
+          <Route path="/finance/rechnungsnummern" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRechnungsnummern /></ProtectedRoute>} />
+
 
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
