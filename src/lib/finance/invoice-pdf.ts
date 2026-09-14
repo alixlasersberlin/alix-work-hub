@@ -34,7 +34,7 @@ export async function generateInvoicePdf(data: InvoicePdfData) {
     customerName: data.customerName,
     customerAddress: data.customerAddress,
     customerNumber: data.customerNumber,
-    title: `Rechnung ${data.invoiceNumber}`,
+    title: `Rechnung Nr. ${data.invoiceNumber}`,
     reference: data.reference || null,
     intro:
       `vielen Dank für Ihren Auftrag. Nachfolgend erhalten Sie die Rechnung ${data.invoiceNumber} ` +
@@ -42,6 +42,16 @@ export async function generateInvoicePdf(data: InvoicePdfData) {
   });
 
   const { doc, m, right, footerTop } = ctx;
+
+  // Beleg-ID unter dem Titel ausweisen (unveränderliche Belegkennung)
+  if (data.belegId) {
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(110);
+    doc.text(`Beleg-ID: ${data.belegId}`, m, ctx.y);
+    ctx.y += 5;
+    doc.setTextColor(25);
+  }
 
   const cols = {
     pos: m,
