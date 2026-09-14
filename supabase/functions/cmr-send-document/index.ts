@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     const fromAddress = settings?.email_from_address || "no-reply@alix-lasers.com";
 
     const payload: Record<string, unknown> = {
-      from: "Alix Lasers ® <noreply@alixlasers.ai>",
+      from: "Alix Lasers ® <noreply@notify.alixsales.com>",
       to,
       bcc: [...([] as string[]).concat(["rde@alix-lasers.com"] as any), "service@alix-lasers.com"],
       subject,
@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       });
       try {
         await client.send({
-          from: "Alix Lasers ® <noreply@alixlasers.ai>",
+          from: "Alix Lasers ® <noreply@notify.alixsales.com>",
           to,
           bcc: [...([] as string[]).concat(["rde@alix-lasers.com"] as any), "service@alix-lasers.com"],
           replyTo: settings.email_reply_to || undefined,

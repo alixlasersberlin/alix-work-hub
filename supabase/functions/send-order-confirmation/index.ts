@@ -8,8 +8,8 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
-const SENDER_DOMAIN = 'notify.alixlasers.ai'
-const FROM_DOMAIN = 'notify.alixlasers.ai'
+const SENDER_DOMAIN = 'notify.alixsales.com'
+const FROM_DOMAIN = 'notify.alixsales.com'
 const PUBLIC_BASE = 'https://alixwork.de'
 
 const corsHeaders = {
@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
       const u = Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('')
       await sendLovableEmail({
         to: rec.email,
-        from: "Alix Lasers ® <noreply@alixlasers.ai>",
+        from: "Alix Lasers ® <noreply@notify.alixsales.com>",
         bcc: ["service@alix-lasers.com"],
         sender_domain: SENDER_DOMAIN,
         subject: `${rec.subjectPrefix ?? ''}${subject}`,

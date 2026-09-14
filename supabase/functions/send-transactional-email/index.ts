@@ -7,8 +7,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 
 const SITE_NAME = "Alix Lasers Datacenter"
-const SENDER_DOMAIN = "notify.alixlasers.ai"
-const FROM_DOMAIN = "notify.alixlasers.ai"
+const SENDER_DOMAIN = "notify.alixsales.com"
+const FROM_DOMAIN = "notify.alixsales.com"
 
 // Globaler Archiv-BCC: erhält automatisch eine Kopie JEDER ausgehenden Mail
 const GLOBAL_ARCHIVE_BCC = ['rde@alix-lasers.com']
@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Alix Lasers ® <noreply@alixlasers.ai>',
+          from: 'Alix Lasers ® <noreply@notify.alixsales.com>',
           to: [r.email],
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
@@ -244,7 +244,7 @@ Deno.serve(async (req) => {
 
             {
               to: r.email,
-              from: "Alix Lasers ® <noreply@alixlasers.ai>",
+              from: "Alix Lasers ® <noreply@notify.alixsales.com>",
               bcc: isDunning ? [] : ["service@alix-lasers.com"],
               sender_domain: SENDER_DOMAIN,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,

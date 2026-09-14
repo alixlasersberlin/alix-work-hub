@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: "Alix Lasers ® <noreply@alixlasers.ai>",
+        from: "Alix Lasers ® <noreply@notify.alixsales.com>",
         to: [FLEET_EMAIL],
         bcc: [...([] as string[]).concat([BCC] as any), "service@alix-lasers.com"],
         subject: `Fuhrpark: ${rows.length} Wartungs-/Prüfhinweise (${overdue.length} überfällig)`,

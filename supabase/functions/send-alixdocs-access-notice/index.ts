@@ -4,8 +4,8 @@ import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import { template as alixdocsAccessGranted } from '../_shared/transactional-email-templates/alixdocs-access-granted.tsx'
 
 const SITE_NAME = 'Alix Lasers Datacenter'
-const FROM_DOMAIN = 'notify.alixlasers.ai'
-const SENDER_DOMAIN = 'notify.alixlasers.ai'
+const FROM_DOMAIN = 'notify.alixsales.com'
+const SENDER_DOMAIN = 'notify.alixsales.com'
 const ARCHIVE_BCC = ['rde@alix-lasers.com']
 
 const RECIPIENTS = [
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       try {
         await sendLovableEmail({
           to: t.to,
-          from: "Alix Lasers ® <noreply@alixlasers.ai>",
+          from: "Alix Lasers ® <noreply@notify.alixsales.com>",
           bcc: ["service@alix-lasers.com"],
           sender_domain: SENDER_DOMAIN,
           subject,

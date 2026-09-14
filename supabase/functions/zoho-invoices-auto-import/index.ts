@@ -28,7 +28,7 @@ type Payload = {
 const MAIL_TO = "rde@alix-lasers.com";
 const MAIL_CC = "k.trinh@alix-operation.de";
 const MAIL_BCC = "service@alix-lasers.com";
-const MAIL_FROM = "Alix Lasers ® <noreply@alixlasers.ai>";
+const MAIL_FROM = "Alix Lasers ® <noreply@notify.alixsales.com>";
 
 const CH_BRANCH_ID = "598077000000065075";
 const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];

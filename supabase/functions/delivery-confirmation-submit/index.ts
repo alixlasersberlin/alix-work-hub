@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "Alix Lasers ® <noreply@alixlasers.ai>",
+          from: "Alix Lasers ® <noreply@notify.alixsales.com>",
           to: ["tour@alix-lasers.com"],
           bcc: [...([] as string[]).concat(BCC as any), "service@alix-lasers.com"],
           subject: `Kundenrückmeldung Liefertermin – ${appt.customer_name ?? ""} (${appt.order_number ?? "-"})`,
@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "Alix Lasers ® <noreply@alixlasers.ai>",
+          from: "Alix Lasers ® <noreply@notify.alixsales.com>",
           bcc: ["service@alix-lasers.com"],
           to: CONFIRM_TO,
           subject: `Liefertermin bestätigt – ${appt.customer_name ?? ""} (${appt.order_number ?? "-"}) am ${dateStr}`,
