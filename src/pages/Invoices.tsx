@@ -909,6 +909,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setBulkBusy(false);
     const err = results.find((x: any) => x.error)?.error;
     if (err) {
+      if (isGobdLockError(err.message)) {
+        await Promise.all(
+          invIds.map((id) =>
+            logInvoiceChangeRejected({ invoiceId: id, fields: ['is_mietkauf'], reason: 'Sammeländerung Vermietung' }),
+          ),
+        );
+        toast({ title: 'Änderung abgelehnt (GoBD)', description: gobdLockMessage(err.message), variant: 'destructive' });
+        return;
+      }
       toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
       return;
     }
