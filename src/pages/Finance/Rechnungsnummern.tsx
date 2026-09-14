@@ -126,11 +126,25 @@ export default function Rechnungsnummern() {
     if (!preview || preview.length === 0) { toast({ title: 'Bitte zuerst den Prüflauf starten' }); return; }
     if (!window.confirm(`${preview.length} Rechnungen erhalten jetzt dauerhaft eine neue Rechnungsnummer. Fortfahren?`)) return;
     setRunning(true);
-    const { data, error } = await (supabase as any).rpc('run_invoice_renumbering', { p_period: null });
+    let total = 0;
+    // In Paketen, damit auch mehrere tausend Rechnungen ohne Zeitüberschreitung durchlaufen.
+    for (let i = 0; i < 200; i++) {
+      const { data, error } = await (supabase as any).rpc('run_invoice_renumbering', { p_period: null, p_limit: 200 });
+      if (error) {
+        setRunning(false); setProgress(null);
+        toast({ title: 'Migration fehlgeschlagen', description: error.message, variant: 'destructive' });
+        load();
+        return;
+      }
+      const res = Array.isArray(data) ? data[0] : data;
+      total += Number(res?.migrated ?? 0);
+      const remaining = Number(res?.remaining ?? 0);
+      setProgress({ done: total, remaining });
+      if (!res?.migrated || remaining === 0) break;
+    }
     setRunning(false);
-    if (error) { toast({ title: 'Migration fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
-    const res = Array.isArray(data) ? data[0] : data;
-    toast({ title: 'Migration abgeschlossen', description: `${res?.migrated ?? 0} Rechnungen nummeriert.` });
+    setProgress(null);
+    toast({ title: 'Migration abgeschlossen', description: `${total} Rechnungen nummeriert.` });
     setPreview(null);
     load();
   };
