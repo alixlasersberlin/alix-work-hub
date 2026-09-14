@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check, Lock, UserPlus, CalendarClock, AlertTriangle, Download, Eye, History as HistoryIcon, FileText } from 'lucide-react';
+import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check, Lock, UserPlus, CalendarClock, AlertTriangle, Download, Eye, History as HistoryIcon, FileText, Send, Unlock, ExternalLink } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -253,6 +256,82 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     finally { setEmailing(false); }
   };
 
+  // ---- Erneut zusenden (Verlauf + Einsendung erneut öffnen + Versand) ----
+  const [resendOpen, setResendOpen] = useState(false);
+  const [resendHistory, setResendHistory] = useState<any[] | null>(null);
+  const [resendSubject, setResendSubject] = useState('Ihr Media Paket bei Alix Lasers');
+  const [resendMessage, setResendMessage] = useState('wir senden Ihnen Ihr Media Paket erneut zu. Sie können Ihre Angaben jederzeit ergänzen oder korrigieren.');
+  const [reopenSubmission, setReopenSubmission] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const loadResendHistory = useCallback(async (mpId: string) => {
+    setResendHistory(null);
+    const { data } = await supabase
+      .from('media_package_history')
+      .select('id, action, new_value, created_at, user_id')
+      .eq('media_package_id', mpId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    const rows = data || [];
+    const uids = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean))) as string[];
+    const names: Record<string, string> = {};
+    if (uids.length) {
+      const { data: profs } = await supabase.from('user_profiles').select('id, full_name, email').in('id', uids);
+      (profs || []).forEach((p: any) => { names[p.id] = p.full_name || p.email || 'Mitarbeiter'; });
+    }
+    setResendHistory(rows.map((r: any) => ({ ...r, _name: r.user_id ? (names[r.user_id] || 'Mitarbeiter') : 'System' })));
+  }, []);
+
+  const openResend = () => {
+    if (!mp?.id) return;
+    setReopenSubmission(!!mp.submitted_at);
+    setResendOpen(true);
+    loadResendHistory(mp.id);
+  };
+
+  const doResend = async () => {
+    if (!mp?.id) return;
+    setResending(true);
+    try {
+      if (reopenSubmission) {
+        const { error: upErr } = await supabase
+          .from('media_packages')
+          .update({ status: 'customer_correction' as any, submitted_at: null })
+          .eq('id', mp.id);
+        if (upErr) throw new Error(upErr.message);
+      }
+      const { data, error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: {
+          action: 'notify_customer',
+          mp_id: mp.id,
+          subject: resendSubject,
+          message: resendMessage,
+          base_url: window.location.origin,
+        },
+      });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || 'Fehler');
+      toast.success('Erneut zugesendet an ' + data.email);
+      setResendOpen(false);
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const HISTORY_LABEL: Record<string, string> = {
+    customer_link_sent: 'Kundenlink versendet',
+    submitted: 'Vom Kunden eingereicht',
+    status_changed: 'Status geändert',
+    status_customer_notified: 'Kunde über Status informiert',
+    duplicated_from: 'Kopie erstellt',
+    submit_email_sent: 'Einreichungs-E-Mail versendet',
+    snapshot: 'Zwischenstand gespeichert',
+  };
+
+
+
   // Internal staff-only thread
   const [internalDraft, setInternalDraft] = useState('');
   const [postingInternal, setPostingInternal] = useState(false);
@@ -331,6 +410,81 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
               {issuing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
               Kundenlink kopieren
             </Button>
+            <Button variant="outline" size="sm" onClick={openResend}>
+              <Send className="w-4 h-4 mr-2" />Erneut zusenden
+            </Button>
+
+            <Dialog open={resendOpen} onOpenChange={setResendOpen}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Mediapaket erneut zusenden</DialogTitle></DialogHeader>
+                <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                  {/* Verlauf */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2"><HistoryIcon className="w-4 h-4" /> Verlauf</h4>
+                      <Button variant="ghost" size="sm" className="h-7" onClick={() => window.open(`/mediapaket/print/${mp.id}`, '_blank')}>
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" /> Einsendung öffnen
+                      </Button>
+                    </div>
+                    {resendHistory === null ? (
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>
+                    ) : resendHistory.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Noch kein Verlauf vorhanden.</p>
+                    ) : (
+                      <div className="space-y-1 max-h-56 overflow-y-auto">
+                        {resendHistory.map(h => (
+                          <div key={h.id} className="rounded-lg border border-border p-2 text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium">{HISTORY_LABEL[h.action] || h.action}</span>
+                              <span className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString('de-DE')}</span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {h._name}
+                              {h.new_value?.email ? ` · ${h.new_value.email}` : ''}
+                              {h.new_value?.subject ? ` · ${h.new_value.subject}` : ''}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Einsendung erneut öffnen */}
+                  <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+                    <Unlock className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="text-sm font-medium">Einsendung erneut öffnen</label>
+                        <Switch checked={reopenSubmission} onCheckedChange={setReopenSubmission} />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Setzt den Status auf „Korrektur beim Kunden“, damit der Kunde seine Angaben wieder bearbeiten kann.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Nachricht */}
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Betreff</label>
+                      <Input value={resendSubject} onChange={(e) => setResendSubject(e.target.value)} className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Nachricht</label>
+                      <Textarea value={resendMessage} onChange={(e) => setResendMessage(e.target.value)} rows={4} className="text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setResendOpen(false)}>Abbrechen</Button>
+                    <Button onClick={doResend} disabled={resending} className="gold-gradient text-primary-foreground">
+                      {resending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                      Jetzt zusenden
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
         {/* Assignment + Due date */}
