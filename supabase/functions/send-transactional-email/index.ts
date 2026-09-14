@@ -275,12 +275,12 @@ Deno.serve(async (req) => {
     const results: PromiseSettledResult<any>[] = []
     for (let i = 0; i < recipients.length; i++) {
       try {
-        const value = await sendOne(recipients[i], i === 0 ? 4 : 3)
+        const value = await sendOne(recipients[i], i === 0 ? 6 : 3)
         results.push({ status: 'fulfilled', value } as PromiseFulfilledResult<any>)
       } catch (reason: any) {
         results.push({ status: 'rejected', reason } as PromiseRejectedResult)
       }
-      if (i < recipients.length - 1) await sleep(750)
+      if (i < recipients.length - 1) await sleep(1200)
     }
 
     const failures = results
