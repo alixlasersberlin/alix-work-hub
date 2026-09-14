@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { logGobdExport } from '@/lib/finance/gobd';
 
 const MODULES = [
   'finance_incoming_invoices', 'finance_approvals', 'finance_sepa_runs',
@@ -41,18 +42,24 @@ export default function FinanceCompliance() {
 
   const exportCsv = async () => {
     setBusy(true);
+    const fileName = `compliance_${from}_${to}.csv`;
     try {
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/finance-compliance-report?from=${from}T00:00:00Z&to=${to}T23:59:59Z`;
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(url, { headers: { Authorization: `Bearer ${session?.access_token}` } });
       if (!res.ok) throw new Error('Export fehlgeschlagen');
-      const blob = await res.blob();
+      const text = await res.text();
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `compliance_${from}_${to}.csv`;
+      a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+      a.download = fileName;
       a.click();
+      await logGobdExport({
+        exportType: 'COMPLIANCE_REPORT', periodFrom: from, periodTo: to, fileName,
+        recordCount: text.split('\n').length - 1, content: text, status: 'CREATED',
+      });
       toast({ title: 'Export erstellt' });
     } catch (e: any) {
+      await logGobdExport({ exportType: 'COMPLIANCE_REPORT', periodFrom: from, periodTo: to, fileName, status: 'FAILED', metadata: { error: e.message } });
       toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
     }
     setBusy(false);

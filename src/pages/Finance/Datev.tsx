@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { logGobdExport } from '@/lib/finance/gobd';
 import { useEffect } from 'react';
 
 const DEFAULT_CFG = {
@@ -47,13 +48,20 @@ export default function FinanceDatev() {
         body: JSON.stringify({ date_from: from, date_to: to, accounting_region: (String(region) === 'ALL' ? 'EU' : region) }),
       });
       if (!res.ok) throw new Error(await res.text());
-      const blob = await res.blob();
+      const text = await res.text();
+      const blob = new Blob([text], { type: 'text/csv;charset=windows-1252' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `EXTF_${region}_${from}_${to}.csv`; a.click();
+      const fileName = `EXTF_${region}_${from}_${to}.csv`;
+      a.href = url; a.download = fileName; a.click();
       URL.revokeObjectURL(url);
+      await logGobdExport({
+        exportType: 'DATEV_EXTF', periodFrom: from, periodTo: to, fileName,
+        recordCount: text.split('\n').length - 1, content: text, region: String(region), status: 'CREATED',
+      });
       toast({ title: 'DATEV-Export erstellt' });
     } catch (e: any) {
+      await logGobdExport({ exportType: 'DATEV_EXTF', periodFrom: from, periodTo: to, status: 'FAILED', region: String(region), metadata: { error: e?.message } });
       toast({ title: 'Fehler', description: e?.message, variant: 'destructive' });
     } finally { setDownloading(false); }
   };

@@ -262,6 +262,9 @@ const FinanceMeldewesen = lazy(() => import("./pages/Finance/Meldewesen"));
 const FinanceSteuerkonto = lazy(() => import("./pages/Finance/Steuerkonto"));
 const FinancePerioden = lazy(() => import("./pages/Finance/Perioden"));
 const FinanceRechnungsnummern = lazy(() => import("./pages/Finance/Rechnungsnummern"));
+const FinanceGobdKonflikte = lazy(() => import("./pages/Finance/GobdKonflikte"));
+const FinanceGobdAudit = lazy(() => import("./pages/Finance/GobdAudit"));
+const FinanceGobdRechnungsnummern = lazy(() => import("./pages/Finance/GobdRechnungsnummern"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const ZohoAbgleich = lazy(() => import("./pages/Admin/ZohoAbgleich"));
@@ -1834,6 +1837,9 @@ function AppRoutes() {
           <Route path="/finance/steuerkonto" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuerkonto /></ProtectedRoute>} />
           <Route path="/finance/perioden" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinancePerioden /></ProtectedRoute>} />
           <Route path="/finance/rechnungsnummern" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRechnungsnummern /></ProtectedRoute>} />
+          <Route path="/finance/gobd/konflikte" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdKonflikte /></ProtectedRoute>} />
+          <Route path="/finance/gobd/audit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdAudit /></ProtectedRoute>} />
+          <Route path="/finance/gobd/rechnungsnummern" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdRechnungsnummern /></ProtectedRoute>} />
 
 
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
