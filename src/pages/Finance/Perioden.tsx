@@ -231,7 +231,7 @@ export default function Perioden() {
           </div>
         )}
         <p className="text-[11px] text-muted-foreground mt-4">
-          Gesperrte Perioden blockieren Anlegen, Ändern und Löschen in Buchungen, Journal, Kassenbuch und Bankbuchungen — getrennt je Buchungskreis. Wiedereröffnen ist ausschließlich Super Admin vorbehalten.
+          Hart gesperrte Perioden blockieren Anlegen, Ändern und Löschen in Buchungen, Journal, Kassenbuch, Bankbuchungen <strong>und Ausgangsrechnungen</strong> — getrennt je Buchungskreis. Wiedereröffnen ist nur mit Begründung und ausschließlich Super Admin bzw. Buchhaltung Admin möglich; jede Statusänderung wird protokolliert.
         </p>
       </DataCard>
     </div>
