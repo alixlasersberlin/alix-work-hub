@@ -236,7 +236,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       try {
         let query = supabase
           .from('finance_deposits' as any)
-          .select('invoice_number, deposit_number, issue_date, due_date, order_id, order_number, gross_amount, net_amount, vat_amount, status, note')
+          .select('invoice_number, deposit_number, issue_date, due_date, order_id, order_number, source_ref, gross_amount, net_amount, vat_amount, status, note')
           .order('issue_date', { ascending: true });
         const orFilters: string[] = [];
         if (order?.id) orFilters.push(`order_id.eq.${order.id}`);
@@ -246,7 +246,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         if (orFilters.length) query = query.or(orFilters.join(','));
         const { data } = await query;
         if (!cancelled) {
-          const list = (data || []).map((row: any) => ({
+          // Automatisch aus dem Auftrag erzeugte Soll-Datensätze (source_ref = "order:<id>")
+          // sind KEINE gestellten Anzahlungsrechnungen – sie dürfen weder als Duplikat
+          // gelten noch gegen die Anzahlungssumme gerechnet werden.
+          const rows = (data || []).filter(
+            (row: any) => !order?.id || String(row.source_ref || '') !== `order:${order.id}`,
+          );
+          const list = rows.map((row: any) => ({
             invoice_number: row.invoice_number || row.deposit_number || `AZ-${orderNo}`,
             issue_date: row.issue_date ?? null,
             due_date: row.due_date ?? null,
