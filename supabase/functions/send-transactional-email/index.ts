@@ -339,9 +339,15 @@ Deno.serve(async (req) => {
 
     if (!primaryOk) {
       const err = (results[0] as PromiseRejectedResult).reason
+      const limited = isRateLimited(err?.message)
       return new Response(
-        JSON.stringify({ error: err?.message || 'Failed to send email' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: limited
+            ? 'E-Mail-Anbieter ist gerade überlastet (Rate-Limit). Bitte in einer Minute erneut senden.'
+            : (err?.message || 'Failed to send email'),
+          rate_limited: limited,
+        }),
+        { status: limited ? 429 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
