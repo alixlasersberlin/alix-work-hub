@@ -9,6 +9,8 @@ type Row = {
   id: string;
   zoho_invoice_id: string;
   invoice_number: string | null;
+  legal_invoice_number: string | null;
+  beleg_id: string | null;
   invoice_date: string | null;
   due_date: string | null;
   status: string | null;
