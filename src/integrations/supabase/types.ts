@@ -28861,6 +28861,114 @@ export type Database = {
           },
         ]
       }
+      invoice_number_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          actor_email: string | null
+          beleg_id: string | null
+          created_at: string
+          id: string
+          invoice_id: string | null
+          new_number: string | null
+          new_pdf_url: string | null
+          old_number: string | null
+          old_pdf_url: string | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          actor_email?: string | null
+          beleg_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          new_number?: string | null
+          new_pdf_url?: string | null
+          old_number?: string | null
+          old_pdf_url?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          actor_email?: string | null
+          beleg_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          new_number?: string | null
+          new_pdf_url?: string | null
+          old_number?: string | null
+          old_pdf_url?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      invoice_number_migrations: {
+        Row: {
+          id: string
+          invoice_date: string | null
+          invoice_id: string
+          migrated_at: string
+          new_number: string
+          note: string | null
+          old_number: string | null
+          status: string
+        }
+        Insert: {
+          id?: string
+          invoice_date?: string | null
+          invoice_id: string
+          migrated_at?: string
+          new_number: string
+          note?: string | null
+          old_number?: string | null
+          status?: string
+        }
+        Update: {
+          id?: string
+          invoice_date?: string | null
+          invoice_id?: string
+          migrated_at?: string
+          new_number?: string
+          note?: string | null
+          old_number?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      invoice_number_ranges: {
+        Row: {
+          created_at: string
+          digits: number
+          last_value: number
+          period: string
+          start_value: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          digits?: number
+          last_value?: number
+          period: string
+          start_value?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          digits?: number
+          last_value?: number
+          period?: string
+          start_value?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_workflow_states: {
         Row: {
           created_at: string
@@ -53440,6 +53548,7 @@ export type Database = {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
           balance: number | null
+          beleg_id: string | null
           billing_address: Json | null
           city: string | null
           created_at: string
@@ -53454,6 +53563,9 @@ export type Database = {
           is_deposit: boolean
           is_mietkauf: boolean
           last_payment_date: string | null
+          legal_invoice_number: string | null
+          legal_number_assigned_at: string | null
+          legal_number_locked: boolean
           mietkauf_booked_at: string | null
           mietkauf_booked_by: string | null
           payment_status: string | null
@@ -53470,6 +53582,7 @@ export type Database = {
         Insert: {
           accounting_region?: Database["public"]["Enums"]["accounting_region"]
           balance?: number | null
+          beleg_id?: string | null
           billing_address?: Json | null
           city?: string | null
           created_at?: string
@@ -53484,6 +53597,9 @@ export type Database = {
           is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
+          legal_invoice_number?: string | null
+          legal_number_assigned_at?: string | null
+          legal_number_locked?: boolean
           mietkauf_booked_at?: string | null
           mietkauf_booked_by?: string | null
           payment_status?: string | null
@@ -53500,6 +53616,7 @@ export type Database = {
         Update: {
           accounting_region?: Database["public"]["Enums"]["accounting_region"]
           balance?: number | null
+          beleg_id?: string | null
           billing_address?: Json | null
           city?: string | null
           created_at?: string
@@ -53514,6 +53631,9 @@ export type Database = {
           is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
+          legal_invoice_number?: string | null
+          legal_number_assigned_at?: string | null
+          legal_number_locked?: boolean
           mietkauf_booked_at?: string | null
           mietkauf_booked_by?: string | null
           payment_status?: string | null
@@ -54316,6 +54436,19 @@ export type Database = {
           },
         ]
       }
+      invoice_number_range_overview: {
+        Row: {
+          digits: number | null
+          first_number: string | null
+          invoice_count: number | null
+          last_number: string | null
+          last_value: number | null
+          period: string | null
+          start_value: number | null
+          status: string | null
+        }
+        Relationships: []
+      }
       security_findings_overview: {
         Row: {
           age_days: number | null
@@ -55055,6 +55188,7 @@ export type Database = {
         Args: { p_case: string }
         Returns: undefined
       }
+      assign_invoice_number: { Args: { p_invoice_id: string }; Returns: string }
       audit_retention_purge: { Args: never; Returns: Json }
       auto_merge_safe_customer_duplicates: {
         Args: { _dry_run?: boolean }
@@ -55163,6 +55297,16 @@ export type Database = {
       compliance_has_access: { Args: never; Returns: boolean }
       compliance_is_admin: { Args: never; Returns: boolean }
       compliance_is_member: { Args: { _project_id: string }; Returns: boolean }
+      correct_invoice_number: {
+        Args: {
+          p_invoice_id: string
+          p_new_number: string
+          p_new_pdf_url?: string
+          p_old_pdf_url?: string
+          p_reason: string
+        }
+        Returns: string
+      }
       create_finance_stakeholder: {
         Args: {
           p_allowed_reports?: Json
@@ -55648,6 +55792,7 @@ export type Database = {
       next_document_number:
         | { Args: { p_code: string }; Returns: string }
         | { Args: { p_case_number: string; p_code: string }; Returns: string }
+      next_invoice_number: { Args: { p_date?: string }; Returns: string }
       notify_customer_event: {
         Args: {
           _customer_name: string
@@ -55734,6 +55879,16 @@ export type Database = {
         Returns: number
       }
       plm_normalize_manufacturer: { Args: { p: string }; Returns: string }
+      preview_invoice_renumbering: {
+        Args: { p_period?: string }
+        Returns: {
+          invoice_date: string
+          invoice_id: string
+          old_number: string
+          period: string
+          planned_number: string
+        }[]
+      }
       process_scheduled_grants: { Args: never; Returns: Json }
       qr_reference_check_digit: { Args: { _body: string }; Returns: string }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
@@ -55783,6 +55938,13 @@ export type Database = {
       rotate_finance_stakeholder_token: {
         Args: { p_id: string }
         Returns: string
+      }
+      run_invoice_renumbering: {
+        Args: { p_period?: string }
+        Returns: {
+          migrated: number
+          periods: number
+        }[]
       }
       schedule_role_grant: {
         Args: {
