@@ -100,3 +100,4 @@
 - [Product Hub Preislisten & Kataloge](mem://features/product-hub-kataloge) — Katalogmodul /product-hub/preislisten, ph_catalog_*, Online-Katalog /preisliste/:slug, Masterpreise bleiben unverändert
 - [ALIX Premium Mietanfrage](mem://features/mietanfrage-premium) — Miet-Wizard /miete/premium im Beratung-Premium-Design, rental-devices/rental-request-submit, Leads in sales_leads
 - [Product Hub Mehrsprachigkeit](mem://features/product-hub-i18n) — de Master + en/es/ru/ar, ph_product_translations/ph_glossary, ph-translate, API locale-Parameter mit Fallback-Kennzeichnung
+- [Rechnungsnummern GoBD](mem://features/rechnungsnummern-gobd) — Beleg-ID (alt, unveränderlich) + Rechnungsnummer YYYY-MM-NNNN, monatlicher Kreis, Audit/Migration unter /finance/rechnungsnummern

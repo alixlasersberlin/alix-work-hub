@@ -103,6 +103,8 @@ type Row = {
   zoho_invoice_id: string | null;
   source_system: string | null;
   invoice_number: string | null;
+  legal_invoice_number?: string | null;
+  beleg_id?: string | null;
   reference_number: string | null;
   customer_id: string | null;
   customer_name: string | null;
@@ -675,7 +677,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
-    const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
+    const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, legal_invoice_number, beleg_id, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
     // PostgREST liefert max. 1000 Zeilen je Request.
     // Seiten werden spekulativ PARALLEL (6 gleichzeitig) geladen, statt nacheinander.
     const fetchAllPages = async (build: () => any, page = 1000, max = 40000) => {
@@ -2670,7 +2672,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                             className="text-primary underline underline-offset-2 hover:text-primary/80"
                             title="Rechnung anzeigen"
                           >
-                            {r.invoice_number ?? '–'}
+                            {(r as any).legal_invoice_number ?? r.invoice_number ?? '–'}
                           </button>
                           <TenantBadge source={r.source_system} />
                           {isDraftInvoice(r) && (
@@ -2680,6 +2682,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           )}
 
                         </div>
+                        {(r as any).legal_invoice_number && (
+                          <div className="text-[10px] text-muted-foreground">
+                            Beleg-ID: {(r as any).beleg_id ?? r.invoice_number}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.total, r.currency)}</td>
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.balance, r.currency)}</td>
