@@ -51,3 +51,46 @@ export async function createInvoiceCorrection(params: {
   if (error) throw new Error(error.message);
   return data as string;
 }
+
+async function sha256Hex(content: string): Promise<string | null> {
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Nachweis für einen steuerlich relevanten Export (DATEV, Steuer, Bank, Journal …).
+ * Darf die Oberfläche nie blockieren.
+ */
+export async function logGobdExport(params: {
+  exportType: string;
+  periodFrom?: string | null;
+  periodTo?: string | null;
+  recordCount?: number | null;
+  fileName?: string | null;
+  content?: string | null;
+  status?: 'CREATED' | 'DOWNLOADED' | 'FAILED';
+  region?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const hash = params.content ? await sha256Hex(params.content) : null;
+    await (supabase as any).rpc('gobd_log_export', {
+      _export_type: params.exportType,
+      _period_from: params.periodFrom ?? null,
+      _period_to: params.periodTo ?? null,
+      _record_count: params.recordCount ?? null,
+      _file_name: params.fileName ?? null,
+      _file_hash: hash,
+      _status: params.status ?? 'CREATED',
+      _accounting_region: params.region ?? null,
+      _tenant_id: null,
+      _metadata: (params.metadata ?? {}) as any,
+    });
+  } catch {
+    /* Protokollierung darf nie blockieren */
+  }
+}
