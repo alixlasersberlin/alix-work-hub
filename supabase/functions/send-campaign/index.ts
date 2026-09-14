@@ -163,7 +163,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Alix Lasers ® <noreply@alixlasers.ai>",
+            from: "Alix Lasers ® <noreply@notify.alixsales.com>",
             to: [rec.name ? `${rec.name} <${rec.email}>` : rec.email],
             bcc: [...([] as string[]).concat(['rde@alix-lasers.com'] as any), "service@alix-lasers.com"],
             subject: subj,
