@@ -53801,6 +53801,7 @@ export type Database = {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
           balance: number | null
+          beleg_id: string | null
           billing_address: Json | null
           city: string | null
           created_at: string
@@ -53816,6 +53817,9 @@ export type Database = {
           is_deposit: boolean
           is_mietkauf: boolean
           last_payment_date: string | null
+          legal_invoice_number: string | null
+          legal_number_assigned_at: string | null
+          legal_number_locked: boolean
           mietkauf_booked_at: string | null
           mietkauf_booked_by: string | null
           payment_status: string | null
@@ -53833,6 +53837,7 @@ export type Database = {
         Insert: {
           accounting_region?: Database["public"]["Enums"]["accounting_region"]
           balance?: number | null
+          beleg_id?: string | null
           billing_address?: Json | null
           city?: string | null
           created_at?: string
@@ -53848,6 +53853,9 @@ export type Database = {
           is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
+          legal_invoice_number?: string | null
+          legal_number_assigned_at?: string | null
+          legal_number_locked?: boolean
           mietkauf_booked_at?: string | null
           mietkauf_booked_by?: string | null
           payment_status?: string | null
@@ -53865,6 +53873,7 @@ export type Database = {
         Update: {
           accounting_region?: Database["public"]["Enums"]["accounting_region"]
           balance?: number | null
+          beleg_id?: string | null
           billing_address?: Json | null
           city?: string | null
           created_at?: string
@@ -53880,6 +53889,9 @@ export type Database = {
           is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
+          legal_invoice_number?: string | null
+          legal_number_assigned_at?: string | null
+          legal_number_locked?: boolean
           mietkauf_booked_at?: string | null
           mietkauf_booked_by?: string | null
           payment_status?: string | null
