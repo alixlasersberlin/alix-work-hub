@@ -55940,10 +55940,10 @@ export type Database = {
         Returns: string
       }
       run_invoice_renumbering: {
-        Args: { p_period?: string }
+        Args: { p_limit?: number; p_period?: string }
         Returns: {
           migrated: number
-          periods: number
+          remaining: number
         }[]
       }
       schedule_role_grant: {
