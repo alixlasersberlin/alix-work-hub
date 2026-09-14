@@ -259,9 +259,9 @@ Deno.serve(async (req) => {
         } catch (err: any) {
           if (isRateLimited(err?.message) && attempt < maxAttempts) {
             attempt++
-            // Backoff: 1.5s, 3s, 6s (cap 8s) + small jitter
-            const backoff = Math.min(8000, 1500 * Math.pow(2, attempt - 1))
-            const jitter = Math.floor(Math.random() * 500)
+            // Backoff: 2s, 4s, 8s, 15s ... (cap 15s) + jitter
+            const backoff = Math.min(15000, 2000 * Math.pow(2, attempt - 1))
+            const jitter = Math.floor(Math.random() * 1000)
             await sleep(backoff + jitter)
             continue
           }
