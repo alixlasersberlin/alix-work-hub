@@ -19,14 +19,14 @@ Deno.serve(async (req) => {
     const result = await sendLovableEmail({
       from: 'Alix Lasers Datacenter <noreply@notify.alixsales.com>',
       sender_domain: 'notify.alixsales.com',
-      to: ['rde@alix-lasers.com'],
+      to: 'rde@alix-lasers.com',
       subject: 'Testmail – Alix Work E-Mail-Versand',
       html: '<p>Dies ist eine Testmail von Alix Work.</p><p>Absender: noreply@notify.alixsales.com</p>',
       text: 'Dies ist eine Testmail von Alix Work. Absender: noreply@notify.alixsales.com',
       purpose: 'transactional',
-      label: 'email-selftest',
       idempotency_key: crypto.randomUUID(),
     }, { apiKey })
+
 
     return new Response(JSON.stringify({ ok: true, result }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
