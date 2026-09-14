@@ -111,6 +111,14 @@ export default function Perioden() {
     if (status === 'open' && row && row.status !== 'open' && !isSuperAdmin) {
       return toast({ title: 'Nicht erlaubt', description: 'Nur Super Admin darf Perioden wieder öffnen.', variant: 'destructive' });
     }
+    // GoBD: Wiederöffnen einer hart gesperrten Periode nur mit Begründung
+    let reason: string | null = null;
+    if (status !== 'hard_locked' && row?.status === 'hard_locked') {
+      reason = window.prompt('Begründung für das Wiederöffnen dieser gesperrten Periode (Pflicht):') ?? '';
+      if (!reason.trim()) {
+        return toast({ title: 'Begründung fehlt', description: 'Ohne Begründung kann eine gesperrte Periode nicht geöffnet werden.', variant: 'destructive' });
+      }
+    }
     setBusy(month);
     const closing = status !== 'open';
     const patch: Record<string, unknown> = {
@@ -118,6 +126,7 @@ export default function Perioden() {
       closed_at: closing ? new Date().toISOString() : null,
       closed_by: closing ? (await supabase.auth.getUser()).data.user?.id ?? null : null,
     };
+    if (reason) patch.note = reason.trim();
     if (!closing) patch.reopened_at = new Date().toISOString();
     const { error } = row
       ? await (supabase as any).from('finance_periods').update(patch).eq('id', row.id)
