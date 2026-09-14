@@ -36,6 +36,7 @@ function SortableTh({ label, sortKey, colSort, onSort, align = 'left' }: {
 
 import { cn } from '@/lib/utils';
 import { postPaymentToJournal } from '@/lib/finance/journal';
+import { isGobdLockError, gobdLockMessage, logInvoiceChangeRejected } from '@/lib/finance/gobd';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -909,6 +910,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setBulkBusy(false);
     const err = results.find((x: any) => x.error)?.error;
     if (err) {
+      if (isGobdLockError(err.message)) {
+        await Promise.all(
+          invIds.map((id) =>
+            logInvoiceChangeRejected({ invoiceId: id, fields: ['is_mietkauf'], reason: 'Sammeländerung Vermietung' }),
+          ),
+        );
+        toast({ title: 'Änderung abgelehnt (GoBD)', description: gobdLockMessage(err.message), variant: 'destructive' });
+        return;
+      }
       toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
       return;
     }
