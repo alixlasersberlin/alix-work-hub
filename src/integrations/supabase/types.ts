@@ -28861,6 +28861,78 @@ export type Database = {
           },
         ]
       }
+      invoice_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          fields: string[] | null
+          id: string
+          invoice_id: string | null
+          invoice_number: string | null
+          metadata: Json
+          reason: string | null
+          related_invoice_id: string | null
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          fields?: string[] | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          metadata?: Json
+          reason?: string | null
+          related_invoice_id?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          fields?: string[] | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          metadata?: Json
+          reason?: string | null
+          related_invoice_id?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      invoice_corrections: {
+        Row: {
+          correction_invoice_id: string | null
+          correction_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          original_invoice_id: string
+          reason: string
+        }
+        Insert: {
+          correction_invoice_id?: string | null
+          correction_type: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          original_invoice_id: string
+          reason: string
+        }
+        Update: {
+          correction_invoice_id?: string | null
+          correction_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          original_invoice_id?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       invoice_number_audit: {
         Row: {
           action: string
@@ -55332,6 +55404,15 @@ export type Database = {
           id: string
         }[]
       }
+      create_invoice_correction: {
+        Args: {
+          _correction_invoice_id?: string
+          _correction_type: string
+          _original_invoice_id: string
+          _reason: string
+        }
+        Returns: string
+      }
       create_sms_auth_token_secret: {
         Args: { p_token: string }
         Returns: string
@@ -55638,6 +55719,26 @@ export type Database = {
       }
       get_mobile_command_center: { Args: never; Returns: Json }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
+      gobd_invoice_is_final: { Args: { _status: string }; Returns: boolean }
+      gobd_is_service_context: { Args: never; Returns: boolean }
+      gobd_log_invoice_event: {
+        Args: {
+          _action: string
+          _fields?: string[]
+          _invoice_id: string
+          _metadata?: Json
+          _reason?: string
+          _related_invoice_id?: string
+        }
+        Returns: string
+      }
+      gobd_period_state: {
+        Args: {
+          _dt: string
+          _region: Database["public"]["Enums"]["accounting_region"]
+        }
+        Returns: string
+      }
       has_accounting_region: {
         Args: {
           _region: Database["public"]["Enums"]["accounting_region"]
