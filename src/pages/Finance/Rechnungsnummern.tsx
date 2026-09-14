@@ -362,7 +362,6 @@ export default function Rechnungsnummern() {
               {correcting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Korrektur speichern
             </Button>
           </DialogFooter>
-        </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
