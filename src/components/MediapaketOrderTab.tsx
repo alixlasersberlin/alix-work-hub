@@ -370,7 +370,82 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         <Button onClick={createPackage} disabled={creating} className="gold-gradient text-primary-foreground">
           {creating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
           Mediapaket erstellen
-        </Button>
+            </Button>
+            <Button variant="outline" size="sm" onClick={openResend}>
+              <Send className="w-4 h-4 mr-2" />Erneut zusenden
+            </Button>
+
+            <Dialog open={resendOpen} onOpenChange={setResendOpen}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Mediapaket erneut zusenden</DialogTitle></DialogHeader>
+                <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                  {/* Verlauf */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2"><HistoryIcon className="w-4 h-4" /> Verlauf</h4>
+                      <Button variant="ghost" size="sm" className="h-7" onClick={() => window.open(`/mediapaket/print/${mp.id}`, '_blank')}>
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" /> Einsendung öffnen
+                      </Button>
+                    </div>
+                    {resendHistory === null ? (
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>
+                    ) : resendHistory.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Noch kein Verlauf vorhanden.</p>
+                    ) : (
+                      <div className="space-y-1 max-h-56 overflow-y-auto">
+                        {resendHistory.map(h => (
+                          <div key={h.id} className="rounded-lg border border-border p-2 text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium">{HISTORY_LABEL[h.action] || h.action}</span>
+                              <span className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString('de-DE')}</span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {h._name}
+                              {h.new_value?.email ? ` · ${h.new_value.email}` : ''}
+                              {h.new_value?.subject ? ` · ${h.new_value.subject}` : ''}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Einsendung erneut öffnen */}
+                  <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+                    <Unlock className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="text-sm font-medium">Einsendung erneut öffnen</label>
+                        <Switch checked={reopenSubmission} onCheckedChange={setReopenSubmission} />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Setzt den Status auf „Korrektur beim Kunden“, damit der Kunde seine Angaben wieder bearbeiten kann.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Nachricht */}
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Betreff</label>
+                      <Input value={resendSubject} onChange={(e) => setResendSubject(e.target.value)} className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Nachricht</label>
+                      <Textarea value={resendMessage} onChange={(e) => setResendMessage(e.target.value)} rows={4} className="text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setResendOpen(false)}>Abbrechen</Button>
+                    <Button onClick={doResend} disabled={resending} className="gold-gradient text-primary-foreground">
+                      {resending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                      Jetzt zusenden
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
       </div>
     );
   }
