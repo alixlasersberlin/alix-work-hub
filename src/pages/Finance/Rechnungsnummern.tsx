@@ -255,6 +255,11 @@ export default function Rechnungsnummern() {
                 Migration ausführen
               </Button>
             </div>
+            {progress && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {progress.done} Rechnungen nummeriert · noch {progress.remaining} offen …
+              </p>
+            )}
             {preview && (
               <div className="mt-4 max-h-[420px] overflow-auto rounded-lg border border-border">
                 <table className="w-full text-sm">
