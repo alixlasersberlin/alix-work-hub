@@ -127,6 +127,14 @@ export async function upsertOffer(snap: OfferSnapshot): Promise<void> {
     createdByName = (prof as any)?.full_name || (prof as any)?.email || createdByName;
   }
 
+  // Rabatt aus der Zahlungsvereinbarung fließt in die gespeicherten Summen ein,
+  // damit Liste, Portal und Auswertungen denselben Betrag zeigen wie PDF/Signatur.
+  const rawGross = Number(snap.totals?.gross || 0);
+  const rawNet = Number(snap.totals?.net || 0);
+  const rawTax = Number(snap.totals?.tax || 0);
+  const discount = Math.max(0, Number((snap as any).payment?.discount) || 0);
+  const factor = rawGross > 0 ? Math.max(0, rawGross - discount) / rawGross : 1;
+
   const row: any = {
     offer_number: snap.offerNumber,
     case_number: snap.caseNumber || null,
@@ -135,13 +143,14 @@ export async function upsertOffer(snap: OfferSnapshot): Promise<void> {
     customer_id: snap.customer?.id || null,
     customer_name: snap.customer?.company_name || snap.customer?.contact_name || null,
     customer_email: snap.customer?.email || null,
-    total_net: snap.totals?.net || 0,
-    total_tax: snap.totals?.tax || 0,
-    total_gross: snap.totals?.gross || 0,
+    total_net: Math.round(rawNet * factor * 100) / 100,
+    total_tax: Math.round(rawTax * factor * 100) / 100,
+    total_gross: Math.round(rawGross * factor * 100) / 100,
     status: snap.status || 'draft',
     signed_at: snap.signedAt || null,
     payload: snap,
   };
+
 
   // Check if exists to preserve created_by
   const { data: existing } = await supabase
