@@ -76,6 +76,7 @@ export default function Rechnungsnummern() {
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; remaining: number } | null>(null);
   const [migrations, setMigrations] = useState<MigrationRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
 
