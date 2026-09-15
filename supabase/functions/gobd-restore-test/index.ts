@@ -56,6 +56,7 @@ type State = {
   plan: Plan[];
   idx: number;
   vidx?: number;
+  roff?: number;
   counts: Record<string, number>;
   manifest_path: string;
 };
@@ -146,17 +147,45 @@ Deno.serve(async (req) => {
       const part = state.plan[state.idx];
       const { data: blob, error: dErr } = await sb.storage.from("backups").download(part.path);
       if (dErr || !blob) throw new Error(`Teil ${part.path}: ${dErr?.message ?? "nicht lesbar"}`);
-      const rows = (await blob.text()).split("\n").filter((l) => l.trim().length > 0).map((l) => JSON.parse(l));
-      // Kleine Pakete: Protokolltabellen enthalten grosse JSON-Felder, der
-      // Inhalts-Hash je Datensatz laeuft sonst in das Statement-Timeout.
+      // Zeilenweise streamen: grosse Protokoll-Teile passen sonst nicht in den
+      // Arbeitsspeicher der Edge Function.
       const CHUNK = 100;
-      for (let i = 0; i < rows.length; i += CHUNK) {
+      const skip = state.roff ?? 0;
+      let seen = 0;
+      let buf = "";
+      let batch: unknown[] = [];
+      const flush = async () => {
+        if (batch.length === 0) return;
         const { error: lErr } = await sb.rpc("gobd_restore_load", {
-          _run_id: runId, _table: part.table, _rows: rows.slice(i, i + CHUNK),
+          _run_id: runId, _table: part.table, _rows: batch,
         });
         if (lErr) throw new Error(`Laden ${part.table} (${part.path}): ${lErr.message}`);
+        state.roff = (state.roff ?? 0) + batch.length;
+        batch = [];
+      };
+      const handleLine = async (line: string) => {
+        if (line.trim().length === 0) return;
+        seen += 1;
+        if (seen <= skip) return; // bereits geladene Datensaetze nicht doppelt einspielen
+        batch.push(JSON.parse(line));
+        if (batch.length >= CHUNK) await flush();
+      };
+      const reader = blob.stream().pipeThrough(new TextDecoderStream()).getReader();
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += value;
+        let nl: number;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, nl);
+          buf = buf.slice(nl + 1);
+          await handleLine(line);
+        }
       }
+      await handleLine(buf);
+      await flush();
       state.idx += 1;
+      state.roff = 0;
     }
 
     // 5) Vergleich (tabellenweise, damit grosse Bestaende nicht in das
