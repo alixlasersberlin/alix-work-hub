@@ -108,7 +108,13 @@ export default function GobdWiederherstellung() {
       ...checks.map(c => [c.category, c.check_name, c.expected, c.actual, c.diff, c.status]),
     ];
     download(`gobd-phase15-${new Date().toISOString().slice(0, 10)}.csv`, csv(rows));
-    try { await logGobdExport('gobd_phase15', 'Prüfnachweis Datensicherung & Wiederherstellung', report.length + checks.length); } catch { /* optional */ }
+    try {
+      await logGobdExport({
+        exportType: 'gobd_phase15',
+        recordCount: report.length + checks.length,
+        fileName: `gobd-phase15-${new Date().toISOString().slice(0, 10)}.csv`,
+      });
+    } catch { /* optional */ }
     toast.success('Prüfnachweis exportiert');
   }
 
