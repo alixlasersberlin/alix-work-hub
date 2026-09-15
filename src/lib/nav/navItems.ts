@@ -593,6 +593,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/gobd/verfahrensdokumentation', label: 'GoBD · Verfahrensdokumentation', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/gobd/aufbewahrung', label: 'GoBD · Aufbewahrung & Legal Hold', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/gobd/wiederherstellung', label: 'GoBD · Datensicherung & Wiederherstellung', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/abschluss', label: 'GoBD · Organisatorischer Abschluss', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/steuer', label: 'Steuer-Auswertung', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/meldewesen', label: 'Steuer & Meldewesen', icon: FileText, roles: ['Admin', 'Super Admin'] },

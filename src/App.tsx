@@ -269,6 +269,7 @@ const FinanceGobdGesamtabschluss = lazy(() => import("./pages/Finance/GobdGesamt
 const FinanceGobdVerfahrensdoku = lazy(() => import("./pages/Finance/GobdVerfahrensdokumentation"));
 const FinanceGobdAufbewahrung = lazy(() => import("./pages/Finance/GobdAufbewahrung"));
 const FinanceGobdWiederherstellung = lazy(() => import("./pages/Finance/GobdWiederherstellung"));
+const FinanceGobdAbschluss = lazy(() => import("./pages/Finance/GobdAbschluss"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const ZohoAbgleich = lazy(() => import("./pages/Admin/ZohoAbgleich"));
@@ -1848,6 +1849,7 @@ function AppRoutes() {
           <Route path="/finance/gobd/verfahrensdokumentation" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdVerfahrensdoku /></ProtectedRoute>} />
           <Route path="/finance/gobd/aufbewahrung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdAufbewahrung /></ProtectedRoute>} />
           <Route path="/finance/gobd/wiederherstellung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdWiederherstellung /></ProtectedRoute>} />
+          <Route path="/finance/gobd/abschluss" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdAbschluss /></ProtectedRoute>} />
 
 
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
