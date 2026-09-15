@@ -8,7 +8,8 @@ Status: OFFEN / WARNUNG (Phase 15 bleibt unverändert nicht bestanden)
 | --- | --- |
 | Ereignisart | Verbindungsschicht (Connection Pooler) der Datenbank nicht erreichbar |
 | Erstmals festgestellt | 2026-09-15 ca. 05:20 UTC |
-| Weiterhin bestehend um | 2026-09-15 07:13 UTC (mehrfach geprüft: 05:32, 05:45, 05:52, 06:02, 07:07, 07:08–07:13 UTC im 40-Sekunden-Takt) |
+| Weiterhin bestehend um | 2026-09-15 07:42 UTC (mehrfach geprüft: 05:32, 05:45, 05:52, 06:02, 07:07, 07:08–07:13, 07:34–07:37 und 07:38–07:42 UTC) |
+| Zwischenbefund 07:34–07:37 UTC | Schnittstellen-Endpunkt antwortet (HTTP 401 ohne Datenzugriff), echte Datenabfragen weiterhin HTTP 522; Datenbankschicht unverändert nicht erreichbar |
 | Fehlerbild | `SUPABASE_POOLER_UNAVAILABLE` / `Connection terminated due to connection timeout`; über die Daten-Schnittstelle zusätzlich HTTP 522 (Zeitüberschreitung zum Ursprungsserver) |
 | Auswirkung | Keine Lese- oder Schreibvorgänge auf der Datenbank möglich |
 | Maßnahme | Bewusst keine weiteren Restore-, Reparatur- oder Schreibversuche erzwungen |
