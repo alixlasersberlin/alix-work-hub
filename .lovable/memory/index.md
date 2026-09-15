@@ -104,3 +104,4 @@
 - [GoBD Gesamtabschluss](mem://features/gobd-gesamtabschluss) — /finance/gobd/gesamtabschluss, gobd_compliance_check, WORM-/Lösch-/Nummernkreis-Guards, keine Rück-Umnummerierung
 - [GoBD Phase 13](mem://features/gobd-phase13) — Verfahrensdokumentation (WORM, versioniert), Berechtigungsmatrix, Vier-Augen-Empfehlungen, Änderungsprotokoll; Status erst nach Phase 17 "bestanden"
 - [GoBD Phase 16](mem://features/gobd-phase16-abschluss) — /finance/gobd/abschluss: Verantwortlichkeiten, WORM-Freigaben, versionierte Abschlussberichte mit Freigabestatus
+- [GoBD Besetzungsregeln](mem://features/gobd-organisatorischer-abschluss) — Verantwortlicher ≠ Vertretung, Vier-Augen und Löschfreigabe durch verschiedene Personen, Freigabe-Reihenfolge
