@@ -69,9 +69,9 @@ export default function GobdAbschluss() {
       supabase.from('gobd_final_reports' as any).select('*').order('version', { ascending: false }),
     ]);
     if (o.error) toast.error(o.error.message); else setOrg((o.data ?? []) as Check[]);
-    setResps((r.data ?? []) as Resp[]);
-    setApprovals((a.data ?? []) as Approval[]);
-    setReports((f.data ?? []) as Report[]);
+    setResps((r.data ?? []) as unknown as Resp[]);
+    setApprovals((a.data ?? []) as unknown as Approval[]);
+    setReports((f.data ?? []) as unknown as Report[]);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
