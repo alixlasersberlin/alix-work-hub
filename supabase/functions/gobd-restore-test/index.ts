@@ -17,6 +17,8 @@ const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b, null, 2), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 // GoBD-relevante Objektklassen fuer den Vollstaendigkeitsvergleich
+// (Phase 15B: zusaetzlich Zahlungen, Bankbelege, Perioden, Legal Holds,
+//  Verfahrensdokumentation und saemtliche GoBD-Protokolle)
 const SCOPE = [
   "zoho_invoices",
   "zoho_recurring_invoices",
@@ -28,6 +30,22 @@ const SCOPE = [
   "number_ranges",
   "customers",
   "audit_logs",
+  "finance_audit_trail",
+  "invoice_audit_log",
+  "invoice_corrections",
+  "invoice_number_audit",
+  "invoice_number_ranges",
+  "finance_periods",
+  "bank_imports",
+  "bank_transactions",
+  "bank_transaction_allocations",
+  "gobd_legal_holds",
+  "gobd_legal_hold_items",
+  "gobd_procedure_docs",
+  "gobd_export_log",
+  "gobd_retention_audit",
+  "gobd_sync_conflicts",
+  "gobd_change_log",
 ];
 
 const BUDGET_MS = 45_000;
@@ -37,6 +55,7 @@ type State = {
   phase: "load" | "verify";
   plan: Plan[];
   idx: number;
+  vidx?: number;
   counts: Record<string, number>;
   manifest_path: string;
 };
@@ -128,21 +147,42 @@ Deno.serve(async (req) => {
       const { data: blob, error: dErr } = await sb.storage.from("backups").download(part.path);
       if (dErr || !blob) throw new Error(`Teil ${part.path}: ${dErr?.message ?? "nicht lesbar"}`);
       const rows = (await blob.text()).split("\n").filter((l) => l.trim().length > 0).map((l) => JSON.parse(l));
-      const { error: lErr } = await sb.rpc("gobd_restore_load", {
-        _run_id: runId, _table: part.table, _rows: rows,
-      });
-      if (lErr) throw new Error(`Laden ${part.table} (${part.path}): ${lErr.message}`);
+      // Kleine Pakete: Protokolltabellen enthalten grosse JSON-Felder, der
+      // Inhalts-Hash je Datensatz laeuft sonst in das Statement-Timeout.
+      const CHUNK = 100;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        const { error: lErr } = await sb.rpc("gobd_restore_load", {
+          _run_id: runId, _table: part.table, _rows: rows.slice(i, i + CHUNK),
+        });
+        if (lErr) throw new Error(`Laden ${part.table} (${part.path}): ${lErr.message}`);
+      }
       state.idx += 1;
     }
 
-    // 5) Vergleich, Schutztests, Abschluss
+    // 5) Vergleich (tabellenweise, damit grosse Bestaende nicht in das
+    //    Statement-Timeout laufen), Schutztests, Abschluss
     state.phase = "verify";
+    state.vidx = state.vidx ?? 0;
     await sb.from("gobd_restore_runs").update({ summary: { state } }).eq("id", runId);
 
-    const { error: cErr } = await sb.rpc("gobd_restore_compare", {
-      _run_id: runId, _counts: state.counts, _scope: SCOPE,
-    });
-    if (cErr) throw new Error(`Vergleich: ${cErr.message}`);
+    while ((state.vidx ?? 0) < SCOPE.length) {
+      if (Date.now() - started > BUDGET_MS) {
+        await sb.from("gobd_restore_runs").update({ summary: { state } }).eq("id", runId);
+        return json({ done: false, run_id: runId, progress: `Vergleich ${state.vidx}/${SCOPE.length}` }, 202);
+      }
+      const t = SCOPE[state.vidx!];
+      const { error: cErr } = await sb.rpc("gobd_restore_compare_one", {
+        _run_id: runId, _counts: state.counts, _table: t,
+      });
+      if (cErr) throw new Error(`Vergleich ${t}: ${cErr.message}`);
+
+      // Phase 15B: gleiche Anzahl ist kein Inhaltsnachweis → Hash je Datensatz
+      const { error: hashErr } = await sb.rpc("gobd_restore_content_check", {
+        _run_id: runId, _scope: [t],
+      });
+      if (hashErr) throw new Error(`Inhaltsvergleich ${t}: ${hashErr.message}`);
+      state.vidx! += 1;
+    }
 
     const { error: pErr } = await sb.rpc("gobd_restore_protection_tests", { _run_id: runId });
     if (pErr) throw new Error(`Schutztests: ${pErr.message}`);
