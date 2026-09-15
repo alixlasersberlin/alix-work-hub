@@ -1841,6 +1841,7 @@ function AppRoutes() {
           <Route path="/finance/gobd/konflikte" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdKonflikte /></ProtectedRoute>} />
           <Route path="/finance/gobd/audit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdAudit /></ProtectedRoute>} />
           <Route path="/finance/gobd/rechnungsnummern" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdRechnungsnummern /></ProtectedRoute>} />
+          <Route path="/finance/gobd/gesamtabschluss" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGobdGesamtabschluss /></ProtectedRoute>} />
 
 
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
