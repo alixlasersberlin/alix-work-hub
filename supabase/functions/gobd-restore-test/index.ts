@@ -55,6 +55,7 @@ type State = {
   phase: "load" | "verify";
   plan: Plan[];
   idx: number;
+  vidx?: number;
   counts: Record<string, number>;
   manifest_path: string;
 };
