@@ -56540,6 +56540,10 @@ export type Database = {
         Args: { _counts: Json; _run_id: string; _scope: string[] }
         Returns: undefined
       }
+      gobd_restore_compare_one: {
+        Args: { _counts: Json; _run_id: string; _table: string }
+        Returns: undefined
+      }
       gobd_restore_content_check: {
         Args: { _run_id: string; _scope: string[] }
         Returns: undefined
