@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { logGobdExport } from '@/lib/finance/gobd';
+import { GobdRestoreRunner } from '@/components/finance/GobdRestoreRunner';
 
 type Backup = {
   id: string; backup_type: string; backup_scope: string | null; backup_status: string;
