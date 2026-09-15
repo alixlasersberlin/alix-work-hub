@@ -66,6 +66,9 @@ type State = {
   idx: number;          // aktuelle Sicherungsdatei
   roff?: number;        // bereits geladene Datensaetze dieser Datei (Checkpoint)
   vidx?: number;        // aktuelle Tabelle im Vergleich
+  vcounted?: boolean;   // Mengenvergleich dieser Tabelle erledigt
+  vcursor?: string | null; // Cursor im Inhaltsvergleich dieser Tabelle
+  vdone?: boolean;      // Inhaltspakete dieser Tabelle vollstaendig
   counts: Record<string, number>;
   manifest_path: string;
   control?: "running" | "paused";
@@ -96,8 +99,10 @@ Deno.serve(async (req) => {
   const apikey = req.headers.get("apikey") ?? "";
 
   const testToken = Deno.env.get("GOBD_RESTORE_TEST_TOKEN");
+  const testToken2 = Deno.env.get("GOBD_RESTORE_TEST_TOKEN2");
   let ok = (cronSecret && auth === `Bearer ${cronSecret}`) ||
     (testToken && auth === `Bearer ${testToken}`) ||
+    (testToken2 && auth === `Bearer ${testToken2}`) ||
     auth === `Bearer ${srk}` || apikey === srk;
   if (!ok && auth.startsWith("Bearer ")) {
     try {
@@ -303,17 +308,48 @@ Deno.serve(async (req) => {
         return json({ done: false, run_id: runId, progress: progressOf(state) }, 202);
       }
       const t = SCOPE[state.vidx!];
-      const { error: cErr } = await sb.rpc("gobd_restore_compare_one", {
-        _run_id: runId, _counts: state.counts, _table: t,
-      });
-      if (cErr) throw new Error(`Vergleich ${t}: ${cErr.message}`);
 
-      // gleiche Anzahl ist kein Inhaltsnachweis → Hash je Datensatz, tabellenweise
-      const { error: hashErr } = await sb.rpc("gobd_restore_content_check", {
-        _run_id: runId, _scope: [t],
+      if (!state.vcounted) {
+        const { error: cErr } = await sb.rpc("gobd_restore_compare_one", {
+          _run_id: runId, _counts: state.counts, _table: t,
+        });
+        if (cErr) throw new Error(`Vergleich ${t}: ${cErr.message}`);
+        state.vcounted = true;
+        await saveState(runId!, state);
+        await sleep(BATCH_PAUSE_MS);
+      }
+
+      // gleiche Anzahl ist kein Inhaltsnachweis → Hash je Datensatz,
+      // paketweise (max. BATCH_ROWS je Aufruf, Cursor statt OFFSET)
+      let guard = 0;
+      while (!state.vdone) {
+        if (Date.now() - started > BUDGET_MS) {
+          await saveState(runId!, state);
+          return json({ done: false, run_id: runId, progress: progressOf(state) }, 202);
+        }
+        const { data: chunk, error: chErr } = await sb.rpc("gobd_restore_content_index_chunk", {
+          _table: t, _after: state.vcursor ?? null, _limit: BATCH_ROWS,
+        });
+        if (chErr) throw new Error(`Inhaltsvergleich ${t}: ${chErr.message}`);
+        const c = (chunk ?? {}) as { done?: boolean; cursor?: string | null; inserted?: number };
+        state.vcursor = c.cursor ?? state.vcursor ?? null;
+        state.batches = (state.batches ?? 0) + 1;
+        if (c.done) state.vdone = true;
+        await saveState(runId!, state);
+        if (state.vdone) break;
+        guard += 1;
+        await sleep(BATCH_PAUSE_MS);
+      }
+
+      const { error: fErr2 } = await sb.rpc("gobd_restore_content_finish", {
+        _run_id: runId, _table: t,
       });
-      if (hashErr) throw new Error(`Inhaltsvergleich ${t}: ${hashErr.message}`);
+      if (fErr2) throw new Error(`Inhaltsabschluss ${t}: ${fErr2.message}`);
+
       state.vidx! += 1;
+      state.vcounted = false;
+      state.vdone = false;
+      state.vcursor = null;
       await saveState(runId!, state);
       await sleep(BATCH_PAUSE_MS);
     }
