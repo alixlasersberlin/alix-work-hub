@@ -30,7 +30,7 @@ export default function GobdGesamtabschluss() {
 
   const fehler = rows.filter(r => r.status === 'FEHLER');
   const hinweise = rows.filter(r => r.status === 'HINWEIS');
-  const gesamt = loading ? '…' : fehler.length > 0 ? 'FEHLER' : hinweise.length > 0 ? 'MIT HINWEISEN' : 'BESTANDEN';
+  const gesamt = loading ? '…' : fehler.length > 0 ? 'FEHLER' : hinweise.length > 0 ? 'MIT HINWEISEN' : 'TECHNISCH BESTANDEN';
 
   const bereiche = useMemo(() => {
     const m = new Map<string, Row[]>();
@@ -59,7 +59,7 @@ export default function GobdGesamtabschluss() {
       <PageHeader
         icon={ShieldCheck}
         title="GoBD Gesamtabschluss"
-        subtitle="Automatische Gesamtprüfung aller Schutzmechanismen für Rechnungen, Protokolle, Perioden und Exporte"
+        subtitle="Technische GoBD-Prüfung – organisatorischer Abschluss läuft (Phasen 14 bis 17 stehen aus)"
         actions={<>
           <Button variant="outline" onClick={load} disabled={loading}><RefreshCw className="h-4 w-4" /></Button>
           <Button onClick={exportCsv} disabled={loading || rows.length === 0}>
@@ -72,7 +72,7 @@ export default function GobdGesamtabschluss() {
         <Card><CardContent className="p-4">
           <div className="text-xs text-muted-foreground">Gesamtergebnis</div>
           <div className="mt-2">
-            <Badge variant={gesamt === 'BESTANDEN' ? 'outline' : gesamt === 'FEHLER' ? 'destructive' : 'secondary'}>{gesamt}</Badge>
+            <Badge variant={gesamt === 'TECHNISCH BESTANDEN' ? 'outline' : gesamt === 'FEHLER' ? 'destructive' : 'secondary'}>{gesamt}</Badge>
           </div>
         </CardContent></Card>
         <Card><CardContent className="p-4">
