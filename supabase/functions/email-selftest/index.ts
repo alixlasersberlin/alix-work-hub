@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   try {
     const result = await sendLovableEmail({
       from: 'Alix Lasers Datacenter <noreply@notify.alix-finance.de>',
-      sender_domain: 'notify.alixsales.com',
+      sender_domain: 'notify.alix-finance.de',
       to: 'rde@alix-lasers.com',
       subject: 'Testmail – Alix Work E-Mail-Versand',
       html: '<p>Dies ist eine Testmail von Alix Work.</p><p>Absender: noreply@notify.alix-finance.de</p>',

@@ -4,8 +4,8 @@ import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import { template as alixdocsAccessGranted } from '../_shared/transactional-email-templates/alixdocs-access-granted.tsx'
 
 const SITE_NAME = 'Alix Lasers Datacenter'
-const FROM_DOMAIN = 'notify.alixsales.com'
-const SENDER_DOMAIN = 'notify.alixsales.com'
+const FROM_DOMAIN = 'notify.alix-finance.de'
+const SENDER_DOMAIN = 'notify.alix-finance.de'
 const ARCHIVE_BCC = ['rde@alix-lasers.com']
 
 const RECIPIENTS = [

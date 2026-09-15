@@ -29,7 +29,7 @@ export function isValidEmail(value: unknown): boolean {
   if (/^(example|test|localhost|invalid|beispiel)\./i.test(domain) || /^(example|test|localhost|invalid)$/i.test(domain.split('.')[0])) return false
   return true
 }
-const FROM_DOMAIN = "notify.alixsales.com"
+const FROM_DOMAIN = "notify.alix-finance.de"
 
 // Globaler Archiv-BCC: erhält automatisch eine Kopie JEDER ausgehenden Mail
 const GLOBAL_ARCHIVE_BCC = ['rde@alix-lasers.com']

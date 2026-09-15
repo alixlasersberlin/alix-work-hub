@@ -5,8 +5,8 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
-const SENDER_DOMAIN = 'notify.alixsales.com'
-const FROM_DOMAIN = 'notify.alixsales.com'
+const SENDER_DOMAIN = 'notify.alix-finance.de'
+const FROM_DOMAIN = 'notify.alix-finance.de'
 const APP_BASE_URL = 'https://www.alixwork.de'
 
 const corsHeaders = {
