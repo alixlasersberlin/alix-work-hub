@@ -51,7 +51,10 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization") ?? "";
   const apikey = req.headers.get("apikey") ?? "";
 
-  let ok = (cronSecret && auth === `Bearer ${cronSecret}`) || auth === `Bearer ${srk}` || apikey === srk;
+  const testToken = Deno.env.get("GOBD_RESTORE_TEST_TOKEN");
+  let ok = (cronSecret && auth === `Bearer ${cronSecret}`) ||
+    (testToken && auth === `Bearer ${testToken}`) ||
+    auth === `Bearer ${srk}` || apikey === srk;
   if (!ok && auth.startsWith("Bearer ")) {
     try {
       const usb = createClient(url, anon, { global: { headers: { Authorization: auth } } });
