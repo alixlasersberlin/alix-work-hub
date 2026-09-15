@@ -146,10 +146,15 @@ Deno.serve(async (req) => {
       const { data: blob, error: dErr } = await sb.storage.from("backups").download(part.path);
       if (dErr || !blob) throw new Error(`Teil ${part.path}: ${dErr?.message ?? "nicht lesbar"}`);
       const rows = (await blob.text()).split("\n").filter((l) => l.trim().length > 0).map((l) => JSON.parse(l));
-      const { error: lErr } = await sb.rpc("gobd_restore_load", {
-        _run_id: runId, _table: part.table, _rows: rows,
-      });
-      if (lErr) throw new Error(`Laden ${part.table} (${part.path}): ${lErr.message}`);
+      // Kleine Pakete: Protokolltabellen enthalten grosse JSON-Felder, der
+      // Inhalts-Hash je Datensatz laeuft sonst in das Statement-Timeout.
+      const CHUNK = 100;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        const { error: lErr } = await sb.rpc("gobd_restore_load", {
+          _run_id: runId, _table: part.table, _rows: rows.slice(i, i + CHUNK),
+        });
+        if (lErr) throw new Error(`Laden ${part.table} (${part.path}): ${lErr.message}`);
+      }
       state.idx += 1;
     }
 
