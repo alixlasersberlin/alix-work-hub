@@ -111,6 +111,10 @@ const BACKUP_TABLES = [
   "gobd_export_log","gobd_four_eyes_recommendations","gobd_legal_hold_items","gobd_legal_holds",
   "gobd_permission_matrix","gobd_procedure_docs","gobd_restore_checks","gobd_restore_runs",
   "gobd_retention_audit","gobd_retention_rule_log","gobd_sync_conflicts",
+  // Phase 15B: Zahlungen, Bankbelege und der zentrale Finanz-Audit-Trail
+  "finance_audit_trail","bank_accounts","bank_audit_log","bank_imports",
+  "bank_transactions","bank_transaction_allocations","bank_transaction_matches",
+  "bank_return_debits","bank_return_debit_allocations",
 ];
 
 // All Storage Buckets (außer `backups` – das ist das Ziel selbst).
