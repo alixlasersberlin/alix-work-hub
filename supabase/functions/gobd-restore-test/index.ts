@@ -17,6 +17,8 @@ const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b, null, 2), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 // GoBD-relevante Objektklassen fuer den Vollstaendigkeitsvergleich
+// (Phase 15B: zusaetzlich Zahlungen, Bankbelege, Perioden, Legal Holds,
+//  Verfahrensdokumentation und saemtliche GoBD-Protokolle)
 const SCOPE = [
   "zoho_invoices",
   "zoho_recurring_invoices",
@@ -28,6 +30,22 @@ const SCOPE = [
   "number_ranges",
   "customers",
   "audit_logs",
+  "finance_audit_trail",
+  "invoice_audit_log",
+  "invoice_corrections",
+  "invoice_number_audit",
+  "invoice_number_ranges",
+  "finance_periods",
+  "bank_imports",
+  "bank_transactions",
+  "bank_transaction_allocations",
+  "gobd_legal_holds",
+  "gobd_legal_hold_items",
+  "gobd_procedure_docs",
+  "gobd_export_log",
+  "gobd_retention_audit",
+  "gobd_sync_conflicts",
+  "gobd_change_log",
 ];
 
 const BUDGET_MS = 45_000;
