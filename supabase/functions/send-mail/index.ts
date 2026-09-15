@@ -259,7 +259,12 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+        // Nur in Resend verifizierte Domain verwenden (alixwork.de)
+        from: (() => {
+          const addr = String(from_email).toLowerCase().trim();
+          const safe = addr.endsWith("@alixwork.de") ? addr : "noreply@alixwork.de";
+          return `Alix Lasers ® <${safe}>`;
+        })(),
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: (() => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);
