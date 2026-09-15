@@ -467,3 +467,6 @@ verify_jwt = false
 
 [functions.rental-request-submit]
 verify_jwt = false
+
+[functions.gobd-restore-test]
+verify_jwt = false

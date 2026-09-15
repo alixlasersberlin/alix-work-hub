@@ -29023,6 +29023,113 @@ export type Database = {
           },
         ]
       }
+      gobd_restore_checks: {
+        Row: {
+          actual: string | null
+          category: string
+          check_name: string
+          created_at: string
+          details: Json
+          diff: number | null
+          expected: string | null
+          id: string
+          run_id: string
+          status: string
+        }
+        Insert: {
+          actual?: string | null
+          category: string
+          check_name: string
+          created_at?: string
+          details?: Json
+          diff?: number | null
+          expected?: string | null
+          id?: string
+          run_id: string
+          status: string
+        }
+        Update: {
+          actual?: string | null
+          category?: string
+          check_name?: string
+          created_at?: string
+          details?: Json
+          diff?: number | null
+          expected?: string | null
+          id?: string
+          run_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gobd_restore_checks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "gobd_restore_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gobd_restore_runs: {
+        Row: {
+          backup_created_at: string | null
+          backup_id: string | null
+          backup_location: string | null
+          backup_path: string | null
+          created_at: string
+          executed_by: string | null
+          executor_context: string | null
+          finished_at: string | null
+          id: string
+          rows_restored: number
+          rpo_seconds: number | null
+          rto_seconds: number | null
+          started_at: string
+          status: string
+          summary: Json
+          tables_restored: number
+          target_env: string
+        }
+        Insert: {
+          backup_created_at?: string | null
+          backup_id?: string | null
+          backup_location?: string | null
+          backup_path?: string | null
+          created_at?: string
+          executed_by?: string | null
+          executor_context?: string | null
+          finished_at?: string | null
+          id?: string
+          rows_restored?: number
+          rpo_seconds?: number | null
+          rto_seconds?: number | null
+          started_at?: string
+          status?: string
+          summary?: Json
+          tables_restored?: number
+          target_env?: string
+        }
+        Update: {
+          backup_created_at?: string | null
+          backup_id?: string | null
+          backup_location?: string | null
+          backup_path?: string | null
+          created_at?: string
+          executed_by?: string | null
+          executor_context?: string | null
+          finished_at?: string | null
+          id?: string
+          rows_restored?: number
+          rpo_seconds?: number | null
+          rto_seconds?: number | null
+          started_at?: string
+          status?: string
+          summary?: Json
+          tables_restored?: number
+          target_env?: string
+        }
+        Relationships: []
+      }
       gobd_retention_audit: {
         Row: {
           actor: string | null
@@ -56410,6 +56517,50 @@ export type Database = {
           pruefung: string
           status: string
         }[]
+      }
+      gobd_phase15_check: {
+        Args: never
+        Returns: {
+          bereich: string
+          detail: string
+          pruefung: string
+          status: string
+        }[]
+      }
+      gobd_restore_begin: {
+        Args: {
+          _backup_created_at: string
+          _backup_id: string
+          _backup_location: string
+          _backup_path: string
+        }
+        Returns: string
+      }
+      gobd_restore_compare: {
+        Args: { _counts: Json; _run_id: string; _scope: string[] }
+        Returns: undefined
+      }
+      gobd_restore_finish: {
+        Args: { _cleanup?: boolean; _run_id: string }
+        Returns: Json
+      }
+      gobd_restore_guard: { Args: never; Returns: undefined }
+      gobd_restore_hash: {
+        Args: { _fields: string[]; _j: Json }
+        Returns: string
+      }
+      gobd_restore_idfields: { Args: { _t: string }; Returns: string[] }
+      gobd_restore_legal_hold_test: {
+        Args: { _run_id: string }
+        Returns: undefined
+      }
+      gobd_restore_load: {
+        Args: { _rows: Json; _run_id: string; _table: string }
+        Returns: number
+      }
+      gobd_restore_protection_tests: {
+        Args: { _run_id: string }
+        Returns: undefined
       }
       gobd_retention_dry_run: {
         Args: { _log?: boolean }
