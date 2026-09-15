@@ -7,7 +7,28 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 
 const SITE_NAME = "Alix Lasers Datacenter"
-const SENDER_DOMAIN = "notify.alixsales.com"
+const SENDER_DOMAIN = "notify.alix-finance.de"
+const FROM_ADDRESS = "Alix Lasers ® <noreply@notify.alix-finance.de>"
+// Für Anhänge läuft der Versand über Resend – dort ist nur alixwork.de verifiziert
+const FROM_ADDRESS_ATTACHMENTS = "Alix Lasers ® <noreply@alixwork.de>"
+
+/** Einfache Plausibilitätsprüfung für Empfängeradressen (verhindert Rückläufer). */
+export function isValidEmail(value: unknown): boolean {
+  if (typeof value !== 'string') return false
+  const email = value.trim()
+  if (email.length < 6 || email.length > 254) return false
+  if (/[\s,;<>()\[\]\\"]/.test(email)) return false
+  if (!/^[^@]+@[^@]+$/.test(email)) return false
+  const [local, domain] = email.split('@')
+  if (!local || local.length > 64) return false
+  if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(local)) return false
+  if (local.startsWith('.') || local.endsWith('.') || local.includes('..')) return false
+  if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$/.test(domain)) return false
+  const tld = domain.split('.').pop() || ''
+  if (!/^[a-zA-Z]{2,24}$/.test(tld)) return false
+  if (/^(example|test|localhost|invalid|beispiel)\./i.test(domain) || /^(example|test|localhost|invalid)$/i.test(domain.split('.')[0])) return false
+  return true
+}
 const FROM_DOMAIN = "notify.alixsales.com"
 
 // Globaler Archiv-BCC: erhält automatisch eine Kopie JEDER ausgehenden Mail
