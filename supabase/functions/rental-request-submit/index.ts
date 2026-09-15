@@ -345,7 +345,7 @@ Deno.serve(async (req) => {
         fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ from: "Alix Lasers ® <noreply@notify.alixsales.com>", to: [to], subject, html }),
+          body: JSON.stringify({ from: "Alix Lasers ® <noreply@alixwork.de>", to: [to], subject, html }),
         });
       await send(input.email, `Ihre Mietanfrage bei ALIX LASERS – ${product.name}`, customerHtml);
       await send("rde@alix-operation.de", `Neue Mietanfrage – ${product.name}`, internalHtml);

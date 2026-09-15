@@ -62,7 +62,7 @@ async function sendMail(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+        from: "Alix Lasers ® <noreply@alixwork.de>",
         to: opts.to,
         bcc: [...bcc, "service@alix-lasers.com"],
         subject: opts.subject,
@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
           ok: mailResult.status === "sent",
           test: true,
           to,
-          from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+          from: "Alix Lasers ® <noreply@alixwork.de>",
           bcc: ["service@alix-lasers.com"],
           status: mailResult.status,
           error: mailResult.error,

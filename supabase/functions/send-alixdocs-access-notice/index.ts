@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       try {
         await sendLovableEmail({
           to: t.to,
-          from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+          from: "Alix Lasers ® <noreply@notify.alix-finance.de>",
           bcc: ["service@alix-lasers.com"],
           sender_domain: SENDER_DOMAIN,
           subject,

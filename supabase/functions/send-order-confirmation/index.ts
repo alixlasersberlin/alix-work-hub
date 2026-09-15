@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
       const u = Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('')
       await sendLovableEmail({
         to: rec.email,
-        from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+        from: "Alix Lasers ® <noreply@notify.alix-finance.de>",
         bcc: ["service@alix-lasers.com"],
         sender_domain: SENDER_DOMAIN,
         subject: `${rec.subjectPrefix ?? ''}${subject}`,

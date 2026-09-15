@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+            from: "Alix Lasers ® <noreply@alixwork.de>",
             to: [to],
             bcc: [...([] as string[]).concat(isCancellation ? [...BCC, escalateTo] : BCC as any), "service@alix-lasers.com"],
             subject,
