@@ -77,6 +77,13 @@ Deno.serve(async (req) => {
     let runId = body.run_id ? String(body.run_id) : null;
     let state: State;
 
+    // Abgebrochenen Lauf sauber beenden und isolierte Umgebung entfernen
+    if (action === "abort" && runId) {
+      const { data: res, error } = await sb.rpc("gobd_restore_finish", { _run_id: runId, _cleanup: true });
+      if (error) throw new Error(`Abbruch: ${error.message}`);
+      return json({ done: true, aborted: true, run_id: runId, result: res });
+    }
+
     if (action === "start" || !runId) {
       // 1) Sicherung waehlen (nur Sicherungen im lesbaren Bucket "backups")
       let q = sb.from("backups_metadata").select("*").eq("backup_status", "success")
