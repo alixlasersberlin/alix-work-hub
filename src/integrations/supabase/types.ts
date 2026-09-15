@@ -28608,6 +28608,117 @@ export type Database = {
         }
         Relationships: []
       }
+      gobd_data_classes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          deletable: boolean
+          id: string
+          label: string
+          legal_basis: string
+          legal_hold_capable: boolean
+          notes: string | null
+          purpose: string
+          responsible_role: string
+          retention_start_column: string | null
+          retention_start_rule: string
+          retention_years: number
+          source_table: string | null
+          storage_location: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          deletable?: boolean
+          id?: string
+          label: string
+          legal_basis: string
+          legal_hold_capable?: boolean
+          notes?: string | null
+          purpose: string
+          responsible_role: string
+          retention_start_column?: string | null
+          retention_start_rule?: string
+          retention_years: number
+          source_table?: string | null
+          storage_location: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          deletable?: boolean
+          id?: string
+          label?: string
+          legal_basis?: string
+          legal_hold_capable?: boolean
+          notes?: string | null
+          purpose?: string
+          responsible_role?: string
+          retention_start_column?: string | null
+          retention_start_rule?: string
+          retention_years?: number
+          source_table?: string | null
+          storage_location?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gobd_deletion_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          criteria: Json
+          data_class_code: string
+          denied_reason: string | null
+          estimated_count: number | null
+          executed_at: string | null
+          id: string
+          reason: string
+          requested_at: string
+          requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          criteria?: Json
+          data_class_code: string
+          denied_reason?: string | null
+          estimated_count?: number | null
+          executed_at?: string | null
+          id?: string
+          reason: string
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          criteria?: Json
+          data_class_code?: string
+          denied_reason?: string | null
+          estimated_count?: number | null
+          executed_at?: string | null
+          id?: string
+          reason?: string
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gobd_export_log: {
         Row: {
           accounting_region: string | null
@@ -28688,6 +28799,110 @@ export type Database = {
           process?: string
           rationale?: string
           requirement_level?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gobd_legal_hold_items: {
+        Row: {
+          created_at: string
+          data_class_code: string | null
+          hold_id: string
+          id: string
+          note: string | null
+          object_id: string
+          object_table: string
+        }
+        Insert: {
+          created_at?: string
+          data_class_code?: string | null
+          hold_id: string
+          id?: string
+          note?: string | null
+          object_id: string
+          object_table: string
+        }
+        Update: {
+          created_at?: string
+          data_class_code?: string | null
+          hold_id?: string
+          id?: string
+          note?: string | null
+          object_id?: string
+          object_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gobd_legal_hold_items_hold_id_fkey"
+            columns: ["hold_id"]
+            isOneToOne: false
+            referencedRelation: "gobd_legal_holds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gobd_legal_holds: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hold_number: string | null
+          id: string
+          reason: string
+          reason_category: string
+          reference: string | null
+          release_reason: string | null
+          released_at: string | null
+          released_by: string | null
+          responsible: string
+          scope_data_class: string | null
+          scope_filter: Json | null
+          scope_record_id: string | null
+          scope_table: string | null
+          scope_type: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hold_number?: string | null
+          id?: string
+          reason: string
+          reason_category: string
+          reference?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          responsible: string
+          scope_data_class?: string | null
+          scope_filter?: Json | null
+          scope_record_id?: string | null
+          scope_table?: string | null
+          scope_type?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hold_number?: string | null
+          id?: string
+          reason?: string
+          reason_category?: string
+          reference?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          responsible?: string
+          scope_data_class?: string | null
+          scope_filter?: Json | null
+          scope_record_id?: string | null
+          scope_table?: string | null
+          scope_type?: string
+          started_at?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -28789,6 +29004,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gobd_retention_audit: {
+        Row: {
+          actor: string | null
+          actor_context: string | null
+          created_at: string
+          data_class_code: string | null
+          detail: string | null
+          event_type: string
+          hold_id: string | null
+          id: string
+          metadata: Json
+          object_id: string | null
+          object_table: string | null
+        }
+        Insert: {
+          actor?: string | null
+          actor_context?: string | null
+          created_at?: string
+          data_class_code?: string | null
+          detail?: string | null
+          event_type: string
+          hold_id?: string | null
+          id?: string
+          metadata?: Json
+          object_id?: string | null
+          object_table?: string | null
+        }
+        Update: {
+          actor?: string | null
+          actor_context?: string | null
+          created_at?: string
+          data_class_code?: string | null
+          detail?: string | null
+          event_type?: string
+          hold_id?: string | null
+          id?: string
+          metadata?: Json
+          object_id?: string | null
+          object_table?: string | null
+        }
+        Relationships: []
+      }
+      gobd_retention_rule_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          data_class_code: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          data_class_code: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          data_class_code?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Relationships: []
       }
       gobd_sync_conflicts: {
         Row: {
@@ -56022,6 +56309,14 @@ export type Database = {
           status: string
         }[]
       }
+      gobd_has_legal_hold: {
+        Args: {
+          _data_class_code?: string
+          _object_id: string
+          _object_table: string
+        }
+        Returns: boolean
+      }
       gobd_invoice_is_final: { Args: { _status: string }; Returns: boolean }
       gobd_invoice_number_check: {
         Args: { _tenant_id?: string }
@@ -56061,6 +56356,18 @@ export type Database = {
         }
         Returns: string
       }
+      gobd_log_retention_event: {
+        Args: {
+          _data_class_code?: string
+          _detail?: string
+          _event_type: string
+          _hold_id?: string
+          _metadata?: Json
+          _object_id?: string
+          _object_table?: string
+        }
+        Returns: string
+      }
       gobd_period_state: {
         Args: {
           _dt: string
@@ -56075,6 +56382,55 @@ export type Database = {
           detail: string
           pruefung: string
           status: string
+        }[]
+      }
+      gobd_phase14_check: {
+        Args: never
+        Returns: {
+          bereich: string
+          detail: string
+          pruefung: string
+          status: string
+        }[]
+      }
+      gobd_retention_dry_run: {
+        Args: { _log?: boolean }
+        Returns: {
+          blocked_legal_hold: number
+          blocked_not_deletable: number
+          blocked_retention: number
+          data_class: string
+          due_for_deletion: number
+          exclusion_reason: string
+          label: string
+          period_from: string
+          period_to: string
+          source_table: string
+          total_records: number
+          would_delete: number
+        }[]
+      }
+      gobd_retention_due_date: {
+        Args: { _data_class_code: string; _start: string }
+        Returns: string
+      }
+      gobd_retention_overview: {
+        Args: never
+        Returns: {
+          active_holds: number
+          data_class: string
+          deletable: boolean
+          earliest_due: string
+          label: string
+          legal_basis: string
+          legal_hold_capable: boolean
+          oldest: string
+          responsible_role: string
+          retention_start_rule: string
+          retention_years: number
+          source_table: string
+          storage_location: string
+          total_records: number
         }[]
       }
       has_accounting_region: {
