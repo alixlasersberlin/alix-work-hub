@@ -159,20 +159,30 @@ Deno.serve(async (req) => {
       state.idx += 1;
     }
 
-    // 5) Vergleich, Schutztests, Abschluss
+    // 5) Vergleich (tabellenweise, damit grosse Bestaende nicht in das
+    //    Statement-Timeout laufen), Schutztests, Abschluss
     state.phase = "verify";
+    state.vidx = state.vidx ?? 0;
     await sb.from("gobd_restore_runs").update({ summary: { state } }).eq("id", runId);
 
-    const { error: cErr } = await sb.rpc("gobd_restore_compare", {
-      _run_id: runId, _counts: state.counts, _scope: SCOPE,
-    });
-    if (cErr) throw new Error(`Vergleich: ${cErr.message}`);
+    while ((state.vidx ?? 0) < SCOPE.length) {
+      if (Date.now() - started > BUDGET_MS) {
+        await sb.from("gobd_restore_runs").update({ summary: { state } }).eq("id", runId);
+        return json({ done: false, run_id: runId, progress: `Vergleich ${state.vidx}/${SCOPE.length}` }, 202);
+      }
+      const t = SCOPE[state.vidx!];
+      const { error: cErr } = await sb.rpc("gobd_restore_compare_one", {
+        _run_id: runId, _counts: state.counts, _table: t,
+      });
+      if (cErr) throw new Error(`Vergleich ${t}: ${cErr.message}`);
 
-    // Phase 15B: gleiche Anzahl ist kein Inhaltsnachweis → Hash je Datensatz
-    const { error: hashErr } = await sb.rpc("gobd_restore_content_check", {
-      _run_id: runId, _scope: SCOPE,
-    });
-    if (hashErr) throw new Error(`Inhaltsvergleich: ${hashErr.message}`);
+      // Phase 15B: gleiche Anzahl ist kein Inhaltsnachweis → Hash je Datensatz
+      const { error: hashErr } = await sb.rpc("gobd_restore_content_check", {
+        _run_id: runId, _scope: [t],
+      });
+      if (hashErr) throw new Error(`Inhaltsvergleich ${t}: ${hashErr.message}`);
+      state.vidx! += 1;
+    }
 
     const { error: pErr } = await sb.rpc("gobd_restore_protection_tests", { _run_id: runId });
     if (pErr) throw new Error(`Schutztests: ${pErr.message}`);
