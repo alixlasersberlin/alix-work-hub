@@ -8,8 +8,8 @@ Status: OFFEN / WARNUNG (Phase 15 bleibt unverändert nicht bestanden)
 | --- | --- |
 | Ereignisart | Verbindungsschicht (Connection Pooler) der Datenbank nicht erreichbar |
 | Erstmals festgestellt | 2026-09-15 ca. 05:20 UTC |
-| Weiterhin bestehend um | 2026-09-15 06:05 UTC (mehrfach geprüft: 05:32, 05:45, 05:52, 06:02 UTC) |
-| Fehlerbild | `SUPABASE_POOLER_UNAVAILABLE` / `Connection terminated due to connection timeout` |
+| Weiterhin bestehend um | 2026-09-15 07:13 UTC (mehrfach geprüft: 05:32, 05:45, 05:52, 06:02, 07:07, 07:08–07:13 UTC im 40-Sekunden-Takt) |
+| Fehlerbild | `SUPABASE_POOLER_UNAVAILABLE` / `Connection terminated due to connection timeout`; über die Daten-Schnittstelle zusätzlich HTTP 522 (Zeitüberschreitung zum Ursprungsserver) |
 | Auswirkung | Keine Lese- oder Schreibvorgänge auf der Datenbank möglich |
 | Maßnahme | Bewusst keine weiteren Restore-, Reparatur- oder Schreibversuche erzwungen |
 | Datenverlust | Keiner. Produktive Rechnungen, Zahlungen, Buchungen, Nummernkreise, Perioden und Audit-Daten unverändert |
