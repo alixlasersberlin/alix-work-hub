@@ -173,6 +173,8 @@ export default function GobdWiederherstellung() {
         </Card>
       </div>
 
+      <GobdRestoreRunner onFinished={() => void load()} />
+
       <Tabs defaultValue="report">
         <TabsList>
           <TabsTrigger value="report">Prüfergebnis</TabsTrigger>
