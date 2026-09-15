@@ -306,6 +306,41 @@ export default function OffeneAnzahlungen() {
     }
   };
 
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadInvoicePdf = async (d: Deposit) => {
+    if (!d.order_id) { toast.error('Kein Auftrag verknüpft'); return; }
+    setDownloadingId(d.id);
+    try {
+      const { data: docs, error } = await supabase
+        .from('order_documents')
+        .select('id, file_name, file_path')
+        .eq('order_id', d.order_id)
+        .eq('document_type', 'Anzahlungsrechnung')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const doc = (docs ?? [])[0] as any;
+      if (!doc?.file_path) throw new Error('Keine Anzahlungsrechnungs-PDF gefunden. Bitte zuerst PDF erstellen.');
+
+      const { data: file, error: dlErr } = await supabase.storage
+        .from('order-invoices')
+        .download(doc.file_path);
+      if (dlErr || !file) throw dlErr ?? new Error('Datei konnte nicht geladen werden');
+
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name || `${d.invoice_number || d.deposit_number || 'Anzahlungsrechnung'}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success('PDF heruntergeladen');
+    } catch (e: any) {
+      toast.error('Download fehlgeschlagen: ' + (e?.message ?? 'Unbekannt'));
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter(r => {
