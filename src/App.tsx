@@ -266,6 +266,7 @@ const FinanceGobdKonflikte = lazy(() => import("./pages/Finance/GobdKonflikte"))
 const FinanceGobdAudit = lazy(() => import("./pages/Finance/GobdAudit"));
 const FinanceGobdRechnungsnummern = lazy(() => import("./pages/Finance/GobdRechnungsnummern"));
 const FinanceGobdGesamtabschluss = lazy(() => import("./pages/Finance/GobdGesamtabschluss"));
+const FinanceGobdVerfahrensdoku = lazy(() => import("./pages/Finance/GobdVerfahrensdokumentation"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const ZohoAbgleich = lazy(() => import("./pages/Admin/ZohoAbgleich"));
