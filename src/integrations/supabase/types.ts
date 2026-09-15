@@ -55843,6 +55843,15 @@ export type Database = {
       }
       get_mobile_command_center: { Args: never; Returns: Json }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
+      gobd_compliance_check: {
+        Args: never
+        Returns: {
+          bereich: string
+          detail: string
+          pruefung: string
+          status: string
+        }[]
+      }
       gobd_invoice_is_final: { Args: { _status: string }; Returns: boolean }
       gobd_invoice_number_check: {
         Args: { _tenant_id?: string }
