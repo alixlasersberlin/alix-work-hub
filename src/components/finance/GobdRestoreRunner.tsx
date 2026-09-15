@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 
-type Progress = {
+type RunProgress = {
   phase: string; control: string; file: string; rows_done: number; rows_total: number;
   batches: number; verify: string | null; last_checkpoint_at: string | null;
   retries: number; next_retry_at: string | null; last_error: string | null;
@@ -22,7 +22,7 @@ type Status = 'BEREIT' | 'LÄUFT' | 'PAUSIERT' | 'FEHLER' | 'ABGESCHLOSSEN';
 export function GobdRestoreRunner({ onFinished }: { onFinished?: () => void }) {
   const [runId, setRunId] = useState<string>(() => localStorage.getItem('gobd_restore_run') ?? '');
   const [status, setStatus] = useState<Status>('BEREIT');
-  const [progress, setProgress] = useState<Progress | null>(null);
+  const [progress, setProgress] = useState<RunProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
