@@ -871,8 +871,11 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const cronSecret = Deno.env.get("CRON_SECRET");
+  // Technischer Ausloeser fuer GoBD-Nachweise (Phase 15B): dediziertes Secret
+  const gobdToken = Deno.env.get("GOBD_RESTORE_TEST_TOKEN");
   const authHeader = req.headers.get("Authorization") ?? "";
-  const isCronCall = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`);
+  const isCronCall = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`) ||
+    Boolean(gobdToken && authHeader === `Bearer ${gobdToken}`);
   const isServiceCall = authHeader === `Bearer ${serviceRoleKey}`;
 
   let body: any = {};
