@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare, Send } from 'lucide-react';
+import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare, Send, Download } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays, startOfMonth, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -306,6 +306,41 @@ export default function OffeneAnzahlungen() {
     }
   };
 
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadInvoicePdf = async (d: Deposit) => {
+    if (!d.order_id) { toast.error('Kein Auftrag verknüpft'); return; }
+    setDownloadingId(d.id);
+    try {
+      const { data: docs, error } = await supabase
+        .from('order_documents')
+        .select('id, file_name, file_path')
+        .eq('order_id', d.order_id)
+        .eq('document_type', 'Anzahlungsrechnung')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const doc = (docs ?? [])[0] as any;
+      if (!doc?.file_path) throw new Error('Keine Anzahlungsrechnungs-PDF gefunden. Bitte zuerst PDF erstellen.');
+
+      const { data: file, error: dlErr } = await supabase.storage
+        .from('order-invoices')
+        .download(doc.file_path);
+      if (dlErr || !file) throw dlErr ?? new Error('Datei konnte nicht geladen werden');
+
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name || `${d.invoice_number || d.deposit_number || 'Anzahlungsrechnung'}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success('PDF heruntergeladen');
+    } catch (e: any) {
+      toast.error('Download fehlgeschlagen: ' + (e?.message ?? 'Unbekannt'));
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter(r => {
@@ -504,6 +539,15 @@ export default function OffeneAnzahlungen() {
                       {canWrite && r.release_status !== 'auto_freigegeben' && r.release_status !== 'manuell_freigegeben' && (
                         <Button size="sm" variant="outline" onClick={() => manualRelease(r)} title="Manuell freigeben">
                           <CheckCircle2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      {r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => downloadInvoicePdf(r)}
+                          disabled={downloadingId === r.id}
+                          title="Anzahlungsrechnung (PDF) herunterladen">
+                          {downloadingId === r.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Download className="w-3.5 h-3.5" />}
                         </Button>
                       )}
                       {canWrite && r.order_id && (
