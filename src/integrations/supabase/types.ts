@@ -28569,6 +28569,45 @@ export type Database = {
         }
         Relationships: []
       }
+      gobd_change_log: {
+        Row: {
+          area: string
+          changed_at: string
+          created_at: string
+          created_by: string | null
+          description: string
+          evidence: string | null
+          id: string
+          phase: string | null
+          responsible: string
+          version: string
+        }
+        Insert: {
+          area: string
+          changed_at?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          evidence?: string | null
+          id?: string
+          phase?: string | null
+          responsible: string
+          version: string
+        }
+        Update: {
+          area?: string
+          changed_at?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          evidence?: string | null
+          id?: string
+          phase?: string | null
+          responsible?: string
+          version?: string
+        }
+        Relationships: []
+      }
       gobd_export_log: {
         Row: {
           accounting_region: string | null
@@ -28619,6 +28658,137 @@ export type Database = {
           tenant_id?: string | null
         }
         Relationships: []
+      }
+      gobd_four_eyes_recommendations: {
+        Row: {
+          created_at: string
+          current_state: string | null
+          id: string
+          implementation_status: string
+          process: string
+          rationale: string
+          requirement_level: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_state?: string | null
+          id?: string
+          implementation_status?: string
+          process: string
+          rationale: string
+          requirement_level?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_state?: string | null
+          id?: string
+          implementation_status?: string
+          process?: string
+          rationale?: string
+          requirement_level?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gobd_permission_matrix: {
+        Row: {
+          area: string
+          can_approve: boolean
+          can_create: boolean
+          can_delete: boolean
+          can_export: boolean
+          can_read: boolean
+          can_update: boolean
+          created_at: string
+          enforced_by: string | null
+          id: string
+          note: string | null
+          role_name: string
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          can_approve?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_export?: boolean
+          can_read?: boolean
+          can_update?: boolean
+          created_at?: string
+          enforced_by?: string | null
+          id?: string
+          note?: string | null
+          role_name: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          can_approve?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_export?: boolean
+          can_read?: boolean
+          can_update?: boolean
+          created_at?: string
+          enforced_by?: string | null
+          id?: string
+          note?: string | null
+          role_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gobd_procedure_docs: {
+        Row: {
+          content_hash: string | null
+          content_md: string
+          created_at: string
+          created_by: string | null
+          id: string
+          section: string
+          status: string
+          superseded_by: string | null
+          title: string
+          valid_from: string
+          version: string
+        }
+        Insert: {
+          content_hash?: string | null
+          content_md: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          section?: string
+          status?: string
+          superseded_by?: string | null
+          title: string
+          valid_from?: string
+          version: string
+        }
+        Update: {
+          content_hash?: string | null
+          content_md?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          section?: string
+          status?: string
+          superseded_by?: string | null
+          title?: string
+          valid_from?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gobd_procedure_docs_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "gobd_procedure_docs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gobd_sync_conflicts: {
         Row: {
@@ -55897,6 +56067,15 @@ export type Database = {
           _region: Database["public"]["Enums"]["accounting_region"]
         }
         Returns: string
+      }
+      gobd_phase13_check: {
+        Args: never
+        Returns: {
+          bereich: string
+          detail: string
+          pruefung: string
+          status: string
+        }[]
       }
       has_accounting_region: {
         Args: {
