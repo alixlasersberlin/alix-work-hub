@@ -35,3 +35,18 @@ Erst danach: Phase 15 = BESTANDEN und Schließen der Sicherungs-WARNUNG aus Phas
 
 Dieses Ereignis ist zusätzlich als Eintrag im GoBD-Änderungs-/Audit-Protokoll zu erfassen,
 sobald die Datenbank wieder schreibbar ist.
+
+## Notfall-Umbau am 2026-09-15 (ohne Datenbankzugriff umgesetzt)
+
+- Verarbeitung auf max. 250 Datensätze je Paket begrenzt (vorher 100er-Pakete ohne Pause und ohne Zwischenstand je Paket)
+- Checkpoint nach **jedem** Paket; Fortsetzung exakt an der letzten erfolgreichen Stelle, nie wieder ab Datensatz 1
+- Cursor-Verarbeitung entlang der Sicherungsdatei, keine OFFSET-Pagination
+- Pause von 350 ms zwischen den Paketen als Lastbremse
+- Exponentielles Backoff (1/2/4/8/16/30 s, max. 6 Versuche) bei Zeitüberschreitung oder Ressourcenfehlern; danach automatisch PAUSIERT statt Wiederholungsschleife
+- Health-Gate: vor Start/Fortsetzung wird die Datenbank leicht angetippt; bei Störung wird nicht gestartet
+- Vergleich der Protokolleinträge weiterhin ausschließlich tabellenweise, nie als eine Vollabfrage
+- Adminseite „GoBD · Datensicherung & Wiederherstellung": Fortschritt, aktuelles Paket, letzter Checkpoint, Fehler, Laufzeit, Status sowie PAUSIEREN / FORTSETZEN / SICHER ABBRECHEN
+- Kein Restore, keine Migration, keine Änderung an Rechnungen, Zahlungen, Nummernkreisen oder Protokolldaten
+
+Offen bleibt zusätzlich: nach der Stabilisierung die verursachende Abfrage/Funktion identifizieren
+(fehlender Index, Trigger je Datensatz, N+1-Abfrage oder wiederholter Volltabellenscan) statt dauerhaft Compute zu erhöhen.
