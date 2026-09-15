@@ -414,7 +414,10 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
       if (data?.id) {
         const { data: num, error: numErr } = await (supabase as any)
           .rpc('assign_invoice_number', { p_invoice_id: data.id });
-        if (numErr) console.error('Rechnungsnummer konnte nicht vergeben werden', numErr);
+        if (numErr) {
+          console.error('Rechnungsnummer konnte nicht vergeben werden', numErr);
+          toast.error('Rechnungsnummer konnte nicht vergeben werden: ' + numErr.message);
+        }
         else legalNumber = (num as string) ?? null;
       }
       toast.success(
