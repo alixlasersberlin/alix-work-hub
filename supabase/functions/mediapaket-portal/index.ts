@@ -815,7 +815,7 @@ Deno.serve(async (req) => {
           to: staffInbox,
           subject: '🛑 DSGVO-Löschanfrage: Mediapaket',
           html: `<p>Ein Kunde hat die Löschung seiner Mediapaket-Daten beantragt.</p><p><strong>Mediapaket:</strong> ${mpId}</p><p><strong>Grund:</strong> ${String(reason).replace(/</g, '&lt;') || '—'}</p><p>Bitte im Admin-Bereich bearbeiten.</p>`,
-          from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+          from: "Alix Lasers ® <noreply@alixwork.de>",
           bcc: ["service@alix-lasers.com"],
         }),
       });

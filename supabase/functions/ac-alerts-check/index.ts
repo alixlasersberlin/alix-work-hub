@@ -18,7 +18,7 @@ async function notify(to: string, subject: string, text: string) {
   try {
     await sendLovableEmail({
       apiKey: Deno.env.get('LOVABLE_API_KEY')!,
-      senderDomain: 'notify.alixsales.com',
+      senderDomain: 'notify.alix-finance.de',
       fromName: 'ALIX CONNECT Alerts',
       fromLocalPart: 'connect-alerts',
       to,
