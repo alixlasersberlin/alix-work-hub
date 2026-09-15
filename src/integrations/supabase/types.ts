@@ -56548,6 +56548,14 @@ export type Database = {
         Args: { _run_id: string; _scope: string[] }
         Returns: undefined
       }
+      gobd_restore_content_finish: {
+        Args: { _run_id: string; _table: string }
+        Returns: Json
+      }
+      gobd_restore_content_index_chunk: {
+        Args: { _after?: string; _limit?: number; _table: string }
+        Returns: Json
+      }
       gobd_restore_finish: {
         Args: { _cleanup?: boolean; _run_id: string }
         Returns: Json
@@ -56570,6 +56578,7 @@ export type Database = {
         Args: { _run_id: string }
         Returns: undefined
       }
+      gobd_restore_rid_ensure: { Args: never; Returns: undefined }
       gobd_restore_rowid: { Args: { _r: Json; _t: string }; Returns: string }
       gobd_retention_dry_run: {
         Args: { _log?: boolean }
