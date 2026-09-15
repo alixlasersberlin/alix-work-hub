@@ -31,3 +31,9 @@ type: feature
 - Vier-Augen-Prinzip: Dieter Eitner + Ronny D. Eitner. Bei Löschfreigaben darf Dieter Eitner nicht gleichzeitig
   Antragsteller und alleiniger Freigeber sein.
 - E-Mail-Adressen sind noch offen und werden vom Kunden nachgereicht.
+
+## Verifizierte E-Mail-Adressen (Stand 15.09.2026)
+- Dieter Eitner: homebln@icloud.com
+- Kenny Duc Trinh: k.trinh@alix-operation.de
+- Lars Scheidler: l.scheidler@alix-operation.de
+- Ronny D. Eitner: rde@alix-operation.de (noch vom Kunden zu bestätigen)
