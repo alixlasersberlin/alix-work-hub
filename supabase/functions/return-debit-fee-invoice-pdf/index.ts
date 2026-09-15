@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
 
     text('Alix Lasers GmbH', LEFT, 14, helvB, gold)
     y -= 16
-    text('Buchhaltung · notify.alixsales.com', LEFT, 9, helv, grey)
+    text('Buchhaltung · alix-finance.de', LEFT, 9, helv, grey)
     y -= 40
 
     text('Gebührenrechnung nach Rücklastschrift', LEFT, 16, helvB)

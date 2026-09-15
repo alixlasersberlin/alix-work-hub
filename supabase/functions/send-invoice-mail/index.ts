@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Alix Lasers ® <noreply@notify.alixsales.com>',
+        from: 'Alix Lasers ® <noreply@alixwork.de>',
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: finalBcc,
         subject,
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       const u = Array.from(tb).map((b) => b.toString(16).padStart(2, '0')).join('')
       await sendLovableEmail({
         to: rec.email,
-        from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+        from: "Alix Lasers ® <noreply@notify.alix-finance.de>",
         bcc: ["service@alix-lasers.com", "k.trinh@alix-operation.de"].filter(
           (b) => b.toLowerCase() !== String(rec.email).toLowerCase(),
         ),
