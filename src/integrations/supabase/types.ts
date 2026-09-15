@@ -28955,6 +28955,24 @@ export type Database = {
         }
         Relationships: []
       }
+      gobd_phase14_test: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+        }
+        Relationships: []
+      }
       gobd_procedure_docs: {
         Row: {
           content_hash: string | null
