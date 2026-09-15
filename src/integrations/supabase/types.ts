@@ -28569,6 +28569,51 @@ export type Database = {
         }
         Relationships: []
       }
+      gobd_approvals: {
+        Row: {
+          approved_at: string
+          approver_id: string | null
+          approver_name: string
+          approver_role: string
+          created_at: string
+          decision: string
+          doc_version: string | null
+          evidence_ref: string | null
+          id: string
+          reason: string | null
+          subject: string
+          subject_label: string
+        }
+        Insert: {
+          approved_at?: string
+          approver_id?: string | null
+          approver_name: string
+          approver_role: string
+          created_at?: string
+          decision: string
+          doc_version?: string | null
+          evidence_ref?: string | null
+          id?: string
+          reason?: string | null
+          subject: string
+          subject_label: string
+        }
+        Update: {
+          approved_at?: string
+          approver_id?: string | null
+          approver_name?: string
+          approver_role?: string
+          created_at?: string
+          decision?: string
+          doc_version?: string | null
+          evidence_ref?: string | null
+          id?: string
+          reason?: string | null
+          subject?: string
+          subject_label?: string
+        }
+        Relationships: []
+      }
       gobd_change_log: {
         Row: {
           area: string
@@ -28767,6 +28812,48 @@ export type Database = {
           record_count?: number | null
           status?: string
           tenant_id?: string | null
+        }
+        Relationships: []
+      }
+      gobd_final_reports: {
+        Row: {
+          content_hash: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          organizational_status: string
+          payload: Json
+          report_number: string
+          status: string
+          technical_status: string
+          version: number
+        }
+        Insert: {
+          content_hash: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          organizational_status: string
+          payload: Json
+          report_number: string
+          status: string
+          technical_status: string
+          version: number
+        }
+        Update: {
+          content_hash?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          organizational_status?: string
+          payload?: Json
+          report_number?: string
+          status?: string
+          technical_status?: string
+          version?: number
         }
         Relationships: []
       }
@@ -29022,6 +29109,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gobd_responsibilities: {
+        Row: {
+          area: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          confirmed_by_name: string | null
+          created_at: string
+          deputy_name: string | null
+          duty: string
+          id: string
+          notes: string | null
+          person_email: string | null
+          person_name: string | null
+          role_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          created_at?: string
+          deputy_name?: string | null
+          duty: string
+          id?: string
+          notes?: string | null
+          person_email?: string | null
+          person_name?: string | null
+          role_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          created_at?: string
+          deputy_name?: string | null
+          duty?: string
+          id?: string
+          notes?: string | null
+          person_email?: string | null
+          person_name?: string | null
+          role_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       gobd_restore_checks: {
         Row: {
@@ -56434,6 +56572,7 @@ export type Database = {
           status: string
         }[]
       }
+      gobd_generate_final_report: { Args: never; Returns: string }
       gobd_has_legal_hold: {
         Args: {
           _data_class_code?: string
@@ -56493,6 +56632,15 @@ export type Database = {
         }
         Returns: string
       }
+      gobd_org_status: {
+        Args: never
+        Returns: {
+          bereich: string
+          detail: string
+          pruefung: string
+          status: string
+        }[]
+      }
       gobd_period_state: {
         Args: {
           _dt: string
@@ -56526,6 +56674,18 @@ export type Database = {
           pruefung: string
           status: string
         }[]
+      }
+      gobd_record_approval: {
+        Args: {
+          p_approver_name: string
+          p_approver_role: string
+          p_decision: string
+          p_doc_version?: string
+          p_evidence_ref?: string
+          p_reason?: string
+          p_subject: string
+        }
+        Returns: string
       }
       gobd_restore_begin: {
         Args: {
@@ -56619,6 +56779,20 @@ export type Database = {
           storage_location: string
           total_records: number
         }[]
+      }
+      gobd_set_responsibility: {
+        Args: {
+          p_area: string
+          p_confirm?: boolean
+          p_confirmed_by_name?: string
+          p_deputy_name?: string
+          p_duty: string
+          p_notes?: string
+          p_person_email?: string
+          p_person_name: string
+          p_role_name: string
+        }
+        Returns: string
       }
       has_accounting_region: {
         Args: {
