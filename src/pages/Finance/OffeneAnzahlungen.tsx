@@ -541,6 +541,15 @@ export default function OffeneAnzahlungen() {
                           <CheckCircle2 className="w-3.5 h-3.5" />
                         </Button>
                       )}
+                      {r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => downloadInvoicePdf(r)}
+                          disabled={downloadingId === r.id}
+                          title="Anzahlungsrechnung (PDF) herunterladen">
+                          {downloadingId === r.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Download className="w-3.5 h-3.5" />}
+                        </Button>
+                      )}
                       {canWrite && r.order_id && (
                         <Button size="sm" variant="outline" onClick={() => sendInvoiceEmail(r)}
                           disabled={sendingInvoiceId === r.id}
