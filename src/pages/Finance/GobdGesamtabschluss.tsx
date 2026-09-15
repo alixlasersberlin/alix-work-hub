@@ -72,7 +72,7 @@ export default function GobdGesamtabschluss() {
         <Card><CardContent className="p-4">
           <div className="text-xs text-muted-foreground">Gesamtergebnis</div>
           <div className="mt-2">
-            <Badge variant={gesamt === 'BESTANDEN' ? 'outline' : gesamt === 'FEHLER' ? 'destructive' : 'secondary'}>{gesamt}</Badge>
+            <Badge variant={gesamt === 'TECHNISCH BESTANDEN' ? 'outline' : gesamt === 'FEHLER' ? 'destructive' : 'secondary'}>{gesamt}</Badge>
           </div>
         </CardContent></Card>
         <Card><CardContent className="p-4">
