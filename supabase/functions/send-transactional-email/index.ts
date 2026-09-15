@@ -184,6 +184,13 @@ Deno.serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
+  if (!isValidEmail(effectiveRecipient)) {
+    console.warn('invalid recipient rejected', { templateName })
+    return new Response(
+      JSON.stringify({ error: 'invalid_recipient', message: `Ungültige Empfängeradresse: ${effectiveRecipient}` }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
 
   // Render template
   const html = await renderAsync(React.createElement(template.component, templateData))
@@ -239,7 +246,7 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Alix Lasers ® <noreply@notify.alixsales.com>',
+          from: FROM_ADDRESS_ATTACHMENTS,
           to: [r.email],
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
@@ -265,7 +272,7 @@ Deno.serve(async (req) => {
 
             {
               to: r.email,
-              from: "Alix Lasers ® <noreply@notify.alixsales.com>",
+              from: FROM_ADDRESS,
               bcc: isDunning ? [] : ["service@alix-lasers.com"],
               sender_domain: SENDER_DOMAIN,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
