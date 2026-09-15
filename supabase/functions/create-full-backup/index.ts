@@ -104,6 +104,13 @@ const BACKUP_TABLES = [
   "whatsapp_sc_conversations","whatsapp_sc_messages","whatsapp_sc_templates",
   "whatsapp_sync_logs","whatsapp_templates",
   "zoho_invoices","zoho_items","zoho_recurring_invoices","zoho_recurring_profiles","zoho_unpaid_invoices",
+  // GoBD-Nachweise (Phase 15: Sicherung muss zur Rekonstruktion ausreichen)
+  "finance_periods","invoice_audit_log","invoice_corrections","invoice_number_audit",
+  "invoice_number_migrations","invoice_number_ranges",
+  "gobd_audit_unified","gobd_change_log","gobd_data_classes","gobd_deletion_requests",
+  "gobd_export_log","gobd_four_eyes_recommendations","gobd_legal_hold_items","gobd_legal_holds",
+  "gobd_permission_matrix","gobd_procedure_docs","gobd_restore_checks","gobd_restore_runs",
+  "gobd_retention_audit","gobd_retention_rule_log","gobd_sync_conflicts",
 ];
 
 // All Storage Buckets (außer `backups` – das ist das Ziel selbst).
