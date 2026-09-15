@@ -56540,6 +56540,10 @@ export type Database = {
         Args: { _counts: Json; _run_id: string; _scope: string[] }
         Returns: undefined
       }
+      gobd_restore_content_check: {
+        Args: { _run_id: string; _scope: string[] }
+        Returns: undefined
+      }
       gobd_restore_finish: {
         Args: { _cleanup?: boolean; _run_id: string }
         Returns: Json
