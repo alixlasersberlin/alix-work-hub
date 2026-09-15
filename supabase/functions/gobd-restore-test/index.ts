@@ -56,6 +56,7 @@ type State = {
   plan: Plan[];
   idx: number;
   vidx?: number;
+  roff?: number;
   counts: Record<string, number>;
   manifest_path: string;
 };
