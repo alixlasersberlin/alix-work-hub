@@ -162,6 +162,12 @@ Deno.serve(async (req) => {
     });
     if (cErr) throw new Error(`Vergleich: ${cErr.message}`);
 
+    // Phase 15B: gleiche Anzahl ist kein Inhaltsnachweis → Hash je Datensatz
+    const { error: hashErr } = await sb.rpc("gobd_restore_content_check", {
+      _run_id: runId, _scope: SCOPE,
+    });
+    if (hashErr) throw new Error(`Inhaltsvergleich: ${hashErr.message}`);
+
     const { error: pErr } = await sb.rpc("gobd_restore_protection_tests", { _run_id: runId });
     if (pErr) throw new Error(`Schutztests: ${pErr.message}`);
 
