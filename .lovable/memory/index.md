@@ -102,3 +102,4 @@
 - [Product Hub Mehrsprachigkeit](mem://features/product-hub-i18n) — de Master + en/es/ru/ar, ph_product_translations/ph_glossary, ph-translate, API locale-Parameter mit Fallback-Kennzeichnung
 - [Rechnungsnummern GoBD](mem://features/rechnungsnummern-gobd) — Beleg-ID (alt, unveränderlich) + Rechnungsnummer YYYY-MM-NNNN, monatlicher Kreis, Audit/Migration unter /finance/rechnungsnummern
 - [GoBD Gesamtabschluss](mem://features/gobd-gesamtabschluss) — /finance/gobd/gesamtabschluss, gobd_compliance_check, WORM-/Lösch-/Nummernkreis-Guards, keine Rück-Umnummerierung
+- [GoBD Phase 13](mem://features/gobd-phase13) — Verfahrensdokumentation (WORM, versioniert), Berechtigungsmatrix, Vier-Augen-Empfehlungen, Änderungsprotokoll; Status erst nach Phase 17 "bestanden"
