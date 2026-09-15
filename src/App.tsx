@@ -268,6 +268,7 @@ const FinanceGobdRechnungsnummern = lazy(() => import("./pages/Finance/GobdRechn
 const FinanceGobdGesamtabschluss = lazy(() => import("./pages/Finance/GobdGesamtabschluss"));
 const FinanceGobdVerfahrensdoku = lazy(() => import("./pages/Finance/GobdVerfahrensdokumentation"));
 const FinanceGobdAufbewahrung = lazy(() => import("./pages/Finance/GobdAufbewahrung"));
+const FinanceGobdWiederherstellung = lazy(() => import("./pages/Finance/GobdWiederherstellung"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const ZohoAbgleich = lazy(() => import("./pages/Admin/ZohoAbgleich"));
