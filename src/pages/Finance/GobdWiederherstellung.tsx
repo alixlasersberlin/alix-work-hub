@@ -122,7 +122,7 @@ export default function GobdWiederherstellung() {
     <div className="space-y-6 p-4 md:p-6">
       <PageHeader
         title="GoBD · Datensicherung & Wiederherstellung"
-        description="Backup-Inventar, echter Wiederherstellungstest in isolierter Umgebung, RPO/RTO und Prüfnachweis (Phase 15)"
+        subtitle="Backup-Inventar, echter Wiederherstellungstest in isolierter Umgebung, RPO/RTO und Prüfnachweis (Phase 15)"
         icon={DatabaseBackup}
         actions={
           <div className="flex gap-2">
