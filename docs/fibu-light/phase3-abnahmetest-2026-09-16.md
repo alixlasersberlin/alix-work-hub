@@ -77,3 +77,17 @@ FIBU LIGHT PHASE 3
 - Offene Fehler: **0** (1 gefundener Fehler behoben und nachgetestet)
 
 PHASE 3 – PRODUKTIONSFREIGABE: **NEIN** (bis zur ausdrücklichen Freigabe)
+
+## Geltungsbereich (Abgrenzung)
+
+Dieser Bericht gilt **ausschließlich** für **FIBU LIGHT Phase 3 – Bank & Zuordnung**.
+
+Nicht Bestandteil dieses Berichts und nicht durch diese Abnahme freigegeben:
+
+- **Anwalt / internes Inkasso** (Markierung und Massenübergabe in „Offene Posten Light“,
+  `op_light_escalations`, `fibu_light_set_escalation`, `fibu_light_clear_escalation`).
+  Separate Erweiterung, nicht Bestandteil der 20 Phase-3-Testfälle, benötigt einen
+  eigenen Test- und Freigabestatus (siehe `docs/fibu-light/anwalt-inkasso-status.md`).
+
+Eine spätere Produktionsfreigabe auf Basis dieses Berichts umfasst ausdrücklich nur
+„FIBU LIGHT Phase 3 – Bank & Zuordnung“.
