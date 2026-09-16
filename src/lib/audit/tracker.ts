@@ -38,7 +38,7 @@ class AuditTracker {
 
 
   async start(attempt = 0) {
-    if (this.started) return;
+    if (this.started || this.disabled) return;
     // Ohne echte User-Session würde nur der Anon-Key gesendet -> 401.
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) return;
