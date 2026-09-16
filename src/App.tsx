@@ -170,6 +170,7 @@ const FinanceZahlungsuebersicht = lazy(() => import("./pages/Finance/Zahlungsueb
 const FinanceDatevExport = lazy(() => import("./pages/Finance/DatevExport"));
 const FinanceAuditRevision = lazy(() => import("./pages/Finance/AuditRevision"));
 const FinanceZahlungen = lazy(() => import("./pages/Finance/Zahlungen"));
+const OffenePostenLight = lazy(() => import("./pages/Finance/OffenePostenLight"));
 const FinanceVertraege = lazy(() => import("./pages/Finance/Vertraege"));
 const FinanceMahnwesen = lazy(() => import("./pages/Finance/Mahnwesen"));
 const FinanceMahnwesenDetail = lazy(() => import("./pages/Finance/MahnwesenDetail"));
