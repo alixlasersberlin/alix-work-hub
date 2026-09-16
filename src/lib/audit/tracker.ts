@@ -29,13 +29,10 @@ class AuditTracker {
   /** Audit darf die App nie stören: bei Infrastrukturfehlern komplett abschalten. */
   private isFatal(e: unknown) {
     const msg = String((e as any)?.message ?? e ?? "");
-    return (
-      msg.includes("503") ||
-      msg.includes("LOAD_FUNCTION_METADATA_ERROR") ||
-      msg.includes("Failed to send a request") ||
-      msg.includes("Failed to fetch")
-    );
+    // Nur echte Infrastrukturfehler abschalten – kurze Netzaussetzer nicht.
+    return msg.includes("503") || msg.includes("LOAD_FUNCTION_METADATA_ERROR");
   }
+
 
 
   async start(attempt = 0) {
