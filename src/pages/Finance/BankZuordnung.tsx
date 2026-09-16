@@ -219,7 +219,9 @@ export default function BankZuordnung() {
     <div className="space-y-6 p-4 md:p-6">
       <PageHeader
         title="Bank & Zuordnung"
-        description="Bankzahlungen prüfen, Vorschläge bestätigen, offene Posten ausgleichen."
+        subtitle="Bankzahlung → Rechnung finden → Vorschlag → bestätigen → offener Posten ausgeglichen"
+        icon={Banknote}
+        noBreadcrumbs
         actions={
           <Button variant="outline" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={cn('mr-2 h-4 w-4', loading && 'animate-spin')} /> Aktualisieren

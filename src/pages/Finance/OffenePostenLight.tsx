@@ -531,6 +531,23 @@ export default function OffenePostenLight() {
         ))}
       </div>
 
+      {/* Bank & Zuordnung (Phase 3) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Bankumsätze ungeprüft', value: bankKpi.ungeprueft ?? 0 },
+          { label: 'Zuordnungsvorschläge', value: bankKpi.vorschlaege ?? 0 },
+          { label: 'Unklare Zahlungen', value: bankKpi.unklar ?? 0 },
+          { label: 'Heute zugeordnet', value: bankKpi.heute_zugeordnet ?? 0 },
+        ].map((k) => (
+          <a key={k.label} href="/fibu-light/bank" className="rounded-xl border border-border bg-card p-4 hover:border-primary/50">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+              <Landmark className="h-3.5 w-3.5" /> {k.label}
+            </div>
+            <div className="text-xl font-semibold">{k.value}</div>
+          </a>
+        ))}
+      </div>
+
       {/* Drei grosse Arbeitsbuttons */}
       <div className="grid gap-3 sm:grid-cols-3 mb-6">
         <Button size="lg" variant="destructive" className="h-14 text-base"
