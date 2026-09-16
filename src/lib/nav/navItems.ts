@@ -1101,6 +1101,21 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      // 16b) GoBD Compliance
+      {
+        path: '#gobd-compliance', label: 'GOBD COMPLIANCE', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'],
+        children: [
+          { path: '/finance/gobd/abschluss', label: 'Organisatorischer Abschluss', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/verfahrensdokumentation', label: 'Verfahrensdokumentation', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/aufbewahrung', label: 'Aufbewahrung & Legal Hold', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/wiederherstellung', label: 'Datensicherung & Wiederherstellung', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/rechnungsnummern', label: 'Rechnungsnummern-Prüfung', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/konflikte', label: 'Synchronisationskonflikte', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/audit', label: 'Audit-Protokoll', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/gobd/gesamtabschluss', label: 'Gesamtabschluss', icon: Lock, roles: ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+        ],
+      },
+
       // 17) Auswertungen
       {
         path: '#stats', label: 'AUSWERTUNGEN', icon: BarChart3, roles: ['Super Admin'],
