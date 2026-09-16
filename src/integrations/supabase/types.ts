@@ -35363,6 +35363,135 @@ export type Database = {
           },
         ]
       }
+      op_light_bank_audit: {
+        Row: {
+          action: string
+          bank_amount: number | null
+          booked_amount: number | null
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          id: string
+          invoice_id: string | null
+          invoice_number: string | null
+          matching_reasons: Json | null
+          matching_score: number | null
+          new_balance: number | null
+          note: string | null
+          prev_balance: number | null
+          result: string | null
+          source: string | null
+          transaction_id: string
+        }
+        Insert: {
+          action: string
+          bank_amount?: number | null
+          booked_amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          matching_reasons?: Json | null
+          matching_score?: number | null
+          new_balance?: number | null
+          note?: string | null
+          prev_balance?: number | null
+          result?: string | null
+          source?: string | null
+          transaction_id: string
+        }
+        Update: {
+          action?: string
+          bank_amount?: number | null
+          booked_amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          matching_reasons?: Json | null
+          matching_score?: number | null
+          new_balance?: number | null
+          note?: string | null
+          prev_balance?: number | null
+          result?: string | null
+          source?: string | null
+          transaction_id?: string
+        }
+        Relationships: []
+      }
+      op_light_bank_cases: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          reason: string | null
+          transaction_id: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          reason?: string | null
+          transaction_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          reason?: string | null
+          transaction_id?: string
+        }
+        Relationships: []
+      }
+      op_light_bank_credits: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          note: string | null
+          status: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          transaction_id?: string
+        }
+        Relationships: []
+      }
       op_light_booking_issues: {
         Row: {
           created_at: string
@@ -56708,6 +56837,51 @@ export type Database = {
         Args: { p_invoice_id: string; p_note: string }
         Returns: string
       }
+      fibu_light_bank_confirm: {
+        Args: {
+          p_allocations: Json
+          p_overpay?: string
+          p_source?: string
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
+      fibu_light_bank_dashboard: { Args: never; Returns: Json }
+      fibu_light_bank_group_suggestion: {
+        Args: { p_transaction_id: string }
+        Returns: {
+          customer_name: string
+          invoice_id: string
+          invoice_number: string
+          open_amount: number
+        }[]
+      }
+      fibu_light_bank_list: {
+        Args: { p_filter?: string; p_limit?: number; p_search?: string }
+        Returns: {
+          allocated_amount: number
+          amount: number
+          bank_account: string
+          best_customer_name: string
+          best_invoice_id: string
+          best_invoice_number: string
+          best_open_amount: number
+          best_reasons: Json
+          best_score: number
+          best_suggested: number
+          booking_date: string
+          case_open: boolean
+          case_reason: string
+          currency: string
+          id: string
+          is_allocated: boolean
+          purpose: string
+          sender_iban: string
+          sender_name: string
+          status: string
+          value_date: string
+        }[]
+      }
       fibu_light_bank_match_suggestions: {
         Args: { p_limit?: number }
         Returns: {
@@ -56721,6 +56895,31 @@ export type Database = {
           score: number
           sender_name: string
           transaction_id: string
+        }[]
+      }
+      fibu_light_bank_set_case: {
+        Args: {
+          p_action?: string
+          p_note?: string
+          p_reason: string
+          p_transaction_id: string
+        }
+        Returns: string
+      }
+      fibu_light_bank_suggestions: {
+        Args: { p_limit?: number; p_transaction_id: string }
+        Returns: {
+          currency: string
+          customer_id: string
+          customer_name: string
+          due_date: string
+          invoice_id: string
+          invoice_number: string
+          invoice_total: number
+          open_amount: number
+          reasons: Json
+          score: number
+          suggested_amount: number
         }[]
       }
       fibu_light_book_payment: {
@@ -57377,6 +57576,7 @@ export type Database = {
         Args: { _reason: string; _user_id: string }
         Returns: Json
       }
+      op_light_norm_ref: { Args: { p: string }; Returns: string }
       order_status_counts: { Args: { p_order_id: string }; Returns: Json }
       order_tenant_scope_ok: { Args: { _order_id: string }; Returns: boolean }
       page_usage_top: {
