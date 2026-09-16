@@ -840,7 +840,31 @@ export default function OffenePostenLight() {
                   <Button size="sm" variant="outline" onClick={() => setIssueOpen(true)}>
                     <ShieldAlert className="h-4 w-4 mr-2" /> Buchungsfehler
                   </Button>
+                  {selected.escalation_stage ? (
+                    <Button size="sm" variant="outline" className="col-span-2" onClick={() => void clearEscalation(selected)}>
+                      <Undo2 className="h-4 w-4 mr-2" /> Zurückholen von {ESC_LABEL[selected.escalation_stage]}
+                    </Button>
+                  ) : (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => openEscalation([selected], 'inkasso_intern')}>
+                        <ShieldAlert className="h-4 w-4 mr-2" /> Internes Inkasso
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => openEscalation([selected], 'anwalt')}>
+                        <Gavel className="h-4 w-4 mr-2" /> An Anwalt
+                      </Button>
+                    </>
+                  )}
                 </div>
+
+                {selected.escalation_stage && (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs mb-3">
+                    <div className="font-medium">Übergeben an {ESC_LABEL[selected.escalation_stage]}</div>
+                    <div className="text-muted-foreground">
+                      {fmtDateTime(selected.escalation_at)}{selected.escalation_note ? ` · ${selected.escalation_note}` : ''}
+                    </div>
+                  </div>
+                )}
+
 
                 <div className="my-4">
                   <Label className="text-xs">Interne Notiz</Label>
