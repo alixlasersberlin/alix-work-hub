@@ -402,6 +402,10 @@ Deno.serve(async (req) => {
           metadata: {
             role,
             idempotency_key: `${idempotencyKey}-${r.keySuffix}`,
+            sender_used: attachments.length > 0
+              ? (ATTACHMENT_SENDER_CHAIN[attachmentSenderIdx] ?? ATTACHMENT_SENDER_CHAIN[0])
+              : (SENDER_CHAIN[senderIdx] ?? SENDER_CHAIN[0]).from,
+
             ...(ok ? {} : { error: (res as PromiseRejectedResult).reason?.message ?? 'unknown' }),
           },
         }
