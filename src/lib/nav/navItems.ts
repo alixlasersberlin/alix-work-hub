@@ -449,6 +449,7 @@ export const navItems: NavItem[] = [
         path: '/offene-posten-light', label: 'FIBU LIGHT', icon: Wallet, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin', 'FIBU LIGHT'],
         children: [
           { path: '/offene-posten-light', label: 'Offene Posten Light', icon: Wallet, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin', 'FIBU LIGHT'] },
+          { path: '/fibu-light/bank', label: 'Bank & Zuordnung', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin', 'FIBU LIGHT'] },
         ],
       },
       {

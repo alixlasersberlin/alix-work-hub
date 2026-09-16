@@ -171,6 +171,7 @@ const FinanceDatevExport = lazy(() => import("./pages/Finance/DatevExport"));
 const FinanceAuditRevision = lazy(() => import("./pages/Finance/AuditRevision"));
 const FinanceZahlungen = lazy(() => import("./pages/Finance/Zahlungen"));
 const OffenePostenLight = lazy(() => import("./pages/Finance/OffenePostenLight"));
+const BankZuordnung = lazy(() => import("./pages/Finance/BankZuordnung"));
 const FinanceVertraege = lazy(() => import("./pages/Finance/Vertraege"));
 const FinanceMahnwesen = lazy(() => import("./pages/Finance/Mahnwesen"));
 const FinanceMahnwesenDetail = lazy(() => import("./pages/Finance/MahnwesenDetail"));
@@ -1726,6 +1727,7 @@ function AppRoutes() {
           <Route path="/finance/vermietung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices mietkaufOnly /></ProtectedRoute>} />
           <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
           <Route path="/offene-posten-light" element={<ProtectedRoute requiredRoles={[...FINANCE_ROLES, 'FIBU LIGHT']}><OffenePostenLight /></ProtectedRoute>} />
+          <Route path="/fibu-light/bank" element={<ProtectedRoute requiredRoles={[...FINANCE_ROLES, 'FIBU LIGHT']}><BankZuordnung /></ProtectedRoute>} />
           {/* /finance/unpaid-zoho deaktiviert – Daten bleiben in DB für andere Übersichten */}
           <Route path="/finance/rechnungsvorschlaege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Rechnungsvorschlaege /></ProtectedRoute>} />
           <Route path="/finance/stornos" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceStornos /></ProtectedRoute>} />
