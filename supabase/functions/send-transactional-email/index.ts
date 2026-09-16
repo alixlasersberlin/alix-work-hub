@@ -7,10 +7,32 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 
 const SITE_NAME = "Alix Lasers Datacenter"
-const SENDER_DOMAIN = "notify.alix-finance.de"
-const FROM_ADDRESS = "Alix Lasers ® <noreply@notify.alix-finance.de>"
+
+/**
+ * Automatische Absender-Umschaltung: Schlägt der Versand wegen eines
+ * Absender-/Domain-Problems (gesperrt, nicht verifiziert, Rate-Limit) fehl,
+ * wird automatisch die nächste verfügbare Absenderadresse verwendet.
+ */
+const SENDER_CHAIN: Array<{ domain: string; from: string }> = [
+  { domain: "notify.alix-finance.de", from: "Alix Lasers ® <noreply@notify.alix-finance.de>" },
+  { domain: "notify.alixsales.com", from: "Alix Lasers ® <noreply@notify.alixsales.com>" },
+  { domain: "alixwork.de", from: "Alix Lasers ® <noreply@alixwork.de>" },
+]
 // Für Anhänge läuft der Versand über Resend – dort ist nur alixwork.de verifiziert
-const FROM_ADDRESS_ATTACHMENTS = "Alix Lasers ® <noreply@alixwork.de>"
+const ATTACHMENT_SENDER_CHAIN: string[] = [
+  "Alix Lasers ® <noreply@alixwork.de>",
+  "Alix Lasers ® <noreply@notify.alixsales.com>",
+]
+const SENDER_DOMAIN = SENDER_CHAIN[0].domain
+const FROM_ADDRESS = SENDER_CHAIN[0].from
+const FROM_ADDRESS_ATTACHMENTS = ATTACHMENT_SENDER_CHAIN[0]
+
+/** Fehler, bei denen ein Absenderwechsel sinnvoll ist. */
+export function isSenderProblem(msg?: string): boolean {
+  if (!msg) return false
+  return /domain[_ -]?(suspended|not[_ -]?verified|blocked)|not verified|unverified|forbidden|403|422|sender|from address|rate.?limit|429|quota|throttl/i.test(msg)
+}
+
 
 /** Einfache Plausibilitätsprüfung für Empfängeradressen (verhindert Rückläufer). */
 export function isValidEmail(value: unknown): boolean {
@@ -233,11 +255,19 @@ Deno.serve(async (req) => {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
     const isRateLimited = (msg?: string) => !!msg && /429|rate.?limit|high demand/i.test(msg)
 
+    // Aktueller Absender-Index – wird bei Absenderproblemen automatisch erhöht
+    // und gilt dann für alle weiteren Empfänger dieses Aufrufs.
+    let senderIdx = 0
+    let attachmentSenderIdx = 0
+    const usedSenders: string[] = []
+
     // Anhänge (z. B. Angebots-PDF) unterstützt das Lovable-Email-SDK nicht
     // -> in diesem Fall über den Resend-Gateway senden.
     const sendWithAttachments = async (r: typeof recipients[number]) => {
       const resendKey = Deno.env.get('RESEND_API_KEY')
       if (!resendKey) throw new Error('RESEND_API_KEY not configured (für Anhänge erforderlich)')
+      const from = ATTACHMENT_SENDER_CHAIN[attachmentSenderIdx] ?? ATTACHMENT_SENDER_CHAIN[0]
+      usedSenders.push(from)
       const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
         method: 'POST',
         headers: {
@@ -246,7 +276,7 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: FROM_ADDRESS_ATTACHMENTS,
+          from,
           to: [r.email],
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
@@ -265,27 +295,32 @@ Deno.serve(async (req) => {
 
     const sendOne = async (r: typeof recipients[number], maxAttempts: number) => {
       let attempt = 0
+      let switched = 0
+      const maxSwitches = Math.max(SENDER_CHAIN.length, ATTACHMENT_SENDER_CHAIN.length) - 1
       while (true) {
         try {
           if (attachments.length > 0) return await sendWithAttachments(r)
+          const sender = SENDER_CHAIN[senderIdx] ?? SENDER_CHAIN[0]
+          usedSenders.push(sender.from)
           return await sendLovableEmail(
 
             {
               to: r.email,
-              from: FROM_ADDRESS,
+              from: sender.from,
               bcc: isDunning ? [] : ["service@alix-lasers.com"],
-              sender_domain: SENDER_DOMAIN,
+              sender_domain: sender.domain,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
               html,
               text: plainText,
               purpose: 'transactional',
-              idempotency_key: `${idempotencyKey}-${r.keySuffix}`,
+              idempotency_key: `${idempotencyKey}-${r.keySuffix}-s${senderIdx}`,
               unsubscribe_token: unsubscribeToken,
             },
             { apiKey },
           )
         } catch (err: any) {
-          if (isRateLimited(err?.message) && attempt < maxAttempts) {
+          const msg = err?.message as string | undefined
+          if (isRateLimited(msg) && attempt < maxAttempts) {
             attempt++
             // Backoff: 2s, 4s, 8s, 15s ... (cap 15s) + jitter
             const backoff = Math.min(15000, 2000 * Math.pow(2, attempt - 1))
@@ -293,10 +328,31 @@ Deno.serve(async (req) => {
             await sleep(backoff + jitter)
             continue
           }
+          // Automatischer Absenderwechsel bei Domain-/Absenderproblemen
+          if (isSenderProblem(msg) && switched < maxSwitches) {
+            switched++
+            const hasNext = attachments.length > 0
+              ? attachmentSenderIdx + 1 < ATTACHMENT_SENDER_CHAIN.length
+              : senderIdx + 1 < SENDER_CHAIN.length
+            if (hasNext) {
+              if (attachments.length > 0) attachmentSenderIdx++
+              else senderIdx++
+              console.warn('Absender wird automatisch gewechselt', {
+                grund: msg?.slice(0, 200),
+                neuerAbsender: attachments.length > 0
+                  ? ATTACHMENT_SENDER_CHAIN[attachmentSenderIdx]
+                  : SENDER_CHAIN[senderIdx].from,
+              })
+              attempt = 0
+              await sleep(500)
+              continue
+            }
+          }
           throw err
         }
       }
     }
+
 
     // Send every recipient synchronously so required copies/BCC are actually
     // accepted by the email provider before the function returns.
@@ -346,6 +402,10 @@ Deno.serve(async (req) => {
           metadata: {
             role,
             idempotency_key: `${idempotencyKey}-${r.keySuffix}`,
+            sender_used: attachments.length > 0
+              ? (ATTACHMENT_SENDER_CHAIN[attachmentSenderIdx] ?? ATTACHMENT_SENDER_CHAIN[0])
+              : (SENDER_CHAIN[senderIdx] ?? SENDER_CHAIN[0]).from,
+
             ...(ok ? {} : { error: (res as PromiseRejectedResult).reason?.message ?? 'unknown' }),
           },
         }
