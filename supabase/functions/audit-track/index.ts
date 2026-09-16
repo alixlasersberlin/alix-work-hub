@@ -12,6 +12,19 @@ type Action = {
   meta?: Record<string, unknown>;
 };
 
+type Heartbeat = {
+  active_delta?: number;
+  idle_delta?: number;
+  clicks?: number;
+  scrolls?: number;
+  keystrokes?: number;
+};
+
+function nonNegativeNumber(value: unknown) {
+  const number = Number(value ?? 0);
+  return Number.isFinite(number) && number >= 0 ? number : 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -21,21 +34,56 @@ Deno.serve(async (req) => {
     const supabase = createAuditServiceClient();
 
 
-    const { session_id, actions } = await req.json() as { session_id?: string; actions: Action[] };
-    if (!Array.isArray(actions) || actions.length === 0) {
-      return jsonResponse({ ok: true, inserted: 0 });
+    const { session_id, actions, heartbeat } = await req.json() as {
+      session_id?: string;
+      actions?: Action[];
+      heartbeat?: Heartbeat;
+    };
+
+    if (!session_id && heartbeat) {
+      return jsonResponse({ error: "session_id required for heartbeat" }, 400);
     }
 
+    let session: {
+      id: string;
+      user_id: string;
+      active_seconds: number | null;
+      idle_seconds: number | null;
+      click_count: number | null;
+      scroll_count: number | null;
+      keystroke_count: number | null;
+    } | null = null;
     if (session_id) {
-      const { data: session, error: sessionError } = await supabase
+      const { data, error: sessionError } = await supabase
         .from("audit_sessions")
-        .select("id, user_id")
+        .select("id, user_id, active_seconds, idle_seconds, click_count, scroll_count, keystroke_count")
         .eq("id", session_id)
         .single();
       if (sessionError) throw sessionError;
+      session = data;
       if (session.user_id !== user.id) {
         return jsonResponse({ error: "session mismatch" }, 403);
       }
+    }
+
+    if (heartbeat && session) {
+      const { error: heartbeatError } = await supabase
+        .from("audit_sessions")
+        .update({
+          last_heartbeat_at: new Date().toISOString(),
+          active_seconds: (session.active_seconds ?? 0) + nonNegativeNumber(heartbeat.active_delta),
+          idle_seconds: (session.idle_seconds ?? 0) + nonNegativeNumber(heartbeat.idle_delta),
+          click_count: (session.click_count ?? 0) + nonNegativeNumber(heartbeat.clicks),
+          scroll_count: (session.scroll_count ?? 0) + nonNegativeNumber(heartbeat.scrolls),
+          keystroke_count: (session.keystroke_count ?? 0) + nonNegativeNumber(heartbeat.keystrokes),
+        })
+        .eq("id", session_id)
+        .eq("user_id", user.id);
+      if (heartbeatError) throw heartbeatError;
+    }
+
+    if (!Array.isArray(actions) || actions.length === 0) {
+      return jsonResponse({ ok: true, inserted: 0, heartbeat: Boolean(heartbeat) });
     }
 
     // Rate limit: max 200 per call
