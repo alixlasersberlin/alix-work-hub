@@ -23,10 +23,22 @@ class AuditTracker {
   private started = false;
   private failureCount = 0;
   private pauseUntil = 0;
+  private disabled = false;
+
+  /** Audit darf die App nie stören: bei Infrastrukturfehlern komplett abschalten. */
+  private isFatal(e: unknown) {
+    const msg = String((e as any)?.message ?? e ?? "");
+    return (
+      msg.includes("503") ||
+      msg.includes("LOAD_FUNCTION_METADATA_ERROR") ||
+      msg.includes("Failed to send a request") ||
+      msg.includes("Failed to fetch")
+    );
+  }
 
 
   async start(attempt = 0) {
-    if (this.started) return;
+    if (this.started || this.disabled) return;
     // Ohne echte User-Session würde nur der Anon-Key gesendet -> 401.
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) return;
@@ -44,6 +56,7 @@ class AuditTracker {
       this.started = false;
       const msg = String((e as any)?.message ?? e ?? "");
       const unauthorized = msg.includes("401") || msg.toLowerCase().includes("unauthorized");
+      if (this.isFatal(e)) { this.disabled = true; return; }
       if (!unauthorized && attempt < 3) {
         const delay = 15_000 * Math.pow(2, attempt);
         window.setTimeout(() => { if (!this.started) this.start(attempt + 1); }, delay);
@@ -91,7 +104,7 @@ class AuditTracker {
   private onMove = () => { this.lastActivity = Date.now(); };
 
   private async sendHeartbeat() {
-    if (!this.sessionId || !this.started) return;
+    if (!this.sessionId || !this.started || this.disabled) return;
     if (Date.now() < this.pauseUntil) return;
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -120,7 +133,8 @@ class AuditTracker {
           await this.stop();
           return;
         }
-        // Transient backend issues (503 / service degraded): back off instead of hammering
+        // Infrastrukturfehler (503 / Funktion nicht ladbar): Audit still abschalten
+        if (this.isFatal(error)) { this.disabled = true; await this.stop(); return; }
         this.failureCount++;
         if (this.failureCount >= 3) {
           this.pauseUntil = Date.now() + 5 * 60_000;
@@ -129,7 +143,8 @@ class AuditTracker {
         return;
       }
       this.failureCount = 0;
-    } catch {
+    } catch (e) {
+      if (this.isFatal(e)) { this.disabled = true; await this.stop(); return; }
       this.failureCount++;
       if (this.failureCount >= 3) {
         this.pauseUntil = Date.now() + 5 * 60_000;
