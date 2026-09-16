@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
       end_session?: boolean;
     };
 
-    if (!session_id && heartbeat) {
-      return jsonResponse({ error: "session_id required for heartbeat" }, 400);
+    if (!session_id && (heartbeat || end_session)) {
+      return jsonResponse({ error: "session_id required" }, 400);
     }
 
     let session: {
