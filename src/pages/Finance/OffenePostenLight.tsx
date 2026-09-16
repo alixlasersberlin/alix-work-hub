@@ -548,6 +548,16 @@ export default function OffenePostenLight() {
         .join(' ').toLowerCase().includes(q)).slice(0, 12);
   }, [items, quickSearch]);
 
+  const markedItems = useMemo(() => filtered.filter((i) => listChecked[i.id]), [filtered, listChecked]);
+  const allMarked = filtered.length > 0 && filtered.every((i) => listChecked[i.id]);
+  const markedSum = markedItems.reduce((s, i) => s + Number(i.balance || 0), 0);
+
+  const toggleAllMarked = (on: boolean) => {
+    const next = { ...listChecked };
+    for (const i of filtered) { if (on) next[i.id] = true; else delete next[i.id]; }
+    setListChecked(next);
+  };
+
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'alle', label: 'Alle' },
     { key: 'heute', label: 'Heute fällig' },
@@ -556,6 +566,8 @@ export default function OffenePostenLight() {
     { key: 'mahnung', label: 'Mahnung erforderlich' },
     { key: 'klaerung', label: 'Klärung' },
     { key: 'raten', label: 'Ratenzahlung' },
+    { key: 'anwalt', label: 'Beim Anwalt' },
+    { key: 'inkasso', label: 'Internes Inkasso' },
   ];
 
   return (
