@@ -104,7 +104,7 @@ class AuditTracker {
   private onMove = () => { this.lastActivity = Date.now(); };
 
   private async sendHeartbeat() {
-    if (!this.sessionId || !this.started) return;
+    if (!this.sessionId || !this.started || this.disabled) return;
     if (Date.now() < this.pauseUntil) return;
 
     const { data: { session } } = await supabase.auth.getSession();
