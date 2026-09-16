@@ -35654,6 +35654,51 @@ export type Database = {
         }
         Relationships: []
       }
+      op_light_escalations: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          invoice_id: string
+          invoice_number: string | null
+          note: string | null
+          open_amount: number | null
+          stage: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_id: string
+          invoice_number?: string | null
+          note?: string | null
+          open_amount?: number | null
+          stage: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_id?: string
+          invoice_number?: string | null
+          note?: string | null
+          open_amount?: number | null
+          stage?: string
+        }
+        Relationships: []
+      }
       op_light_installment_plans: {
         Row: {
           agreement_date: string
@@ -56938,6 +56983,10 @@ export type Database = {
         Args: { p_invoice_id: string; p_note?: string }
         Returns: string
       }
+      fibu_light_clear_escalation: {
+        Args: { p_invoice_id: string; p_note?: string }
+        Returns: string
+      }
       fibu_light_create_installment_plan: {
         Args: {
           p_amount: number
@@ -56980,6 +57029,9 @@ export type Database = {
           days_overdue: number
           due_date: string
           dunning_level: number
+          escalation_at: string
+          escalation_note: string
+          escalation_stage: string
           id: string
           invoice_date: string
           invoice_number: string
@@ -57015,6 +57067,15 @@ export type Database = {
           p_reason: string
         }
         Returns: string
+      }
+      fibu_light_set_escalation: {
+        Args: { p_invoice_ids: string[]; p_note?: string; p_stage: string }
+        Returns: {
+          invoice_id: string
+          invoice_number: string
+          message: string
+          ok: boolean
+        }[]
       }
       finance_can_write: { Args: never; Returns: boolean }
       finance_cost_center_report: {
