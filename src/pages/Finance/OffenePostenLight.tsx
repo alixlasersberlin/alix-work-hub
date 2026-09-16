@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle, Banknote, CalendarClock, CheckCircle2, FileText, History, Landmark, Loader2, Lock,
-  Mail, RefreshCw, Search, Send, ShieldAlert, StickyNote, Unlock, Wallet, X,
+  AlertTriangle, Banknote, CalendarClock, CheckCircle2, FileText, Gavel, History, Landmark, Loader2, Lock,
+  Mail, RefreshCw, Search, Send, ShieldAlert, StickyNote, Undo2, Unlock, Wallet, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -47,10 +47,15 @@ type OpenItem = {
   next_rate_amount: number | null;
   next_rate_due: string | null;
   next_action_level: number | null;
+  escalation_stage: string | null;
+  escalation_at: string | null;
+  escalation_note: string | null;
 };
 
-type Filter = 'alle' | 'heute' | 'ueberfaellig' | 'teilbezahlt' | 'mahnung' | 'klaerung' | 'raten';
+type Filter = 'alle' | 'heute' | 'ueberfaellig' | 'teilbezahlt' | 'mahnung' | 'klaerung' | 'raten' | 'anwalt' | 'inkasso';
 type Tab = 'arbeitsliste' | 'mahncenter' | 'bank';
+
+const ESC_LABEL: Record<string, string> = { anwalt: 'Anwalt', inkasso_intern: 'Internes Inkasso' };
 
 const LEVEL_LABEL: Record<number, string> = {
   0: 'Keine Mahnung',
@@ -157,6 +162,15 @@ export default function OffenePostenLight() {
   const [note, setNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
+  // Eskalation (Anwalt / internes Inkasso)
+  const [listChecked, setListChecked] = useState<Record<string, boolean>>({});
+  const [escOpen, setEscOpen] = useState(false);
+  const [escStage, setEscStage] = useState<'anwalt' | 'inkasso_intern'>('anwalt');
+  const [escNote, setEscNote] = useState('');
+  const [escRows, setEscRows] = useState<OpenItem[]>([]);
+  const [escBusy, setEscBusy] = useState(false);
+
+
   const [pdfLoading, setPdfLoading] = useState(false);
   const pdfCache = useRef<Map<string, string>>(new Map());
 
@@ -235,6 +249,8 @@ export default function OffenePostenLight() {
         case 'mahnung': return !i.case_active && Number(i.next_action_level || 0) > 0;
         case 'klaerung': return !!i.case_active;
         case 'raten': return !!i.plan_id;
+        case 'anwalt': return i.escalation_stage === 'anwalt';
+        case 'inkasso': return i.escalation_stage === 'inkasso_intern';
         default: return true;
       }
     });
@@ -440,6 +456,46 @@ export default function OffenePostenLight() {
     else { toast.success('Mahnsperre aufgehoben.'); await load(); setSelected(null); }
   };
 
+  /** Eskalation: Übergabe an Anwalt oder internes Inkasso (Einzeln oder Massenbearbeitung). */
+  const openEscalation = (rows: OpenItem[], stage: 'anwalt' | 'inkasso_intern') => {
+    if (rows.length === 0) { toast.error('Bitte zuerst offene Posten markieren.'); return; }
+    setEscRows(rows);
+    setEscStage(stage);
+    setEscNote('');
+    setEscOpen(true);
+  };
+
+  const runEscalation = async () => {
+    setEscBusy(true);
+    const { data, error } = await rpc('fibu_light_set_escalation', {
+      p_invoice_ids: escRows.map((r) => r.id),
+      p_stage: escStage,
+      p_note: escNote.trim() || null,
+    });
+    if (error) toast.error(`Übergabe fehlgeschlagen: ${error.message}`);
+    else {
+      const rows = (data as { ok: boolean }[]) || [];
+      const ok = rows.filter((r) => r.ok).length;
+      const fail = rows.length - ok;
+      toast[fail ? 'warning' : 'success'](
+        `${ESC_LABEL[escStage]}: ${ok} übergeben${fail ? ` · ${fail} übersprungen` : ''}`,
+      );
+      setEscOpen(false);
+      setListChecked({});
+      await load();
+      if (selected) setSelected(null);
+    }
+    setEscBusy(false);
+  };
+
+  const clearEscalation = async (item: OpenItem) => {
+    const { error } = await rpc('fibu_light_clear_escalation', { p_invoice_id: item.id, p_note: null });
+    if (error) toast.error(error.message);
+    else { toast.success('Rückholung protokolliert.'); await load(); setSelected(null); }
+  };
+
+
+
   const savePlan = async () => {
     if (!selected) return;
     setRateBusy(true);
@@ -492,6 +548,16 @@ export default function OffenePostenLight() {
         .join(' ').toLowerCase().includes(q)).slice(0, 12);
   }, [items, quickSearch]);
 
+  const markedItems = useMemo(() => filtered.filter((i) => listChecked[i.id]), [filtered, listChecked]);
+  const allMarked = filtered.length > 0 && filtered.every((i) => listChecked[i.id]);
+  const markedSum = markedItems.reduce((s, i) => s + Number(i.balance || 0), 0);
+
+  const toggleAllMarked = (on: boolean) => {
+    const next = { ...listChecked };
+    for (const i of filtered) { if (on) next[i.id] = true; else delete next[i.id]; }
+    setListChecked(next);
+  };
+
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'alle', label: 'Alle' },
     { key: 'heute', label: 'Heute fällig' },
@@ -500,6 +566,8 @@ export default function OffenePostenLight() {
     { key: 'mahnung', label: 'Mahnung erforderlich' },
     { key: 'klaerung', label: 'Klärung' },
     { key: 'raten', label: 'Ratenzahlung' },
+    { key: 'anwalt', label: 'Beim Anwalt' },
+    { key: 'inkasso', label: 'Internes Inkasso' },
   ];
 
   return (
@@ -604,6 +672,24 @@ export default function OffenePostenLight() {
             ))}
           </div>
 
+          {/* Massenbearbeitung: Übergabe an Anwalt / internes Inkasso */}
+          {markedItems.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 mb-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3">
+              <span className="text-sm font-medium">
+                {markedItems.length} markiert · {fmt(markedSum)}
+              </span>
+              <div className="ml-auto flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => setListChecked({})}>Auswahl aufheben</Button>
+                <Button size="sm" variant="outline" onClick={() => openEscalation(markedItems, 'inkasso_intern')}>
+                  <ShieldAlert className="h-4 w-4 mr-2" /> An internes Inkasso
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => openEscalation(markedItems, 'anwalt')}>
+                  <Gavel className="h-4 w-4 mr-2" /> An Anwalt übergeben
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className={cn('grid gap-4', selected ? 'lg:grid-cols-[1fr_400px]' : 'grid-cols-1')}>
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               {loading ? (
@@ -615,6 +701,9 @@ export default function OffenePostenLight() {
                   <table className="w-full text-sm">
                     <thead className="bg-secondary/50 text-muted-foreground">
                       <tr>
+                        <th className="w-10 pl-3">
+                          <Checkbox checked={allMarked} onCheckedChange={(v) => toggleAllMarked(!!v)} aria-label="Alle markieren" />
+                        </th>
                         <th className="w-8" />
                         <th className="text-left px-3 py-3">Kunde</th>
                         <th className="text-left px-3 py-3">Rechnung</th>
@@ -631,23 +720,39 @@ export default function OffenePostenLight() {
                       {filtered.map((i) => {
                         const light = trafficLight(i);
                         return (
-                          <tr key={i.id} className={cn('hover:bg-secondary/30', selected?.id === i.id && 'bg-secondary/40')}>
-                            <td className="pl-3"><span className={cn('block h-2.5 w-2.5 rounded-full', light.dot)} /></td>
+                          <tr key={i.id} className={cn('hover:bg-secondary/30', selected?.id === i.id && 'bg-secondary/40', listChecked[i.id] && 'bg-primary/5')}>
+                            <td className="pl-3">
+                              <Checkbox
+                                checked={!!listChecked[i.id]}
+                                onCheckedChange={(v) => setListChecked((s) => ({ ...s, [i.id]: !!v }))}
+                                aria-label={`${invNo(i)} markieren`}
+                              />
+                            </td>
+                            <td className="pl-1"><span className={cn('block h-2.5 w-2.5 rounded-full', light.dot)} /></td>
                             <td className="px-3 py-2">{i.customer_name || '—'}</td>
-                            <td className="px-3 py-2 font-medium">{invNo(i)}</td>
+                            <td className="px-3 py-2 font-medium">
+                              {invNo(i)}
+                              {i.escalation_stage && (
+                                <Badge variant={i.escalation_stage === 'anwalt' ? 'destructive' : 'secondary'} className="ml-2">
+                                  {ESC_LABEL[i.escalation_stage]}
+                                </Badge>
+                              )}
+                            </td>
                             <td className="px-3 py-2">{fmtDate(i.due_date)}</td>
                             <td className="px-3 py-2 text-right">{fmt(i.total, i.currency)}</td>
                             <td className="px-3 py-2 text-right text-muted-foreground">{fmt(i.paid, i.currency)}</td>
                             <td className="px-3 py-2 text-right font-semibold">{fmt(i.balance, i.currency)}</td>
                             <td className={cn('px-3 py-2 whitespace-nowrap', light.text)}>{light.label}</td>
                             <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                              {i.case_active
-                                ? `Klärung: ${i.case_reason}`
-                                : i.plan_id
-                                  ? `Rate ${fmt(i.next_rate_amount, i.currency)} am ${fmtDate(i.next_rate_due)}`
-                                  : Number(i.next_action_level || 0) > 0
-                                    ? LEVEL_LABEL[Number(i.next_action_level)]
-                                    : '—'}
+                              {i.escalation_stage
+                                ? `Übergeben: ${ESC_LABEL[i.escalation_stage]}${i.escalation_at ? ` am ${fmtDate(i.escalation_at)}` : ''}`
+                                : i.case_active
+                                  ? `Klärung: ${i.case_reason}`
+                                  : i.plan_id
+                                    ? `Rate ${fmt(i.next_rate_amount, i.currency)} am ${fmtDate(i.next_rate_due)}`
+                                    : Number(i.next_action_level || 0) > 0
+                                      ? LEVEL_LABEL[Number(i.next_action_level)]
+                                      : '—'}
                             </td>
                             <td className="px-3 py-2 text-right">
                               <Button size="sm" variant="outline" onClick={() => openPanel(i)}>Öffnen</Button>
@@ -660,6 +765,8 @@ export default function OffenePostenLight() {
                 </div>
               )}
             </div>
+
+
 
             {/* Arbeitskarte */}
             {selected && (
@@ -733,7 +840,31 @@ export default function OffenePostenLight() {
                   <Button size="sm" variant="outline" onClick={() => setIssueOpen(true)}>
                     <ShieldAlert className="h-4 w-4 mr-2" /> Buchungsfehler
                   </Button>
+                  {selected.escalation_stage ? (
+                    <Button size="sm" variant="outline" className="col-span-2" onClick={() => void clearEscalation(selected)}>
+                      <Undo2 className="h-4 w-4 mr-2" /> Zurückholen von {ESC_LABEL[selected.escalation_stage]}
+                    </Button>
+                  ) : (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => openEscalation([selected], 'inkasso_intern')}>
+                        <ShieldAlert className="h-4 w-4 mr-2" /> Internes Inkasso
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => openEscalation([selected], 'anwalt')}>
+                        <Gavel className="h-4 w-4 mr-2" /> An Anwalt
+                      </Button>
+                    </>
+                  )}
                 </div>
+
+                {selected.escalation_stage && (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs mb-3">
+                    <div className="font-medium">Übergeben an {ESC_LABEL[selected.escalation_stage]}</div>
+                    <div className="text-muted-foreground">
+                      {fmtDateTime(selected.escalation_at)}{selected.escalation_note ? ` · ${selected.escalation_note}` : ''}
+                    </div>
+                  </div>
+                )}
+
 
                 <div className="my-4">
                   <Label className="text-xs">Interne Notiz</Label>
@@ -1127,6 +1258,55 @@ export default function OffenePostenLight() {
           <DialogFooter>
             <Button onClick={() => void saveIssue()} disabled={issueBusy || !issueText.trim()}>
               {issueBusy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Melden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Übergabe an Anwalt / internes Inkasso */}
+      <Dialog open={escOpen} onOpenChange={setEscOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {escStage === 'anwalt' ? 'An Anwalt übergeben' : 'An internes Inkasso übergeben'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant={escStage === 'anwalt' ? 'destructive' : 'outline'} onClick={() => setEscStage('anwalt')}>
+                <Gavel className="h-4 w-4 mr-2" /> Anwalt
+              </Button>
+              <Button size="sm" variant={escStage === 'inkasso_intern' ? 'default' : 'outline'} onClick={() => setEscStage('inkasso_intern')}>
+                <ShieldAlert className="h-4 w-4 mr-2" /> Internes Inkasso
+              </Button>
+            </div>
+            <div className="rounded-lg border border-border max-h-56 overflow-y-auto divide-y divide-border">
+              {escRows.map((r) => (
+                <div key={r.id} className="flex justify-between gap-3 px-3 py-2 text-xs">
+                  <span className="truncate">{r.customer_name} · {invNo(r)}</span>
+                  <span className="font-medium whitespace-nowrap">{fmt(r.balance, r.currency)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-sm font-medium">
+              <span>{escRows.length} Forderung(en)</span>
+              <span>{fmt(escRows.reduce((s, r) => s + Number(r.balance || 0), 0))}</span>
+            </div>
+            <div>
+              <Label className="text-xs">Notiz zur Übergabe (optional)</Label>
+              <Textarea rows={2} value={escNote} onChange={(e) => setEscNote(e.target.value)}
+                placeholder="z. B. Aktenzeichen, Ansprechpartner, Übergabedatum" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Die Übergabe setzt automatisch eine Mahnsperre, damit kein reguläres Mahnwesen weiterläuft.
+              Rechnungen, Zahlungen und Rechnungsnummern werden nicht verändert; die Übergabe wird unveränderbar protokolliert.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEscOpen(false)} disabled={escBusy}>Abbrechen</Button>
+            <Button variant={escStage === 'anwalt' ? 'destructive' : 'default'} onClick={() => void runEscalation()} disabled={escBusy || escRows.length === 0}>
+              {escBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Verbindlich übergeben
             </Button>
           </DialogFooter>
         </DialogContent>
