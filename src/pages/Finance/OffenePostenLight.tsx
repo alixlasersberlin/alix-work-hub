@@ -162,6 +162,15 @@ export default function OffenePostenLight() {
   const [note, setNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
+  // Eskalation (Anwalt / internes Inkasso)
+  const [listChecked, setListChecked] = useState<Record<string, boolean>>({});
+  const [escOpen, setEscOpen] = useState(false);
+  const [escStage, setEscStage] = useState<'anwalt' | 'inkasso_intern'>('anwalt');
+  const [escNote, setEscNote] = useState('');
+  const [escRows, setEscRows] = useState<OpenItem[]>([]);
+  const [escBusy, setEscBusy] = useState(false);
+
+
   const [pdfLoading, setPdfLoading] = useState(false);
   const pdfCache = useRef<Map<string, string>>(new Map());
 
