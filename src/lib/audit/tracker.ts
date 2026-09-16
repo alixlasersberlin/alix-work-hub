@@ -113,6 +113,8 @@ class AuditTracker {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { await this.stop(); return; }
+    this.accessToken = session.access_token;
+
     const now = Date.now();
     const elapsedSec = Math.round((now - this.lastHeartbeat) / 1000);
     const idleThresholdMs = 60_000;
@@ -166,6 +168,8 @@ class AuditTracker {
     if (!this.sessionId || this.queue.length === 0) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { this.queue = []; await this.stop(); return; }
+    this.accessToken = session.access_token;
+
     const batch = this.queue.splice(0, 100);
     try {
       const { error } = await supabase.functions.invoke("audit-track", { body: { session_id: this.sessionId, actions: batch } });
