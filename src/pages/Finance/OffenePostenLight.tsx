@@ -672,6 +672,24 @@ export default function OffenePostenLight() {
             ))}
           </div>
 
+          {/* Massenbearbeitung: Übergabe an Anwalt / internes Inkasso */}
+          {markedItems.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 mb-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3">
+              <span className="text-sm font-medium">
+                {markedItems.length} markiert · {fmt(markedSum)}
+              </span>
+              <div className="ml-auto flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => setListChecked({})}>Auswahl aufheben</Button>
+                <Button size="sm" variant="outline" onClick={() => openEscalation(markedItems, 'inkasso_intern')}>
+                  <ShieldAlert className="h-4 w-4 mr-2" /> An internes Inkasso
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => openEscalation(markedItems, 'anwalt')}>
+                  <Gavel className="h-4 w-4 mr-2" /> An Anwalt übergeben
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className={cn('grid gap-4', selected ? 'lg:grid-cols-[1fr_400px]' : 'grid-cols-1')}>
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               {loading ? (
@@ -683,6 +701,9 @@ export default function OffenePostenLight() {
                   <table className="w-full text-sm">
                     <thead className="bg-secondary/50 text-muted-foreground">
                       <tr>
+                        <th className="w-10 pl-3">
+                          <Checkbox checked={allMarked} onCheckedChange={(v) => toggleAllMarked(!!v)} aria-label="Alle markieren" />
+                        </th>
                         <th className="w-8" />
                         <th className="text-left px-3 py-3">Kunde</th>
                         <th className="text-left px-3 py-3">Rechnung</th>
@@ -699,23 +720,39 @@ export default function OffenePostenLight() {
                       {filtered.map((i) => {
                         const light = trafficLight(i);
                         return (
-                          <tr key={i.id} className={cn('hover:bg-secondary/30', selected?.id === i.id && 'bg-secondary/40')}>
-                            <td className="pl-3"><span className={cn('block h-2.5 w-2.5 rounded-full', light.dot)} /></td>
+                          <tr key={i.id} className={cn('hover:bg-secondary/30', selected?.id === i.id && 'bg-secondary/40', listChecked[i.id] && 'bg-primary/5')}>
+                            <td className="pl-3">
+                              <Checkbox
+                                checked={!!listChecked[i.id]}
+                                onCheckedChange={(v) => setListChecked((s) => ({ ...s, [i.id]: !!v }))}
+                                aria-label={`${invNo(i)} markieren`}
+                              />
+                            </td>
+                            <td className="pl-1"><span className={cn('block h-2.5 w-2.5 rounded-full', light.dot)} /></td>
                             <td className="px-3 py-2">{i.customer_name || '—'}</td>
-                            <td className="px-3 py-2 font-medium">{invNo(i)}</td>
+                            <td className="px-3 py-2 font-medium">
+                              {invNo(i)}
+                              {i.escalation_stage && (
+                                <Badge variant={i.escalation_stage === 'anwalt' ? 'destructive' : 'secondary'} className="ml-2">
+                                  {ESC_LABEL[i.escalation_stage]}
+                                </Badge>
+                              )}
+                            </td>
                             <td className="px-3 py-2">{fmtDate(i.due_date)}</td>
                             <td className="px-3 py-2 text-right">{fmt(i.total, i.currency)}</td>
                             <td className="px-3 py-2 text-right text-muted-foreground">{fmt(i.paid, i.currency)}</td>
                             <td className="px-3 py-2 text-right font-semibold">{fmt(i.balance, i.currency)}</td>
                             <td className={cn('px-3 py-2 whitespace-nowrap', light.text)}>{light.label}</td>
                             <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                              {i.case_active
-                                ? `Klärung: ${i.case_reason}`
-                                : i.plan_id
-                                  ? `Rate ${fmt(i.next_rate_amount, i.currency)} am ${fmtDate(i.next_rate_due)}`
-                                  : Number(i.next_action_level || 0) > 0
-                                    ? LEVEL_LABEL[Number(i.next_action_level)]
-                                    : '—'}
+                              {i.escalation_stage
+                                ? `Übergeben: ${ESC_LABEL[i.escalation_stage]}${i.escalation_at ? ` am ${fmtDate(i.escalation_at)}` : ''}`
+                                : i.case_active
+                                  ? `Klärung: ${i.case_reason}`
+                                  : i.plan_id
+                                    ? `Rate ${fmt(i.next_rate_amount, i.currency)} am ${fmtDate(i.next_rate_due)}`
+                                    : Number(i.next_action_level || 0) > 0
+                                      ? LEVEL_LABEL[Number(i.next_action_level)]
+                                      : '—'}
                             </td>
                             <td className="px-3 py-2 text-right">
                               <Button size="sm" variant="outline" onClick={() => openPanel(i)}>Öffnen</Button>
@@ -723,6 +760,12 @@ export default function OffenePostenLight() {
                           </tr>
                         );
                       })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
                     </tbody>
                   </table>
                 </div>
