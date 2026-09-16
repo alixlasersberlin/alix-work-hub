@@ -1089,6 +1089,7 @@ export const navItems: NavItem[] = [
         path: '#audit-center', label: 'AUDIT CENTER', icon: ShieldCheck, roles: ['Super Admin'],
         children: [
           { path: '/audit-center', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin'] },
+          { path: '/admin/audit', label: 'System-Audit-Log', icon: ScrollText, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
           { path: '/audit-center/live', label: 'Live-Monitor', icon: Radio, roles: ['Super Admin'] },
           { path: '/audit-center/timeline', label: 'Activity Timeline', icon: Activity, roles: ['Super Admin'] },
           { path: '/audit-center/changes', label: 'Änderungs-Log', icon: FileText, roles: ['Super Admin'] },
