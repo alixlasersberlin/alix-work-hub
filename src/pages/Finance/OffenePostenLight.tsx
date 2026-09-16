@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle, Banknote, CalendarClock, CheckCircle2, FileText, History, Landmark, Loader2, Lock,
-  Mail, RefreshCw, Search, Send, ShieldAlert, StickyNote, Unlock, Wallet, X,
+  AlertTriangle, Banknote, CalendarClock, CheckCircle2, FileText, Gavel, History, Landmark, Loader2, Lock,
+  Mail, RefreshCw, Search, Send, ShieldAlert, StickyNote, Undo2, Unlock, Wallet, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
