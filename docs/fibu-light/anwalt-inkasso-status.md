@@ -10,6 +10,9 @@ offener Posten, Massenübergabe an Anwalt oder internes Inkasso, Rückholung, Pr
 **Nicht** Bestandteil von FIBU LIGHT Phase 3 – Bank & Zuordnung.
 **Nicht** durch den Phase-3-Abnahmebericht vom 16.09.2026 geprüft oder freigegeben.
 Die 20 Phase-3-Testfälle decken diese Funktion nicht ab.
+Die Produktionsfreigabe für Phase 3 vom 16.09.2026
+(`docs/fibu-light/phase3-produktionsfreigabe-2026-09-16.md`) umfasst diese Funktion
+ausdrücklich **nicht**.
 
 ## Aktueller Status
 
