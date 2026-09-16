@@ -1262,6 +1262,55 @@ export default function OffenePostenLight() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Übergabe an Anwalt / internes Inkasso */}
+      <Dialog open={escOpen} onOpenChange={setEscOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {escStage === 'anwalt' ? 'An Anwalt übergeben' : 'An internes Inkasso übergeben'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant={escStage === 'anwalt' ? 'destructive' : 'outline'} onClick={() => setEscStage('anwalt')}>
+                <Gavel className="h-4 w-4 mr-2" /> Anwalt
+              </Button>
+              <Button size="sm" variant={escStage === 'inkasso_intern' ? 'default' : 'outline'} onClick={() => setEscStage('inkasso_intern')}>
+                <ShieldAlert className="h-4 w-4 mr-2" /> Internes Inkasso
+              </Button>
+            </div>
+            <div className="rounded-lg border border-border max-h-56 overflow-y-auto divide-y divide-border">
+              {escRows.map((r) => (
+                <div key={r.id} className="flex justify-between gap-3 px-3 py-2 text-xs">
+                  <span className="truncate">{r.customer_name} · {invNo(r)}</span>
+                  <span className="font-medium whitespace-nowrap">{fmt(r.balance, r.currency)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-sm font-medium">
+              <span>{escRows.length} Forderung(en)</span>
+              <span>{fmt(escRows.reduce((s, r) => s + Number(r.balance || 0), 0))}</span>
+            </div>
+            <div>
+              <Label className="text-xs">Notiz zur Übergabe (optional)</Label>
+              <Textarea rows={2} value={escNote} onChange={(e) => setEscNote(e.target.value)}
+                placeholder="z. B. Aktenzeichen, Ansprechpartner, Übergabedatum" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Die Übergabe setzt automatisch eine Mahnsperre, damit kein reguläres Mahnwesen weiterläuft.
+              Rechnungen, Zahlungen und Rechnungsnummern werden nicht verändert; die Übergabe wird unveränderbar protokolliert.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEscOpen(false)} disabled={escBusy}>Abbrechen</Button>
+            <Button variant={escStage === 'anwalt' ? 'destructive' : 'default'} onClick={() => void runEscalation()} disabled={escBusy || escRows.length === 0}>
+              {escBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Verbindlich übergeben
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
