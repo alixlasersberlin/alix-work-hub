@@ -7,10 +7,32 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 
 const SITE_NAME = "Alix Lasers Datacenter"
-const SENDER_DOMAIN = "notify.alix-finance.de"
-const FROM_ADDRESS = "Alix Lasers ® <noreply@notify.alix-finance.de>"
+
+/**
+ * Automatische Absender-Umschaltung: Schlägt der Versand wegen eines
+ * Absender-/Domain-Problems (gesperrt, nicht verifiziert, Rate-Limit) fehl,
+ * wird automatisch die nächste verfügbare Absenderadresse verwendet.
+ */
+const SENDER_CHAIN: Array<{ domain: string; from: string }> = [
+  { domain: "notify.alix-finance.de", from: "Alix Lasers ® <noreply@notify.alix-finance.de>" },
+  { domain: "notify.alixsales.com", from: "Alix Lasers ® <noreply@notify.alixsales.com>" },
+  { domain: "alixwork.de", from: "Alix Lasers ® <noreply@alixwork.de>" },
+]
 // Für Anhänge läuft der Versand über Resend – dort ist nur alixwork.de verifiziert
-const FROM_ADDRESS_ATTACHMENTS = "Alix Lasers ® <noreply@alixwork.de>"
+const ATTACHMENT_SENDER_CHAIN: string[] = [
+  "Alix Lasers ® <noreply@alixwork.de>",
+  "Alix Lasers ® <noreply@notify.alixsales.com>",
+]
+const SENDER_DOMAIN = SENDER_CHAIN[0].domain
+const FROM_ADDRESS = SENDER_CHAIN[0].from
+const FROM_ADDRESS_ATTACHMENTS = ATTACHMENT_SENDER_CHAIN[0]
+
+/** Fehler, bei denen ein Absenderwechsel sinnvoll ist. */
+export function isSenderProblem(msg?: string): boolean {
+  if (!msg) return false
+  return /domain[_ -]?(suspended|not[_ -]?verified|blocked)|not verified|unverified|forbidden|403|422|sender|from address|rate.?limit|429|quota|throttl/i.test(msg)
+}
+
 
 /** Einfache Plausibilitätsprüfung für Empfängeradressen (verhindert Rückläufer). */
 export function isValidEmail(value: unknown): boolean {
