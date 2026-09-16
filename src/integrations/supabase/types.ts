@@ -35363,6 +35363,84 @@ export type Database = {
           },
         ]
       }
+      op_light_booking_issues: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          invoice_number: string | null
+          reported_by: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          invoice_number?: string | null
+          reported_by?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          invoice_number?: string | null
+          reported_by?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
+      op_light_case_events: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string
+          invoice_number: string | null
+          note: string | null
+          pause_until: string | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id: string
+          invoice_number?: string | null
+          note?: string | null
+          pause_until?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string
+          invoice_number?: string | null
+          note?: string | null
+          pause_until?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       op_light_dunning_log: {
         Row: {
           created_at: string
@@ -35419,6 +35497,116 @@ export type Database = {
           template?: string | null
         }
         Relationships: []
+      }
+      op_light_dunning_rules: {
+        Row: {
+          active: boolean
+          label: string
+          level: number
+          offset_days: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          label: string
+          level: number
+          offset_days: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          label?: string
+          level?: number
+          offset_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      op_light_installment_plans: {
+        Row: {
+          agreement_date: string
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          id: string
+          installment_count: number
+          invoice_id: string
+          invoice_number: string | null
+          note: string | null
+          status: string
+          total_amount: number
+        }
+        Insert: {
+          agreement_date?: string
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          installment_count: number
+          invoice_id: string
+          invoice_number?: string | null
+          note?: string | null
+          status?: string
+          total_amount: number
+        }
+        Update: {
+          agreement_date?: string
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          installment_count?: number
+          invoice_id?: string
+          invoice_number?: string | null
+          note?: string | null
+          status?: string
+          total_amount?: number
+        }
+        Relationships: []
+      }
+      op_light_installments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          invoice_id: string
+          paid_at: string | null
+          plan_id: string
+          seq: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_id: string
+          paid_at?: string | null
+          plan_id: string
+          seq: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_id?: string
+          paid_at?: string | null
+          plan_id?: string
+          seq?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_light_installments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "op_light_installment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       op_light_notes: {
         Row: {
@@ -56520,6 +56708,21 @@ export type Database = {
         Args: { p_invoice_id: string; p_note: string }
         Returns: string
       }
+      fibu_light_bank_match_suggestions: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          booking_date: string
+          customer_name: string
+          invoice_id: string
+          invoice_number: string
+          open_amount: number
+          purpose: string
+          score: number
+          sender_name: string
+          transaction_id: string
+        }[]
+      }
       fibu_light_book_payment: {
         Args: {
           p_amount: number
@@ -56529,6 +56732,21 @@ export type Database = {
           p_note?: string
           p_payment_date: string
           p_reference?: string
+        }
+        Returns: Json
+      }
+      fibu_light_clear_clarification: {
+        Args: { p_invoice_id: string; p_note?: string }
+        Returns: string
+      }
+      fibu_light_create_installment_plan: {
+        Args: {
+          p_amount: number
+          p_count: number
+          p_first_due: string
+          p_interval_months?: number
+          p_invoice_id: string
+          p_note?: string
         }
         Returns: Json
       }
@@ -56553,6 +56771,10 @@ export type Database = {
         Args: never
         Returns: {
           balance: number
+          case_active: boolean
+          case_note: string
+          case_pause_until: string
+          case_reason: string
           currency: string
           customer_id: string
           customer_name: string
@@ -56565,13 +56787,35 @@ export type Database = {
           last_action: string
           last_action_at: string
           legal_invoice_number: string
+          next_action_level: number
+          next_rate_amount: number
+          next_rate_due: string
           paid: number
           payment_status: string
+          plan_id: string
+          plan_installments: number
           source_system: string
           status: string
           total: number
           zoho_invoice_id: string
         }[]
+      }
+      fibu_light_report_booking_issue: {
+        Args: {
+          p_description: string
+          p_invoice_id: string
+          p_transaction_id?: string
+        }
+        Returns: string
+      }
+      fibu_light_set_clarification: {
+        Args: {
+          p_invoice_id: string
+          p_note?: string
+          p_pause_until?: string
+          p_reason: string
+        }
+        Returns: string
       }
       finance_can_write: { Args: never; Returns: boolean }
       finance_cost_center_report: {
