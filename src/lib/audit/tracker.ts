@@ -23,6 +23,18 @@ class AuditTracker {
   private started = false;
   private failureCount = 0;
   private pauseUntil = 0;
+  private disabled = false;
+
+  /** Audit darf die App nie stören: bei Infrastrukturfehlern komplett abschalten. */
+  private isFatal(e: unknown) {
+    const msg = String((e as any)?.message ?? e ?? "");
+    return (
+      msg.includes("503") ||
+      msg.includes("LOAD_FUNCTION_METADATA_ERROR") ||
+      msg.includes("Failed to send a request") ||
+      msg.includes("Failed to fetch")
+    );
+  }
 
 
   async start(attempt = 0) {
