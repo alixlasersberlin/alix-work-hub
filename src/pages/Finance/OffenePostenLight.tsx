@@ -100,6 +100,7 @@ export default function OffenePostenLight() {
   const [selected, setSelected] = useState<OpenItem | null>(null);
   const [history, setHistory] = useState<any | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [bankKpi, setBankKpi] = useState<Record<string, number>>({});
 
   // Zahlung
   const [payOpen, setPayOpen] = useState(false);
@@ -161,10 +162,12 @@ export default function OffenePostenLight() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data, error }, rulesRes] = await Promise.all([
+    const [{ data, error }, rulesRes, bankRes] = await Promise.all([
       rpc('fibu_light_open_items'),
       supabase.from('op_light_dunning_rules' as any).select('level,label,offset_days').order('level'),
+      rpc('fibu_light_bank_dashboard'),
     ]);
+    if (!bankRes.error) setBankKpi((bankRes.data as Record<string, number>) || {});
     if (error) {
       toast.error(`Offene Posten konnten nicht geladen werden: ${error.message}`);
       setItems([]);
