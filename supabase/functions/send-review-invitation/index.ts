@@ -107,6 +107,22 @@ Deno.serve(async (req) => {
       return json({ error: 'Für diesen Auftrag wurde bereits eine Bewertung abgegeben' }, 409)
     }
 
+    // Pro Kunde nur EINE Bewertungseinladung – auch über mehrere Aufträge hinweg.
+    if (!manual) {
+      let q = admin
+        .from('reviews')
+        .select('id, order_id, submitted_at, invitation_sent_at')
+        .not('invitation_sent_at', 'is', null)
+        .limit(1)
+      q = order.customer_id
+        ? q.eq('customer_id', order.customer_id)
+        : q.eq('customer_email', customer.email)
+      const { data: already } = await q
+      if (already && already.length > 0 && already[0].order_id !== orderId) {
+        return json({ ok: true, skipped: true, message: 'Kunde wurde bereits um eine Bewertung gebeten' })
+      }
+    }
+
     if (existing && !manual) {
       // Auto-Trigger sendet nicht doppelt
       return json({ ok: true, skipped: true, message: 'Bereits eingeladen' })
