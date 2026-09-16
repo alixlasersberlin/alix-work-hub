@@ -766,11 +766,7 @@ export default function OffenePostenLight() {
               )}
             </div>
 
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+
 
             {/* Arbeitskarte */}
             {selected && (
