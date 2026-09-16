@@ -249,6 +249,8 @@ export default function OffenePostenLight() {
         case 'mahnung': return !i.case_active && Number(i.next_action_level || 0) > 0;
         case 'klaerung': return !!i.case_active;
         case 'raten': return !!i.plan_id;
+        case 'anwalt': return i.escalation_stage === 'anwalt';
+        case 'inkasso': return i.escalation_stage === 'inkasso_intern';
         default: return true;
       }
     });
