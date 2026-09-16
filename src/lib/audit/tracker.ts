@@ -29,13 +29,10 @@ class AuditTracker {
   /** Audit darf die App nie stören: bei Infrastrukturfehlern komplett abschalten. */
   private isFatal(e: unknown) {
     const msg = String((e as any)?.message ?? e ?? "");
-    return (
-      msg.includes("503") ||
-      msg.includes("LOAD_FUNCTION_METADATA_ERROR") ||
-      msg.includes("Failed to send a request") ||
-      msg.includes("Failed to fetch")
-    );
+    // Nur echte Infrastrukturfehler abschalten – kurze Netzaussetzer nicht.
+    return msg.includes("503") || msg.includes("LOAD_FUNCTION_METADATA_ERROR");
   }
+
 
 
   async start(attempt = 0) {
@@ -116,6 +113,8 @@ class AuditTracker {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { await this.stop(); return; }
+    this.accessToken = session.access_token;
+
     const now = Date.now();
     const elapsedSec = Math.round((now - this.lastHeartbeat) / 1000);
     const idleThresholdMs = 60_000;
@@ -169,6 +168,8 @@ class AuditTracker {
     if (!this.sessionId || this.queue.length === 0) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { this.queue = []; await this.stop(); return; }
+    this.accessToken = session.access_token;
+
     const batch = this.queue.splice(0, 100);
     try {
       const { error } = await supabase.functions.invoke("audit-track", { body: { session_id: this.sessionId, actions: batch } });
