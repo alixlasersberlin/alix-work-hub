@@ -47,10 +47,15 @@ type OpenItem = {
   next_rate_amount: number | null;
   next_rate_due: string | null;
   next_action_level: number | null;
+  escalation_stage: string | null;
+  escalation_at: string | null;
+  escalation_note: string | null;
 };
 
-type Filter = 'alle' | 'heute' | 'ueberfaellig' | 'teilbezahlt' | 'mahnung' | 'klaerung' | 'raten';
+type Filter = 'alle' | 'heute' | 'ueberfaellig' | 'teilbezahlt' | 'mahnung' | 'klaerung' | 'raten' | 'anwalt' | 'inkasso';
 type Tab = 'arbeitsliste' | 'mahncenter' | 'bank';
+
+const ESC_LABEL: Record<string, string> = { anwalt: 'Anwalt', inkasso_intern: 'Internes Inkasso' };
 
 const LEVEL_LABEL: Record<number, string> = {
   0: 'Keine Mahnung',
