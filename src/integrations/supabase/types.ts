@@ -35363,6 +35363,90 @@ export type Database = {
           },
         ]
       }
+      op_light_dunning_log: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          due_date: string | null
+          error_message: string | null
+          id: string
+          invoice_id: string
+          invoice_number: string | null
+          level: number
+          message: string | null
+          open_amount: number | null
+          recipient_email: string
+          send_status: string
+          sent_at: string
+          sent_by: string | null
+          subject: string | null
+          template: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          due_date?: string | null
+          error_message?: string | null
+          id?: string
+          invoice_id: string
+          invoice_number?: string | null
+          level: number
+          message?: string | null
+          open_amount?: number | null
+          recipient_email: string
+          send_status?: string
+          sent_at?: string
+          sent_by?: string | null
+          subject?: string | null
+          template?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          due_date?: string | null
+          error_message?: string | null
+          id?: string
+          invoice_id?: string
+          invoice_number?: string | null
+          level?: number
+          message?: string | null
+          open_amount?: number | null
+          recipient_email?: string
+          send_status?: string
+          sent_at?: string
+          sent_by?: string | null
+          subject?: string | null
+          template?: string | null
+        }
+        Relationships: []
+      }
+      op_light_notes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string
+          invoice_number: string | null
+          note: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id: string
+          invoice_number?: string | null
+          note: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string
+          invoice_number?: string | null
+          note?: string
+        }
+        Relationships: []
+      }
       order_additional_deposits: {
         Row: {
           amount: number
@@ -56181,6 +56265,7 @@ export type Database = {
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
       can_use_alix_sign: { Args: never; Returns: boolean }
+      can_use_fibu_light: { Args: never; Returns: boolean }
       can_view_backups: { Args: never; Returns: boolean }
       can_view_delivery: { Args: never; Returns: boolean }
       can_view_finance_module: { Args: never; Returns: boolean }
@@ -56430,6 +56515,63 @@ export type Database = {
           p_table: string
         }
         Returns: string
+      }
+      fibu_light_add_note: {
+        Args: { p_invoice_id: string; p_note: string }
+        Returns: string
+      }
+      fibu_light_book_payment: {
+        Args: {
+          p_amount: number
+          p_full?: boolean
+          p_invoice_id: string
+          p_method?: string
+          p_note?: string
+          p_payment_date: string
+          p_reference?: string
+        }
+        Returns: Json
+      }
+      fibu_light_invoice_history: {
+        Args: { p_invoice_id: string }
+        Returns: Json
+      }
+      fibu_light_log_dunning: {
+        Args: {
+          p_error?: string
+          p_invoice_id: string
+          p_level: number
+          p_message: string
+          p_open_amount?: number
+          p_recipient: string
+          p_send_status?: string
+          p_subject: string
+        }
+        Returns: string
+      }
+      fibu_light_open_items: {
+        Args: never
+        Returns: {
+          balance: number
+          currency: string
+          customer_id: string
+          customer_name: string
+          days_overdue: number
+          due_date: string
+          dunning_level: number
+          id: string
+          invoice_date: string
+          invoice_number: string
+          last_action: string
+          last_action_at: string
+          legal_invoice_number: string
+          paid: number
+          payment_status: string
+          source_system: string
+          status: string
+          total: number
+          zoho_invoice_id: string
+        }[]
       }
       finance_can_write: { Args: never; Returns: boolean }
       finance_cost_center_report: {
@@ -56862,6 +57004,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_device_active: { Args: { _sub_id: string }; Returns: boolean }
+      is_fibu_light: { Args: never; Returns: boolean }
       is_internal_user: { Args: never; Returns: boolean }
       is_mobile_supervisor: { Args: never; Returns: boolean }
       is_portal_customer:

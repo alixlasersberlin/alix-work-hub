@@ -1,0 +1,14 @@
+REVOKE EXECUTE ON FUNCTION public.fibu_light_open_items() FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.fibu_light_book_payment(uuid, numeric, date, text, text, text, boolean) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.fibu_light_log_dunning(uuid, smallint, text, text, text, numeric, text, text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.fibu_light_add_note(uuid, text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.fibu_light_invoice_history(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.is_fibu_light() FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.can_use_fibu_light() FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.fibu_light_open_items() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fibu_light_book_payment(uuid, numeric, date, text, text, text, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fibu_light_log_dunning(uuid, smallint, text, text, text, numeric, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fibu_light_add_note(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fibu_light_invoice_history(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_fibu_light() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_use_fibu_light() TO authenticated;
