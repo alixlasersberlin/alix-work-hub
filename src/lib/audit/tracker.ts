@@ -133,7 +133,8 @@ class AuditTracker {
           await this.stop();
           return;
         }
-        // Transient backend issues (503 / service degraded): back off instead of hammering
+        // Infrastrukturfehler (503 / Funktion nicht ladbar): Audit still abschalten
+        if (this.isFatal(error)) { this.disabled = true; await this.stop(); return; }
         this.failureCount++;
         if (this.failureCount >= 3) {
           this.pauseUntil = Date.now() + 5 * 60_000;
@@ -142,7 +143,8 @@ class AuditTracker {
         return;
       }
       this.failureCount = 0;
-    } catch {
+    } catch (e) {
+      if (this.isFatal(e)) { this.disabled = true; await this.stop(); return; }
       this.failureCount++;
       if (this.failureCount >= 3) {
         this.pauseUntil = Date.now() + 5 * 60_000;
