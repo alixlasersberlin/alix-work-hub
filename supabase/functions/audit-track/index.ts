@@ -34,14 +34,15 @@ Deno.serve(async (req) => {
     const supabase = createAuditServiceClient();
 
 
-    const { session_id, actions, heartbeat } = await req.json() as {
+    const { session_id, actions, heartbeat, end_session } = await req.json() as {
       session_id?: string;
       actions?: Action[];
       heartbeat?: Heartbeat;
+      end_session?: boolean;
     };
 
-    if (!session_id && heartbeat) {
-      return jsonResponse({ error: "session_id required for heartbeat" }, 400);
+    if (!session_id && (heartbeat || end_session)) {
+      return jsonResponse({ error: "session_id required" }, 400);
     }
 
     let session: {
@@ -82,8 +83,23 @@ Deno.serve(async (req) => {
       if (heartbeatError) throw heartbeatError;
     }
 
+    if (end_session && session) {
+      const { error: endError } = await supabase
+        .from("audit_sessions")
+        .update({ ended_at: new Date().toISOString() })
+        .eq("id", session_id)
+        .eq("user_id", user.id)
+        .is("ended_at", null);
+      if (endError) throw endError;
+    }
+
     if (!Array.isArray(actions) || actions.length === 0) {
-      return jsonResponse({ ok: true, inserted: 0, heartbeat: Boolean(heartbeat) });
+      return jsonResponse({
+        ok: true,
+        inserted: 0,
+        heartbeat: Boolean(heartbeat),
+        session_ended: Boolean(end_session),
+      });
     }
 
     // Rate limit: max 200 per call

@@ -24,6 +24,7 @@ class AuditTracker {
   private failureCount = 0;
   private pauseUntil = 0;
   private disabled = false;
+  private accessToken: string | null = null;
 
   /** Audit darf die App nie stören: bei Infrastrukturfehlern komplett abschalten. */
   private isFatal(e: unknown) {
@@ -42,6 +43,7 @@ class AuditTracker {
     // Ohne echte User-Session würde nur der Anon-Key gesendet -> 401.
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) return;
+    this.accessToken = session.access_token;
     this.started = true;
     try {
       const info = collectDeviceInfo();
@@ -80,9 +82,14 @@ class AuditTracker {
     await this.flush();
     await this.sendHeartbeat();
     if (this.sessionId) {
-      try { await supabase.functions.invoke("audit-session-end", { body: { session_id: this.sessionId } }); } catch {}
+      try {
+        await supabase.functions.invoke("audit-track", {
+          body: { session_id: this.sessionId, actions: [], end_session: true },
+        });
+      } catch {}
     }
     this.sessionId = null;
+    this.accessToken = null;
   }
 
   track(action: Action) {
@@ -179,11 +186,19 @@ class AuditTracker {
   }
 
   private handleUnload = () => {
-    if (!this.sessionId) return;
+    if (!this.sessionId || !this.accessToken) return;
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audit-session-end`;
-      const blob = new Blob([JSON.stringify({ session_id: this.sessionId })], { type: "application/json" });
-      navigator.sendBeacon(url, blob);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audit-track`;
+      void fetch(url, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ session_id: this.sessionId, actions: [], end_session: true }),
+      }).catch(() => undefined);
     } catch {}
   };
 }
