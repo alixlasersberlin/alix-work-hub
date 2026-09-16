@@ -369,6 +369,9 @@ verify_jwt = false
 [functions.audit-session-end]
 verify_jwt = false
 
+[functions.audit-session-heartbeat]
+verify_jwt = false
+
 
 
 [functions.survey-public]
