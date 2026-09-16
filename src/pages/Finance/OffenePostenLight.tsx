@@ -100,6 +100,7 @@ export default function OffenePostenLight() {
   const [selected, setSelected] = useState<OpenItem | null>(null);
   const [history, setHistory] = useState<any | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [bankKpi, setBankKpi] = useState<Record<string, number>>({});
 
   // Zahlung
   const [payOpen, setPayOpen] = useState(false);
@@ -161,10 +162,12 @@ export default function OffenePostenLight() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data, error }, rulesRes] = await Promise.all([
+    const [{ data, error }, rulesRes, bankRes] = await Promise.all([
       rpc('fibu_light_open_items'),
       supabase.from('op_light_dunning_rules' as any).select('level,label,offset_days').order('level'),
+      rpc('fibu_light_bank_dashboard'),
     ]);
+    if (!bankRes.error) setBankKpi((bankRes.data as Record<string, number>) || {});
     if (error) {
       toast.error(`Offene Posten konnten nicht geladen werden: ${error.message}`);
       setItems([]);
@@ -528,6 +531,23 @@ export default function OffenePostenLight() {
             </div>
             <div className={cn('text-xl font-semibold', k.tone)}>{k.value}</div>
           </div>
+        ))}
+      </div>
+
+      {/* Bank & Zuordnung (Phase 3) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Bankumsätze ungeprüft', value: bankKpi.ungeprueft ?? 0 },
+          { label: 'Zuordnungsvorschläge', value: bankKpi.vorschlaege ?? 0 },
+          { label: 'Unklare Zahlungen', value: bankKpi.unklar ?? 0 },
+          { label: 'Heute zugeordnet', value: bankKpi.heute_zugeordnet ?? 0 },
+        ].map((k) => (
+          <a key={k.label} href="/fibu-light/bank" className="rounded-xl border border-border bg-card p-4 hover:border-primary/50">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+              <Landmark className="h-3.5 w-3.5" /> {k.label}
+            </div>
+            <div className="text-xl font-semibold">{k.value}</div>
+          </a>
         ))}
       </div>
 
