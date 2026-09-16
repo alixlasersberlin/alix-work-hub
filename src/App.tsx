@@ -1724,6 +1724,7 @@ function AppRoutes() {
           <Route path="/finance/rechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices /></ProtectedRoute>} />
           <Route path="/finance/vermietung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices mietkaufOnly /></ProtectedRoute>} />
           <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
+          <Route path="/offene-posten-light" element={<ProtectedRoute requiredRoles={[...FINANCE_ROLES, 'FIBU LIGHT']}><OffenePostenLight /></ProtectedRoute>} />
           {/* /finance/unpaid-zoho deaktiviert – Daten bleiben in DB für andere Übersichten */}
           <Route path="/finance/rechnungsvorschlaege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Rechnungsvorschlaege /></ProtectedRoute>} />
           <Route path="/finance/stornos" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceStornos /></ProtectedRoute>} />
