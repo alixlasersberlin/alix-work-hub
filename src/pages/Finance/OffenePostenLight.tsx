@@ -456,6 +456,46 @@ export default function OffenePostenLight() {
     else { toast.success('Mahnsperre aufgehoben.'); await load(); setSelected(null); }
   };
 
+  /** Eskalation: Übergabe an Anwalt oder internes Inkasso (Einzeln oder Massenbearbeitung). */
+  const openEscalation = (rows: OpenItem[], stage: 'anwalt' | 'inkasso_intern') => {
+    if (rows.length === 0) { toast.error('Bitte zuerst offene Posten markieren.'); return; }
+    setEscRows(rows);
+    setEscStage(stage);
+    setEscNote('');
+    setEscOpen(true);
+  };
+
+  const runEscalation = async () => {
+    setEscBusy(true);
+    const { data, error } = await rpc('fibu_light_set_escalation', {
+      p_invoice_ids: escRows.map((r) => r.id),
+      p_stage: escStage,
+      p_note: escNote.trim() || null,
+    });
+    if (error) toast.error(`Übergabe fehlgeschlagen: ${error.message}`);
+    else {
+      const rows = (data as { ok: boolean }[]) || [];
+      const ok = rows.filter((r) => r.ok).length;
+      const fail = rows.length - ok;
+      toast[fail ? 'warning' : 'success'](
+        `${ESC_LABEL[escStage]}: ${ok} übergeben${fail ? ` · ${fail} übersprungen` : ''}`,
+      );
+      setEscOpen(false);
+      setListChecked({});
+      await load();
+      if (selected) setSelected(null);
+    }
+    setEscBusy(false);
+  };
+
+  const clearEscalation = async (item: OpenItem) => {
+    const { error } = await rpc('fibu_light_clear_escalation', { p_invoice_id: item.id, p_note: null });
+    if (error) toast.error(error.message);
+    else { toast.success('Rückholung protokolliert.'); await load(); setSelected(null); }
+  };
+
+
+
   const savePlan = async () => {
     if (!selected) return;
     setRateBusy(true);
