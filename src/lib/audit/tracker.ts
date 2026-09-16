@@ -56,6 +56,7 @@ class AuditTracker {
       this.started = false;
       const msg = String((e as any)?.message ?? e ?? "");
       const unauthorized = msg.includes("401") || msg.toLowerCase().includes("unauthorized");
+      if (this.isFatal(e)) { this.disabled = true; return; }
       if (!unauthorized && attempt < 3) {
         const delay = 15_000 * Math.pow(2, attempt);
         window.setTimeout(() => { if (!this.started) this.start(attempt + 1); }, delay);
