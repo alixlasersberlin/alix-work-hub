@@ -28,7 +28,11 @@ export function DeviceConfigDialog({
   onConfirm: (cfg: DeviceConfig) => void;
 }) {
   const colors = (target?.colors?.length ? target.colors : [...PH_DEFAULT_COLORS]) as string[];
-  const powers = (target?.powers?.length ? target.powers : [...PH_DEFAULT_POWERS]) as string[];
+  // Immer alle Standard-Leistungsstufen (inkl. 5000 W) anbieten, ergänzt um produktspezifische Werte.
+  const powers = Array.from(new Set(
+    [...(PH_DEFAULT_POWERS as readonly string[]), ...((target?.powers || []) as string[])]
+      .map(p => String(p).trim()).filter(Boolean),
+  ));
 
   const [color, setColor] = useState('');
   const [ral, setRal] = useState('');
