@@ -695,6 +695,18 @@ export default function Angebote() {
             </Select>
           </div>
         </CardHeader>
+        {selectedOffers.size > 0 && (
+          <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2">
+            <span className="text-sm">{selectedOffers.size} Angebot(e) markiert</span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setSelectedOffers(new Set())}>Auswahl aufheben</Button>
+              <Button size="sm" disabled={duplicating} onClick={duplicateSelected} className="gold-gradient text-black hover:opacity-90">
+                <Copy className="h-4 w-4 mr-2" />
+                {duplicating ? 'Dupliziere…' : 'Duplizieren (neue Nummer)'}
+              </Button>
+            </div>
+          </div>
+        )}
         <CardContent className="p-0">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Lade Angebote…</div>
@@ -745,6 +757,13 @@ export default function Angebote() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={visibleOffers.length > 0 && selectedOffers.size === visibleOffers.length}
+                      onCheckedChange={toggleSelectAllVisible}
+                      aria-label="Alle markieren"
+                    />
+                  </TableHead>
                   <TableHead>Angebotsnr.</TableHead>
                   <TableHead>Datum</TableHead>
                   <TableHead>Kunde</TableHead>
