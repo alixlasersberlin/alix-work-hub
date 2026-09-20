@@ -466,6 +466,55 @@ export default function Angebote() {
     }
   };
 
+  const toggleSelectOffer = (offerNumber: string) => {
+    setSelectedOffers(prev => {
+      const next = new Set(prev);
+      if (next.has(offerNumber)) next.delete(offerNumber); else next.add(offerNumber);
+      return next;
+    });
+  };
+  const toggleSelectAllVisible = () => {
+    setSelectedOffers(prev =>
+      prev.size === visibleOffers.length && visibleOffers.length > 0
+        ? new Set()
+        : new Set(visibleOffers.map(o => o.offerNumber)),
+    );
+  };
+
+  const duplicateSelected = async () => {
+    const targets = visibleOffers.filter(o => selectedOffers.has(o.offerNumber)).map(o => o.offerNumber);
+    if (targets.length === 0) return;
+    if (!confirm(`${targets.length} Angebot(e) identisch duplizieren? Jede Kopie erhält eine neue Angebotsnummer.`)) return;
+    setDuplicating(true);
+    let ok = 0;
+    const created: string[] = [];
+    for (const nr of targets) {
+      try {
+        created.push(await duplicateOffer(nr));
+        ok++;
+      } catch (e: any) {
+        toast.error(`${nr}: ${e?.message || 'Duplizieren fehlgeschlagen'}`);
+      }
+    }
+    setDuplicating(false);
+    setSelectedOffers(new Set());
+    if (ok > 0) toast.success(`${ok} Kopie(n) erstellt: ${created.join(', ')}`);
+    await reload();
+  };
+
+  const duplicateOne = async (offerNumber: string) => {
+    setDuplicating(true);
+    try {
+      const nr = await duplicateOffer(offerNumber);
+      toast.success(`Kopie erstellt: ${nr}`);
+      await reload();
+    } catch (e: any) {
+      toast.error('Duplizieren fehlgeschlagen: ' + (e?.message || 'Unbekannt'));
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
