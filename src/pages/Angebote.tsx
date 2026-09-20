@@ -107,6 +107,10 @@ export default function Angebote() {
   const [selectedApprovals, setSelectedApprovals] = useState<Set<string>>(new Set());
   const [bulkApprovingBusy, setBulkApprovingBusy] = useState(false);
 
+  // Markierung für Duplizieren
+  const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
+  const [duplicating, setDuplicating] = useState(false);
+
   const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
   const pendingCount = pendingOffers.length;
 
