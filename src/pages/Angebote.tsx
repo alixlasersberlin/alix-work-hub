@@ -794,6 +794,13 @@ export default function Angebote() {
                       navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`);
                     }}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedOffers.has(o.offerNumber)}
+                        onCheckedChange={() => toggleSelectOffer(o.offerNumber)}
+                        aria-label={`Angebot ${o.offerNumber} markieren`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       <span className="inline-flex items-center gap-2">
                         {(() => {
@@ -905,6 +912,15 @@ export default function Angebote() {
                           <XCircle className="h-4 w-4 mr-1" /> Kein Deal
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={duplicating}
+                        onClick={() => duplicateOne(o.offerNumber)}
+                        title="Angebot duplizieren (neue Angebotsnummer)"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)} title="Löschen">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
