@@ -25,6 +25,7 @@ import {
   listOffers,
   getOffer,
   deleteOffer as deleteOfferDb,
+  duplicateOffer,
   updateOfferStatus,
   setOfferApproval,
   migrateLegacyOffersOnce,
@@ -105,6 +106,10 @@ export default function Angebote() {
   const [pendingPanelOpen, setPendingPanelOpen] = useState(false);
   const [selectedApprovals, setSelectedApprovals] = useState<Set<string>>(new Set());
   const [bulkApprovingBusy, setBulkApprovingBusy] = useState(false);
+
+  // Markierung für Duplizieren
+  const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
+  const [duplicating, setDuplicating] = useState(false);
 
   const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
   const pendingCount = pendingOffers.length;
@@ -461,6 +466,55 @@ export default function Angebote() {
     }
   };
 
+  const toggleSelectOffer = (offerNumber: string) => {
+    setSelectedOffers(prev => {
+      const next = new Set(prev);
+      if (next.has(offerNumber)) next.delete(offerNumber); else next.add(offerNumber);
+      return next;
+    });
+  };
+  const toggleSelectAllVisible = () => {
+    setSelectedOffers(prev =>
+      prev.size === visibleOffers.length && visibleOffers.length > 0
+        ? new Set()
+        : new Set(visibleOffers.map(o => o.offerNumber)),
+    );
+  };
+
+  const duplicateSelected = async () => {
+    const targets = visibleOffers.filter(o => selectedOffers.has(o.offerNumber)).map(o => o.offerNumber);
+    if (targets.length === 0) return;
+    if (!confirm(`${targets.length} Angebot(e) identisch duplizieren? Jede Kopie erhält eine neue Angebotsnummer.`)) return;
+    setDuplicating(true);
+    let ok = 0;
+    const created: string[] = [];
+    for (const nr of targets) {
+      try {
+        created.push(await duplicateOffer(nr));
+        ok++;
+      } catch (e: any) {
+        toast.error(`${nr}: ${e?.message || 'Duplizieren fehlgeschlagen'}`);
+      }
+    }
+    setDuplicating(false);
+    setSelectedOffers(new Set());
+    if (ok > 0) toast.success(`${ok} Kopie(n) erstellt: ${created.join(', ')}`);
+    await reload();
+  };
+
+  const duplicateOne = async (offerNumber: string) => {
+    setDuplicating(true);
+    try {
+      const nr = await duplicateOffer(offerNumber);
+      toast.success(`Kopie erstellt: ${nr}`);
+      await reload();
+    } catch (e: any) {
+      toast.error('Duplizieren fehlgeschlagen: ' + (e?.message || 'Unbekannt'));
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
@@ -641,6 +695,18 @@ export default function Angebote() {
             </Select>
           </div>
         </CardHeader>
+        {selectedOffers.size > 0 && (
+          <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2">
+            <span className="text-sm">{selectedOffers.size} Angebot(e) markiert</span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setSelectedOffers(new Set())}>Auswahl aufheben</Button>
+              <Button size="sm" disabled={duplicating} onClick={duplicateSelected} className="gold-gradient text-black hover:opacity-90">
+                <Copy className="h-4 w-4 mr-2" />
+                {duplicating ? 'Dupliziere…' : 'Duplizieren (neue Nummer)'}
+              </Button>
+            </div>
+          </div>
+        )}
         <CardContent className="p-0">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Lade Angebote…</div>
@@ -691,6 +757,13 @@ export default function Angebote() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={visibleOffers.length > 0 && selectedOffers.size === visibleOffers.length}
+                      onCheckedChange={toggleSelectAllVisible}
+                      aria-label="Alle markieren"
+                    />
+                  </TableHead>
                   <TableHead>Angebotsnr.</TableHead>
                   <TableHead>Datum</TableHead>
                   <TableHead>Kunde</TableHead>
@@ -721,6 +794,13 @@ export default function Angebote() {
                       navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`);
                     }}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedOffers.has(o.offerNumber)}
+                        onCheckedChange={() => toggleSelectOffer(o.offerNumber)}
+                        aria-label={`Angebot ${o.offerNumber} markieren`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       <span className="inline-flex items-center gap-2">
                         {(() => {
@@ -832,13 +912,22 @@ export default function Angebote() {
                           <XCircle className="h-4 w-4 mr-1" /> Kein Deal
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={duplicating}
+                        onClick={() => duplicateOne(o.offerNumber)}
+                        title="Angebot duplizieren (neue Angebotsnummer)"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)} title="Löschen">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
                   <TableRow key={`${o.offerNumber}-note`} className="hover:bg-transparent border-b">
-                    <TableCell colSpan={9} className="pt-0 pb-3" onClick={(e) => e.stopPropagation()}>
+                    <TableCell colSpan={10} className="pt-0 pb-3" onClick={(e) => e.stopPropagation()}>
                       <OfferNoteRow offerNumber={o.offerNumber} initial={o.listNote || ''} />
                     </TableCell>
                   </TableRow>
