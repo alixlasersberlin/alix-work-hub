@@ -170,6 +170,45 @@ export async function upsertOffer(snap: OfferSnapshot): Promise<void> {
   }
 }
 
+/**
+ * Dupliziert ein Angebot 1:1 – identische Positionen, Kunde, Zahlung und Texte,
+ * aber mit neuer Angebots-/Vorgangsnummer, neuem Datum und zurückgesetztem
+ * Status (Entwurf, keine Freigabe, keine Unterschrift).
+ */
+export async function duplicateOffer(offerNumber: string): Promise<string> {
+  const src = await getOffer(offerNumber);
+  if (!src) throw new Error(`Angebot ${offerNumber} nicht gefunden`);
+
+  const { ensureCaseNumber, nextNumber } = await import('@/lib/number-ranges');
+  const caseNumber = await ensureCaseNumber(null);
+  const fallback = () => `ANG-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`;
+  const newNumber = await nextNumber('offer', fallback, { caseNumber });
+
+  const copy: OfferSnapshot = {
+    ...src,
+    offerNumber: newNumber,
+    caseNumber: caseNumber || null,
+    offerDate: new Date().toISOString().slice(0, 10),
+    createdAt: new Date().toISOString(),
+    status: 'draft',
+    signedAt: undefined,
+    approvalStatus: 'pending',
+    approvedAt: null,
+    approvedBy: null,
+    approvalNote: null,
+    listNote: src.listNote ? `Kopie von ${offerNumber} · ${src.listNote}` : `Kopie von ${offerNumber}`,
+  };
+
+  await upsertOffer(copy);
+  try {
+    await supabase
+      .from('offers')
+      .update({ list_note: copy.listNote, approval_status: 'pending' } as any)
+      .eq('offer_number', newNumber);
+  } catch { /* nicht blockierend */ }
+  return newNumber;
+}
+
 export async function deleteOffer(offerNumber: string): Promise<void> {
   const { error } = await supabase.from('offers').delete().eq('offer_number', offerNumber);
   if (error) throw error;
