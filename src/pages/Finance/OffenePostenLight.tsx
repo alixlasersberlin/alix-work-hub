@@ -191,6 +191,10 @@ export default function OffenePostenLight() {
   const [mailLevel, setMailLevel] = useState(1);
   const [mailText, setMailText] = useState('');
   const [mailBusy, setMailBusy] = useState(false);
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [smsRows, setSmsRows] = useState<{ item: OpenItem; phone: string }[]>([]);
+  const [smsText, setSmsText] = useState('');
+  const [smsBusy, setSmsBusy] = useState(false);
 
 
   const [pdfLoading, setPdfLoading] = useState(false);
