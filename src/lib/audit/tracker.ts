@@ -35,12 +35,47 @@ class AuditTracker {
 
 
 
+  /**
+   * Liefert ein gültiges Access-Token; erneuert es, wenn es abgelaufen ist oder
+   * in den nächsten 60 Sekunden abläuft (sonst antwortet die Edge Function 401).
+   */
+  private async ensureToken(): Promise<string | null> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return null;
+      const expiresAt = (session.expires_at ?? 0) * 1000;
+      if (expiresAt && expiresAt - Date.now() < 60_000) {
+        const { data } = await supabase.auth.refreshSession();
+        const refreshed = data.session?.access_token ?? null;
+        this.accessToken = refreshed;
+        return refreshed;
+      }
+      this.accessToken = session.access_token;
+      return session.access_token;
+    } catch {
+      return null;
+    }
+  }
+
+  /** 401: einmal Session erneuern, sonst Tracking für diese Sitzung beenden. */
+  private async handleUnauthorized(): Promise<boolean> {
+    try {
+      const { data } = await supabase.auth.refreshSession();
+      if (data.session?.access_token) {
+        this.accessToken = data.session.access_token;
+        return true;
+      }
+    } catch { /* ignore */ }
+    this.disabled = true;
+    await this.stop();
+    return false;
+  }
+
   async start(attempt = 0) {
     if (this.started || this.disabled) return;
     // Ohne echte User-Session würde nur der Anon-Key gesendet -> 401.
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) return;
-    this.accessToken = session.access_token;
+    const token = await this.ensureToken();
+    if (!token) return;
     this.started = true;
     try {
       const info = collectDeviceInfo();
@@ -111,9 +146,8 @@ class AuditTracker {
     if (!this.sessionId || !this.started || this.disabled) return;
     if (Date.now() < this.pauseUntil) return;
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { await this.stop(); return; }
-    this.accessToken = session.access_token;
+    const token = await this.ensureToken();
+    if (!token) { await this.stop(); return; }
 
     const now = Date.now();
     const elapsedSec = Math.round((now - this.lastHeartbeat) / 1000);
@@ -140,7 +174,7 @@ class AuditTracker {
       if (error) {
         const msg = String((error as any)?.message ?? "");
         if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
-          await this.stop();
+          await this.handleUnauthorized();
           return;
         }
         // Infrastrukturfehler (503 / Funktion nicht ladbar): Audit still abschalten
@@ -166,9 +200,8 @@ class AuditTracker {
 
   private async flush() {
     if (!this.sessionId || this.queue.length === 0) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { this.queue = []; await this.stop(); return; }
-    this.accessToken = session.access_token;
+    const token = await this.ensureToken();
+    if (!token) { this.queue = []; await this.stop(); return; }
 
     const batch = this.queue.splice(0, 100);
     try {
@@ -177,7 +210,7 @@ class AuditTracker {
         const msg = String((error as any)?.message ?? "");
         if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
           this.queue = [];
-          await this.stop();
+          await this.handleUnauthorized();
         }
       }
     } catch {
