@@ -722,6 +722,10 @@ export default function OffenePostenLight() {
               </span>
               <div className="ml-auto flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => setListChecked({})}>Auswahl aufheben</Button>
+                <Button size="sm" onClick={() => void openMail(markedItems)} disabled={mailBusy}>
+                  {mailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                  E-Mail versenden
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => openEscalation(markedItems, 'inkasso_intern')}>
                   <ShieldAlert className="h-4 w-4 mr-2" /> An internes Inkasso
                 </Button>
