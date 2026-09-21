@@ -237,9 +237,7 @@ Deno.serve(async (req) => {
   // Einheitlicher deutscher Hinweis-Footer (ersetzt den englischen Standardtext)
   const FOOTER_TEXT =
     'Sie erhalten diese Nachricht über Ihren Account der Alix Lasers ®. Bitte lesen Sie den Inhalt aufmerksam, damit es zu keiner weiteren Maßnahme kommt.'
-  const confirmLink = trackingPixelUrl
-    ? `<div style="margin:16px 0 0"><a href="${trackingPixelUrl}&c=1" style="color:#b08a2e;font-family:Arial,Helvetica,sans-serif;font-size:13px">Erhalt dieser Nachricht bestätigen</a></div>`
-    : ''
+  const confirmLink = ''
   const UNSUBSCRIBE_URL = 'https://www.alix-lasers.de'
   const footerHtml =
     `${confirmLink}<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}` +
@@ -285,10 +283,11 @@ Deno.serve(async (req) => {
     // und gilt dann für alle weiteren Empfänger dieses Aufrufs.
     let senderIdx = 0
     let attachmentSenderIdx = 0
+    let resendDisabled = false
     const usedSenders: string[] = []
 
-    // Anhänge (z. B. Angebots-PDF) unterstützt das Lovable-Email-SDK nicht
-    // -> in diesem Fall über den Resend-Gateway senden.
+    // Versand über den Resend-Gateway: hier bestimmen wir den kompletten
+    // Inhalt selbst – ohne fremden Abmelde-Hinweis/Abmeldelink.
     const sendWithAttachments = async (r: typeof recipients[number]) => {
       const resendKey = Deno.env.get('RESEND_API_KEY')
       if (!resendKey) throw new Error('RESEND_API_KEY not configured (für Anhänge erforderlich)')
@@ -307,12 +306,17 @@ Deno.serve(async (req) => {
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
           text: plainTextWithFooter,
+          ...(isDunning ? {} : { bcc: ['service@alix-lasers.com'] }),
           headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
-          attachments: attachments.map((a: any) => ({
-            filename: a.filename,
-            content: a.content,
-            content_type: a.contentType || a.content_type || 'application/pdf',
-          })),
+          ...(attachments.length > 0
+            ? {
+                attachments: attachments.map((a: any) => ({
+                  filename: a.filename,
+                  content: a.content,
+                  content_type: a.contentType || a.content_type || 'application/pdf',
+                })),
+              }
+            : {}),
         }),
       })
       const txt = await res.text()
@@ -327,6 +331,21 @@ Deno.serve(async (req) => {
       while (true) {
         try {
           if (attachments.length > 0) return await sendWithAttachments(r)
+          // Bevorzugt Resend: dort erscheint kein fremder Abmeldelink.
+          if (Deno.env.get('RESEND_API_KEY') && !resendDisabled) {
+            try {
+              return await sendWithAttachments(r)
+            } catch (resendErr: any) {
+              console.warn('Resend-Versand fehlgeschlagen, Fallback auf Lovable', {
+                grund: resendErr?.message?.slice(0, 200),
+              })
+              if (isSenderProblem(resendErr?.message) && attachmentSenderIdx + 1 < ATTACHMENT_SENDER_CHAIN.length) {
+                attachmentSenderIdx++
+                continue
+              }
+              resendDisabled = true
+            }
+          }
           const sender = SENDER_CHAIN[senderIdx] ?? SENDER_CHAIN[0]
           usedSenders.push(sender.from)
           return await sendLovableEmail(
