@@ -35579,15 +35579,19 @@ export type Database = {
           id: string
           invoice_id: string
           invoice_number: string | null
+          last_opened_at: string | null
           level: number
           message: string | null
           open_amount: number | null
+          open_count: number
+          opened_at: string | null
           recipient_email: string
           send_status: string
           sent_at: string
           sent_by: string | null
           subject: string | null
           template: string | null
+          track_token: string | null
         }
         Insert: {
           created_at?: string
@@ -35597,15 +35601,19 @@ export type Database = {
           id?: string
           invoice_id: string
           invoice_number?: string | null
+          last_opened_at?: string | null
           level: number
           message?: string | null
           open_amount?: number | null
+          open_count?: number
+          opened_at?: string | null
           recipient_email: string
           send_status?: string
           sent_at?: string
           sent_by?: string | null
           subject?: string | null
           template?: string | null
+          track_token?: string | null
         }
         Update: {
           created_at?: string
@@ -35615,15 +35623,19 @@ export type Database = {
           id?: string
           invoice_id?: string
           invoice_number?: string | null
+          last_opened_at?: string | null
           level?: number
           message?: string | null
           open_amount?: number | null
+          open_count?: number
+          opened_at?: string | null
           recipient_email?: string
           send_status?: string
           sent_at?: string
           sent_by?: string | null
           subject?: string | null
           template?: string | null
+          track_token?: string | null
         }
         Relationships: []
       }
@@ -57002,19 +57014,48 @@ export type Database = {
         Args: { p_invoice_id: string }
         Returns: Json
       }
-      fibu_light_log_dunning: {
-        Args: {
-          p_error?: string
-          p_invoice_id: string
-          p_level: number
-          p_message: string
-          p_open_amount?: number
-          p_recipient: string
-          p_send_status?: string
-          p_subject: string
-        }
-        Returns: string
+      fibu_light_last_emails: {
+        Args: { p_invoice_ids: string[] }
+        Returns: {
+          invoice_id: string
+          last_opened_at: string
+          level: number
+          open_count: number
+          opened_at: string
+          recipient_email: string
+          send_status: string
+          sent_at: string
+          subject: string
+        }[]
       }
+      fibu_light_log_dunning:
+        | {
+            Args: {
+              p_error?: string
+              p_invoice_id: string
+              p_level: number
+              p_message: string
+              p_open_amount?: number
+              p_recipient: string
+              p_send_status?: string
+              p_subject: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_error?: string
+              p_invoice_id: string
+              p_level: number
+              p_message: string
+              p_open_amount?: number
+              p_recipient: string
+              p_send_status?: string
+              p_subject: string
+              p_track_token?: string
+            }
+            Returns: string
+          }
       fibu_light_open_items: {
         Args: never
         Returns: {
@@ -57636,6 +57677,10 @@ export type Database = {
       offboard_user: {
         Args: { _reason: string; _user_id: string }
         Returns: Json
+      }
+      op_light_mark_email_opened: {
+        Args: { p_token: string }
+        Returns: undefined
       }
       op_light_norm_ref: { Args: { p: string }; Returns: string }
       order_status_counts: { Args: { p_order_id: string }; Returns: Json }
