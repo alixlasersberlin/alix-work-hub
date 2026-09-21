@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle, Banknote, CalendarClock, CheckCircle2, FileText, Gavel, History, Landmark, Loader2, Lock,
-  Mail, RefreshCw, Search, Send, ShieldAlert, StickyNote, Undo2, Unlock, Wallet, X,
+  Mail, MessageSquare, RefreshCw, Search, Send, ShieldAlert, StickyNote, Undo2, Unlock, Wallet, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -191,6 +191,10 @@ export default function OffenePostenLight() {
   const [mailLevel, setMailLevel] = useState(1);
   const [mailText, setMailText] = useState('');
   const [mailBusy, setMailBusy] = useState(false);
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [smsRows, setSmsRows] = useState<{ item: OpenItem; phone: string }[]>([]);
+  const [smsText, setSmsText] = useState('');
+  const [smsBusy, setSmsBusy] = useState(false);
 
 
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -314,6 +318,17 @@ export default function OffenePostenLight() {
       .or(`company_name.ilike.${name},contact_name.ilike.${name}`)
       .limit(1);
     return ((data as any[])?.[0]?.email as string) || '';
+  }, []);
+
+  /** Mobilnummer des Kunden für den SMS-Versand ermitteln. */
+  const resolvePhone = useCallback(async (item: OpenItem): Promise<string> => {
+    const name = item.customer_name?.trim();
+    if (!name) return '';
+    const { data } = await supabase.from('customers')
+      .select('phone, company_name, contact_name')
+      .or(`company_name.ilike.${name},contact_name.ilike.${name}`)
+      .limit(1);
+    return ((data as any[])?.[0]?.phone as string) || '';
   }, []);
 
   const openPdf = useCallback(async (item: OpenItem) => {
@@ -566,6 +581,67 @@ export default function OffenePostenLight() {
     await load();
   };
 
+  /** SMS-Erinnerung an die markierten Kunden (Twilio). */
+  const openSms = async (rows: OpenItem[]) => {
+    if (rows.length === 0) { toast.error('Bitte zuerst offene Posten markieren.'); return; }
+    setSmsBusy(true);
+    const prepared: { item: OpenItem; phone: string }[] = [];
+    for (const it of rows) prepared.push({ item: it, phone: await resolvePhone(it) });
+    setSmsRows(prepared);
+    setSmsText('Alix Lasers: Bitte gleichen Sie Ihre offene Rechnung {rechnung} über {betrag} kurzfristig aus. Vielen Dank.');
+    setSmsBusy(false);
+    setSmsOpen(true);
+  };
+
+  const sendSms = async () => {
+    if (!smsText.trim()) { toast.error('Bitte einen Text für die SMS eingeben.'); return; }
+    setSmsBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const row of smsRows) {
+      const phone = row.phone.trim();
+      if (phone.replace(/\D/g, '').length < 7) { skipped += 1; continue; }
+      const message = smsText
+        .replace(/\{rechnung\}/g, invNo(row.item))
+        .replace(/\{betrag\}/g, fmt(row.item.balance, row.item.currency))
+        .replace(/\{kunde\}/g, row.item.customer_name ?? '');
+      try {
+        const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
+          body: { to: phone, message, invoice_id: row.item.id },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        ok += 1;
+        await rpc('fibu_light_log_dunning', {
+          p_invoice_id: row.item.id,
+          p_level: Math.max(1, Number(row.item.next_action_level || 1)),
+          p_recipient: phone,
+          p_subject: `SMS – Rechnung ${invNo(row.item)}`,
+          p_message: message,
+          p_open_amount: Number(row.item.balance || 0),
+          p_send_status: 'sent',
+          p_error: null,
+        });
+      } catch (e: any) {
+        fail += 1;
+        await rpc('fibu_light_log_dunning', {
+          p_invoice_id: row.item.id,
+          p_level: Math.max(1, Number(row.item.next_action_level || 1)),
+          p_recipient: phone,
+          p_subject: `SMS – Rechnung ${invNo(row.item)}`,
+          p_message: message,
+          p_open_amount: Number(row.item.balance || 0),
+          p_send_status: 'failed',
+          p_error: String(e?.message ?? e).slice(0, 500),
+        });
+      }
+    }
+    setSmsBusy(false);
+    setSmsOpen(false);
+    setListChecked({});
+    toast[fail ? 'warning' : 'success'](`SMS versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Nummer: ${skipped}`);
+    await load();
+  };
+
 
 
   const savePlan = async () => {
@@ -755,6 +831,10 @@ export default function OffenePostenLight() {
                 <Button size="sm" onClick={() => void openMail(markedItems)} disabled={mailBusy}>
                   {mailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
                   E-Mail versenden
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => void openSms(markedItems)} disabled={smsBusy}>
+                  {smsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+                  SMS versenden
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => openEscalation(markedItems, 'inkasso_intern')}>
                   <ShieldAlert className="h-4 w-4 mr-2" /> An internes Inkasso
@@ -1314,6 +1394,44 @@ export default function OffenePostenLight() {
         </DialogContent>
       </Dialog>
 
+      {/* SMS an markierte Kunden */}
+      <Dialog open={smsOpen} onOpenChange={setSmsOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle>SMS an {smsRows.length} markierte Kunden</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div>
+              <Label>Text der SMS</Label>
+              <Textarea rows={4} value={smsText} onChange={(e) => setSmsText(e.target.value)}
+                placeholder="Kurzer Hinweis auf die offene Rechnung …" />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Platzhalter: {'{rechnung}'}, {'{betrag}'}, {'{kunde}'} · {smsText.length} Zeichen
+              </p>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+              {smsRows.map((r, idx) => (
+                <div key={r.item.id} className="p-2">
+                  <div className="flex justify-between font-medium">
+                    <span>{r.item.customer_name} · {invNo(r.item)}</span>
+                    <span>{fmt(r.item.balance, r.item.currency)}</span>
+                  </div>
+                  <Input className="mt-1 h-8 text-xs" value={r.phone} placeholder="keine Mobilnummer hinterlegt"
+                    onChange={(e) => setSmsRows((prev) => prev.map((p, i) => (i === idx ? { ...p, phone: e.target.value } : p)))} />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Jede versendete SMS wird protokolliert. Kunden ohne Mobilnummer werden übersprungen.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => void sendSms()} disabled={smsBusy}>
+              {smsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+              SMS jetzt senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Sammelprüfung Mahnungen */}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
