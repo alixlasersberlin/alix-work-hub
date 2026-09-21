@@ -315,8 +315,11 @@ Deno.serve(async (req) => {
           html: htmlFor(r),
 
           text: plainTextWithFooter,
+          reply_to: REPLY_TO,
           ...(isDunning ? {} : { bcc: ['service@alix-lasers.com'] }),
-          headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
+          headers: {
+            'List-Unsubscribe': `<mailto:${REPLY_TO}?subject=unsubscribe>, <${UNSUBSCRIBE_URL}>`,
+          },
           ...(attachments.length > 0
             ? {
                 attachments: attachments.map((a: any) => ({
