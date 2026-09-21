@@ -53,7 +53,23 @@ type OpenItem = {
 };
 
 type Filter = 'alle' | 'heute' | 'ueberfaellig' | 'teilbezahlt' | 'mahnung' | 'klaerung' | 'raten' | 'anwalt' | 'inkasso';
-type Tab = 'arbeitsliste' | 'mahncenter' | 'bank';
+type Tab = 'arbeitsliste' | 'anzahlungen' | 'mahncenter' | 'bank';
+
+/** Offene Anzahlung (finance_deposits) – reine Anzeige, keine Buchungen in FIBU LIGHT. */
+type DepositRow = {
+  id: string;
+  deposit_number: string | null;
+  customer_name: string | null;
+  invoice_number: string | null;
+  order_number: string | null;
+  currency: string | null;
+  gross_amount: number | null;
+  paid_amount: number | null;
+  open_amount: number | null;
+  due_date: string | null;
+  status: string | null;
+};
+
 
 const ESC_LABEL: Record<string, string> = { anwalt: 'Anwalt', inkasso_intern: 'Internes Inkasso' };
 
@@ -256,6 +272,38 @@ export default function OffenePostenLight() {
   }, []);
 
   useEffect(() => { if (tab === 'bank' && bankRows.length === 0) void loadBank(); }, [tab, bankRows.length, loadBank]);
+
+  // Offene Anzahlungen – separat, reine Anzeige
+  const [deposits, setDeposits] = useState<DepositRow[]>([]);
+  const [depositsLoading, setDepositsLoading] = useState(false);
+  const loadDeposits = useCallback(async () => {
+    setDepositsLoading(true);
+    const { data, error } = await supabase
+      .from('finance_deposits' as any)
+      .select('id,deposit_number,customer_name,invoice_number,order_number,currency,gross_amount,paid_amount,open_amount,due_date,status')
+      .gt('open_amount', 0.009)
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .limit(2000);
+    if (error) toast.error(`Anzahlungen konnten nicht geladen werden: ${error.message}`);
+    setDeposits(((data as any[]) || []) as DepositRow[]);
+    setDepositsLoading(false);
+  }, []);
+
+  useEffect(() => { if (tab === 'anzahlungen' && deposits.length === 0) void loadDeposits(); }, [tab, deposits.length, loadDeposits]);
+
+  const depositsFiltered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return deposits;
+    return deposits.filter((d) =>
+      [d.customer_name, d.deposit_number, d.invoice_number, d.order_number]
+        .filter(Boolean).join(' ').toLowerCase().includes(q));
+  }, [deposits, search]);
+
+  const depositsSum = useMemo(
+    () => depositsFiltered.reduce((s, d) => s + Number(d.open_amount || 0), 0),
+    [depositsFiltered],
+  );
+
 
   const loadHistory = useCallback(async (invoiceId: string) => {
     setHistoryLoading(true);
@@ -812,8 +860,10 @@ export default function OffenePostenLight() {
       <div className="flex items-center gap-2 mb-4 border-b border-border">
         {([
           { key: 'arbeitsliste', label: 'Arbeitsliste' },
+          { key: 'anzahlungen', label: 'Anzahlungen' },
           { key: 'mahncenter', label: 'Mahnungen heute' },
           { key: 'bank', label: 'Bankvorschläge' },
+
         ] as { key: Tab; label: string }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={cn('px-4 py-2 text-sm border-b-2 -mb-px',
@@ -1174,7 +1224,66 @@ export default function OffenePostenLight() {
       )}
 
       {/* Mahncenter */}
+      {tab === 'anzahlungen' && (
+        <>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <div className="text-xs text-muted-foreground">Offene Anzahlungen</div>
+              <div className="text-xl font-semibold">{fmt(depositsSum)}</div>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <div className="text-xs text-muted-foreground">Anzahl</div>
+              <div className="text-xl font-semibold">{depositsFiltered.length}</div>
+            </div>
+            <div className="ml-auto w-full sm:w-72">
+              <Input placeholder="Kunde, Anzahlungs- oder Auftragsnummer …" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {depositsLoading ? (
+              <div className="p-6"><SkeletonTable rows={6} cols={6} /></div>
+            ) : depositsFiltered.length === 0 ? (
+              <div className="p-8"><EmptyState title="Keine offenen Anzahlungen" description="Aktuell sind keine Anzahlungen offen." /></div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/50 text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-3 py-3">Kunde</th>
+                      <th className="text-left px-3 py-3">Anzahlung</th>
+                      <th className="text-left px-3 py-3">Auftrag</th>
+                      <th className="text-left px-3 py-3">Fällig</th>
+                      <th className="text-right px-3 py-3">Betrag</th>
+                      <th className="text-right px-3 py-3">Bezahlt</th>
+                      <th className="text-right px-3 py-3">Offen</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {depositsFiltered.map((d) => (
+                      <tr key={d.id} className="hover:bg-secondary/30">
+                        <td className="px-3 py-2">{d.customer_name || '—'}</td>
+                        <td className="px-3 py-2 font-medium">{d.deposit_number || d.invoice_number || '—'}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{d.order_number || '—'}</td>
+                        <td className="px-3 py-2">{fmtDate(d.due_date)}</td>
+                        <td className="px-3 py-2 text-right">{fmt(d.gross_amount, d.currency)}</td>
+                        <td className="px-3 py-2 text-right text-muted-foreground">{fmt(d.paid_amount, d.currency)}</td>
+                        <td className="px-3 py-2 text-right font-semibold">{fmt(d.open_amount, d.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
+              Anzeige aus „Offene Anzahlungen“ – Buchungen und Freigaben erfolgen weiterhin dort.
+            </div>
+          </div>
+        </>
+      )}
+
       {tab === 'mahncenter' && (
+
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
             Mahnfristen (zentral vom Administrator festgelegt):{' '}
