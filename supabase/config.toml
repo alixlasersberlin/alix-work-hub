@@ -473,3 +473,6 @@ verify_jwt = false
 
 [functions.gobd-restore-test]
 verify_jwt = false
+
+[functions.op-light-mail-open]
+verify_jwt = false
