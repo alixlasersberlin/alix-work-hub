@@ -1204,6 +1204,64 @@ export default function OffenePostenLight() {
         </DialogContent>
       </Dialog>
 
+      {/* E-Mail an markierte Kunden: Vorlage oder freier Text */}
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle>E-Mail an {mailRows.length} markierte Kunden</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex gap-2">
+              <Button size="sm" variant={mailMode === 'vorlage' ? 'default' : 'outline'} onClick={() => setMailMode('vorlage')}>
+                Vorlage auswählen
+              </Button>
+              <Button size="sm" variant={mailMode === 'frei' ? 'default' : 'outline'} onClick={() => setMailMode('frei')}>
+                Freier Text
+              </Button>
+            </div>
+
+            {mailMode === 'vorlage' ? (
+              <div>
+                <Label>Vorlage</Label>
+                <Select value={String(mailLevel)} onValueChange={(v) => setMailLevel(Number(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4].map((l) => <SelectItem key={l} value={String(l)}>{LEVEL_LABEL[l]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div>
+                <Label>Ihr Text an den Kunden</Label>
+                <Textarea rows={5} value={mailText} onChange={(e) => setMailText(e.target.value)}
+                  placeholder="Sehr geehrte Damen und Herren, wir möchten Sie freundlich an die offene Rechnung erinnern …" />
+              </div>
+            )}
+
+            <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+              {mailRows.map((r, idx) => (
+                <div key={r.item.id} className="p-2">
+                  <div className="flex justify-between font-medium">
+                    <span>{r.item.customer_name} · {invNo(r.item)}</span>
+                    <span>{fmt(r.item.balance, r.item.currency)}</span>
+                  </div>
+                  <Input className="mt-1 h-8 text-xs" value={r.email} placeholder="keine E-Mail hinterlegt"
+                    onChange={(e) => setMailRows((prev) => prev.map((p, i) => (i === idx ? { ...p, email: e.target.value } : p)))} />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Jede versendete Erinnerung wird protokolliert. Kunden ohne E-Mail-Adresse werden übersprungen.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => void sendMails()} disabled={mailBusy}>
+              {mailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Erinnerung jetzt senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Sammelprüfung Mahnungen */}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent className="sm:max-w-2xl">
