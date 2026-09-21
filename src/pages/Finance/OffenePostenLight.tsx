@@ -95,8 +95,22 @@ function trafficLight(i: OpenItem): Light {
   return { key: 'rot', label: `${od} Tage überfällig`, dot: 'bg-destructive', text: 'text-destructive' };
 }
 
+/** Letzte gesendete E-Mail je Rechnung inkl. Lesesignal (1x1-Pixel). */
+type LastMail = {
+  invoice_id: string;
+  sent_at: string | null;
+  level: number | null;
+  subject: string | null;
+  recipient_email: string | null;
+  send_status: string | null;
+  opened_at: string | null;
+  last_opened_at: string | null;
+  open_count: number | null;
+};
+
 export default function OffenePostenLight() {
   const [items, setItems] = useState<OpenItem[]>([]);
+  const [lastMails, setLastMails] = useState<Record<string, LastMail>>({});
   const [rules, setRules] = useState<{ level: number; label: string; offset_days: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('arbeitsliste');
@@ -193,8 +207,19 @@ export default function OffenePostenLight() {
     if (error) {
       toast.error(`Offene Posten konnten nicht geladen werden: ${error.message}`);
       setItems([]);
+      setLastMails({});
     } else {
-      setItems((data as OpenItem[]) || []);
+      const rows = (data as OpenItem[]) || [];
+      setItems(rows);
+      const ids = rows.map((r) => r.id).filter(Boolean);
+      if (ids.length) {
+        const { data: mails } = await rpc('fibu_light_last_emails', { p_invoice_ids: ids });
+        const map: Record<string, LastMail> = {};
+        for (const m of ((mails as LastMail[]) || [])) map[m.invoice_id] = m;
+        setLastMails(map);
+      } else {
+        setLastMails({});
+      }
     }
     setRules(((rulesRes.data as any[]) || []) as any);
     setLoading(false);
@@ -367,11 +392,15 @@ export default function OffenePostenLight() {
 
   const sendDunningFor = useCallback(async (item: OpenItem, level: number, email: string, message: string) => {
     const subject = `${LEVEL_LABEL[level]} – Rechnung ${invNo(item)}`;
+    // Lesesignal: eindeutiger Token pro Versand, wird als 1x1-Pixel eingebettet.
+    const trackToken = crypto.randomUUID();
+    const pixelUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/op-light-mail-open?t=${trackToken}`;
     try {
       const { data, error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'finance-reminder',
           recipientEmail: email,
+          trackingPixelUrl: pixelUrl,
           templateData: {
             customerName: item.customer_name,
             level,
@@ -393,7 +422,7 @@ export default function OffenePostenLight() {
       await rpc('fibu_light_log_dunning', {
         p_invoice_id: item.id, p_level: level, p_recipient: email, p_subject: subject,
         p_message: message || null, p_open_amount: Number(item.balance || 0),
-        p_send_status: 'sent', p_error: null,
+        p_send_status: 'sent', p_error: null, p_track_token: trackToken,
       });
       return { ok: true as const };
     } catch (e: any) {
@@ -401,7 +430,7 @@ export default function OffenePostenLight() {
       await rpc('fibu_light_log_dunning', {
         p_invoice_id: item.id, p_level: level, p_recipient: email, p_subject: subject,
         p_message: message || null, p_open_amount: Number(item.balance || 0),
-        p_send_status: 'failed', p_error: msg.slice(0, 500),
+        p_send_status: 'failed', p_error: msg.slice(0, 500), p_track_token: null,
       });
       return { ok: false as const, error: msg };
     }
@@ -758,6 +787,7 @@ export default function OffenePostenLight() {
                         <th className="text-right px-3 py-3">Betrag</th>
                         <th className="text-right px-3 py-3">Bezahlt</th>
                         <th className="text-right px-3 py-3">Offen</th>
+                        <th className="text-left px-3 py-3">Letzte E-Mail</th>
                         <th className="text-left px-3 py-3">Arbeitsstatus</th>
                         <th className="text-left px-3 py-3">Nächste Aktion</th>
                         <th className="text-right px-3 py-3" />
@@ -789,6 +819,28 @@ export default function OffenePostenLight() {
                             <td className="px-3 py-2 text-right">{fmt(i.total, i.currency)}</td>
                             <td className="px-3 py-2 text-right text-muted-foreground">{fmt(i.paid, i.currency)}</td>
                             <td className="px-3 py-2 text-right font-semibold">{fmt(i.balance, i.currency)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-xs">
+                              {(() => {
+                                const m = lastMails[i.id];
+                                if (!m) return <span className="text-muted-foreground">Keine E-Mail</span>;
+                                const failed = m.send_status !== 'sent';
+                                return (
+                                  <span title={`${m.subject || ''}\n${m.recipient_email || ''}`}>
+                                    <span className="text-muted-foreground">{fmtDateTime(m.sent_at)}</span>
+                                    <Badge
+                                      variant={failed ? 'destructive' : m.opened_at ? 'default' : 'secondary'}
+                                      className="ml-2"
+                                    >
+                                      {failed
+                                        ? 'Versand fehlgeschlagen'
+                                        : m.opened_at
+                                          ? `Gelesen ${fmtDateTime(m.opened_at)}`
+                                          : 'Noch nicht gelesen'}
+                                    </Badge>
+                                  </span>
+                                );
+                              })()}
+                            </td>
                             <td className={cn('px-3 py-2 whitespace-nowrap', light.text)}>{light.label}</td>
                             <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                               {i.escalation_stage

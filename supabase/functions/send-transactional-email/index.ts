@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
   let bccEmails: string[] = []
   let skipDefaultCopies = false
   let attachments: Array<{ filename: string; content: string; contentType?: string; content_type?: string }> = []
+  let trackingPixelUrl = ''
 
   try {
     const body = await req.json()
@@ -151,6 +152,9 @@ Deno.serve(async (req) => {
       bccEmails = body.bcc.filter((e: any) => typeof e === 'string' && e.includes('@'))
     }
     if (body.skipDefaultCopies === true) skipDefaultCopies = true
+    if (typeof body.trackingPixelUrl === 'string' && body.trackingPixelUrl.startsWith('https://')) {
+      trackingPixelUrl = body.trackingPixelUrl
+    }
     if (Array.isArray(body.attachments)) {
       attachments = body.attachments.filter((a: any) => a && typeof a.filename === 'string' && typeof a.content === 'string')
     }
@@ -215,11 +219,17 @@ Deno.serve(async (req) => {
   }
 
   // Render template
-  const html = await renderAsync(React.createElement(template.component, templateData))
+  let html = await renderAsync(React.createElement(template.component, templateData))
   const plainText = await renderAsync(
     React.createElement(template.component, templateData),
     { plainText: true }
   )
+
+  // Optionales Lesesignal (1x1-Pixel) – nur wenn der Aufrufer eine URL mitgibt
+  if (trackingPixelUrl) {
+    const pixel = `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`
+    html = html.includes('</body>') ? html.replace('</body>', `${pixel}</body>`) : html + pixel
+  }
 
   const resolvedSubject =
     typeof template.subject === 'function'
