@@ -83,6 +83,22 @@ const invNo = (i: OpenItem) => i.legal_invoice_number || i.invoice_number || '�
 const rpc = (name: string, args?: Record<string, unknown>) =>
   (supabase.rpc as unknown as (n: string, a?: Record<string, unknown>) => Promise<{ data: any; error: any }>)(name, args);
 
+/** Lädt eine set-returning RPC vollständig (PostgREST liefert max. 1000 Zeilen pro Anfrage). */
+async function rpcAll(name: string, args?: Record<string, unknown>) {
+  const CHUNK = 1000;
+  const out: any[] = [];
+  for (let from = 0; ; from += CHUNK) {
+    const q = (supabase.rpc as any)(name, args).range(from, from + CHUNK - 1);
+    const { data, error } = await q;
+    if (error) return { data: out, error };
+    const rows = (data as any[]) || [];
+    out.push(...rows);
+    if (rows.length < CHUNK) break;
+  }
+  return { data: out, error: null as any };
+}
+
+
 /** Ampel: reine Arbeitskennzeichnung, verändert keine Buchhaltungsdaten. */
 type Light = { key: string; label: string; dot: string; text: string };
 function trafficLight(i: OpenItem): Light {
@@ -203,7 +219,7 @@ export default function OffenePostenLight() {
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data, error }, rulesRes, bankRes] = await Promise.all([
-      rpc('fibu_light_open_items'),
+      rpcAll('fibu_light_open_items'),
       supabase.from('op_light_dunning_rules' as any).select('level,label,offset_days').order('level'),
       rpc('fibu_light_bank_dashboard'),
     ]);
@@ -217,7 +233,7 @@ export default function OffenePostenLight() {
       setItems(rows);
       const ids = rows.map((r) => r.id).filter(Boolean);
       if (ids.length) {
-        const { data: mails } = await rpc('fibu_light_last_emails', { p_invoice_ids: ids });
+        const { data: mails } = await rpcAll('fibu_light_last_emails', { p_invoice_ids: ids });
         const map: Record<string, LastMail> = {};
         for (const m of ((mails as LastMail[]) || [])) map[m.invoice_id] = m;
         setLastMails(map);
