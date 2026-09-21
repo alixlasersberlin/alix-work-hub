@@ -240,10 +240,12 @@ Deno.serve(async (req) => {
   const confirmLink = trackingPixelUrl
     ? `<div style="margin:16px 0 0"><a href="${trackingPixelUrl}&c=1" style="color:#b08a2e;font-family:Arial,Helvetica,sans-serif;font-size:13px">Erhalt dieser Nachricht bestätigen</a></div>`
     : ''
+  const UNSUBSCRIBE_URL = 'https://www.alix-lasers.de'
   const footerHtml =
-    `${confirmLink}<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}</div>`
+    `${confirmLink}<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}` +
+    ` <a href="${UNSUBSCRIBE_URL}" style="color:#8a8a8a;text-decoration:underline">${UNSUBSCRIBE_URL.replace('https://', '')}</a></div>`
   html = html.includes('</body>') ? html.replace('</body>', `${footerHtml}</body>`) : html + footerHtml
-  const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT}`
+  const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT} ${UNSUBSCRIBE_URL}`
 
   const resolvedSubject =
     typeof template.subject === 'function'
@@ -305,6 +307,7 @@ Deno.serve(async (req) => {
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
           text: plainTextWithFooter,
+          headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
           attachments: attachments.map((a: any) => ({
             filename: a.filename,
             content: a.content,
