@@ -305,12 +305,17 @@ Deno.serve(async (req) => {
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
           text: plainTextWithFooter,
+          ...(isDunning ? {} : { bcc: ['service@alix-lasers.com'] }),
           headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
-          attachments: attachments.map((a: any) => ({
-            filename: a.filename,
-            content: a.content,
-            content_type: a.contentType || a.content_type || 'application/pdf',
-          })),
+          ...(attachments.length > 0
+            ? {
+                attachments: attachments.map((a: any) => ({
+                  filename: a.filename,
+                  content: a.content,
+                  content_type: a.contentType || a.content_type || 'application/pdf',
+                })),
+              }
+            : {}),
         }),
       })
       const txt = await res.text()
