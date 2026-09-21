@@ -146,9 +146,8 @@ class AuditTracker {
     if (!this.sessionId || !this.started || this.disabled) return;
     if (Date.now() < this.pauseUntil) return;
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { await this.stop(); return; }
-    this.accessToken = session.access_token;
+    const token = await this.ensureToken();
+    if (!token) { await this.stop(); return; }
 
     const now = Date.now();
     const elapsedSec = Math.round((now - this.lastHeartbeat) / 1000);
