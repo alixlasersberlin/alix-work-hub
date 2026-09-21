@@ -273,6 +273,38 @@ export default function OffenePostenLight() {
 
   useEffect(() => { if (tab === 'bank' && bankRows.length === 0) void loadBank(); }, [tab, bankRows.length, loadBank]);
 
+  // Offene Anzahlungen – separat, reine Anzeige
+  const [deposits, setDeposits] = useState<DepositRow[]>([]);
+  const [depositsLoading, setDepositsLoading] = useState(false);
+  const loadDeposits = useCallback(async () => {
+    setDepositsLoading(true);
+    const { data, error } = await supabase
+      .from('finance_deposits' as any)
+      .select('id,deposit_number,customer_name,invoice_number,order_number,currency,gross_amount,paid_amount,open_amount,due_date,status')
+      .gt('open_amount', 0.009)
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .limit(2000);
+    if (error) toast.error(`Anzahlungen konnten nicht geladen werden: ${error.message}`);
+    setDeposits(((data as any[]) || []) as DepositRow[]);
+    setDepositsLoading(false);
+  }, []);
+
+  useEffect(() => { if (tab === 'anzahlungen' && deposits.length === 0) void loadDeposits(); }, [tab, deposits.length, loadDeposits]);
+
+  const depositsFiltered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return deposits;
+    return deposits.filter((d) =>
+      [d.customer_name, d.deposit_number, d.invoice_number, d.order_number]
+        .filter(Boolean).join(' ').toLowerCase().includes(q));
+  }, [deposits, search]);
+
+  const depositsSum = useMemo(
+    () => depositsFiltered.reduce((s, d) => s + Number(d.open_amount || 0), 0),
+    [depositsFiltered],
+  );
+
+
   const loadHistory = useCallback(async (invoiceId: string) => {
     setHistoryLoading(true);
     const { data, error } = await rpc('fibu_light_invoice_history', { p_invoice_id: invoiceId });
