@@ -304,6 +304,16 @@ export default function OffenePostenLight() {
     [depositsFiltered],
   );
 
+  const [depChecked, setDepChecked] = useState<Record<string, boolean>>({});
+  const [depMailOpen, setDepMailOpen] = useState(false);
+  const [depMailBusy, setDepMailBusy] = useState(false);
+  const [depMailText, setDepMailText] = useState('');
+  const [depMailRows, setDepMailRows] = useState<{ row: DepositRow; email: string }[]>([]);
+  const [depSmsOpen, setDepSmsOpen] = useState(false);
+  const [depSmsBusy, setDepSmsBusy] = useState(false);
+  const [depSmsText, setDepSmsText] = useState('');
+  const [depSmsRows, setDepSmsRows] = useState<{ row: DepositRow; phone: string }[]>([]);
+
 
   const loadHistory = useCallback(async (invoiceId: string) => {
     setHistoryLoading(true);
