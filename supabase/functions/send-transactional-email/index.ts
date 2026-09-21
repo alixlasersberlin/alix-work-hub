@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
     extraCc = extraCc.filter(e => !/service@alix-lasers\.com|buchhaltung@alix-lasers\.com/i.test(e))
     if (!bccEmails.some(e => e.trim().toLowerCase() === dunningBcc)) bccEmails.push(dunningBcc)
     // Zusätzlich immer in Kopie (CC)
-    const dunningCc = 'k.trinh@alix-lasers.com'
+    const dunningCc = 'k.trinh@alix-operation.de'
     if (!extraCc.some(e => e.trim().toLowerCase() === dunningCc)) extraCc.push(dunningCc)
   }
 
