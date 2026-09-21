@@ -307,6 +307,7 @@ Deno.serve(async (req) => {
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
           text: plainTextWithFooter,
+          headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
           attachments: attachments.map((a: any) => ({
             filename: a.filename,
             content: a.content,
