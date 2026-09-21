@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!url || !key) return pixelResponse;
 
-    await fetch(`${url}/rest/v1/rpc/op_light_mark_email_opened`, {
+    const res = await fetch(`${url}/rest/v1/rpc/op_light_mark_email_opened`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({ p_token: token }),
     });
+    console.log('mark_email_opened', res.status, (await res.text()).slice(0, 300));
     // Klick-Bestaetigung (falls Bilder im Mailprogramm blockiert sind)
     if (new URL(req.url).searchParams.get('c') === '1') {
       return new Response(
