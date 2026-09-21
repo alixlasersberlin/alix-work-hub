@@ -304,6 +304,16 @@ export default function OffenePostenLight() {
     [depositsFiltered],
   );
 
+  const [depChecked, setDepChecked] = useState<Record<string, boolean>>({});
+  const [depMailOpen, setDepMailOpen] = useState(false);
+  const [depMailBusy, setDepMailBusy] = useState(false);
+  const [depMailText, setDepMailText] = useState('');
+  const [depMailRows, setDepMailRows] = useState<{ row: DepositRow; email: string }[]>([]);
+  const [depSmsOpen, setDepSmsOpen] = useState(false);
+  const [depSmsBusy, setDepSmsBusy] = useState(false);
+  const [depSmsText, setDepSmsText] = useState('');
+  const [depSmsRows, setDepSmsRows] = useState<{ row: DepositRow; phone: string }[]>([]);
+
 
   const loadHistory = useCallback(async (invoiceId: string) => {
     setHistoryLoading(true);
@@ -385,8 +395,8 @@ export default function OffenePostenLight() {
     [dunningItems, checked],
   );
 
-  const resolveEmail = useCallback(async (item: OpenItem): Promise<string> => {
-    const name = item.customer_name?.trim();
+  const resolveEmailByName = useCallback(async (raw: string | null | undefined): Promise<string> => {
+    const name = raw?.trim();
     if (!name) return '';
     const { data } = await supabase.from('customers')
       .select('email, company_name, contact_name')
@@ -395,9 +405,8 @@ export default function OffenePostenLight() {
     return ((data as any[])?.[0]?.email as string) || '';
   }, []);
 
-  /** Mobilnummer des Kunden für den SMS-Versand ermitteln. */
-  const resolvePhone = useCallback(async (item: OpenItem): Promise<string> => {
-    const name = item.customer_name?.trim();
+  const resolvePhoneByName = useCallback(async (raw: string | null | undefined): Promise<string> => {
+    const name = raw?.trim();
     if (!name) return '';
     const { data } = await supabase.from('customers')
       .select('phone, company_name, contact_name')
@@ -405,6 +414,105 @@ export default function OffenePostenLight() {
       .limit(1);
     return ((data as any[])?.[0]?.phone as string) || '';
   }, []);
+
+  const resolveEmail = useCallback(
+    (item: OpenItem) => resolveEmailByName(item.customer_name), [resolveEmailByName]);
+
+  /** Mobilnummer des Kunden für den SMS-Versand ermitteln. */
+  const resolvePhone = useCallback(
+    (item: OpenItem) => resolvePhoneByName(item.customer_name), [resolvePhoneByName]);
+
+  // ---- Anzahlungen: Markierung, E-Mail- und SMS-Versand (reine Erinnerung, keine Buchung) ----
+  const depMarked = useMemo(
+    () => depositsFiltered.filter((d) => depChecked[d.id]), [depositsFiltered, depChecked]);
+  const depMarkedSum = useMemo(
+    () => depMarked.reduce((s, d) => s + Number(d.open_amount || 0), 0), [depMarked]);
+  const depNo = (d: DepositRow) => d.deposit_number || d.invoice_number || d.order_number || '—';
+
+  const openDepMail = async () => {
+    if (depMarked.length === 0) { toast.error('Bitte zuerst Anzahlungen markieren.'); return; }
+    setDepMailBusy(true);
+    const prepared: { row: DepositRow; email: string }[] = [];
+    for (const d of depMarked) prepared.push({ row: d, email: await resolveEmailByName(d.customer_name) });
+    setDepMailRows(prepared);
+    setDepMailText('');
+    setDepMailBusy(false);
+    setDepMailOpen(true);
+  };
+
+  const sendDepMails = async () => {
+    setDepMailBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const r of depMailRows) {
+      if (!r.email.includes('@')) { skipped += 1; continue; }
+      try {
+        const { data, error } = await supabase.functions.invoke('send-transactional-email', {
+          body: {
+            templateName: 'finance-reminder',
+            recipientEmail: r.email,
+            templateData: {
+              customerName: r.row.customer_name,
+              level: 1,
+              amount: Number(r.row.open_amount || 0),
+              total: Number(r.row.open_amount || 0),
+              dueDate: r.row.due_date,
+              items: [{
+                invoice_number: depNo(r.row),
+                amount: Number(r.row.open_amount || 0),
+                due_date: r.row.due_date,
+                days_overdue: 0,
+              }],
+              note: depMailText.trim() || undefined,
+            },
+          },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        ok += 1;
+      } catch { fail += 1; }
+    }
+    setDepMailBusy(false);
+    setDepMailOpen(false);
+    setDepChecked({});
+    toast[fail ? 'warning' : 'success'](`E-Mail versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Adresse: ${skipped}`);
+  };
+
+  const openDepSms = async () => {
+    if (depMarked.length === 0) { toast.error('Bitte zuerst Anzahlungen markieren.'); return; }
+    setDepSmsBusy(true);
+    const prepared: { row: DepositRow; phone: string }[] = [];
+    for (const d of depMarked) prepared.push({ row: d, phone: await resolvePhoneByName(d.customer_name) });
+    setDepSmsRows(prepared);
+    setDepSmsText('Alix Lasers: Bitte gleichen Sie Ihre offene Anzahlung {nummer} über {betrag} kurzfristig aus. Vielen Dank.');
+    setDepSmsBusy(false);
+    setDepSmsOpen(true);
+  };
+
+  const sendDepSms = async () => {
+    if (!depSmsText.trim()) { toast.error('Bitte einen Text für die SMS eingeben.'); return; }
+    setDepSmsBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const r of depSmsRows) {
+      const phone = r.phone.trim();
+      if (phone.replace(/\D/g, '').length < 7) { skipped += 1; continue; }
+      const message = depSmsText
+        .replace(/\{nummer\}/g, depNo(r.row))
+        .replace(/\{betrag\}/g, fmt(r.row.open_amount, r.row.currency))
+        .replace(/\{kunde\}/g, r.row.customer_name ?? '');
+      try {
+        const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
+          body: { to: phone, message },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        ok += 1;
+      } catch { fail += 1; }
+    }
+    setDepSmsBusy(false);
+    setDepSmsOpen(false);
+    setDepChecked({});
+    toast[fail ? 'warning' : 'success'](`SMS versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Nummer: ${skipped}`);
+  };
 
   const openPdf = useCallback(async (item: OpenItem) => {
     if (!item.zoho_invoice_id) { toast.error('Für diese Rechnung ist kein PDF hinterlegt.'); return; }
@@ -1240,6 +1348,27 @@ export default function OffenePostenLight() {
             </div>
           </div>
 
+          {depMarked.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+              <span className="text-sm font-medium">
+                {depMarked.length} markiert · {fmt(depMarkedSum)}
+              </span>
+              <div className="ml-auto flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => void openDepMail()} disabled={depMailBusy}>
+                  {depMailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                  E-Mail versenden
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => void openDepSms()} disabled={depSmsBusy}>
+                  {depSmsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+                  SMS versenden
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setDepChecked({})}>
+                  <X className="h-4 w-4 mr-2" /> Auswahl aufheben
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             {depositsLoading ? (
               <div className="p-6"><SkeletonTable rows={6} cols={6} /></div>
@@ -1250,6 +1379,15 @@ export default function OffenePostenLight() {
                 <table className="w-full text-sm">
                   <thead className="bg-secondary/50 text-muted-foreground">
                     <tr>
+                      <th className="px-3 py-3 w-10">
+                        <Checkbox
+                          checked={depositsFiltered.length > 0 && depMarked.length === depositsFiltered.length}
+                          onCheckedChange={(v) => setDepChecked(
+                            v ? Object.fromEntries(depositsFiltered.map((d) => [d.id, true])) : {},
+                          )}
+                          aria-label="Alle markieren"
+                        />
+                      </th>
                       <th className="text-left px-3 py-3">Kunde</th>
                       <th className="text-left px-3 py-3">Anzahlung</th>
                       <th className="text-left px-3 py-3">Auftrag</th>
@@ -1261,7 +1399,14 @@ export default function OffenePostenLight() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {depositsFiltered.map((d) => (
-                      <tr key={d.id} className="hover:bg-secondary/30">
+                      <tr key={d.id} className={cn('hover:bg-secondary/30', depChecked[d.id] && 'bg-primary/5')}>
+                        <td className="px-3 py-2">
+                          <Checkbox
+                            checked={!!depChecked[d.id]}
+                            onCheckedChange={(v) => setDepChecked((prev) => ({ ...prev, [d.id]: !!v }))}
+                            aria-label="Anzahlung markieren"
+                          />
+                        </td>
                         <td className="px-3 py-2">{d.customer_name || '—'}</td>
                         <td className="px-3 py-2 font-medium">{d.deposit_number || d.invoice_number || '—'}</td>
                         <td className="px-3 py-2 text-muted-foreground">{d.order_number || '—'}</td>
@@ -1279,6 +1424,75 @@ export default function OffenePostenLight() {
               Anzeige aus „Offene Anzahlungen“ – Buchungen und Freigaben erfolgen weiterhin dort.
             </div>
           </div>
+
+          {/* E-Mail an markierte Anzahlungen */}
+          <Dialog open={depMailOpen} onOpenChange={setDepMailOpen}>
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader><DialogTitle>E-Mail an {depMailRows.length} markierte Kunden</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <Label>Ihr Text an den Kunden (optional)</Label>
+                  <Textarea rows={5} value={depMailText} onChange={(e) => setDepMailText(e.target.value)}
+                    placeholder="Sehr geehrte Damen und Herren, wir möchten Sie freundlich an die offene Anzahlung erinnern …" />
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+                  {depMailRows.map((r, idx) => (
+                    <div key={r.row.id} className="p-2">
+                      <div className="flex justify-between font-medium">
+                        <span>{r.row.customer_name} · {depNo(r.row)}</span>
+                        <span>{fmt(r.row.open_amount, r.row.currency)}</span>
+                      </div>
+                      <Input className="mt-1 h-8 text-xs" value={r.email} placeholder="keine E-Mail hinterlegt"
+                        onChange={(e) => setDepMailRows((prev) => prev.map((p, i) => (i === idx ? { ...p, email: e.target.value } : p)))} />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Kunden ohne E-Mail-Adresse werden übersprungen. Es werden keine Buchungen verändert.
+                </p>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => void sendDepMails()} disabled={depMailBusy}>
+                  {depMailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  Erinnerung jetzt senden
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* SMS an markierte Anzahlungen */}
+          <Dialog open={depSmsOpen} onOpenChange={setDepSmsOpen}>
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader><DialogTitle>SMS an {depSmsRows.length} markierte Kunden</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <Label>Text der SMS</Label>
+                  <Textarea rows={4} value={depSmsText} onChange={(e) => setDepSmsText(e.target.value)} />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Platzhalter: {'{nummer}'}, {'{betrag}'}, {'{kunde}'} · {depSmsText.length} Zeichen
+                  </p>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+                  {depSmsRows.map((r, idx) => (
+                    <div key={r.row.id} className="p-2">
+                      <div className="flex justify-between font-medium">
+                        <span>{r.row.customer_name} · {depNo(r.row)}</span>
+                        <span>{fmt(r.row.open_amount, r.row.currency)}</span>
+                      </div>
+                      <Input className="mt-1 h-8 text-xs" value={r.phone} placeholder="keine Mobilnummer hinterlegt"
+                        onChange={(e) => setDepSmsRows((prev) => prev.map((p, i) => (i === idx ? { ...p, phone: e.target.value } : p)))} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => void sendDepSms()} disabled={depSmsBusy}>
+                  {depSmsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  SMS jetzt senden
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       )}
 
