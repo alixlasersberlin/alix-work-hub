@@ -91,14 +91,14 @@ const Email = ({ customerName, level = 1, amount = 0, fee = 0, interest = 0, tot
         <Text style={p}>Hierzu kann – soweit die jeweiligen gesetzlichen Voraussetzungen erfüllt sind – auch eine Meldung an Auskunfteien wie die SCHUFA gehören.</Text>
         <Text style={p}>Wir bitten Sie daher, den offenen Gesamtbetrag fristgerecht auszugleichen, um weitere Maßnahmen und gegebenenfalls damit verbundene Kosten zu vermeiden.</Text>
 
-        {(iban || bic) && (
-          <Section style={card}>
-            <Text style={cardLabel}>Bankverbindung</Text>
-            {bankName && <Text style={p}>{bankName}</Text>}
-            {iban && <Text style={p}>IBAN: {iban}</Text>}
-            {bic && <Text style={p}>BIC: {bic}</Text>}
-          </Section>
-        )}
+        <Section style={card}>
+          <Text style={cardLabel}>Bankverbindung</Text>
+          <Text style={p}>Kontoinhaber: Alix Lasers GmbH</Text>
+          <Text style={p}>Anschrift: Zeppelinstrasse 3, 12529 Schönefeld-Waltersdorf</Text>
+          <Text style={p}>Deutsche Bank</Text>
+          <Text style={p}>IBAN: DE07100701000142660000</Text>
+          <Text style={p}>SWIFT: DEUTDEBB101</Text>
+        </Section>
 
         <Text style={p}>Bei Fragen stehen wir Ihnen jederzeit zur Verfügung.</Text>
         <Text style={p}>Mit freundlichen Grüßen<br />Ihr Alix Lasers Team</Text>
