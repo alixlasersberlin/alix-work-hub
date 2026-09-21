@@ -412,6 +412,98 @@ export default function OffenePostenLight() {
   const resolvePhone = useCallback(
     (item: OpenItem) => resolvePhoneByName(item.customer_name), [resolvePhoneByName]);
 
+  // ---- Anzahlungen: Markierung, E-Mail- und SMS-Versand (reine Erinnerung, keine Buchung) ----
+  const depMarked = useMemo(
+    () => depositsFiltered.filter((d) => depChecked[d.id]), [depositsFiltered, depChecked]);
+  const depMarkedSum = useMemo(
+    () => depMarked.reduce((s, d) => s + Number(d.open_amount || 0), 0), [depMarked]);
+  const depNo = (d: DepositRow) => d.deposit_number || d.invoice_number || d.order_number || '—';
+
+  const openDepMail = async () => {
+    if (depMarked.length === 0) { toast.error('Bitte zuerst Anzahlungen markieren.'); return; }
+    setDepMailBusy(true);
+    const prepared: { row: DepositRow; email: string }[] = [];
+    for (const d of depMarked) prepared.push({ row: d, email: await resolveEmailByName(d.customer_name) });
+    setDepMailRows(prepared);
+    setDepMailText('');
+    setDepMailBusy(false);
+    setDepMailOpen(true);
+  };
+
+  const sendDepMails = async () => {
+    setDepMailBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const r of depMailRows) {
+      if (!r.email.includes('@')) { skipped += 1; continue; }
+      try {
+        const { data, error } = await supabase.functions.invoke('send-transactional-email', {
+          body: {
+            templateName: 'finance-reminder',
+            recipientEmail: r.email,
+            templateData: {
+              customerName: r.row.customer_name,
+              level: 1,
+              amount: Number(r.row.open_amount || 0),
+              total: Number(r.row.open_amount || 0),
+              dueDate: r.row.due_date,
+              items: [{
+                invoice_number: depNo(r.row),
+                amount: Number(r.row.open_amount || 0),
+                due_date: r.row.due_date,
+                days_overdue: 0,
+              }],
+              note: depMailText.trim() || undefined,
+            },
+          },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        ok += 1;
+      } catch { fail += 1; }
+    }
+    setDepMailBusy(false);
+    setDepMailOpen(false);
+    setDepChecked({});
+    toast[fail ? 'warning' : 'success'](`E-Mail versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Adresse: ${skipped}`);
+  };
+
+  const openDepSms = async () => {
+    if (depMarked.length === 0) { toast.error('Bitte zuerst Anzahlungen markieren.'); return; }
+    setDepSmsBusy(true);
+    const prepared: { row: DepositRow; phone: string }[] = [];
+    for (const d of depMarked) prepared.push({ row: d, phone: await resolvePhoneByName(d.customer_name) });
+    setDepSmsRows(prepared);
+    setDepSmsText('Alix Lasers: Bitte gleichen Sie Ihre offene Anzahlung {nummer} über {betrag} kurzfristig aus. Vielen Dank.');
+    setDepSmsBusy(false);
+    setDepSmsOpen(true);
+  };
+
+  const sendDepSms = async () => {
+    if (!depSmsText.trim()) { toast.error('Bitte einen Text für die SMS eingeben.'); return; }
+    setDepSmsBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const r of depSmsRows) {
+      const phone = r.phone.trim();
+      if (phone.replace(/\D/g, '').length < 7) { skipped += 1; continue; }
+      const message = depSmsText
+        .replace(/\{nummer\}/g, depNo(r.row))
+        .replace(/\{betrag\}/g, fmt(r.row.open_amount, r.row.currency))
+        .replace(/\{kunde\}/g, r.row.customer_name ?? '');
+      try {
+        const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
+          body: { to: phone, message },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        ok += 1;
+      } catch { fail += 1; }
+    }
+    setDepSmsBusy(false);
+    setDepSmsOpen(false);
+    setDepChecked({});
+    toast[fail ? 'warning' : 'success'](`SMS versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Nummer: ${skipped}`);
+  };
+
   const openPdf = useCallback(async (item: OpenItem) => {
     if (!item.zoho_invoice_id) { toast.error('Für diese Rechnung ist kein PDF hinterlegt.'); return; }
     const cached = pdfCache.current.get(item.id);
