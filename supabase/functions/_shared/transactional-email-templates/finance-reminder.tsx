@@ -86,7 +86,10 @@ const Email = ({ customerName, level = 1, amount = 0, fee = 0, interest = 0, tot
           </table>
         </Section>
 
-        {dueDate && <Text style={p}>Bitte überweisen Sie den Gesamtbetrag bis spätestens <strong>{dueDate}</strong>.</Text>}
+        <Text style={p}>Bitte überweisen Sie den ausstehenden Gesamtbetrag innerhalb der nächsten 4 Tage vollständig auf das Ihnen bekannte Konto.</Text>
+        <Text style={p}>Sollte innerhalb dieser Frist kein vollständiger Zahlungseingang erfolgen, werden wir den Vorgang an die hierfür vorgesehenen externen Dienstleister zur weiteren Bearbeitung übergeben und die Einleitung weiterer zulässiger Maßnahmen prüfen.</Text>
+        <Text style={p}>Hierzu kann – soweit die jeweiligen gesetzlichen Voraussetzungen erfüllt sind – auch eine Meldung an Auskunfteien wie die SCHUFA gehören.</Text>
+        <Text style={p}>Wir bitten Sie daher, den offenen Gesamtbetrag fristgerecht auszugleichen, um weitere Maßnahmen und gegebenenfalls damit verbundene Kosten zu vermeiden.</Text>
 
         {(iban || bic) && (
           <Section style={card}>
