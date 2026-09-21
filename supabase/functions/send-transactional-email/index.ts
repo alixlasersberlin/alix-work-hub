@@ -234,6 +234,14 @@ Deno.serve(async (req) => {
     html = html.includes('</body>') ? html.replace('</body>', `${pixel}</body>`) : html + pixel
   }
 
+  // Einheitlicher deutscher Hinweis-Footer (ersetzt den englischen Standardtext)
+  const FOOTER_TEXT =
+    'Sie erhalten diese Nachricht über Ihren Account der Alix Lasers ®. Bitte lesen Sie den Inhalt aufmerksam, damit es zu keiner weiteren Maßnahme kommt.'
+  const footerHtml =
+    `<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}</div>`
+  html = html.includes('</body>') ? html.replace('</body>', `${footerHtml}</body>`) : html + footerHtml
+  const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT}`
+
   const resolvedSubject =
     typeof template.subject === 'function'
       ? template.subject(templateData)
@@ -293,7 +301,7 @@ Deno.serve(async (req) => {
           to: [r.email],
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
-          text: plainText,
+          text: plainTextWithFooter,
           attachments: attachments.map((a: any) => ({
             filename: a.filename,
             content: a.content,
@@ -324,10 +332,9 @@ Deno.serve(async (req) => {
               sender_domain: sender.domain,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
               html,
-              text: plainText,
+              text: plainTextWithFooter,
               purpose: 'transactional',
               idempotency_key: `${idempotencyKey}-${r.keySuffix}-s${senderIdx}`,
-              unsubscribe_token: unsubscribeToken,
             },
             { apiKey },
           )
