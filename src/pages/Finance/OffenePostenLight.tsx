@@ -1394,6 +1394,44 @@ export default function OffenePostenLight() {
         </DialogContent>
       </Dialog>
 
+      {/* SMS an markierte Kunden */}
+      <Dialog open={smsOpen} onOpenChange={setSmsOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle>SMS an {smsRows.length} markierte Kunden</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div>
+              <Label>Text der SMS</Label>
+              <Textarea rows={4} value={smsText} onChange={(e) => setSmsText(e.target.value)}
+                placeholder="Kurzer Hinweis auf die offene Rechnung …" />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Platzhalter: {'{rechnung}'}, {'{betrag}'}, {'{kunde}'} · {smsText.length} Zeichen
+              </p>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+              {smsRows.map((r, idx) => (
+                <div key={r.item.id} className="p-2">
+                  <div className="flex justify-between font-medium">
+                    <span>{r.item.customer_name} · {invNo(r.item)}</span>
+                    <span>{fmt(r.item.balance, r.item.currency)}</span>
+                  </div>
+                  <Input className="mt-1 h-8 text-xs" value={r.phone} placeholder="keine Mobilnummer hinterlegt"
+                    onChange={(e) => setSmsRows((prev) => prev.map((p, i) => (i === idx ? { ...p, phone: e.target.value } : p)))} />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Jede versendete SMS wird protokolliert. Kunden ohne Mobilnummer werden übersprungen.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => void sendSms()} disabled={smsBusy}>
+              {smsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+              SMS jetzt senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Sammelprüfung Mahnungen */}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
