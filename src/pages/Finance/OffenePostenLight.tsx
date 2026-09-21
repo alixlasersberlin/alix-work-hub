@@ -1224,7 +1224,66 @@ export default function OffenePostenLight() {
       )}
 
       {/* Mahncenter */}
+      {tab === 'anzahlungen' && (
+        <>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <div className="text-xs text-muted-foreground">Offene Anzahlungen</div>
+              <div className="text-xl font-semibold">{fmt(depositsSum)}</div>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <div className="text-xs text-muted-foreground">Anzahl</div>
+              <div className="text-xl font-semibold">{depositsFiltered.length}</div>
+            </div>
+            <div className="ml-auto w-full sm:w-72">
+              <Input placeholder="Kunde, Anzahlungs- oder Auftragsnummer …" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {depositsLoading ? (
+              <div className="p-6"><SkeletonTable rows={6} cols={6} /></div>
+            ) : depositsFiltered.length === 0 ? (
+              <div className="p-8"><EmptyState title="Keine offenen Anzahlungen" description="Aktuell sind keine Anzahlungen offen." /></div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/50 text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-3 py-3">Kunde</th>
+                      <th className="text-left px-3 py-3">Anzahlung</th>
+                      <th className="text-left px-3 py-3">Auftrag</th>
+                      <th className="text-left px-3 py-3">Fällig</th>
+                      <th className="text-right px-3 py-3">Betrag</th>
+                      <th className="text-right px-3 py-3">Bezahlt</th>
+                      <th className="text-right px-3 py-3">Offen</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {depositsFiltered.map((d) => (
+                      <tr key={d.id} className="hover:bg-secondary/30">
+                        <td className="px-3 py-2">{d.customer_name || '—'}</td>
+                        <td className="px-3 py-2 font-medium">{d.deposit_number || d.invoice_number || '—'}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{d.order_number || '—'}</td>
+                        <td className="px-3 py-2">{fmtDate(d.due_date)}</td>
+                        <td className="px-3 py-2 text-right">{fmt(d.gross_amount, d.currency)}</td>
+                        <td className="px-3 py-2 text-right text-muted-foreground">{fmt(d.paid_amount, d.currency)}</td>
+                        <td className="px-3 py-2 text-right font-semibold">{fmt(d.open_amount, d.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
+              Anzeige aus „Offene Anzahlungen“ – Buchungen und Freigaben erfolgen weiterhin dort.
+            </div>
+          </div>
+        </>
+      )}
+
       {tab === 'mahncenter' && (
+
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
             Mahnfristen (zentral vom Administrator festgelegt):{' '}
