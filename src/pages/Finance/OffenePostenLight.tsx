@@ -1424,6 +1424,75 @@ export default function OffenePostenLight() {
               Anzeige aus „Offene Anzahlungen“ – Buchungen und Freigaben erfolgen weiterhin dort.
             </div>
           </div>
+
+          {/* E-Mail an markierte Anzahlungen */}
+          <Dialog open={depMailOpen} onOpenChange={setDepMailOpen}>
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader><DialogTitle>E-Mail an {depMailRows.length} markierte Kunden</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <Label>Ihr Text an den Kunden (optional)</Label>
+                  <Textarea rows={5} value={depMailText} onChange={(e) => setDepMailText(e.target.value)}
+                    placeholder="Sehr geehrte Damen und Herren, wir möchten Sie freundlich an die offene Anzahlung erinnern …" />
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+                  {depMailRows.map((r, idx) => (
+                    <div key={r.row.id} className="p-2">
+                      <div className="flex justify-between font-medium">
+                        <span>{r.row.customer_name} · {depNo(r.row)}</span>
+                        <span>{fmt(r.row.open_amount, r.row.currency)}</span>
+                      </div>
+                      <Input className="mt-1 h-8 text-xs" value={r.email} placeholder="keine E-Mail hinterlegt"
+                        onChange={(e) => setDepMailRows((prev) => prev.map((p, i) => (i === idx ? { ...p, email: e.target.value } : p)))} />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Kunden ohne E-Mail-Adresse werden übersprungen. Es werden keine Buchungen verändert.
+                </p>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => void sendDepMails()} disabled={depMailBusy}>
+                  {depMailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  Erinnerung jetzt senden
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* SMS an markierte Anzahlungen */}
+          <Dialog open={depSmsOpen} onOpenChange={setDepSmsOpen}>
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader><DialogTitle>SMS an {depSmsRows.length} markierte Kunden</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <Label>Text der SMS</Label>
+                  <Textarea rows={4} value={depSmsText} onChange={(e) => setDepSmsText(e.target.value)} />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Platzhalter: {'{nummer}'}, {'{betrag}'}, {'{kunde}'} · {depSmsText.length} Zeichen
+                  </p>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+                  {depSmsRows.map((r, idx) => (
+                    <div key={r.row.id} className="p-2">
+                      <div className="flex justify-between font-medium">
+                        <span>{r.row.customer_name} · {depNo(r.row)}</span>
+                        <span>{fmt(r.row.open_amount, r.row.currency)}</span>
+                      </div>
+                      <Input className="mt-1 h-8 text-xs" value={r.phone} placeholder="keine Mobilnummer hinterlegt"
+                        onChange={(e) => setDepSmsRows((prev) => prev.map((p, i) => (i === idx ? { ...p, phone: e.target.value } : p)))} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => void sendDepSms()} disabled={depSmsBusy}>
+                  {depSmsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  SMS jetzt senden
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       )}
 
