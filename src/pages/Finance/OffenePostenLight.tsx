@@ -170,6 +170,14 @@ export default function OffenePostenLight() {
   const [escRows, setEscRows] = useState<OpenItem[]>([]);
   const [escBusy, setEscBusy] = useState(false);
 
+  // E-Mail an markierte Kunden (Vorlage oder freier Text)
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailRows, setMailRows] = useState<{ item: OpenItem; email: string }[]>([]);
+  const [mailMode, setMailMode] = useState<'vorlage' | 'frei'>('vorlage');
+  const [mailLevel, setMailLevel] = useState(1);
+  const [mailText, setMailText] = useState('');
+  const [mailBusy, setMailBusy] = useState(false);
+
 
   const [pdfLoading, setPdfLoading] = useState(false);
   const pdfCache = useRef<Map<string, string>>(new Map());
@@ -494,6 +502,40 @@ export default function OffenePostenLight() {
     else { toast.success('Rückholung protokolliert.'); await load(); setSelected(null); }
   };
 
+  /** E-Mail-Erinnerung an die markierten Kunden: Vorlage wählen oder freien Text schreiben. */
+  const openMail = async (rows: OpenItem[]) => {
+    if (rows.length === 0) { toast.error('Bitte zuerst offene Posten markieren.'); return; }
+    setMailBusy(true);
+    const prepared: { item: OpenItem; email: string }[] = [];
+    for (const it of rows) prepared.push({ item: it, email: await resolveEmail(it) });
+    setMailRows(prepared);
+    setMailMode('vorlage');
+    setMailLevel(Math.max(1, Number(rows[0].next_action_level || 1)));
+    setMailText('');
+    setMailBusy(false);
+    setMailOpen(true);
+  };
+
+  const sendMails = async () => {
+    if (mailMode === 'frei' && !mailText.trim()) {
+      toast.error('Bitte einen Text für die Erinnerung eingeben.');
+      return;
+    }
+    setMailBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const row of mailRows) {
+      if (!row.email.includes('@')) { skipped += 1; continue; }
+      const level = mailMode === 'vorlage' ? mailLevel : Math.max(1, Number(row.item.next_action_level || 1));
+      const res = await sendDunningFor(row.item, level, row.email, mailMode === 'frei' ? mailText.trim() : '');
+      if (res.ok) ok += 1; else fail += 1;
+    }
+    setMailBusy(false);
+    setMailOpen(false);
+    setListChecked({});
+    toast[fail ? 'warning' : 'success'](`E-Mail versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Adresse: ${skipped}`);
+    await load();
+  };
+
 
 
   const savePlan = async () => {
@@ -680,6 +722,10 @@ export default function OffenePostenLight() {
               </span>
               <div className="ml-auto flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => setListChecked({})}>Auswahl aufheben</Button>
+                <Button size="sm" onClick={() => void openMail(markedItems)} disabled={mailBusy}>
+                  {mailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                  E-Mail versenden
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => openEscalation(markedItems, 'inkasso_intern')}>
                   <ShieldAlert className="h-4 w-4 mr-2" /> An internes Inkasso
                 </Button>
@@ -1157,6 +1203,64 @@ export default function OffenePostenLight() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* E-Mail an markierte Kunden: Vorlage oder freier Text */}
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle>E-Mail an {mailRows.length} markierte Kunden</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex gap-2">
+              <Button size="sm" variant={mailMode === 'vorlage' ? 'default' : 'outline'} onClick={() => setMailMode('vorlage')}>
+                Vorlage auswählen
+              </Button>
+              <Button size="sm" variant={mailMode === 'frei' ? 'default' : 'outline'} onClick={() => setMailMode('frei')}>
+                Freier Text
+              </Button>
+            </div>
+
+            {mailMode === 'vorlage' ? (
+              <div>
+                <Label>Vorlage</Label>
+                <Select value={String(mailLevel)} onValueChange={(v) => setMailLevel(Number(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4].map((l) => <SelectItem key={l} value={String(l)}>{LEVEL_LABEL[l]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div>
+                <Label>Ihr Text an den Kunden</Label>
+                <Textarea rows={5} value={mailText} onChange={(e) => setMailText(e.target.value)}
+                  placeholder="Sehr geehrte Damen und Herren, wir möchten Sie freundlich an die offene Rechnung erinnern …" />
+              </div>
+            )}
+
+            <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-lg border border-border">
+              {mailRows.map((r, idx) => (
+                <div key={r.item.id} className="p-2">
+                  <div className="flex justify-between font-medium">
+                    <span>{r.item.customer_name} · {invNo(r.item)}</span>
+                    <span>{fmt(r.item.balance, r.item.currency)}</span>
+                  </div>
+                  <Input className="mt-1 h-8 text-xs" value={r.email} placeholder="keine E-Mail hinterlegt"
+                    onChange={(e) => setMailRows((prev) => prev.map((p, i) => (i === idx ? { ...p, email: e.target.value } : p)))} />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Jede versendete Erinnerung wird protokolliert. Kunden ohne E-Mail-Adresse werden übersprungen.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => void sendMails()} disabled={mailBusy}>
+              {mailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Erinnerung jetzt senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Sammelprüfung Mahnungen */}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
