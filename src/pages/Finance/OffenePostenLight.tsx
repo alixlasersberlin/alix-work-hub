@@ -320,6 +320,17 @@ export default function OffenePostenLight() {
     return ((data as any[])?.[0]?.email as string) || '';
   }, []);
 
+  /** Mobilnummer des Kunden für den SMS-Versand ermitteln. */
+  const resolvePhone = useCallback(async (item: OpenItem): Promise<string> => {
+    const name = item.customer_name?.trim();
+    if (!name) return '';
+    const { data } = await supabase.from('customers')
+      .select('phone, company_name, contact_name')
+      .or(`company_name.ilike.${name},contact_name.ilike.${name}`)
+      .limit(1);
+    return ((data as any[])?.[0]?.phone as string) || '';
+  }, []);
+
   const openPdf = useCallback(async (item: OpenItem) => {
     if (!item.zoho_invoice_id) { toast.error('Für diese Rechnung ist kein PDF hinterlegt.'); return; }
     const cached = pdfCache.current.get(item.id);
