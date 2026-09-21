@@ -228,11 +228,14 @@ Deno.serve(async (req) => {
     { plainText: true }
   )
 
-  // Optionales Lesesignal (1x1-Pixel) – nur wenn der Aufrufer eine URL mitgibt
-  if (trackingPixelUrl) {
-    const pixel = `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`
-    html = html.includes('</body>') ? html.replace('</body>', `${pixel}</body>`) : html + pixel
-  }
+  // Optionales Lesesignal (1x1-Pixel) – nur wenn der Aufrufer eine URL mitgibt.
+  // Wichtig: Das Pixel kommt ausschliesslich in die Mail an den eigentlichen
+  // Empfänger, nicht in interne Kopien (CC/BCC) – sonst würde eine intern
+  // geöffnete Kopie fälschlich als "vom Kunden gelesen" gelten.
+  const pixelTag = trackingPixelUrl
+    ? `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`
+    : ''
+
 
   // Einheitlicher deutscher Hinweis-Footer (ersetzt den englischen Standardtext)
   const FOOTER_TEXT =
