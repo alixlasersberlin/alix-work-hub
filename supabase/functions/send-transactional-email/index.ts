@@ -237,8 +237,11 @@ Deno.serve(async (req) => {
   // Einheitlicher deutscher Hinweis-Footer (ersetzt den englischen Standardtext)
   const FOOTER_TEXT =
     'Sie erhalten diese Nachricht über Ihren Account der Alix Lasers ®. Bitte lesen Sie den Inhalt aufmerksam, damit es zu keiner weiteren Maßnahme kommt.'
+  const confirmLink = trackingPixelUrl
+    ? `<div style="margin:16px 0 0"><a href="${trackingPixelUrl}&c=1" style="color:#b08a2e;font-family:Arial,Helvetica,sans-serif;font-size:13px">Erhalt dieser Nachricht bestätigen</a></div>`
+    : ''
   const footerHtml =
-    `<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}</div>`
+    `${confirmLink}<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}</div>`
   html = html.includes('</body>') ? html.replace('</body>', `${footerHtml}</body>`) : html + footerHtml
   const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT}`
 
