@@ -246,7 +246,12 @@ Deno.serve(async (req) => {
     `${confirmLink}<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}` +
     ` <a href="${UNSUBSCRIBE_URL}" style="color:#8a8a8a;text-decoration:underline">${UNSUBSCRIBE_URL.replace('https://', '')}</a></div>`
   html = html.includes('</body>') ? html.replace('</body>', `${footerHtml}</body>`) : html + footerHtml
+  const htmlPrimary = pixelTag
+    ? (html.includes('</body>') ? html.replace('</body>', `${pixelTag}</body>`) : html + pixelTag)
+    : html
+  const htmlFor = (r: { keySuffix: string }) => (r.keySuffix === 'primary' ? htmlPrimary : html)
   const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT} ${UNSUBSCRIBE_URL}`
+
 
   const resolvedSubject =
     typeof template.subject === 'function'
