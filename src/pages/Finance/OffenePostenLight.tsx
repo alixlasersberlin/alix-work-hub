@@ -193,8 +193,19 @@ export default function OffenePostenLight() {
     if (error) {
       toast.error(`Offene Posten konnten nicht geladen werden: ${error.message}`);
       setItems([]);
+      setLastMails({});
     } else {
-      setItems((data as OpenItem[]) || []);
+      const rows = (data as OpenItem[]) || [];
+      setItems(rows);
+      const ids = rows.map((r) => r.id).filter(Boolean);
+      if (ids.length) {
+        const { data: mails } = await rpc('fibu_light_last_emails', { p_invoice_ids: ids });
+        const map: Record<string, LastMail> = {};
+        for (const m of ((mails as LastMail[]) || [])) map[m.invoice_id] = m;
+        setLastMails(map);
+      } else {
+        setLastMails({});
+      }
     }
     setRules(((rulesRes.data as any[]) || []) as any);
     setLoading(false);
