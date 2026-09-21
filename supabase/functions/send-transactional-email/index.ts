@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
   let bccEmails: string[] = []
   let skipDefaultCopies = false
   let attachments: Array<{ filename: string; content: string; contentType?: string; content_type?: string }> = []
+  let trackingPixelUrl = ''
 
   try {
     const body = await req.json()
