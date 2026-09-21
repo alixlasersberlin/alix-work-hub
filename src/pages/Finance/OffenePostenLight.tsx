@@ -502,6 +502,40 @@ export default function OffenePostenLight() {
     else { toast.success('Rückholung protokolliert.'); await load(); setSelected(null); }
   };
 
+  /** E-Mail-Erinnerung an die markierten Kunden: Vorlage wählen oder freien Text schreiben. */
+  const openMail = async (rows: OpenItem[]) => {
+    if (rows.length === 0) { toast.error('Bitte zuerst offene Posten markieren.'); return; }
+    setMailBusy(true);
+    const prepared: { item: OpenItem; email: string }[] = [];
+    for (const it of rows) prepared.push({ item: it, email: await resolveEmail(it) });
+    setMailRows(prepared);
+    setMailMode('vorlage');
+    setMailLevel(Math.max(1, Number(rows[0].next_action_level || 1)));
+    setMailText('');
+    setMailBusy(false);
+    setMailOpen(true);
+  };
+
+  const sendMails = async () => {
+    if (mailMode === 'frei' && !mailText.trim()) {
+      toast.error('Bitte einen Text für die Erinnerung eingeben.');
+      return;
+    }
+    setMailBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const row of mailRows) {
+      if (!row.email.includes('@')) { skipped += 1; continue; }
+      const level = mailMode === 'vorlage' ? mailLevel : Math.max(1, Number(row.item.next_action_level || 1));
+      const res = await sendDunningFor(row.item, level, row.email, mailMode === 'frei' ? mailText.trim() : '');
+      if (res.ok) ok += 1; else fail += 1;
+    }
+    setMailBusy(false);
+    setMailOpen(false);
+    setListChecked({});
+    toast[fail ? 'warning' : 'success'](`E-Mail versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Adresse: ${skipped}`);
+    await load();
+  };
+
 
 
   const savePlan = async () => {
