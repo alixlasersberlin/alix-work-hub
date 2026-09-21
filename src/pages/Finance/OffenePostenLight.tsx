@@ -601,9 +601,9 @@ export default function OffenePostenLight() {
       const phone = row.phone.trim();
       if (phone.replace(/\D/g, '').length < 7) { skipped += 1; continue; }
       const message = smsText
-        .replaceAll('{rechnung}', invNo(row.item))
-        .replaceAll('{betrag}', fmt(row.item.balance, row.item.currency))
-        .replaceAll('{kunde}', row.item.customer_name ?? '');
+        .replace(/\{rechnung\}/g, invNo(row.item))
+        .replace(/\{betrag\}/g, fmt(row.item.balance, row.item.currency))
+        .replace(/\{kunde\}/g, row.item.customer_name ?? '');
       try {
         const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
           body: { to: phone, message, invoice_id: row.item.id },
