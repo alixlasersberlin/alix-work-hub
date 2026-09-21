@@ -152,6 +152,9 @@ Deno.serve(async (req) => {
       bccEmails = body.bcc.filter((e: any) => typeof e === 'string' && e.includes('@'))
     }
     if (body.skipDefaultCopies === true) skipDefaultCopies = true
+    if (typeof body.trackingPixelUrl === 'string' && body.trackingPixelUrl.startsWith('https://')) {
+      trackingPixelUrl = body.trackingPixelUrl
+    }
     if (Array.isArray(body.attachments)) {
       attachments = body.attachments.filter((a: any) => a && typeof a.filename === 'string' && typeof a.content === 'string')
     }
