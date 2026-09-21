@@ -83,6 +83,22 @@ const invNo = (i: OpenItem) => i.legal_invoice_number || i.invoice_number || '�
 const rpc = (name: string, args?: Record<string, unknown>) =>
   (supabase.rpc as unknown as (n: string, a?: Record<string, unknown>) => Promise<{ data: any; error: any }>)(name, args);
 
+/** Lädt eine set-returning RPC vollständig (PostgREST liefert max. 1000 Zeilen pro Anfrage). */
+async function rpcAll(name: string, args?: Record<string, unknown>) {
+  const CHUNK = 1000;
+  const out: any[] = [];
+  for (let from = 0; ; from += CHUNK) {
+    const q = (supabase.rpc as any)(name, args).range(from, from + CHUNK - 1);
+    const { data, error } = await q;
+    if (error) return { data: out, error };
+    const rows = (data as any[]) || [];
+    out.push(...rows);
+    if (rows.length < CHUNK) break;
+  }
+  return { data: out, error: null as any };
+}
+
+
 /** Ampel: reine Arbeitskennzeichnung, verändert keine Buchhaltungsdaten. */
 type Light = { key: string; label: string; dot: string; text: string };
 function trafficLight(i: OpenItem): Light {
