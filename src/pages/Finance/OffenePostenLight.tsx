@@ -95,8 +95,22 @@ function trafficLight(i: OpenItem): Light {
   return { key: 'rot', label: `${od} Tage überfällig`, dot: 'bg-destructive', text: 'text-destructive' };
 }
 
+/** Letzte gesendete E-Mail je Rechnung inkl. Lesesignal (1x1-Pixel). */
+type LastMail = {
+  invoice_id: string;
+  sent_at: string | null;
+  level: number | null;
+  subject: string | null;
+  recipient_email: string | null;
+  send_status: string | null;
+  opened_at: string | null;
+  last_opened_at: string | null;
+  open_count: number | null;
+};
+
 export default function OffenePostenLight() {
   const [items, setItems] = useState<OpenItem[]>([]);
+  const [lastMails, setLastMails] = useState<Record<string, LastMail>>({});
   const [rules, setRules] = useState<{ level: number; label: string; offset_days: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('arbeitsliste');
