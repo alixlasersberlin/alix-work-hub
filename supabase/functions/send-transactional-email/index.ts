@@ -335,6 +335,7 @@ Deno.serve(async (req) => {
               text: plainTextWithFooter,
               purpose: 'transactional',
               idempotency_key: `${idempotencyKey}-${r.keySuffix}-s${senderIdx}`,
+              unsubscribe_token: unsubscribeToken,
             },
             { apiKey },
           )
