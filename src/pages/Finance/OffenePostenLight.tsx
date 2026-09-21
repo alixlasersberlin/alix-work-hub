@@ -385,8 +385,8 @@ export default function OffenePostenLight() {
     [dunningItems, checked],
   );
 
-  const resolveEmail = useCallback(async (item: OpenItem): Promise<string> => {
-    const name = item.customer_name?.trim();
+  const resolveEmailByName = useCallback(async (raw: string | null | undefined): Promise<string> => {
+    const name = raw?.trim();
     if (!name) return '';
     const { data } = await supabase.from('customers')
       .select('email, company_name, contact_name')
@@ -395,9 +395,8 @@ export default function OffenePostenLight() {
     return ((data as any[])?.[0]?.email as string) || '';
   }, []);
 
-  /** Mobilnummer des Kunden für den SMS-Versand ermitteln. */
-  const resolvePhone = useCallback(async (item: OpenItem): Promise<string> => {
-    const name = item.customer_name?.trim();
+  const resolvePhoneByName = useCallback(async (raw: string | null | undefined): Promise<string> => {
+    const name = raw?.trim();
     if (!name) return '';
     const { data } = await supabase.from('customers')
       .select('phone, company_name, contact_name')
@@ -405,6 +404,13 @@ export default function OffenePostenLight() {
       .limit(1);
     return ((data as any[])?.[0]?.phone as string) || '';
   }, []);
+
+  const resolveEmail = useCallback(
+    (item: OpenItem) => resolveEmailByName(item.customer_name), [resolveEmailByName]);
+
+  /** Mobilnummer des Kunden für den SMS-Versand ermitteln. */
+  const resolvePhone = useCallback(
+    (item: OpenItem) => resolvePhoneByName(item.customer_name), [resolvePhoneByName]);
 
   const openPdf = useCallback(async (item: OpenItem) => {
     if (!item.zoho_invoice_id) { toast.error('Für diese Rechnung ist kein PDF hinterlegt.'); return; }
