@@ -170,6 +170,14 @@ export default function OffenePostenLight() {
   const [escRows, setEscRows] = useState<OpenItem[]>([]);
   const [escBusy, setEscBusy] = useState(false);
 
+  // E-Mail an markierte Kunden (Vorlage oder freier Text)
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailRows, setMailRows] = useState<{ item: OpenItem; email: string }[]>([]);
+  const [mailMode, setMailMode] = useState<'vorlage' | 'frei'>('vorlage');
+  const [mailLevel, setMailLevel] = useState(1);
+  const [mailText, setMailText] = useState('');
+  const [mailBusy, setMailBusy] = useState(false);
+
 
   const [pdfLoading, setPdfLoading] = useState(false);
   const pdfCache = useRef<Map<string, string>>(new Map());
