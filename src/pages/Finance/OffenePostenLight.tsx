@@ -1348,6 +1348,27 @@ export default function OffenePostenLight() {
             </div>
           </div>
 
+          {depMarked.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+              <span className="text-sm font-medium">
+                {depMarked.length} markiert · {fmt(depMarkedSum)}
+              </span>
+              <div className="ml-auto flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => void openDepMail()} disabled={depMailBusy}>
+                  {depMailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                  E-Mail versenden
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => void openDepSms()} disabled={depSmsBusy}>
+                  {depSmsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+                  SMS versenden
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setDepChecked({})}>
+                  <X className="h-4 w-4 mr-2" /> Auswahl aufheben
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             {depositsLoading ? (
               <div className="p-6"><SkeletonTable rows={6} cols={6} /></div>
@@ -1358,6 +1379,15 @@ export default function OffenePostenLight() {
                 <table className="w-full text-sm">
                   <thead className="bg-secondary/50 text-muted-foreground">
                     <tr>
+                      <th className="px-3 py-3 w-10">
+                        <Checkbox
+                          checked={depositsFiltered.length > 0 && depMarked.length === depositsFiltered.length}
+                          onCheckedChange={(v) => setDepChecked(
+                            v ? Object.fromEntries(depositsFiltered.map((d) => [d.id, true])) : {},
+                          )}
+                          aria-label="Alle markieren"
+                        />
+                      </th>
                       <th className="text-left px-3 py-3">Kunde</th>
                       <th className="text-left px-3 py-3">Anzahlung</th>
                       <th className="text-left px-3 py-3">Auftrag</th>
@@ -1369,7 +1399,14 @@ export default function OffenePostenLight() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {depositsFiltered.map((d) => (
-                      <tr key={d.id} className="hover:bg-secondary/30">
+                      <tr key={d.id} className={cn('hover:bg-secondary/30', depChecked[d.id] && 'bg-primary/5')}>
+                        <td className="px-3 py-2">
+                          <Checkbox
+                            checked={!!depChecked[d.id]}
+                            onCheckedChange={(v) => setDepChecked((prev) => ({ ...prev, [d.id]: !!v }))}
+                            aria-label="Anzahlung markieren"
+                          />
+                        </td>
                         <td className="px-3 py-2">{d.customer_name || '—'}</td>
                         <td className="px-3 py-2 font-medium">{d.deposit_number || d.invoice_number || '—'}</td>
                         <td className="px-3 py-2 text-muted-foreground">{d.order_number || '—'}</td>
