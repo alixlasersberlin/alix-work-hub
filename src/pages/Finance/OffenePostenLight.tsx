@@ -392,11 +392,15 @@ export default function OffenePostenLight() {
 
   const sendDunningFor = useCallback(async (item: OpenItem, level: number, email: string, message: string) => {
     const subject = `${LEVEL_LABEL[level]} – Rechnung ${invNo(item)}`;
+    // Lesesignal: eindeutiger Token pro Versand, wird als 1x1-Pixel eingebettet.
+    const trackToken = crypto.randomUUID();
+    const pixelUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/op-light-mail-open?t=${trackToken}`;
     try {
       const { data, error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'finance-reminder',
           recipientEmail: email,
+          trackingPixelUrl: pixelUrl,
           templateData: {
             customerName: item.customer_name,
             level,
@@ -418,7 +422,7 @@ export default function OffenePostenLight() {
       await rpc('fibu_light_log_dunning', {
         p_invoice_id: item.id, p_level: level, p_recipient: email, p_subject: subject,
         p_message: message || null, p_open_amount: Number(item.balance || 0),
-        p_send_status: 'sent', p_error: null,
+        p_send_status: 'sent', p_error: null, p_track_token: trackToken,
       });
       return { ok: true as const };
     } catch (e: any) {
@@ -426,7 +430,7 @@ export default function OffenePostenLight() {
       await rpc('fibu_light_log_dunning', {
         p_invoice_id: item.id, p_level: level, p_recipient: email, p_subject: subject,
         p_message: message || null, p_open_amount: Number(item.balance || 0),
-        p_send_status: 'failed', p_error: msg.slice(0, 500),
+        p_send_status: 'failed', p_error: msg.slice(0, 500), p_track_token: null,
       });
       return { ok: false as const, error: msg };
     }
