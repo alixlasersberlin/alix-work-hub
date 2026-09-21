@@ -787,6 +787,7 @@ export default function OffenePostenLight() {
                         <th className="text-right px-3 py-3">Betrag</th>
                         <th className="text-right px-3 py-3">Bezahlt</th>
                         <th className="text-right px-3 py-3">Offen</th>
+                        <th className="text-left px-3 py-3">Letzte E-Mail</th>
                         <th className="text-left px-3 py-3">Arbeitsstatus</th>
                         <th className="text-left px-3 py-3">Nächste Aktion</th>
                         <th className="text-right px-3 py-3" />
