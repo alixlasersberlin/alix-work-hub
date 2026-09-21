@@ -283,6 +283,7 @@ Deno.serve(async (req) => {
     // und gilt dann für alle weiteren Empfänger dieses Aufrufs.
     let senderIdx = 0
     let attachmentSenderIdx = 0
+    let resendDisabled = false
     const usedSenders: string[] = []
 
     // Versand über den Resend-Gateway: hier bestimmen wir den kompletten
