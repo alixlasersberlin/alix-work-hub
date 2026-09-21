@@ -219,11 +219,17 @@ Deno.serve(async (req) => {
   }
 
   // Render template
-  const html = await renderAsync(React.createElement(template.component, templateData))
+  let html = await renderAsync(React.createElement(template.component, templateData))
   const plainText = await renderAsync(
     React.createElement(template.component, templateData),
     { plainText: true }
   )
+
+  // Optionales Lesesignal (1x1-Pixel) – nur wenn der Aufrufer eine URL mitgibt
+  if (trackingPixelUrl) {
+    const pixel = `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`
+    html = html.includes('</body>') ? html.replace('</body>', `${pixel}</body>`) : html + pixel
+  }
 
   const resolvedSubject =
     typeof template.subject === 'function'
