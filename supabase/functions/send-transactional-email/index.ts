@@ -312,7 +312,8 @@ Deno.serve(async (req) => {
           from,
           to: [r.email],
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
-          html,
+          html: htmlFor(r),
+
           text: plainTextWithFooter,
           ...(isDunning ? {} : { bcc: ['service@alix-lasers.com'] }),
           headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
@@ -364,7 +365,7 @@ Deno.serve(async (req) => {
               bcc: isDunning ? [] : ["service@alix-lasers.com"],
               sender_domain: sender.domain,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
-              html,
+              html: htmlFor(r),
               text: plainTextWithFooter,
               purpose: 'transactional',
               idempotency_key: `${idempotencyKey}-${r.keySuffix}-s${senderIdx}`,
