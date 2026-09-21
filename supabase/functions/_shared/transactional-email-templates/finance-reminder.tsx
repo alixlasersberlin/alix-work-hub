@@ -49,7 +49,10 @@ const Email = ({ customerName, level = 1, amount = 0, fee = 0, interest = 0, tot
       <Container style={container}>
         <Heading style={h1}>{LEVEL_TITLES[level] ?? 'Mahnung'}</Heading>
         <Text style={p}>Sehr geehrte Damen und Herren{customerName ? `, ${customerName}` : ''},</Text>
-        <Text style={p}>{note && note.trim() ? note : (LEVEL_INTRO[level] ?? LEVEL_INTRO[1])}</Text>
+        <Text style={note && note.trim() ? { ...p, whiteSpace: 'pre-line' as const } : p}>
+          {note && note.trim() ? note : (LEVEL_INTRO[level] ?? LEVEL_INTRO[1])}
+        </Text>
+
 
 
         <Section style={card}>
