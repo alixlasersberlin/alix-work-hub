@@ -200,9 +200,8 @@ class AuditTracker {
 
   private async flush() {
     if (!this.sessionId || this.queue.length === 0) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { this.queue = []; await this.stop(); return; }
-    this.accessToken = session.access_token;
+    const token = await this.ensureToken();
+    if (!token) { this.queue = []; await this.stop(); return; }
 
     const batch = this.queue.splice(0, 100);
     try {
