@@ -56,6 +56,9 @@ const FROM_DOMAIN = "notify.alix-finance.de"
 // Globaler Archiv-BCC: erhält automatisch eine Kopie JEDER ausgehenden Mail
 const GLOBAL_ARCHIVE_BCC = ['rde@alix-lasers.com']
 
+// Echte Antwortadresse – "noreply" ohne Reply-To gilt bei Spamfiltern als Negativsignal
+const REPLY_TO = 'service@alix-lasers.com'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
@@ -242,15 +245,20 @@ Deno.serve(async (req) => {
     'Sie erhalten diese Nachricht über Ihren Account der Alix Lasers ®. Bitte lesen Sie den Inhalt aufmerksam, damit es zu keiner weiteren Maßnahme kommt.'
   const confirmLink = ''
   const UNSUBSCRIBE_URL = 'https://www.alix-lasers.de'
+  // Vollständige Absenderangabe im Footer (Pflichtangaben + Vertrauenssignal für Spamfilter)
+  const IMPRINT_TEXT =
+    'Alix Lasers GmbH · Zeppelinstrasse 3 · 12529 Schönefeld-Waltersdorf · Deutschland · ' +
+    `Antworten an: ${REPLY_TO}`
   const footerHtml =
     `${confirmLink}<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}` +
-    ` <a href="${UNSUBSCRIBE_URL}" style="color:#8a8a8a;text-decoration:underline">${UNSUBSCRIBE_URL.replace('https://', '')}</a></div>`
+    ` <a href="${UNSUBSCRIBE_URL}" style="color:#8a8a8a;text-decoration:underline">${UNSUBSCRIBE_URL.replace('https://', '')}</a>` +
+    `<br />${IMPRINT_TEXT}</div>`
   html = html.includes('</body>') ? html.replace('</body>', `${footerHtml}</body>`) : html + footerHtml
   const htmlPrimary = pixelTag
     ? (html.includes('</body>') ? html.replace('</body>', `${pixelTag}</body>`) : html + pixelTag)
     : html
   const htmlFor = (r: { keySuffix: string }) => (r.keySuffix === 'primary' ? htmlPrimary : html)
-  const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT} ${UNSUBSCRIBE_URL}`
+  const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT} ${UNSUBSCRIBE_URL}\n${IMPRINT_TEXT}`
 
 
   const resolvedSubject =
@@ -315,8 +323,11 @@ Deno.serve(async (req) => {
           html: htmlFor(r),
 
           text: plainTextWithFooter,
+          reply_to: REPLY_TO,
           ...(isDunning ? {} : { bcc: ['service@alix-lasers.com'] }),
-          headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
+          headers: {
+            'List-Unsubscribe': `<mailto:${REPLY_TO}?subject=unsubscribe>, <${UNSUBSCRIBE_URL}>`,
+          },
           ...(attachments.length > 0
             ? {
                 attachments: attachments.map((a: any) => ({
