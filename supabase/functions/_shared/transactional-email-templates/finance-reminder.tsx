@@ -19,7 +19,9 @@ interface Props {
   iban?: string
   bic?: string
   bankName?: string
+  note?: string
 }
+
 
 const LEVEL_TITLES: Record<number, string> = {
   1: 'Zahlungserinnerung',
