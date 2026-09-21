@@ -832,6 +832,10 @@ export default function OffenePostenLight() {
                   {mailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
                   E-Mail versenden
                 </Button>
+                <Button size="sm" variant="outline" onClick={() => void openSms(markedItems)} disabled={smsBusy}>
+                  {smsBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+                  SMS versenden
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => openEscalation(markedItems, 'inkasso_intern')}>
                   <ShieldAlert className="h-4 w-4 mr-2" /> An internes Inkasso
                 </Button>
