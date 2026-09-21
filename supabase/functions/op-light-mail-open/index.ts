@@ -34,6 +34,16 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({ p_token: token }),
     });
+    // Klick-Bestaetigung (falls Bilder im Mailprogramm blockiert sind)
+    if (new URL(req.url).searchParams.get('c') === '1') {
+      return new Response(
+        `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Empfang bestätigt</title></head>
+<body style="margin:0;background:#0b0b0d;color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center">
+<div style="max-width:440px;padding:32px;text-align:center"><h1 style="font-size:20px;margin:0 0 12px">Vielen Dank</h1>
+<p style="font-size:14px;line-height:22px;color:#c9c9c9;margin:0">Der Empfang Ihrer Nachricht wurde bestätigt. Sie können dieses Fenster schließen.</p></div></body></html>`,
+        { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } },
+      );
+    }
   } catch (_e) {
     // Lesesignal darf niemals die Bildauslieferung stoeren
   }
