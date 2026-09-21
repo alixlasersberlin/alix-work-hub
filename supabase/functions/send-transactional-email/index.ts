@@ -330,6 +330,21 @@ Deno.serve(async (req) => {
       while (true) {
         try {
           if (attachments.length > 0) return await sendWithAttachments(r)
+          // Bevorzugt Resend: dort erscheint kein fremder Abmeldelink.
+          if (Deno.env.get('RESEND_API_KEY') && !resendDisabled) {
+            try {
+              return await sendWithAttachments(r)
+            } catch (resendErr: any) {
+              console.warn('Resend-Versand fehlgeschlagen, Fallback auf Lovable', {
+                grund: resendErr?.message?.slice(0, 200),
+              })
+              if (isSenderProblem(resendErr?.message) && attachmentSenderIdx + 1 < ATTACHMENT_SENDER_CHAIN.length) {
+                attachmentSenderIdx++
+                continue
+              }
+              resendDisabled = true
+            }
+          }
           const sender = SENDER_CHAIN[senderIdx] ?? SENDER_CHAIN[0]
           usedSenders.push(sender.from)
           return await sendLovableEmail(
