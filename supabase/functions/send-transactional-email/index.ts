@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
           to: [r.email],
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
           html,
-          text: plainText,
+          text: plainTextWithFooter,
           attachments: attachments.map((a: any) => ({
             filename: a.filename,
             content: a.content,
@@ -332,10 +332,9 @@ Deno.serve(async (req) => {
               sender_domain: sender.domain,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
               html,
-              text: plainText,
+              text: plainTextWithFooter,
               purpose: 'transactional',
               idempotency_key: `${idempotencyKey}-${r.keySuffix}-s${senderIdx}`,
-              unsubscribe_token: unsubscribeToken,
             },
             { apiKey },
           )
