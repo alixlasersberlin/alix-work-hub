@@ -219,7 +219,7 @@ export default function OffenePostenLight() {
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data, error }, rulesRes, bankRes] = await Promise.all([
-      rpc('fibu_light_open_items'),
+      rpcAll('fibu_light_open_items'),
       supabase.from('op_light_dunning_rules' as any).select('level,label,offset_days').order('level'),
       rpc('fibu_light_bank_dashboard'),
     ]);
