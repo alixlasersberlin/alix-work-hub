@@ -860,8 +860,10 @@ export default function OffenePostenLight() {
       <div className="flex items-center gap-2 mb-4 border-b border-border">
         {([
           { key: 'arbeitsliste', label: 'Arbeitsliste' },
+          { key: 'anzahlungen', label: 'Anzahlungen' },
           { key: 'mahncenter', label: 'Mahnungen heute' },
           { key: 'bank', label: 'Bankvorschläge' },
+
         ] as { key: Tab; label: string }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={cn('px-4 py-2 text-sm border-b-2 -mb-px',
