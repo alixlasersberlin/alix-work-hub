@@ -19,7 +19,9 @@ interface Props {
   iban?: string
   bic?: string
   bankName?: string
+  note?: string
 }
+
 
 const LEVEL_TITLES: Record<number, string> = {
   1: 'Zahlungserinnerung',
@@ -39,7 +41,7 @@ const fmt = (n?: number) => typeof n === 'number'
   ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
   : '–'
 
-const Email = ({ customerName, level = 1, amount = 0, fee = 0, interest = 0, total = 0, dueDate, items = [], iban, bic, bankName }: Props) => (
+const Email = ({ customerName, level = 1, amount = 0, fee = 0, interest = 0, total = 0, dueDate, items = [], iban, bic, bankName, note }: Props) => (
   <Html lang="de">
     <Head />
     <Preview>{LEVEL_TITLES[level] ?? 'Mahnung'} – offener Betrag {fmt(total)}</Preview>
@@ -47,7 +49,11 @@ const Email = ({ customerName, level = 1, amount = 0, fee = 0, interest = 0, tot
       <Container style={container}>
         <Heading style={h1}>{LEVEL_TITLES[level] ?? 'Mahnung'}</Heading>
         <Text style={p}>Sehr geehrte Damen und Herren{customerName ? `, ${customerName}` : ''},</Text>
-        <Text style={p}>{LEVEL_INTRO[level] ?? LEVEL_INTRO[1]}</Text>
+        <Text style={note && note.trim() ? { ...p, whiteSpace: 'pre-line' as const } : p}>
+          {note && note.trim() ? note : (LEVEL_INTRO[level] ?? LEVEL_INTRO[1])}
+        </Text>
+
+
 
         <Section style={card}>
           <Text style={cardLabel}>Offene Posten</Text>

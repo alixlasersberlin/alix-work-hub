@@ -228,11 +228,14 @@ Deno.serve(async (req) => {
     { plainText: true }
   )
 
-  // Optionales Lesesignal (1x1-Pixel) – nur wenn der Aufrufer eine URL mitgibt
-  if (trackingPixelUrl) {
-    const pixel = `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`
-    html = html.includes('</body>') ? html.replace('</body>', `${pixel}</body>`) : html + pixel
-  }
+  // Optionales Lesesignal (1x1-Pixel) – nur wenn der Aufrufer eine URL mitgibt.
+  // Wichtig: Das Pixel kommt ausschliesslich in die Mail an den eigentlichen
+  // Empfänger, nicht in interne Kopien (CC/BCC) – sonst würde eine intern
+  // geöffnete Kopie fälschlich als "vom Kunden gelesen" gelten.
+  const pixelTag = trackingPixelUrl
+    ? `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`
+    : ''
+
 
   // Einheitlicher deutscher Hinweis-Footer (ersetzt den englischen Standardtext)
   const FOOTER_TEXT =
@@ -243,7 +246,12 @@ Deno.serve(async (req) => {
     `${confirmLink}<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e5e5;color:#8a8a8a;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px">${FOOTER_TEXT}` +
     ` <a href="${UNSUBSCRIBE_URL}" style="color:#8a8a8a;text-decoration:underline">${UNSUBSCRIBE_URL.replace('https://', '')}</a></div>`
   html = html.includes('</body>') ? html.replace('</body>', `${footerHtml}</body>`) : html + footerHtml
+  const htmlPrimary = pixelTag
+    ? (html.includes('</body>') ? html.replace('</body>', `${pixelTag}</body>`) : html + pixelTag)
+    : html
+  const htmlFor = (r: { keySuffix: string }) => (r.keySuffix === 'primary' ? htmlPrimary : html)
   const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT} ${UNSUBSCRIBE_URL}`
+
 
   const resolvedSubject =
     typeof template.subject === 'function'
@@ -304,7 +312,8 @@ Deno.serve(async (req) => {
           from,
           to: [r.email],
           subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
-          html,
+          html: htmlFor(r),
+
           text: plainTextWithFooter,
           ...(isDunning ? {} : { bcc: ['service@alix-lasers.com'] }),
           headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_URL}>` },
@@ -356,7 +365,7 @@ Deno.serve(async (req) => {
               bcc: isDunning ? [] : ["service@alix-lasers.com"],
               sender_domain: sender.domain,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
-              html,
+              html: htmlFor(r),
               text: plainTextWithFooter,
               purpose: 'transactional',
               idempotency_key: `${idempotencyKey}-${r.keySuffix}-s${senderIdx}`,
