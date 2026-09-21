@@ -294,6 +294,17 @@ export default function OffenePostenLight() {
     });
   }, [items, search, filter]);
 
+  const [pageSize, setPageSize] = useState<number | 'all'>(20);
+  const [page, setPage] = useState(1);
+  const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const visible = useMemo(() => {
+    if (pageSize === 'all') return filtered;
+    const start = (safePage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, pageSize, safePage]);
+  useEffect(() => { setPage(1); }, [search, filter]);
+
   const dunningItems = useMemo(
     () => items.filter((i) => !i.case_active && Number(i.next_action_level || 0) > 0),
     [items],
@@ -697,12 +708,12 @@ export default function OffenePostenLight() {
   }, [items, quickSearch]);
 
   const markedItems = useMemo(() => filtered.filter((i) => listChecked[i.id]), [filtered, listChecked]);
-  const allMarked = filtered.length > 0 && filtered.every((i) => listChecked[i.id]);
+  const allMarked = visible.length > 0 && visible.every((i) => listChecked[i.id]);
   const markedSum = markedItems.reduce((s, i) => s + Number(i.balance || 0), 0);
 
   const toggleAllMarked = (on: boolean) => {
     const next = { ...listChecked };
-    for (const i of filtered) { if (on) next[i.id] = true; else delete next[i.id]; }
+    for (const i of visible) { if (on) next[i.id] = true; else delete next[i.id]; }
     setListChecked(next);
   };
 
@@ -804,7 +815,19 @@ export default function OffenePostenLight() {
                 {f.label}
               </Button>
             ))}
-            <div className="ml-auto w-full sm:w-72">
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
+              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(v === 'all' ? 'all' : Number(v)); setPage(1); }}>
+                <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="all">Alle</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full sm:w-72">
               <Input placeholder="Kunde, Rechnungsnummer oder ID …" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
           </div>
@@ -874,7 +897,7 @@ export default function OffenePostenLight() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {filtered.map((i) => {
+                      {visible.map((i) => {
                         const light = trafficLight(i);
                         return (
                           <tr key={i.id} className={cn('hover:bg-secondary/30', selected?.id === i.id && 'bg-secondary/40', listChecked[i.id] && 'bg-primary/5')}>
@@ -941,6 +964,16 @@ export default function OffenePostenLight() {
                       })}
                     </tbody>
                   </table>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                    <span>{filtered.length} Posten · angezeigt {visible.length}</span>
+                    {totalPages > 1 && (
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Zurück</Button>
+                        <span>Seite {safePage} von {totalPages}</span>
+                        <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Weiter</Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
