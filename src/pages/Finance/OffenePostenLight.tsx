@@ -53,7 +53,23 @@ type OpenItem = {
 };
 
 type Filter = 'alle' | 'heute' | 'ueberfaellig' | 'teilbezahlt' | 'mahnung' | 'klaerung' | 'raten' | 'anwalt' | 'inkasso';
-type Tab = 'arbeitsliste' | 'mahncenter' | 'bank';
+type Tab = 'arbeitsliste' | 'anzahlungen' | 'mahncenter' | 'bank';
+
+/** Offene Anzahlung (finance_deposits) – reine Anzeige, keine Buchungen in FIBU LIGHT. */
+type DepositRow = {
+  id: string;
+  deposit_number: string | null;
+  customer_name: string | null;
+  invoice_number: string | null;
+  order_number: string | null;
+  currency: string | null;
+  gross_amount: number | null;
+  paid_amount: number | null;
+  open_amount: number | null;
+  due_date: string | null;
+  status: string | null;
+};
+
 
 const ESC_LABEL: Record<string, string> = { anwalt: 'Anwalt', inkasso_intern: 'Internes Inkasso' };
 
