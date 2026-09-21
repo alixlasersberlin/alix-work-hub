@@ -581,6 +581,67 @@ export default function OffenePostenLight() {
     await load();
   };
 
+  /** SMS-Erinnerung an die markierten Kunden (Twilio). */
+  const openSms = async (rows: OpenItem[]) => {
+    if (rows.length === 0) { toast.error('Bitte zuerst offene Posten markieren.'); return; }
+    setSmsBusy(true);
+    const prepared: { item: OpenItem; phone: string }[] = [];
+    for (const it of rows) prepared.push({ item: it, phone: await resolvePhone(it) });
+    setSmsRows(prepared);
+    setSmsText('Alix Lasers: Bitte gleichen Sie Ihre offene Rechnung {rechnung} über {betrag} kurzfristig aus. Vielen Dank.');
+    setSmsBusy(false);
+    setSmsOpen(true);
+  };
+
+  const sendSms = async () => {
+    if (!smsText.trim()) { toast.error('Bitte einen Text für die SMS eingeben.'); return; }
+    setSmsBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const row of smsRows) {
+      const phone = row.phone.trim();
+      if (phone.replace(/\D/g, '').length < 7) { skipped += 1; continue; }
+      const message = smsText
+        .replaceAll('{rechnung}', invNo(row.item))
+        .replaceAll('{betrag}', fmt(row.item.balance, row.item.currency))
+        .replaceAll('{kunde}', row.item.customer_name ?? '');
+      try {
+        const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
+          body: { to: phone, message, invoice_id: row.item.id },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        ok += 1;
+        await rpc('fibu_light_log_dunning', {
+          p_invoice_id: row.item.id,
+          p_level: Math.max(1, Number(row.item.next_action_level || 1)),
+          p_recipient: phone,
+          p_subject: `SMS – Rechnung ${invNo(row.item)}`,
+          p_message: message,
+          p_open_amount: Number(row.item.balance || 0),
+          p_send_status: 'sent',
+          p_error: null,
+        });
+      } catch (e: any) {
+        fail += 1;
+        await rpc('fibu_light_log_dunning', {
+          p_invoice_id: row.item.id,
+          p_level: Math.max(1, Number(row.item.next_action_level || 1)),
+          p_recipient: phone,
+          p_subject: `SMS – Rechnung ${invNo(row.item)}`,
+          p_message: message,
+          p_open_amount: Number(row.item.balance || 0),
+          p_send_status: 'failed',
+          p_error: String(e?.message ?? e).slice(0, 500),
+        });
+      }
+    }
+    setSmsBusy(false);
+    setSmsOpen(false);
+    setListChecked({});
+    toast[fail ? 'warning' : 'success'](`SMS versendet: ${ok} · Fehlgeschlagen: ${fail} · Ohne Nummer: ${skipped}`);
+    await load();
+  };
+
 
 
   const savePlan = async () => {
