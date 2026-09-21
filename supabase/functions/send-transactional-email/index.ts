@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
     ? (html.includes('</body>') ? html.replace('</body>', `${pixelTag}</body>`) : html + pixelTag)
     : html
   const htmlFor = (r: { keySuffix: string }) => (r.keySuffix === 'primary' ? htmlPrimary : html)
-  const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT} ${UNSUBSCRIBE_URL}`
+  const plainTextWithFooter = `${plainText}\n\n${FOOTER_TEXT} ${UNSUBSCRIBE_URL}\n${IMPRINT_TEXT}`
 
 
   const resolvedSubject =
