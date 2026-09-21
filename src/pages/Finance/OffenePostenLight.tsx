@@ -819,6 +819,28 @@ export default function OffenePostenLight() {
                             <td className="px-3 py-2 text-right">{fmt(i.total, i.currency)}</td>
                             <td className="px-3 py-2 text-right text-muted-foreground">{fmt(i.paid, i.currency)}</td>
                             <td className="px-3 py-2 text-right font-semibold">{fmt(i.balance, i.currency)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-xs">
+                              {(() => {
+                                const m = lastMails[i.id];
+                                if (!m) return <span className="text-muted-foreground">Keine E-Mail</span>;
+                                const failed = m.send_status !== 'sent';
+                                return (
+                                  <span title={`${m.subject || ''}\n${m.recipient_email || ''}`}>
+                                    <span className="text-muted-foreground">{fmtDateTime(m.sent_at)}</span>
+                                    <Badge
+                                      variant={failed ? 'destructive' : m.opened_at ? 'default' : 'secondary'}
+                                      className="ml-2"
+                                    >
+                                      {failed
+                                        ? 'Versand fehlgeschlagen'
+                                        : m.opened_at
+                                          ? `Gelesen ${fmtDateTime(m.opened_at)}`
+                                          : 'Noch nicht gelesen'}
+                                    </Badge>
+                                  </span>
+                                );
+                              })()}
+                            </td>
                             <td className={cn('px-3 py-2 whitespace-nowrap', light.text)}>{light.label}</td>
                             <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                               {i.escalation_stage
