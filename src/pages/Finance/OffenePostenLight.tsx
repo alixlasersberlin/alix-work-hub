@@ -968,9 +968,9 @@ export default function OffenePostenLight() {
                     <span>{filtered.length} Posten · angezeigt {visible.length}</span>
                     {totalPages > 1 && (
                       <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Zurück</Button>
-                        <span>Seite {page} von {totalPages}</span>
-                        <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Weiter</Button>
+                        <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Zurück</Button>
+                        <span>Seite {safePage} von {totalPages}</span>
+                        <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Weiter</Button>
                       </div>
                     )}
                   </div>
