@@ -285,8 +285,8 @@ Deno.serve(async (req) => {
     let attachmentSenderIdx = 0
     const usedSenders: string[] = []
 
-    // Anhänge (z. B. Angebots-PDF) unterstützt das Lovable-Email-SDK nicht
-    // -> in diesem Fall über den Resend-Gateway senden.
+    // Versand über den Resend-Gateway: hier bestimmen wir den kompletten
+    // Inhalt selbst – ohne fremden Abmelde-Hinweis/Abmeldelink.
     const sendWithAttachments = async (r: typeof recipients[number]) => {
       const resendKey = Deno.env.get('RESEND_API_KEY')
       if (!resendKey) throw new Error('RESEND_API_KEY not configured (für Anhänge erforderlich)')
