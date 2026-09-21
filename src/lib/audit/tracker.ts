@@ -210,7 +210,7 @@ class AuditTracker {
         const msg = String((error as any)?.message ?? "");
         if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
           this.queue = [];
-          await this.stop();
+          await this.handleUnauthorized();
         }
       }
     } catch {
