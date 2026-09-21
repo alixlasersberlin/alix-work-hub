@@ -259,7 +259,8 @@ export default function OffenePostenLight() {
         case 'raten': return !!i.plan_id;
         case 'anwalt': return i.escalation_stage === 'anwalt';
         case 'inkasso': return i.escalation_stage === 'inkasso_intern';
-        default: return true;
+        // „Alle“ zeigt nur Posten, die noch nicht an Anwalt oder internes Inkasso übergeben wurden.
+        default: return !i.escalation_stage;
       }
     });
   }, [items, search, filter]);
