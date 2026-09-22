@@ -687,6 +687,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
   const [lawyerFlag, setLawyerFlag] = useState(false);
   const [lawyerReason, setLawyerReason] = useState('');
   const [altkundeFlag, setAltkundeFlag] = useState(false);
+  const [confirmMail, setConfirmMail] = useState(true);
 
   useEffect(() => {
     if (deposit) {
@@ -697,6 +698,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
       setLawyerFlag(false);
       setLawyerReason('');
       setAltkundeFlag(false);
+      setConfirmMail(true);
     }
   }, [deposit]);
 
@@ -745,7 +747,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
         templateName: 'customer-shipping-notice',
         recipientEmail: email,
         idempotencyKey: `az-payment-${deposit.id}-${paid}-${date}`,
-        cc: ['buchhaltung@alix-operation.de'],
+        extraCc: ['buchhaltung@alix-operation.de'],
         templateData: { subject, body },
       },
     });
@@ -789,6 +791,11 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
           p_note: bookingNote || null,
         });
         if (error) throw error;
+
+        if (confirmMail && !lawyerFlag) {
+          try { await sendPaymentConfirmation(n); }
+          catch (e: any) { toast.error('Zahlungsbestätigung konnte nicht versendet werden: ' + (e?.message ?? 'Unbekannt')); }
+        }
       }
 
       if (lawyerFlag && deposit.order_id) {
@@ -871,6 +878,19 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
           <div className="col-span-2">
             <Label>Interner Vermerk</Label>
             <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
+          </div>
+
+          <div className="col-span-2 rounded-lg border border-border bg-secondary/40 p-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={confirmMail}
+                disabled={lawyerFlag}
+                onChange={(e) => setConfirmMail(e.target.checked)}
+              />
+              <span className="text-sm">Zahlungsbestätigung an Kunden senden (Kopie an buchhaltung@alix-operation.de)</span>
+            </label>
           </div>
 
           <div className={cn(
