@@ -493,7 +493,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [pageSize, setPageSize] = useState<PageSize>(20);
+  const [pageSize, setPageSize] = useState<PageSize>(100);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [previewRow, setPreviewRow] = useState<Row | null>(null);
@@ -1342,7 +1342,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     return paginate(displayAccounts, pageSize)
       .map((a) => a.customer_name)
       .filter(Boolean)
-      .slice(0, 120)
+      .slice(0, 500)
       .join('|');
   }, [displayAccounts, pageSize, isAccountView]);
 

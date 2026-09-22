@@ -1,7 +1,7 @@
 // Shared search + pagination helpers for Finance overview pages.
 
-export type PageSize = 20 | 50 | 100 | 'all';
-export const PAGE_SIZE_OPTIONS: PageSize[] = [20, 50, 100, 'all'];
+export type PageSize = 20 | 50 | 100 | 200 | 500 | 'all';
+export const PAGE_SIZE_OPTIONS: PageSize[] = [20, 50, 100, 200, 500, 'all'];
 
 /**
  * Extracts PLZ (postal code) from a free-form address-like string.
