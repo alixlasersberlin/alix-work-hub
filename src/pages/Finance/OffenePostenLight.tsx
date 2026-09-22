@@ -282,6 +282,7 @@ export default function OffenePostenLight() {
       .from('finance_deposits' as any)
       .select('id,deposit_number,customer_name,invoice_number,order_number,currency,gross_amount,paid_amount,open_amount,due_date,status')
       .gt('open_amount', 0.009)
+      .neq('status', 'storniert')
       .order('due_date', { ascending: true, nullsFirst: false })
       .limit(2000);
     if (error) toast.error(`Anzahlungen konnten nicht geladen werden: ${error.message}`);

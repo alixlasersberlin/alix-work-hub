@@ -129,7 +129,7 @@ export default function OffeneAnzahlungen() {
       .from('finance_deposits')
       .select('*')
       .in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any)
-      .not('status', 'in', '("gebucht","bezahlt")')
+      .not('status', 'in', '("gebucht","bezahlt","storniert")')
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);
     if (tenantId) dq = dq.eq('tenant_id', tenantId);
