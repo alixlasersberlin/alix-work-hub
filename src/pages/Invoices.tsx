@@ -2591,6 +2591,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                   <span className="text-sm">{selectedIds.length} Rechnung(en) markiert</span>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>Auswahl aufheben</Button>
+                    <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={doExportCsv}>
+                      <Download className="w-3.5 h-3.5" /> CSV
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={doExportPdf}>
+                      <Download className="w-3.5 h-3.5" /> PDF
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
