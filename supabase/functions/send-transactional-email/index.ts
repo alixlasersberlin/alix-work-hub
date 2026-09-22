@@ -14,14 +14,11 @@ const SITE_NAME = "Alix Lasers Datacenter"
  * wird automatisch die nächste verfügbare Absenderadresse verwendet.
  */
 const SENDER_CHAIN: Array<{ domain: string; from: string }> = [
-  { domain: "notify.alix-finance.de", from: "Alix Lasers ® <noreply@notify.alix-finance.de>" },
-  { domain: "notify.alixsales.com", from: "Alix Lasers ® <noreply@notify.alixsales.com>" },
   { domain: "alixwork.de", from: "Alix Lasers ® <noreply@alixwork.de>" },
 ]
 // Für Anhänge läuft der Versand über Resend – dort ist nur alixwork.de verifiziert
 const ATTACHMENT_SENDER_CHAIN: string[] = [
   "Alix Lasers ® <noreply@alixwork.de>",
-  "Alix Lasers ® <noreply@notify.alixsales.com>",
 ]
 const SENDER_DOMAIN = SENDER_CHAIN[0].domain
 const FROM_ADDRESS = SENDER_CHAIN[0].from
@@ -51,7 +48,7 @@ export function isValidEmail(value: unknown): boolean {
   if (/^(example|test|localhost|invalid|beispiel)\./i.test(domain) || /^(example|test|localhost|invalid)$/i.test(domain.split('.')[0])) return false
   return true
 }
-const FROM_DOMAIN = "notify.alix-finance.de"
+const FROM_DOMAIN = "alixwork.de"
 
 // Globaler Archiv-BCC: erhält automatisch eine Kopie JEDER ausgehenden Mail
 const GLOBAL_ARCHIVE_BCC = ['rde@alix-lasers.com']

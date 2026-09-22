@@ -4,8 +4,8 @@ import "../_shared/global-bcc.ts";
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 
 const SITE_NAME = 'Alix Lasers I Finance'
-const SENDER_DOMAIN = 'notify.alix-finance.de'
-const FROM_DOMAIN = 'notify.alix-finance.de'
+const SENDER_DOMAIN = 'alixwork.de'
+const FROM_DOMAIN = 'alixwork.de'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       const u = Array.from(tb).map((b) => b.toString(16).padStart(2, '0')).join('')
       await sendLovableEmail({
         to: rec.email,
-        from: "Alix Lasers ® <noreply@notify.alix-finance.de>",
+        from: "Alix Lasers ® <noreply@alixwork.de>",
         bcc: ["service@alix-lasers.com", "k.trinh@alix-operation.de"].filter(
           (b) => b.toLowerCase() !== String(rec.email).toLowerCase(),
         ),
