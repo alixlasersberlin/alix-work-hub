@@ -1293,6 +1293,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metaKeys.sig]);
 
+  // ---- Letzter E-Mail-/Mahnungsversand je Kundenkonto ----
+  type AccountMeta = { sent: string | null; level: number | null; opened: string | null; subject: string | null };
+  const [accountMeta, setAccountMeta] = useState<Record<string, AccountMeta>>({});
+
 
 
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
