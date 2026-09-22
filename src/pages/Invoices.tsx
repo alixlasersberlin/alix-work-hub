@@ -825,7 +825,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         const paid = Math.max(0, gross - (Number(r.balance ?? gross) || 0));
         const isPaid = (Number(r.balance ?? 0) || 0) <= 0.009 && gross > 0;
         const payload: any = {
-          source: 'rechnung',
+          source: 'alixwork',
           source_ref: `${table}:${r.id}`,
           deposit_number: r.invoice_number ?? null,
           customer_name: r.customer_name ?? null,
