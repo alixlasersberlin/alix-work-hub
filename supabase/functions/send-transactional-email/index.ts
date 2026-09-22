@@ -54,7 +54,7 @@ const FROM_DOMAIN = "alixwork.de"
 const GLOBAL_ARCHIVE_BCC = ['rde@alix-lasers.com']
 
 // Echte Antwortadresse – "noreply" ohne Reply-To gilt bei Spamfiltern als Negativsignal
-const REPLY_TO = 'service@alix-lasers.com'
+const REPLY_TO = 'buchhaltung@alix-operation.de'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
