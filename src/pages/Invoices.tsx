@@ -1337,6 +1337,59 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     return base;
   }, [accounts, viewMode, listSort]);
 
+  const accountNamesSig = useMemo(() => {
+    if (!isAccountView) return '';
+    return paginate(displayAccounts, pageSize)
+      .map((a) => a.customer_name)
+      .filter(Boolean)
+      .slice(0, 120)
+      .join('|');
+  }, [displayAccounts, pageSize, isAccountView]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const names = accountNamesSig ? accountNamesSig.split('|') : [];
+    if (names.length === 0) { setAccountMeta({}); return; }
+    (async () => {
+      try {
+        const [dunRes, remRes] = await Promise.all([
+          supabase
+            .from('op_light_dunning_log' as any)
+            .select('customer_name, level, subject, sent_at, opened_at, last_opened_at, send_status')
+            .in('customer_name', names)
+            .order('sent_at', { ascending: false })
+            .limit(1000),
+          supabase
+            .from('finance_reminders' as any)
+            .select('customer_name, level, sent_at')
+            .in('customer_name', names)
+            .limit(1000),
+        ]);
+        if (cancelled) return;
+        const map: Record<string, AccountMeta> = {};
+        const put = (name: string, sent: string | null, level: number | null, opened: string | null, subject: string | null) => {
+          if (!name || !sent) return;
+          const k = name.toLowerCase();
+          const cur = map[k];
+          if (!cur || !cur.sent || sent > cur.sent) map[k] = { sent, level, opened, subject };
+        };
+        for (const r of (((dunRes as any).data ?? []) as any[])) {
+          if (r.send_status && r.send_status !== 'sent') continue;
+          put(String(r.customer_name ?? ''), r.sent_at ?? null, r.level ?? null, r.last_opened_at ?? r.opened_at ?? null, r.subject ?? null);
+        }
+        for (const r of (((remRes as any).data ?? []) as any[])) {
+          put(String(r.customer_name ?? ''), r.sent_at ?? null, r.level ?? null, null, 'Mahnung');
+        }
+        setAccountMeta(map);
+      } catch {
+        /* optional */
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountNamesSig]);
+
+
 
 
   // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
