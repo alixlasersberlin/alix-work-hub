@@ -15,11 +15,17 @@ Deno.serve(async (req) => {
     })
   }
 
+  let to = 'rde@alix-lasers.com'
+  try {
+    const body = await req.json()
+    if (typeof body?.to === 'string' && /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(body.to)) to = body.to
+  } catch { /* kein Body -> Standardempfänger */ }
+
   try {
     const result = await sendLovableEmail({
       from: 'Alix Lasers Datacenter <noreply@alixwork.de>',
       sender_domain: 'alixwork.de',
-      to: 'rde@alix-lasers.com',
+      to,
       subject: 'Testmail – Alix Work E-Mail-Versand',
       html: '<p>Dies ist eine Testmail von Alix Work.</p><p>Absender: noreply@alixwork.de</p>',
       text: 'Dies ist eine Testmail von Alix Work. Absender: noreply@alixwork.de',
