@@ -836,7 +836,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           vat_amount: 0,
           gross_amount: gross,
           paid_amount: paid,
-          open_amount: Math.max(0, gross - paid),
           issue_date: r.invoice_date ?? null,
           due_date: r.due_date ?? null,
           status: isPaid ? 'gebucht' : (paid > 0 ? 'teilweise' : 'offen'),
