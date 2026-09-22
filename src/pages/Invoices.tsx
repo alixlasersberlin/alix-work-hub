@@ -2870,6 +2870,28 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <div className="text-xs text-muted-foreground truncate mt-1">
                       {a.city ?? '–'} {a.customer_id ? `• #${a.customer_id}` : ''} • Letzte: {fmtDate(a.lastInvoiceDate)}
                     </div>
+                    {(() => {
+                      const m = accountMeta[String(a.customer_name ?? '').toLowerCase()];
+                      return (
+                        <div className="text-[11px] mt-0.5 flex flex-wrap items-center gap-2">
+                          <Mail className="w-3 h-3 text-muted-foreground" />
+                          {m?.sent ? (
+                            <>
+                              <span className="text-muted-foreground">
+                                Letzter Versand: <span className="text-foreground">{fmtDate(m.sent)}</span>
+                                {m.level ? ` · Mahnstufe ${m.level}` : ''}
+                              </span>
+                              {m.subject && <span className="text-muted-foreground truncate max-w-[280px]">„{m.subject}"</span>}
+                              <span className={m.opened ? 'text-emerald-400' : 'text-muted-foreground'}>
+                                {m.opened ? `gelesen (${fmtDate(m.opened)})` : 'noch nicht gelesen'}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">Noch keine E-Mail/Mahnung versendet</span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="hidden sm:flex items-center gap-2">
                     <Badge variant="outline" className="bg-muted/40">{a.totalInvoices} Rg.</Badge>
