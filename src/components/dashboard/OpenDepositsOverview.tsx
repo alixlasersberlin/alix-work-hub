@@ -56,6 +56,7 @@ export function OpenDepositsOverview() {
         .from('finance_deposits')
         .select('id, source, deposit_number, customer_name, company_name, order_id, order_number, offer_number, invoice_number, currency, gross_amount, paid_amount, open_amount, due_date, status')
         .neq('status', 'gebucht')
+        .neq('status', 'storniert')
         .order('due_date', { ascending: true, nullsFirst: false })
         .limit(500);
       const list = (data ?? []) as any as Deposit[];

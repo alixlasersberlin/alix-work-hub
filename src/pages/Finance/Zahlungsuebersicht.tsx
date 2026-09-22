@@ -18,7 +18,7 @@ export default function Zahlungsuebersicht() {
       const [accs, tx, dep, cb, bp] = await Promise.all([
         (supabase as any).from('finance_accounts').select('current_balance, overdue_balance').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
         (supabase as any).from('finance_transactions').select('amount, transaction_type').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
-        (supabase as any).from('finance_deposits').select('open_amount').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
+        (supabase as any).from('finance_deposits').select('open_amount').neq('status', 'storniert').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
         (supabase as any).from('finance_cashbook').select('amount_gross, booking_type, status').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
         (supabase as any).from('finance_bank_postings').select('amount, posting_type, status').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
       ]);
