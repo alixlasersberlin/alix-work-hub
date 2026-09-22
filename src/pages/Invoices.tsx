@@ -1934,17 +1934,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         if (c?.email) { foundEmail = c.email; foundName = c.company_name ?? c.contact_name ?? null; }
       }
 
-      // 2) Fallback: Lookup über Firmenname
+      // 2) Fallback: Lookup über Firmen- ODER Kontaktname
       if (!foundEmail && r.customer_name) {
+        const nameEsc = String(r.customer_name).replace(/[,()]/g, ' ').trim();
         const { data: c2 } = await supabase
           .from('customers')
           .select('email, contact_name, company_name')
-          .ilike('company_name', r.customer_name)
+          .or(`company_name.ilike.${nameEsc},contact_name.ilike.${nameEsc}`)
           .not('email', 'is', null)
           .limit(1)
           .maybeSingle();
-        if (c2?.email) { foundEmail = c2.email; foundName = c2.company_name ?? c2.contact_name ?? null; }
+        if (c2?.email) { foundEmail = c2.email; foundName = c2.company_name || c2.contact_name || null; }
       }
+
 
       // 3) Fallback: Email aus raw_data der Zoho-Rechnung
       if (!foundEmail) {
