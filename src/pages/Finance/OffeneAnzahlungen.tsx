@@ -687,6 +687,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
   const [lawyerFlag, setLawyerFlag] = useState(false);
   const [lawyerReason, setLawyerReason] = useState('');
   const [altkundeFlag, setAltkundeFlag] = useState(false);
+  const [confirmMail, setConfirmMail] = useState(true);
 
   useEffect(() => {
     if (deposit) {
@@ -697,8 +698,62 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
       setLawyerFlag(false);
       setLawyerReason('');
       setAltkundeFlag(false);
+      setConfirmMail(true);
     }
   }, [deposit]);
+
+  const sendPaymentConfirmation = async (paid: number) => {
+    if (!deposit) return;
+    let email: string | null = null;
+    let contact: string | null = null;
+    let orderNo = '';
+    if (deposit.order_id) {
+      const { data: order } = await supabase
+        .from('orders').select('id, order_number, customer_id')
+        .eq('id', deposit.order_id).maybeSingle();
+      orderNo = (order as any)?.order_number ?? '';
+      if ((order as any)?.customer_id) {
+        const { data: cust } = await supabase
+          .from('customers').select('email, contact_name')
+          .eq('id', (order as any).customer_id).maybeSingle();
+        email = (cust as any)?.email ?? null;
+        contact = (cust as any)?.contact_name ?? null;
+      }
+    }
+    if (!email) { toast.error('Keine Kunden-E-Mail hinterlegt – Zahlungsbestätigung nicht versendet'); return; }
+
+    const cur = deposit.currency || 'EUR';
+    const nr = deposit.invoice_number || deposit.deposit_number || '';
+    const rest = Math.max(0, Number(deposit.open_amount || 0) - paid);
+    const subject = `Zahlungseingang bestätigt – Anzahlung ${nr}`;
+    const body = [
+      `Sehr geehrte Damen und Herren${contact ? `, ${contact}` : ''},`,
+      '',
+      `wir bestätigen den Eingang Ihrer Zahlung${orderNo ? ` zum Auftrag ${orderNo}` : ''}.`,
+      '',
+      `Anzahlung: ${nr}`,
+      `Zahlungseingang: ${fmtMoney(paid, cur)}`,
+      `Zahlungsdatum: ${format(parseISO(date), 'dd.MM.yyyy', { locale: de })}`,
+      rest > 0.009 ? `Noch offen: ${fmtMoney(rest, cur)}` : 'Die Anzahlung ist damit vollständig ausgeglichen.',
+      '',
+      'Vielen Dank.',
+      '',
+      'Mit freundlichen Grüßen',
+      'Alix Lasers Deutschland',
+    ].filter(Boolean).join('\n');
+
+    const { error } = await supabase.functions.invoke('send-transactional-email', {
+      body: {
+        templateName: 'customer-shipping-notice',
+        recipientEmail: email,
+        idempotencyKey: `az-payment-${deposit.id}-${paid}-${date}`,
+        extraCc: ['buchhaltung@alix-operation.de'],
+        templateData: { subject, body },
+      },
+    });
+    if (error) throw error;
+    toast.success(`Zahlungsbestätigung an ${email} versendet (Kopie an Buchhaltung).`);
+  };
 
   const save = async () => {
     if (!deposit) return;
@@ -736,6 +791,11 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
           p_note: bookingNote || null,
         });
         if (error) throw error;
+
+        if (confirmMail && !lawyerFlag) {
+          try { await sendPaymentConfirmation(n); }
+          catch (e: any) { toast.error('Zahlungsbestätigung konnte nicht versendet werden: ' + (e?.message ?? 'Unbekannt')); }
+        }
       }
 
       if (lawyerFlag && deposit.order_id) {
@@ -818,6 +878,19 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
           <div className="col-span-2">
             <Label>Interner Vermerk</Label>
             <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
+          </div>
+
+          <div className="col-span-2 rounded-lg border border-border bg-secondary/40 p-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={confirmMail}
+                disabled={lawyerFlag}
+                onChange={(e) => setConfirmMail(e.target.checked)}
+              />
+              <span className="text-sm">Zahlungsbestätigung an Kunden senden (Kopie an buchhaltung@alix-operation.de)</span>
+            </label>
           </div>
 
           <div className={cn(
