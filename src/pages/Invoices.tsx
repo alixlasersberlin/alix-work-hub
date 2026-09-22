@@ -2540,6 +2540,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             <Button size="sm" variant="outline" onClick={collapseAll}>Alle schließen</Button>
           </div>
         )}
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={doExportCsv} className="gap-1">
+            <Download className="w-3.5 h-3.5" /> CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={doExportPdf} className="gap-1">
+            <Download className="w-3.5 h-3.5" /> PDF
+          </Button>
+        </div>
       </ListToolbar>
 
       {globalHits.length > 0 && (
