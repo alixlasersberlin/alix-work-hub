@@ -1342,7 +1342,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     return paginate(displayAccounts, pageSize)
       .map((a) => a.customer_name)
       .filter(Boolean)
-      .slice(0, 120)
+      .slice(0, 500)
       .join('|');
   }, [displayAccounts, pageSize, isAccountView]);
 
