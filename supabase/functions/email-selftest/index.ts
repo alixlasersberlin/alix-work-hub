@@ -17,12 +17,12 @@ Deno.serve(async (req) => {
 
   try {
     const result = await sendLovableEmail({
-      from: 'Alix Lasers Datacenter <noreply@notify.alix-finance.de>',
-      sender_domain: 'notify.alix-finance.de',
+      from: 'Alix Lasers Datacenter <noreply@alixwork.de>',
+      sender_domain: 'alixwork.de',
       to: 'rde@alix-lasers.com',
       subject: 'Testmail – Alix Work E-Mail-Versand',
-      html: '<p>Dies ist eine Testmail von Alix Work.</p><p>Absender: noreply@notify.alix-finance.de</p>',
-      text: 'Dies ist eine Testmail von Alix Work. Absender: noreply@notify.alix-finance.de',
+      html: '<p>Dies ist eine Testmail von Alix Work.</p><p>Absender: noreply@alixwork.de</p>',
+      text: 'Dies ist eine Testmail von Alix Work. Absender: noreply@alixwork.de',
       purpose: 'transactional',
       idempotency_key: crypto.randomUUID(),
       unsubscribe_token: Array.from(crypto.getRandomValues(new Uint8Array(32)))
