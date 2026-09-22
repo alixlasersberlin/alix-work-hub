@@ -1198,6 +1198,41 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   type RowMeta = { mails: number; opened: number; lastSent: string | null; level: number | null; reminderSent: string | null };
   const [rowMeta, setRowMeta] = useState<Record<string, RowMeta>>({});
   const visibleRows = useMemo(() => paginate(flatRows, pageSize), [flatRows, pageSize]);
+
+  // ---- Export (CSV / PDF) ----
+  const EXPORT_HEADERS = ['Datum', 'Fällig', 'Status', 'Kunde', 'Rechnung', 'Betrag', 'Saldo', 'Referenz'];
+  const exportRows = () => {
+    const base = selectedIds.length > 0 ? flatRows.filter((r) => selectedIds.includes(r.id)) : flatRows;
+    return base.map((r) => [
+      fmtDate(r.invoice_date),
+      fmtDate(r.due_date),
+      r.payment_status ?? '',
+      r.customer_name ?? '',
+      r.invoice_number ?? '',
+      Number(r.total ?? 0).toFixed(2),
+      Number(r.balance ?? 0).toFixed(2),
+      (r as any).reference_number ?? '',
+    ] as (string | number)[]);
+  };
+  const exportFileBase = () => `rechnungen-${new Date().toISOString().slice(0, 10)}`;
+  const doExportCsv = () => {
+    const rows = exportRows();
+    if (rows.length === 0) { toast({ title: 'Keine Daten zum Export' }); return; }
+    downloadCsv(exportFileBase(), EXPORT_HEADERS, rows);
+  };
+  const doExportPdf = () => {
+    const rows = exportRows();
+    if (rows.length === 0) { toast({ title: 'Keine Daten zum Export' }); return; }
+    const sum = rows.reduce((s, r) => s + Number(r[5] || 0), 0);
+    const open = rows.reduce((s, r) => s + Number(r[6] || 0), 0);
+    downloadPdf(
+      exportFileBase(),
+      selectedIds.length > 0 ? 'Rechnungen (Auswahl)' : 'Rechnungen',
+      EXPORT_HEADERS,
+      rows,
+      `${rows.length} Rechnungen · Summe ${sum.toFixed(2)} € · Offen ${open.toFixed(2)} €`,
+    );
+  };
   const metaKeys = useMemo(() => {
     const numbers = Array.from(new Set(visibleRows.map((r) => r.invoice_number).filter(Boolean) as string[])).slice(0, 60);
     const names = Array.from(new Set(visibleRows.map((r) => r.customer_name).filter(Boolean) as string[])).slice(0, 60);
