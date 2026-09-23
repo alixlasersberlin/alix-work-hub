@@ -1284,11 +1284,23 @@ export default function AngebotErstellen() {
       doc.setFontSize(12);
       doc.text('Gesamt:', totalsX, finalY + 25);
       doc.text(fmtMoney(Math.max(0, totals.gross - activeDiscount)), RIGHT, finalY + 25, { align: 'right' });
+      if (priceMode === 'gross') {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text('inkl. gesetzlicher MwSt.', RIGHT, finalY + 30, { align: 'right' });
+        doc.setFontSize(12);
+      }
       finalY += 11;
     } else {
       doc.setFont('helvetica', 'bold');
       doc.text('Gesamt:', totalsX, finalY + 14);
       doc.text(fmtMoney(totals.gross), RIGHT, finalY + 14, { align: 'right' });
+      if (priceMode === 'gross') {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text('inkl. gesetzlicher MwSt.', RIGHT, finalY + 19, { align: 'right' });
+        doc.setFontSize(12);
+      }
     }
 
 
