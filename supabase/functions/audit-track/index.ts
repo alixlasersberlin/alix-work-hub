@@ -29,7 +29,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const auth = await requireAuditUser(req);
-    if ("response" in auth) return auth.response;
+    // Audit darf die App nie stören: ohne gültiges Token nichts schreiben,
+    // aber auch keinen 401-Fehler im Client auslösen.
+    if ("response" in auth) return jsonResponse({ ok: false, skipped: "unauthorized" }, 200);
     const { user } = auth;
     const supabase = createAuditServiceClient();
 

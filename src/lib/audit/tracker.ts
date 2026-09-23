@@ -168,9 +168,10 @@ class AuditTracker {
     try {
       // Heartbeats share the stable audit batch endpoint. This avoids a second
       // high-frequency worker whose metadata load could intermittently fail.
-      const { error } = await supabase.functions.invoke("audit-track", {
+      const { data, error } = await supabase.functions.invoke("audit-track", {
         body: { session_id: this.sessionId, actions: [], heartbeat: payload },
       });
+      if ((data as any)?.skipped === "unauthorized") { await this.handleUnauthorized(); return; }
       if (error) {
         const msg = String((error as any)?.message ?? "");
         if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
