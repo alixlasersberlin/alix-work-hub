@@ -720,6 +720,23 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
         contact = (cust as any)?.contact_name ?? null;
       }
     }
+    if (!email) {
+      // Fallback: Anzahlungen ohne Auftrag (z. B. aus Rechnungen erzeugt) über den Kundennamen auflösen
+      const name = (deposit as any).customer_name?.trim();
+      if (name) {
+        const esc = name.replace(/[,()]/g, ' ').trim();
+        const { data: cands } = await supabase
+          .from('customers')
+          .select('email, contact_name, company_name')
+          .or(`company_name.ilike.${esc},contact_name.ilike.${esc}`)
+          .limit(5);
+        const hit = (cands as any[] | null)?.find((c) => c?.email);
+        if (hit) {
+          email = hit.email ?? null;
+          contact = hit.contact_name ?? null;
+        }
+      }
+    }
     if (!email) { toast.error('Keine Kunden-E-Mail hinterlegt – Zahlungsbestätigung nicht versendet'); return; }
 
     const cur = deposit.currency || 'EUR';
