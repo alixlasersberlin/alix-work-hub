@@ -43,7 +43,9 @@ export default function ProductHubWebseiten() {
       last_sync_at: new Date().toISOString(), last_sync_status: 'ok',
     });
     await db.from('ph_sync_log').insert({ channel_code: code, direction: 'export', operation: 'publish', product_id: p.id, status: 'ok', message: `${p.name} für ${code.toUpperCase()} freigegeben` });
-    toast.success('Veröffentlicht');
+    toast.success(`Für ${code.toUpperCase()} freigegeben`, {
+      description: 'Die Webseite holt die Daten selbst ab. Was sie anzeigt, entscheidet das Webseiten-Projekt.',
+    });
     load();
   };
 
