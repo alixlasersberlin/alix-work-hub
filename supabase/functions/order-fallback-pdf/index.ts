@@ -301,6 +301,8 @@ Deno.serve(async (req) => {
       y -= 16
       page.drawText('Gesamt:', { x: lblX, y, size: 12, font: helvB, color: headerBlue })
       page.drawText(fmt(displayTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+      y -= 12
+      page.drawText('inkl. gesetzlicher MwSt.', { x: RIGHT - 120, y, size: 8, font: helv, color: black })
     }
     y -= 24
 
