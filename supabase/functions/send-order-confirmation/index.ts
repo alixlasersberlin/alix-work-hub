@@ -188,7 +188,9 @@ Deno.serve(async (req) => {
       }, { apiKey })
       results.push({ to: rec.email, status: 'sent' })
     } catch (e: any) {
-      results.push({ to: rec.email, status: 'failed', error: e?.message })
+      const detail = e?.message || String(e)
+      console.error('order-confirmation send failed', { to: rec.email, key: rec.key, error: detail, raw: JSON.stringify(e?.response ?? e?.body ?? null) })
+      results.push({ to: rec.email, status: 'failed', error: detail })
     }
   }
 
