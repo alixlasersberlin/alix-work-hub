@@ -46,9 +46,9 @@ Deno.serve(async (req) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}` },
         body: JSON.stringify({
-          to,
+          recipientEmail: to,
           templateName: 'customer-shipping-notice',
-          data: { subject, body: text },
+          templateData: { subject, body: text },
           extraCc: to === INTERNAL_TO ? [] : [INTERNAL_TO],
         }),
       })
