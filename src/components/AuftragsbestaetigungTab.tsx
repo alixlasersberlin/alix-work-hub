@@ -96,7 +96,7 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
       if (error) throw error;
       const failed = (data?.results || []).filter((r: any) => r.status !== 'sent');
       if (failed.length > 0) {
-        toast.error(`Versand teilweise fehlgeschlagen: ${failed.map((f: any) => f.to).join(', ')}`);
+        toast.error(`Versand teilweise fehlgeschlagen: ${failed.map((f: any) => `${f.to} (${f.error || 'unbekannter Fehler'})`).join(', ')}`);
       } else {
         toast.success('Auftragsbestätigung versendet');
       }
