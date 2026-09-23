@@ -372,6 +372,12 @@ verify_jwt = false
 [functions.audit-session-heartbeat]
 verify_jwt = false
 
+[functions.audit-track]
+verify_jwt = false
+
+[functions.audit-session-start]
+verify_jwt = false
+
 
 
 [functions.survey-public]
