@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
   if (createdBy) {
     const { data: creator } = await admin.auth.admin.getUserById(createdBy)
     const ce = creator?.user?.email
-    if (ce && ce.toLowerCase() !== primary.toLowerCase() && ce.toLowerCase() !== 'rde@alix-lasers.com') {
+    if (ce && ce.toLowerCase() !== primary.toLowerCase() && ce.toLowerCase() !== 'rde@alix-lasers.com' && ce.toLowerCase() !== 'homebln@icloud.com') {
       recipients.push({ email: ce, subjectPrefix: '[Kopie] ', key: 'creator' })
     }
   }
