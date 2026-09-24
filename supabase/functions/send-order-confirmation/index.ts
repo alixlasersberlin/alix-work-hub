@@ -173,19 +173,28 @@ Deno.serve(async (req) => {
   const idBase = signatureId || `order-${orderId}`
   for (const rec of recipients) {
     try {
-      const tb = new Uint8Array(32); crypto.getRandomValues(tb)
-      const u = Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('')
-      await sendLovableEmail({
-        to: rec.email,
-        from: "Alix Lasers ® <noreply@alixwork.de>",
-        bcc: ["service@alix-lasers.com"],
-        sender_domain: SENDER_DOMAIN,
-        subject: `${rec.subjectPrefix ?? ''}${subject}`,
-        html, text,
-        purpose: 'transactional',
-        idempotency_key: `order-conf-${idBase}-${rec.key}-${stamp}`,
-        unsubscribe_token: u,
-      }, { apiKey })
+      // Versand über Resend – dort ist alixwork.de verifiziert (Lovable-Mail-API kennt die Domain nicht)
+      const resendKey = Deno.env.get('RESEND_API_KEY')
+      if (!resendKey) throw new Error('RESEND_API_KEY not configured')
+      const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'X-Connection-Api-Key': resendKey,
+          'Content-Type': 'application/json',
+          'Idempotency-Key': `order-conf-${idBase}-${rec.key}-${stamp}`,
+        },
+        body: JSON.stringify({
+          from: `Alix Lasers ® <noreply@${FROM_DOMAIN}>`,
+          to: [rec.email],
+          bcc: ['service@alix-lasers.com'],
+          reply_to: 'buchhaltung@alix-operation.de',
+          subject: `${rec.subjectPrefix ?? ''}${subject}`,
+          html, text,
+        }),
+      })
+      const txt = await res.text()
+      if (!res.ok) throw new Error(`Resend ${res.status}: ${txt.slice(0, 300)}`)
       results.push({ to: rec.email, status: 'sent' })
     } catch (e: any) {
       const detail = e?.message || String(e)
