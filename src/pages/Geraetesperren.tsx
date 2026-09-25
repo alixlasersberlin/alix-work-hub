@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Lock, RefreshCw, Unlock, Pencil, Wallet, ChevronDown, ChevronRight, FileDown, Table as TableIcon } from 'lucide-react';
+import { Lock, RefreshCw, Unlock, Pencil, Wallet, ChevronDown, ChevronRight, FileDown, Table as TableIcon, Mail } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -259,8 +261,65 @@ export default function Geraetesperren() {
       toast.error('PDF-Export fehlgeschlagen: ' + e.message);
     }
   }
+  // ---------- E-Mail: Sperrankündigung ----------
+  const DEFAULT_LOCK_TEXT =
+    'Sehr geehrte Kundin, sehr geehrter Kunde,\n\n' +
+    'aufgrund offener Posten in Höhe von {betrag} (Rechnung(en): {rechnungen}) wird Ihr Gerät nun gesperrt.\n\n' +
+    'Um das Gerät erneut zu aktivieren, senden Sie bitte den Einzahlungsschein über die volle offene Summe von {betrag} an service@alix-lasers.com.\n\n' +
+    'Nach Prüfung des Zahlungseingangs wird Ihr Gerät umgehend wieder freigeschaltet.\n\n' +
+    'Mit freundlichen Grüßen\nAlix Lasers – Buchhaltung';
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailBusy, setMailBusy] = useState(false);
+  const [mailText, setMailText] = useState(DEFAULT_LOCK_TEXT);
+  const [mailRows, setMailRows] = useState<{ key: string; name: string; email: string; total: number; invoices: string[] }[]>([]);
 
+  async function openMail() {
+    if (!selectedRows.length) return toast.error('Bitte zuerst Sperren markieren');
+    const map = new Map<string, { key: string; name: string; email: string; total: number; invoices: string[] }>();
+    for (const r of selectedRows) {
+      const key = String(r.customer_number ?? r.customer_id ?? r.customer_name ?? r.id);
+      const g = map.get(key) ?? { key, name: r.customer_name ?? '—', email: '', total: 0, invoices: [] };
+      g.total += Number(r.amount) || 0;
+      if (r.invoice_number) g.invoices.push(r.invoice_number);
+      if (!g.email && r.customer_email) g.email = r.customer_email;
+      map.set(key, g);
+    }
+    const list = [...map.values()];
+    await Promise.all(list.map(async (g) => {
+      if (g.email || !g.name || g.name === '—') return;
+      const esc = `%${g.name.replace(/[%,()]/g, ' ').trim()}%`;
+      const { data } = await supabase.from('customers').select('email')
+        .or(`company_name.ilike.${esc},contact_name.ilike.${esc}`).limit(5);
+      g.email = (data ?? []).find((c: any) => c.email)?.email ?? '';
+    }));
+    setMailRows(list);
+    setMailText(DEFAULT_LOCK_TEXT);
+    setMailOpen(true);
+  }
 
+  async function sendMails() {
+    setMailBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    for (const g of mailRows) {
+      if (!g.email.trim()) { skipped++; continue; }
+      const body = mailText
+        .replace(/\{betrag\}/g, fmt(g.total))
+        .replace(/\{rechnungen\}/g, g.invoices.join(', ') || '—')
+        .replace(/\{kunde\}/g, g.name);
+      const { error } = await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'customer-shipping-notice',
+          recipientEmail: g.email.trim(),
+          idempotencyKey: `device-lock-${g.key}-${Date.now()}`,
+          templateData: { subject: 'Sperrung Ihres Gerätes aufgrund offener Posten', body },
+        },
+      });
+      if (error) fail++; else ok++;
+    }
+    setMailBusy(false);
+    setMailOpen(false);
+    toast[fail ? 'error' : 'success'](`${ok} gesendet${fail ? `, ${fail} fehlgeschlagen` : ''}${skipped ? `, ${skipped} ohne E-Mail übersprungen` : ''}`);
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -298,9 +357,14 @@ export default function Geraetesperren() {
               ? `${selectedRows.length} markiert – Export nur der Markierung`
               : 'Keine Markierung – Export aller angezeigten Sperren'}
             {selectedRows.length > 0 && (
-              <Button variant="link" size="sm" className="h-auto p-0 ml-2" onClick={() => setSelected({})}>
-                Auswahl zurücksetzen
-              </Button>
+              <>
+                <Button variant="link" size="sm" className="h-auto p-0 ml-2" onClick={() => setSelected({})}>
+                  Auswahl zurücksetzen
+                </Button>
+                <Button variant="destructive" size="sm" className="ml-3 h-7" onClick={openMail}>
+                  <Mail className="w-3.5 h-3.5 mr-1" /> Sperr-E-Mail senden
+                </Button>
+              </>
             )}
           </p>
         </CardHeader>
