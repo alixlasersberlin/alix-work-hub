@@ -503,6 +503,33 @@ export default function Geraetesperren() {
         open={!!pdfInvoice}
         onOpenChange={(v) => !v && setPdfInvoice(null)}
       />
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Sperr-E-Mail an {mailRows.length} Kunde(n)</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Platzhalter: {'{betrag}'} {'{rechnungen}'} {'{kunde}'} – pro Kunde wird die volle offene Summe eingesetzt.</p>
+            <Textarea rows={10} value={mailText} onChange={(e) => setMailText(e.target.value)} />
+            <div className="max-h-56 overflow-y-auto space-y-2 border border-border rounded-md p-2">
+              {mailRows.map((g, i) => (
+                <div key={g.key} className="flex items-center gap-2 text-sm">
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate font-medium">{g.name}</div>
+                    <div className="text-xs text-muted-foreground">{fmt(g.total)} · {g.invoices.join(', ')}</div>
+                  </div>
+                  <Input className="w-64" placeholder="E-Mail fehlt" value={g.email}
+                    onChange={(e) => setMailRows((rs) => rs.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMailOpen(false)}>Abbrechen</Button>
+            <Button variant="destructive" onClick={sendMails} disabled={mailBusy}>
+              <Mail className="w-4 h-4 mr-1" /> {mailBusy ? 'Sendet…' : 'Jetzt senden'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
