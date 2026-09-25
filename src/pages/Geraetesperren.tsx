@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Lock, RefreshCw, Unlock, Pencil, Wallet, ChevronDown, ChevronRight, FileDown, Table as TableIcon, Mail } from 'lucide-react';
+import { Lock, RefreshCw, Unlock, Pencil, Wallet, ChevronDown, ChevronRight, FileDown, Table as TableIcon, Mail, MessageSquare } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -321,6 +321,62 @@ export default function Geraetesperren() {
     toast[fail ? 'error' : 'success'](`${ok} gesendet${fail ? `, ${fail} fehlgeschlagen` : ''}${skipped ? `, ${skipped} ohne E-Mail übersprungen` : ''}`);
   }
 
+  // ---------- SMS: Sperrankündigung (Twilio über op-light-send-sms) ----------
+  const DEFAULT_LOCK_SMS =
+    'Alix Lasers: Aufgrund offener Posten von {betrag} wird Ihr Gerät gesperrt. ' +
+    'Zur Freischaltung senden Sie bitte den Einzahlungsschein über {betrag} an service@alix-lasers.com.';
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [smsBusy, setSmsBusy] = useState(false);
+  const [smsText, setSmsText] = useState(DEFAULT_LOCK_SMS);
+  const [smsRows, setSmsRows] = useState<{ key: string; name: string; phone: string; total: number; invoices: string[] }[]>([]);
+
+  async function openSms() {
+    if (!selectedRows.length) return toast.error('Bitte zuerst Sperren markieren');
+    const map = new Map<string, { key: string; name: string; phone: string; total: number; invoices: string[] }>();
+    for (const r of selectedRows) {
+      const key = String(r.customer_number ?? r.customer_id ?? r.customer_name ?? r.id);
+      const g = map.get(key) ?? { key, name: r.customer_name ?? '—', phone: '', total: 0, invoices: [] };
+      g.total += Number(r.amount) || 0;
+      if (r.invoice_number) g.invoices.push(r.invoice_number);
+      if (!g.phone && (r.customer_phone || r.phone)) g.phone = r.customer_phone || r.phone;
+      map.set(key, g);
+    }
+    const list = [...map.values()];
+    await Promise.all(list.map(async (g) => {
+      if (g.phone || !g.name || g.name === '—') return;
+      const esc = `%${g.name.replace(/[%,()]/g, ' ').trim()}%`;
+      const { data } = await supabase.from('customers').select('phone')
+        .or(`company_name.ilike.${esc},contact_name.ilike.${esc}`).limit(5);
+      g.phone = (data ?? []).find((c: any) => c.phone)?.phone ?? '';
+    }));
+    setSmsRows(list);
+    setSmsText(DEFAULT_LOCK_SMS);
+    setSmsOpen(true);
+  }
+
+  async function sendSms() {
+    setSmsBusy(true);
+    let ok = 0, fail = 0, skipped = 0;
+    const errors: string[] = [];
+    for (const g of smsRows) {
+      if (!g.phone.trim()) { skipped++; continue; }
+      const message = smsText
+        .replace(/\{betrag\}/g, fmt(g.total))
+        .replace(/\{rechnungen\}/g, g.invoices.join(', ') || '—')
+        .replace(/\{kunde\}/g, g.name);
+      const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
+        body: { to: g.phone.trim(), message },
+      });
+      if (error || (data as any)?.error) { fail++; errors.push(`${g.name}: ${(data as any)?.error || error?.message}`); }
+      else ok++;
+    }
+    setSmsBusy(false);
+    setSmsOpen(false);
+    if (errors.length) console.error('Sperr-SMS Fehler', errors);
+    toast[fail ? 'error' : 'success'](`${ok} SMS gesendet${fail ? `, ${fail} fehlgeschlagen` : ''}${skipped ? `, ${skipped} ohne Nummer übersprungen` : ''}`);
+  }
+
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader icon={Lock} title="Gerätesperren" subtitle="Übersicht und Verwaltung gesperrter Geräte" noBreadcrumbs />
@@ -363,6 +419,9 @@ export default function Geraetesperren() {
                 </Button>
                 <Button variant="destructive" size="sm" className="ml-3 h-7" onClick={openMail}>
                   <Mail className="w-3.5 h-3.5 mr-1" /> Sperr-E-Mail senden
+                </Button>
+                <Button variant="outline" size="sm" className="ml-2 h-7" onClick={openSms}>
+                  <MessageSquare className="w-3.5 h-3.5 mr-1" /> Sperr-SMS senden
                 </Button>
               </>
             )}
@@ -526,6 +585,33 @@ export default function Geraetesperren() {
             <Button variant="outline" onClick={() => setMailOpen(false)}>Abbrechen</Button>
             <Button variant="destructive" onClick={sendMails} disabled={mailBusy}>
               <Mail className="w-4 h-4 mr-1" /> {mailBusy ? 'Sendet…' : 'Jetzt senden'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={smsOpen} onOpenChange={setSmsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Sperr-SMS an {smsRows.length} Kunde(n)</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Platzhalter: {'{betrag}'} {'{rechnungen}'} {'{kunde}'} · {smsText.length} Zeichen (max. 600)</p>
+            <Textarea rows={5} maxLength={600} value={smsText} onChange={(e) => setSmsText(e.target.value)} />
+            <div className="max-h-56 overflow-y-auto space-y-2 border border-border rounded-md p-2">
+              {smsRows.map((g, i) => (
+                <div key={g.key} className="flex items-center gap-2 text-sm">
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate font-medium">{g.name}</div>
+                    <div className="text-xs text-muted-foreground">{fmt(g.total)} · {g.invoices.join(', ')}</div>
+                  </div>
+                  <Input className="w-56" placeholder="Mobilnummer fehlt" value={g.phone}
+                    onChange={(e) => setSmsRows((rs) => rs.map((x, j) => j === i ? { ...x, phone: e.target.value } : x))} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSmsOpen(false)}>Abbrechen</Button>
+            <Button variant="destructive" onClick={sendSms} disabled={smsBusy}>
+              <MessageSquare className="w-4 h-4 mr-1" /> {smsBusy ? 'Sendet…' : 'SMS jetzt senden'}
             </Button>
           </DialogFooter>
         </DialogContent>
