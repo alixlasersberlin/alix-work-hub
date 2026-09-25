@@ -160,7 +160,7 @@ export function DeviceLockBookDialog({
       booking_date: date,
       description: note || `Zahlung Gerätesperre ${lock.invoice_number ?? ''} · ${lock.customer_name ?? ''}`.trim(),
       source_table: 'device_locks',
-      source_id: `${lock.id}:${date}:${amount}`,
+      source_id: lock.id,
       vorgang: 'Zahlung',
       payment_method: method,
     });
