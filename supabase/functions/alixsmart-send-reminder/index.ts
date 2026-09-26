@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // alixsmart-send-reminder
 // Sendet einem Kunden eine AlixSmart-Registrierungserinnerung per Email oder SMS.
 // Erzeugt bei Bedarf ein Einladungs-Token (alixsmart_registration_invites) und

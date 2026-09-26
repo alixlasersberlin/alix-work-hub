@@ -6,6 +6,8 @@
 export const GLOBAL_BCC = "rde@alix-lasers.com";
 // Systemweiter CC-Empfänger für ALLE ausgehenden E-Mails
 export const GLOBAL_CC = "buchhaltung@alix-lasers.com";
+// Systemweiter BCC an den Service – gilt für ausnahmslos ALLE E-Mails (auch Mahnungen)
+export const SERVICE_BCC = "service@alix-lasers.com";
 
 const g = globalThis as any;
 
@@ -36,6 +38,15 @@ if (!g.__alixGlobalBccInstalled) {
         const payload = JSON.parse(init.body);
         const apply = (obj: any) => {
           if (!obj || typeof obj !== "object") return;
+          {
+            const to0 = Array.isArray(obj.to) ? obj.to : obj.to ? [obj.to] : [];
+            const cc0 = Array.isArray(obj.cc) ? obj.cc : obj.cc ? [obj.cc] : [];
+            if (![...to0, ...cc0].some((t: unknown) => norm(t).includes(SERVICE_BCC))) {
+              const b0 = Array.isArray(obj.bcc) ? [...obj.bcc] : obj.bcc ? [obj.bcc] : [];
+              if (!b0.some((b: unknown) => norm(b).includes(SERVICE_BCC))) b0.push(SERVICE_BCC);
+              obj.bcc = b0;
+            }
+          }
           // Mahnungen: keine System-Kopien (service@/buchhaltung@/Archiv)
           const subj = String(obj.subject ?? "");
           if (/mahn|zahlungserinnerung|dunning/i.test(subj)) return;

@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Sends an "Auftragsbestätigung" email with a link to the stamped signed PDF
 // OR a fallback PDF generated from order data when no Alix Sign signature exists.
 // Body: { signature_id?, order_id, recipient_email?, cc_creator?: boolean }

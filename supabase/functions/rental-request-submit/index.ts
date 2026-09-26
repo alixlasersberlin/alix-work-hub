@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Öffentliche Mietanfrage (/miete/premium).
 // Nutzt die bestehende Lead-Logik (sales_leads) – kein zweites CRM.
 // Preise werden IMMER serverseitig aus dem Product Hub geprüft.
