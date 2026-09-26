@@ -295,12 +295,13 @@ Deno.serve(async (req) => {
       page.drawText('Gesamt (netto):', { x: lblX - 20, y, size: 12, font: helvB, color: headerBlue })
       page.drawText(fmt(displayTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
     } else {
-      const taxInfo = displayTotal * 0.19
-      page.drawText('zzgl. MwSt (19%):', { x: lblX, y, size: 10, font: helv, color: black })
+      const grossTotal = Number(totals.gross) || displayTotal
+      const taxInfo = grossTotal - grossTotal / 1.19
+      page.drawText('darin enth. MwSt (19%):', { x: lblX - 20, y, size: 10, font: helv, color: black })
       page.drawText(fmt(taxInfo, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
       y -= 16
       page.drawText('Gesamt:', { x: lblX, y, size: 12, font: helvB, color: headerBlue })
-      page.drawText(fmt(displayTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+      page.drawText(fmt(grossTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
       y -= 12
       page.drawText('inkl. gesetzlicher MwSt.', { x: RIGHT - 120, y, size: 8, font: helv, color: black })
     }
