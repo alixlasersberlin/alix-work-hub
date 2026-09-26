@@ -178,6 +178,16 @@ function GeraetesperrenMenu(_props: { roles: string[] }) {
 
 
 
+// Hauptmenü: sechs feste Bereiche; bestehende Menüs werden darunter einsortiert.
+const MAIN_SECTIONS = [
+  { key: 'kunden', title: 'KUNDEN', icon: Users, labels: ['CUSTOMER CARE', 'TICKETS', 'ALIX i-COM'] },
+  { key: 'verkauf', title: 'VERKAUF', icon: TrendingUp, labels: ['VERKAUF', 'PRODUCT HUB', 'ARTIKEL & PRODUKTE'] },
+  { key: 'einkauf', title: 'EINKAUF', icon: ShoppingCart, labels: ['EINKAUF'] },
+  { key: 'finance', title: 'FINANCE', icon: Banknote, labels: ['BUCHHALTUNG', 'GERÄTESPERREN'] },
+  { key: 'produktion', title: 'PRODUKTION', icon: Factory, labels: ['LAGER & WERKSTATT', 'CAPA 2.0 COCKPIT'] },
+  { key: 'operation', title: 'OPERATION', icon: Settings, labels: ['OPERATIONS', 'TOURENPLANUNG', 'TEAMKALENDER', 'ALIXDOCS', 'MAGIC STATUS'] },
+];
+
 export default function AppLayout() {
   const { profile, roles, signOut, impersonatedUserId, impersonatedName, stopImpersonation } = useAuth();
   const { variant } = useDesignVariant();
