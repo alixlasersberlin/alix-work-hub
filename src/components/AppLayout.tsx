@@ -1277,6 +1277,17 @@ export default function AppLayout() {
             const take = (labels: string[]) => labels.map(l => byPath.get(l)).filter(Boolean).map(i => { used.add(i!.label); return i!; });
             const top = take(['DASHBOARDS']);
             const sections = MAIN_SECTIONS.map(s => ({ ...s, items: take(s.labels) }));
+            // Kunden-Gruppe aus VERKAUF in den Hauptbereich KUNDEN verschieben
+            const verkaufSec = sections.find(s => s.key === 'verkauf');
+            const kundenSec = sections.find(s => s.key === 'kunden');
+            if (verkaufSec && kundenSec) {
+              verkaufSec.items = verkaufSec.items.map(it => {
+                const k = it.children?.find(c => c.path === '/kunden');
+                if (!k) return it;
+                kundenSec.items.unshift(k as any);
+                return { ...it, children: it.children!.filter(c => c.path !== '/kunden') };
+              });
+            }
             const rest = visibleItems.filter(i => !used.has(i.label));
             const opSec = sections.find(s => s.key === 'operation');
             if (opSec) opSec.items.push(...rest);
