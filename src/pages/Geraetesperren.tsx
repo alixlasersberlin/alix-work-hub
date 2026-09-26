@@ -373,7 +373,8 @@ export default function Geraetesperren() {
     setSmsBusy(false);
     setSmsOpen(false);
     if (errors.length) console.error('Sperr-SMS Fehler', errors);
-    toast[fail ? 'error' : 'success'](`${ok} SMS gesendet${fail ? `, ${fail} fehlgeschlagen` : ''}${skipped ? `, ${skipped} ohne Nummer übersprungen` : ''}`);
+    toast[fail ? 'error' : 'success'](`${ok} SMS gesendet${fail ? `, ${fail} fehlgeschlagen` : ''}${skipped ? `, ${skipped} ohne Nummer übersprungen` : ''}`,
+      fail ? { description: errors.slice(0, 3).join(' · '), duration: 12000 } : undefined);
   }
 
 
