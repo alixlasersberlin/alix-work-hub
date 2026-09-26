@@ -38,24 +38,24 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization') ?? '';
-    if (!authHeader.startsWith('Bearer ')) return json({ error: 'Unauthorized' }, 401);
+    if (!authHeader.startsWith('Bearer ')) return json({ error: 'Sitzung abgelaufen – bitte neu anmelden' }, 200);
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
     });
     const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: 'Unauthorized' }, 401);
+    if (!user) return json({ error: 'Sitzung abgelaufen – bitte neu anmelden' }, 200);
 
     const { data: roleRows } = await admin.from('user_roles').select('roles(name)').eq('user_id', user.id);
     const roleNames = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-    if (!roleNames.some((n: string) => ALLOWED.includes(n))) return json({ error: 'Keine Berechtigung' }, 403);
+    if (!roleNames.some((n: string) => ALLOWED.includes(n))) return json({ error: 'Keine Berechtigung' }, 200);
 
     const body = await req.json().catch(() => ({}));
     const to = normalizePhone(String(body?.to ?? ''));
     const text = String(body?.message ?? '').trim().slice(0, 600);
-    if (!to) return json({ error: 'Keine gültige Mobilnummer' }, 400);
-    if (!text) return json({ error: 'Nachricht fehlt' }, 400);
-    if (!TWILIO_FROM) return json({ error: 'SMS-Absender fehlt (TWILIO_SMS_FROM_NUMBER)' }, 400);
+    if (!to) return json({ error: 'Keine gültige Mobilnummer' }, 200);
+    if (!text) return json({ error: 'Nachricht fehlt' }, 200);
+    if (!TWILIO_FROM) return json({ error: 'SMS-Absender fehlt (TWILIO_SMS_FROM_NUMBER)' }, 200);
 
     const params = new URLSearchParams({ To: to, From: TWILIO_FROM, Body: text });
 
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
         body: params,
       });
     } else {
-      return json({ error: 'Twilio ist nicht konfiguriert' }, 400);
+      return json({ error: 'Twilio ist nicht konfiguriert' }, 200);
     }
 
     if (!res.ok) {
@@ -97,6 +97,6 @@ Deno.serve(async (req) => {
     return json({ success: true, sid: payload?.sid ?? null, to });
   } catch (e: any) {
     console.error('op-light-send-sms error', e);
-    return json({ error: e?.message ?? 'Unbekannter Fehler' }, 500);
+    return json({ error: e?.message ?? 'Unbekannter Fehler' }, 200);
   }
 });
