@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     if (!run || !['rechnungen_erzeugt', 'prenotification_versendet'].includes(run.status)) return json({ error: 'Lauf ist nicht im Status „Rechnungen erzeugt"' }, 200);
 
     const { data: settings } = await sb.from('rp_settings').select('*').eq('id', 1).single();
-    const { data: items } = await sb.from('rp_billing_run_items').select('id, plan_id, customer_id').eq('run_id', runId);
+    const { data: items } = await sb.from('rp_billing_run_items').select('id, plan_id, customer_id, installment_number, installment_count, due_date').eq('run_id', runId);
     const itemIds = (items || []).map((i) => i.id);
     let q = sb.from('rp_prenotifications').select('*').in('item_id', itemIds.length ? itemIds : ['00000000-0000-0000-0000-000000000000']);
     if (only.length || resend.length) q = q.in('id', [...only, ...resend]);
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     for (const pn of pns || []) {
       const item = items!.find((i) => i.id === pn.item_id)!;
       const [{ data: plan }, { data: cust }, { data: inv }] = await Promise.all([
-        sb.from('rp_payment_plans').select('notify_channel,email,phone').eq('id', item.plan_id).single(),
+        sb.from('rp_payment_plans').select('notify_channel,email,phone,sms_enabled').eq('id', item.plan_id).single(),
         sb.from('customers').select('company_name,contact_name,email,phone').eq('id', pn.customer_id).single(),
         sb.from('zoho_invoices').select('legal_invoice_number,invoice_number').eq('id', pn.invoice_id).single(),
       ]);
@@ -50,10 +50,17 @@ Deno.serve(async (req) => {
         customer_name: cust?.contact_name || cust?.company_name || '',
         amount: eur(Number(pn.amount)), collection_date: de(pn.collection_date),
         invoice_number: inv?.legal_invoice_number || inv?.invoice_number || '',
-        mandate_reference: pn.mandate_reference || '', creditor_id: pn.creditor_id, creditor_name: pn.creditor_name,
+        mandate_reference: pn.mandate_reference || '', creditor_id: pn.creditor_id || '', creditor_name: pn.creditor_name,
+        due_date: de(item.due_date || pn.collection_date), installment_number: String(item.installment_number ?? ''), installment_count: String(item.installment_count ?? ''),
       };
       const isResend = resend.includes(pn.id);
-      const channels: string[] = plan?.notify_channel === 'sms' ? ['sms'] : plan?.notify_channel === 'email_sms' ? ['email', 'sms'] : ['email'];
+      const isInfo = pn.kind === 'zahlungsinfo';
+      const chSet = new Set<string>(plan?.notify_channel === 'sms' ? ['sms'] : plan?.notify_channel === 'email_sms' ? ['email', 'sms'] : ['email']);
+      if (plan?.sms_enabled) chSet.add('sms');
+      const channels = [...chSet];
+      const subjT = isInfo ? settings.info_email_subject : settings.email_subject;
+      const bodyT = isInfo ? settings.info_email_body : settings.email_body;
+      const smsT = isInfo ? settings.info_sms_body : settings.sms_body;
       for (const ch of channels) {
         if (sentSet.has(pn.id + ':' + ch) && !isResend) { skipped++; continue; }
         const to = ch === 'email' ? (plan?.email || cust?.email) : (plan?.phone || cust?.phone);
@@ -62,8 +69,8 @@ Deno.serve(async (req) => {
         try {
           const fn = ch === 'email' ? 'send-transactional-email' : 'op-light-send-sms';
           const payload = ch === 'email'
-            ? { templateName: 'customer-shipping-notice', recipientEmail: to, idempotencyKey: `rp-pn-${pn.id}${isResend ? '-r' + Date.now() : ''}`, templateData: { subject: fill(settings.email_subject, vars), body: fill(settings.email_body, vars) } }
-            : { to, message: fill(settings.sms_body, vars) };
+            ? { templateName: 'customer-shipping-notice', recipientEmail: to, idempotencyKey: `rp-pn-${pn.id}${isResend ? '-r' + Date.now() : ''}`, templateData: { subject: fill(subjT, vars), body: fill(bodyT, vars) } }
+            : { to, message: fill(smsT, vars) };
           const r = await fetch(`${url}/functions/v1/${fn}`, { method: 'POST', headers: { Authorization: auth, apikey: Deno.env.get('SUPABASE_ANON_KEY')!, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
           const t = await r.text(); let d: any = {}; try { d = JSON.parse(t); } catch { /* */ }
           if (!r.ok || d?.error || d?.success === false) { status = 'fehlgeschlagen'; err = String(d?.error || d?.reason || t).slice(0, 400); }
