@@ -57,7 +57,9 @@ const KNOWLEDGE = `Du bist ALIX, der KI-Copilot von „Alix Work" (AlixSmart Inf
 # Stil
 Antworte auf Deutsch, präzise, mit Listen oder kurzen Tabellen falls hilfreich.
 Wenn du Echtdaten brauchst, nutze deine Tools.
-Spezialisierte Tools: search_orders, get_order, search_customers, get_customer, search_invoices, search_tickets, search_production_orders, search_repair_orders, search_sales_leads, search_lager_devices, kpi_overview.
+Für offene Posten / Kontoauszug eines Kunden IMMER customer_statement nutzen und das Ergebnis als Tabelle (Rechnung, Datum, Fällig, Betrag, Offen, Tage überfällig) mit Summenzeile und Stand-Zeitpunkt zeigen.
+Alle Tabellen von Alix Work sind über describe_table/query_table lesbar (außer sicherheitskritische); list_modules zeigt nur die wichtigsten.
+Spezialisierte Tools: customer_statement, search_orders, get_order, search_customers, get_customer, search_invoices, search_tickets, search_production_orders, search_repair_orders, search_sales_leads, search_lager_devices, kpi_overview.
 Universelle Tools (für ALLE anderen Module wie Finance, ISO 13485, MDR, QM/Bugs/CAPA, Mail, WhatsApp, Tourenplanung, Warranty, Maintenance, Lieferanten, Dispatch, Lager, Reviews, Academy, AI-Service, Device-Lifecycle, Stammdaten usw.):
   • list_modules() – Übersicht aller verfügbaren Tabellen mit Modul-Gruppierung
   • describe_table(table) – Spalten einer Tabelle anzeigen (vor query_table aufrufen, wenn Struktur unbekannt)
@@ -114,6 +116,14 @@ const tools = [
         properties: { customer_number: { type: "string" } },
         required: ["customer_number"],
       },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "customer_statement",
+      description: "Aktueller Kontoauszug / offene Posten eines Kunden (Name, Teilname oder Kundennummer): alle offenen Rechnungen, wiederkehrenden Rechnungen und offenen Anzahlungen mit Betrag, Saldo, Fälligkeit, Tage überfällig und Summen. IMMER nutzen bei Fragen wie 'was hat X offen', 'offene Rechnungen von X', 'Kontoauszug X'.",
+      parameters: { type: "object", properties: { customer: { type: "string" } }, required: ["customer"] },
     },
   },
   {
@@ -308,9 +318,17 @@ const ALLOWED_TABLES = new Set<string>(
   Object.values(MODULE_CATALOG).flat().filter((t) => !BLOCKED_TABLES.has(t)),
 );
 
+const SENSITIVE_PATTERN = /(^auth|password|secret|token|otp|session|api_key|credential|mfa|webauthn|passkey|vault)/i;
+function isTableAllowed(t: string): boolean {
+  if (!/^[a-z_][a-z0-9_]*$/i.test(t)) return false;
+  if (BLOCKED_TABLES.has(t)) return false;
+  if (ALLOWED_TABLES.has(t)) return true;
+  return !SENSITIVE_PATTERN.test(t);
+}
+
 function tableRequiresRole(table: string): string[] | null {
-  if (table.startsWith("finance_") || table === "zoho_invoices" || table === "zoho_unpaid_invoices" || table === "bank_financing_requests") {
-    return ["Super Admin", "Admin", "Finance"];
+  if (table.startsWith("finance_") || table.startsWith("bank_") || table.startsWith("op_light_") || table.startsWith("gobd_") || table.startsWith("zoho_invoice") || table.startsWith("zoho_recurring") || table === "zoho_unpaid_invoices") {
+    return ["Super Admin", "Admin", "Finance", "FIBU LIGHT", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"];
   }
   if (table.startsWith("iso_") || table === "mdr_vigilance_reports") {
     return ["Super Admin", "Admin", "QM"];
@@ -404,6 +422,36 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
           .eq("customer_id", (cust as any).id)
           .limit(20);
         return { customer: pick(cust as any, ["customer_number", "customer_name", "email", "phone", "city", "country", "source_system", "vip"]), orders, unpaid_invoices: invoices ?? [] };
+      }
+      case "customer_statement": {
+        if (!ctx.isAdmin && !ctx.isFinance) return { error: "Nicht berechtigt – Finance-/Buchhaltungsrolle nötig." };
+        const raw = String(args?.customer ?? "").replace(/[%,()]/g, " ").trim();
+        if (!raw) return { error: "Kundenname fehlt" };
+        const t = `%${raw}%`;
+        const today = new Date().toISOString().slice(0, 10);
+        const cols = "invoice_number, legal_invoice_number, customer_name, invoice_date, due_date, total, balance, status, source_system";
+        const [inv, rec, dep] = await Promise.all([
+          sourceFilter(admin.from("zoho_invoices").select(cols).ilike("customer_name", t).gt("balance", 0.009).order("due_date", { ascending: true }).limit(200)),
+          sourceFilter(admin.from("zoho_recurring_invoices").select(cols).ilike("customer_name", t).gt("balance", 0.009).order("due_date", { ascending: true }).limit(200)),
+          admin.from("finance_deposits").select("deposit_number, order_number, customer_name, due_date, gross_amount, paid_amount, open_amount, status").ilike("customer_name", t).gt("open_amount", 0.009).neq("status", "storniert").limit(100),
+        ]);
+        if (inv.error) throw inv.error;
+        const days = (d: string | null) => d && d < today ? Math.round((Date.parse(today) - Date.parse(d)) / 86400000) : 0;
+        const rows = [
+          ...(inv.data ?? []).map((r: any) => ({ art: "Rechnung", ...r, tage_ueberfaellig: days(r.due_date) })),
+          ...(rec.data ?? []).map((r: any) => ({ art: "Wiederkehrende Rechnung", ...r, tage_ueberfaellig: days(r.due_date) })),
+        ];
+        const deposits = (dep.data ?? []).map((d: any) => ({ art: "Anzahlung", ...d, tage_ueberfaellig: days(d.due_date) }));
+        const kunden = [...new Set([...rows, ...deposits].map((r: any) => r.customer_name))];
+        const sumOpen = rows.reduce((a, r: any) => a + Number(r.balance || 0), 0);
+        const sumOverdue = rows.filter((r: any) => r.tage_ueberfaellig > 0).reduce((a, r: any) => a + Number(r.balance || 0), 0);
+        const sumDep = deposits.reduce((a, d: any) => a + Number(d.open_amount || 0), 0);
+        return {
+          stand: new Date().toISOString(), gefundene_kunden: kunden,
+          hinweis: kunden.length > 1 ? "Mehrere Kunden passen – Ergebnis nach Kunde gruppiert darstellen und ggf. nachfragen." : undefined,
+          offene_posten: rows, offene_anzahlungen: deposits,
+          summen: { offen_rechnungen: Math.round(sumOpen * 100) / 100, davon_ueberfaellig: Math.round(sumOverdue * 100) / 100, offen_anzahlungen: Math.round(sumDep * 100) / 100, gesamt: Math.round((sumOpen + sumDep) * 100) / 100, anzahl: rows.length + deposits.length },
+        };
       }
       case "search_invoices": {
         if (!ctx.isAdmin && !ctx.isFinance) return { error: "Nicht berechtigt – Finance-Rolle nötig." };
@@ -513,7 +561,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
       }
       case "describe_table": {
         const t = String(args?.table ?? "").trim();
-        if (!ALLOWED_TABLES.has(t) || ctx.extraBlocked.has(t)) return { error: `Tabelle '${t}' nicht erlaubt oder unbekannt.` };
+        if (!isTableAllowed(t) || ctx.extraBlocked.has(t)) return { error: `Tabelle '${t}' nicht erlaubt oder unbekannt.` };
         const req = tableRequiresRole(t);
         if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
           return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
@@ -525,7 +573,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
       case "query_table": {
         const t = String(args?.table ?? "").trim();
         if (!/^[a-z_][a-z0-9_]*$/i.test(t)) return { error: "Ungültiger Tabellenname." };
-        if (!ALLOWED_TABLES.has(t) || ctx.extraBlocked.has(t)) return { error: `Tabelle '${t}' nicht erlaubt. Nutze list_modules.` };
+        if (!isTableAllowed(t) || ctx.extraBlocked.has(t)) return { error: `Tabelle '${t}' nicht erlaubt. Nutze list_modules.` };
         const req = tableRequiresRole(t);
         if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
           return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
@@ -654,7 +702,7 @@ Deno.serve(async (req) => {
       userId: user.id,
       roles,
       isAdmin: roles.some((r) => r === "Super Admin" || r === "Admin"),
-      isFinance: roles.some((r) => r === "Finance" || r === "Super Admin" || r === "Admin"),
+      isFinance: roles.some((r) => ["Super Admin", "Admin", "Finance", "FIBU LIGHT", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"].includes(r)),
       tenantSources: Array.isArray(tenantSources) && tenantSources.length > 0 ? tenantSources : null,
       extraBlocked,
       disabledModules,
