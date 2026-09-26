@@ -46107,6 +46107,758 @@ export type Database = {
           },
         ]
       }
+      rp_audit_log: {
+        Row: {
+          action: string
+          actor: string | null
+          contract_id: string | null
+          created_at: string
+          customer_id: string | null
+          entity: string | null
+          entity_id: string | null
+          id: number
+          invoice_id: string | null
+          new_value: Json | null
+          note: string | null
+          old_value: Json | null
+          run_id: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: never
+          invoice_id?: string | null
+          new_value?: Json | null
+          note?: string | null
+          old_value?: Json | null
+          run_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: never
+          invoice_id?: string | null
+          new_value?: Json | null
+          note?: string | null
+          old_value?: Json | null
+          run_id?: string | null
+        }
+        Relationships: []
+      }
+      rp_billing_run_items: {
+        Row: {
+          amount_overridden: boolean
+          billing_period: string
+          contract_id: string | null
+          created_at: string
+          customer_id: string
+          due_date: string | null
+          gross_amount: number
+          id: string
+          invoice_id: string | null
+          issues: Json
+          mandate_id: string | null
+          net_amount: number
+          original_gross_amount: number
+          paid_at: string | null
+          plan_id: string
+          run_id: string
+          status: string
+          tax_amount: number
+          tax_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount_overridden?: boolean
+          billing_period: string
+          contract_id?: string | null
+          created_at?: string
+          customer_id: string
+          due_date?: string | null
+          gross_amount: number
+          id?: string
+          invoice_id?: string | null
+          issues?: Json
+          mandate_id?: string | null
+          net_amount: number
+          original_gross_amount: number
+          paid_at?: string | null
+          plan_id: string
+          run_id: string
+          status?: string
+          tax_amount: number
+          tax_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount_overridden?: boolean
+          billing_period?: string
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string
+          due_date?: string | null
+          gross_amount?: number
+          id?: string
+          invoice_id?: string | null
+          issues?: Json
+          mandate_id?: string | null
+          net_amount?: number
+          original_gross_amount?: number
+          paid_at?: string | null
+          plan_id?: string
+          run_id?: string
+          status?: string
+          tax_amount?: number
+          tax_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_billing_run_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_billing_run_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "rp_billing_run_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_billing_run_items_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "rp_mandates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_billing_run_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "rp_payment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_billing_run_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "rp_billing_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_billing_runs: {
+        Row: {
+          approval_confirmation: string | null
+          approved_at: string | null
+          approved_by: string | null
+          billing_period: string
+          created_at: string
+          id: string
+          idempotency_key: string | null
+          prepared_at: string
+          status: string
+          updated_at: string
+          validated_at: string | null
+        }
+        Insert: {
+          approval_confirmation?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          billing_period: string
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          prepared_at?: string
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+        }
+        Update: {
+          approval_confirmation?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          billing_period?: string
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          prepared_at?: string
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+        }
+        Relationships: []
+      }
+      rp_direct_debit_items: {
+        Row: {
+          amount: number
+          created_at: string
+          debit_run_id: string
+          end_to_end_id: string | null
+          id: string
+          item_id: string
+          mandate_id: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          debit_run_id: string
+          end_to_end_id?: string | null
+          id?: string
+          item_id: string
+          mandate_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          debit_run_id?: string
+          end_to_end_id?: string | null
+          id?: string
+          item_id?: string
+          mandate_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_direct_debit_items_debit_run_id_fkey"
+            columns: ["debit_run_id"]
+            isOneToOne: false
+            referencedRelation: "rp_direct_debit_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_direct_debit_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "rp_billing_run_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_direct_debit_items_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "rp_mandates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_direct_debit_runs: {
+        Row: {
+          billing_run_id: string
+          collection_date: string | null
+          created_at: string
+          created_by: string | null
+          file_path: string | null
+          id: string
+          item_count: number | null
+          status: string
+          total: number | null
+        }
+        Insert: {
+          billing_run_id: string
+          collection_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_path?: string | null
+          id?: string
+          item_count?: number | null
+          status?: string
+          total?: number | null
+        }
+        Update: {
+          billing_run_id?: string
+          collection_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_path?: string | null
+          id?: string
+          item_count?: number | null
+          status?: string
+          total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_direct_debit_runs_billing_run_id_fkey"
+            columns: ["billing_run_id"]
+            isOneToOne: true
+            referencedRelation: "rp_billing_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_mandates: {
+        Row: {
+          account_holder: string | null
+          bic: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          iban: string | null
+          id: string
+          mandate_date: string | null
+          mandate_reference: string
+          sequence_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_holder?: string | null
+          bic?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          iban?: string | null
+          id?: string
+          mandate_date?: string | null
+          mandate_reference: string
+          sequence_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string | null
+          bic?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          iban?: string | null
+          id?: string
+          mandate_date?: string | null
+          mandate_reference?: string
+          sequence_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_mandates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_mandates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
+      rp_notification_deliveries: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          is_resend: boolean
+          prenotification_id: string
+          provider_ref: string | null
+          recipient: string | null
+          status: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          is_resend?: boolean
+          prenotification_id: string
+          provider_ref?: string | null
+          recipient?: string | null
+          status: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          is_resend?: boolean
+          prenotification_id?: string
+          provider_ref?: string | null
+          recipient?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_notification_deliveries_prenotification_id_fkey"
+            columns: ["prenotification_id"]
+            isOneToOne: false
+            referencedRelation: "rp_prenotifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_payment_plans: {
+        Row: {
+          billing_interval: string
+          booking_account: string | null
+          contract_id: string | null
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          description: string | null
+          due_day: number
+          email: string | null
+          end_date: string | null
+          gross_amount: number | null
+          id: string
+          interval_months: number
+          mandate_id: string | null
+          net_amount: number
+          notify_channel: string
+          payment_method: string
+          phone: string | null
+          product: string
+          start_date: string
+          status: string
+          tax_rate: number | null
+          updated_at: string
+          zoho_recurring_invoice_id: string | null
+        }
+        Insert: {
+          billing_interval?: string
+          booking_account?: string | null
+          contract_id?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          description?: string | null
+          due_day?: number
+          email?: string | null
+          end_date?: string | null
+          gross_amount?: number | null
+          id?: string
+          interval_months?: number
+          mandate_id?: string | null
+          net_amount: number
+          notify_channel?: string
+          payment_method?: string
+          phone?: string | null
+          product: string
+          start_date: string
+          status?: string
+          tax_rate?: number | null
+          updated_at?: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Update: {
+          billing_interval?: string
+          booking_account?: string | null
+          contract_id?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          description?: string | null
+          due_day?: number
+          email?: string | null
+          end_date?: string | null
+          gross_amount?: number | null
+          id?: string
+          interval_months?: number
+          mandate_id?: string | null
+          net_amount?: number
+          notify_channel?: string
+          payment_method?: string
+          phone?: string | null
+          product?: string
+          start_date?: string
+          status?: string
+          tax_rate?: number | null
+          updated_at?: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_payment_plans_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "finance_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_payment_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_payment_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "rp_payment_plans_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "rp_mandates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_period_skips: {
+        Row: {
+          billing_period: string
+          created_at: string
+          created_by: string | null
+          id: string
+          plan_id: string
+          reason: string | null
+        }
+        Insert: {
+          billing_period: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id: string
+          reason?: string | null
+        }
+        Update: {
+          billing_period?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_period_skips_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "rp_payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_prenotifications: {
+        Row: {
+          amount: number
+          collection_date: string
+          created_at: string
+          creditor_id: string
+          creditor_name: string
+          customer_id: string
+          id: string
+          invoice_id: string | null
+          item_id: string
+          mandate_reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          collection_date: string
+          created_at?: string
+          creditor_id: string
+          creditor_name: string
+          customer_id: string
+          id?: string
+          invoice_id?: string | null
+          item_id: string
+          mandate_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          collection_date?: string
+          created_at?: string
+          creditor_id?: string
+          creditor_name?: string
+          customer_id?: string
+          id?: string
+          invoice_id?: string | null
+          item_id?: string
+          mandate_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_prenotifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_prenotifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "rp_prenotifications_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_prenotifications_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "rp_billing_run_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_return_debits: {
+        Row: {
+          bank_reference: string | null
+          collection_date: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          fee: number | null
+          id: string
+          invoice_id: string | null
+          item_id: string | null
+          notes: string | null
+          original_amount: number | null
+          reason_code: string | null
+          return_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bank_reference?: string | null
+          collection_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          fee?: number | null
+          id?: string
+          invoice_id?: string | null
+          item_id?: string | null
+          notes?: string | null
+          original_amount?: number | null
+          reason_code?: string | null
+          return_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bank_reference?: string | null
+          collection_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          fee?: number | null
+          id?: string
+          invoice_id?: string | null
+          item_id?: string | null
+          notes?: string | null
+          original_amount?: number | null
+          reason_code?: string | null
+          return_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_return_debits_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_return_debits_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "rp_return_debits_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rp_return_debits_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "rp_billing_run_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rp_settings: {
+        Row: {
+          creditor_id: string | null
+          creditor_id_confirmed: boolean
+          creditor_name: string
+          email_body: string
+          email_subject: string
+          id: number
+          prenotification_days: number
+          sms_body: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          creditor_id?: string | null
+          creditor_id_confirmed?: boolean
+          creditor_name?: string
+          email_body?: string
+          email_subject?: string
+          id?: number
+          prenotification_days?: number
+          sms_body?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          creditor_id?: string | null
+          creditor_id_confirmed?: boolean
+          creditor_name?: string
+          email_body?: string
+          email_subject?: string
+          id?: number
+          prenotification_days?: number
+          sms_body?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       rz_reminder_log: {
         Row: {
           amount: number | null
@@ -57800,6 +58552,91 @@ export type Database = {
         Args: { p_id: string }
         Returns: string
       }
+      rp_approve_run: {
+        Args: {
+          p_confirmation: string
+          p_idempotency_key: string
+          p_run_id: string
+        }
+        Returns: Json
+      }
+      rp_audit: {
+        Args: {
+          p_action: string
+          p_contract: string
+          p_customer: string
+          p_entity: string
+          p_entity_id: string
+          p_invoice: string
+          p_new: Json
+          p_note?: string
+          p_old: Json
+          p_run: string
+        }
+        Returns: undefined
+      }
+      rp_can_manage: { Args: never; Returns: boolean }
+      rp_can_view: { Args: never; Returns: boolean }
+      rp_confirm_creditor: {
+        Args: { p_creditor_id: string }
+        Returns: undefined
+      }
+      rp_get_mandate_iban: { Args: { p_mandate_id: string }; Returns: string }
+      rp_is_system: { Args: never; Returns: boolean }
+      rp_item_action: {
+        Args: {
+          p_action: string
+          p_item_ids: string[]
+          p_reason?: string
+          p_value?: string
+        }
+        Returns: number
+      }
+      rp_list_mandates: {
+        Args: never
+        Returns: {
+          account_holder: string
+          bic: string
+          created_at: string
+          customer_id: string
+          customer_name: string
+          iban_masked: string
+          id: string
+          mandate_date: string
+          mandate_reference: string
+          sequence_type: string
+          status: string
+        }[]
+      }
+      rp_log_delivery: {
+        Args: {
+          p_channel: string
+          p_error: string
+          p_is_resend: boolean
+          p_prenotification_id: string
+          p_provider_ref: string
+          p_recipient: string
+          p_status: string
+        }
+        Returns: undefined
+      }
+      rp_mask_iban: { Args: { p: string }; Returns: string }
+      rp_plan_due_in: {
+        Args: {
+          p: Database["public"]["Tables"]["rp_payment_plans"]["Row"]
+          p_period: string
+        }
+        Returns: boolean
+      }
+      rp_prepare_direct_debit: { Args: { p_run_id: string }; Returns: Json }
+      rp_prepare_run: { Args: { p_period: string }; Returns: string }
+      rp_return_debit_action: {
+        Args: { p_id: string; p_note: string; p_status: string }
+        Returns: undefined
+      }
+      rp_sync_payments: { Args: { p_run_id: string }; Returns: number }
+      rp_validate_item: { Args: { p_item_id: string }; Returns: undefined }
+      rp_validate_run: { Args: { p_run_id: string }; Returns: Json }
       run_invoice_renumbering: {
         Args: { p_limit?: number; p_period?: string }
         Returns: {
