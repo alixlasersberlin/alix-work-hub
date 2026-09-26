@@ -434,6 +434,8 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         ]);
         if (devs.data?.length) out.geraete = devs.data;
         if ((invs as any).data?.length) out.rechnungen = (invs as any).data;
+        const kname = (out.kunde as any)?.company_name || (out.kunde as any)?.contact_name;
+        if (fin && kname) out.offene_posten_kunde = await runTool("customer_statement", { customer: kname }, ctx);
         return out;
       }
       case "search_customers": {
