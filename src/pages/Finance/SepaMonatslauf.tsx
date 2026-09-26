@@ -64,7 +64,7 @@ export default function SepaMonatslauf() {
   const setTab = (t: string) => setSp({ tab: t });
   return (
     <div className="space-y-4">
-      <PageHeader title="Wiederkehrende Zahler · SEPA-Monatslauf" description="Vorschau → Prüfung → Freigabe → Rechnungen → Vorabinformation → Einzug. Kein automatischer Bankeinzug." />
+      <PageHeader title="Wiederkehrende Zahler · SEPA-Monatslauf" subtitle="Vorschau → Prüfung → Freigabe → Rechnungen → Vorabinformation → Einzug. Kein automatischer Bankeinzug." />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           {[['uebersicht', 'Übersicht'], ['zahler', 'Aktive Zahler'], ['laeufe', 'Monatsläufe'], ['mandate', 'SEPA-Mandate'], ['vorab', 'Vorabinformationen'], ['ruecklast', 'Rücklastschriften'], ['einstellungen', 'Einstellungen'], ['protokoll', 'Protokoll']].map(([k, l]) => (
