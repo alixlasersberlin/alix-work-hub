@@ -1802,7 +1802,7 @@ function AppRoutes() {
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
           <Route path="/finance/wiederkehrende-zahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WiederkehrendeZahler /></ProtectedRoute>} />
-          <Route path="/finance/sepa-monatslauf" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><SepaMonatslauf /></ProtectedRoute>} />
+          <Route path="/finance/sepa-monatslauf" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Finance','Buchhaltung Admin','Buchhaltung EU']}><SepaMonatslauf /></ProtectedRoute>} />
           <Route path="/finance/raten-pruefung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><RatenPruefung /></ProtectedRoute>} />
           <Route path="/finance/raten-ende-legal" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><RatenEndeLegal /></ProtectedRoute>} />
           <Route path="/finance/wz-erinnerungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WzErinnerungen /></ProtectedRoute>} />
