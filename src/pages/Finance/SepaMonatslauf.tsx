@@ -44,10 +44,12 @@ const ITEM_STATUS: Record<string, { l: string; c: string }> = {
   prenotified: { l: 'Vorabinfo übergeben', c: 'bg-sky-500/15 text-sky-500' },
   ready_for_debit: { l: 'Bereit für Einzug', c: 'bg-emerald-500/15 text-emerald-500' },
   paid: { l: 'Bezahlt', c: 'bg-emerald-500/15 text-emerald-500' },
-  partially_paid: { l: 'Teilweise bezahlt', c: 'bg-amber-500/15 text-amber-500' },
+  partially_paid: { l: 'Teilbezahlt', c: 'bg-amber-500/15 text-amber-500' },
+  overpaid: { l: 'Überzahlung – Klärung', c: 'bg-amber-500/15 text-amber-500' },
   return_debit: { l: 'Rücklastschrift', c: 'bg-red-500/15 text-red-500' },
   error: { l: 'Fehler', c: 'bg-red-500/15 text-red-500' },
 };
+export const METHOD: Record<string, string> = { sepa: 'SEPA-Lastschrift', ueberweisung: 'Überweisung', dauerauftrag: 'Dauerauftrag', rechnung: 'Rechnung', bar: 'Barzahlung', sonstige: 'Sonstige' };
 const Pill = ({ m, k }: { m: Record<string, { l: string; c: string }>; k: string }) => (
   <Badge variant="outline" className={m[k]?.c}>{m[k]?.l ?? k}</Badge>
 );
@@ -164,6 +166,7 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
   const [items, setItems] = useState<any[]>([]);
   const [meta, setMeta] = useState<Record<string, any>>({});
   const [filter, setFilter] = useState('alle');
+  const [mf, setMf] = useState('alle');
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -182,7 +185,7 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
     const pids = [...new Set(list.map((i: any) => i.plan_id))];
     const [cs, ps, ms, pns] = await Promise.all([
       cids.length ? db.from('customers').select('id,company_name,contact_name,external_customer_id,email,phone').in('id', cids) : { data: [] },
-      pids.length ? db.from('rp_payment_plans').select('id,product,payment_method,notify_channel,email,phone').in('id', pids) : { data: [] },
+      pids.length ? db.from('rp_payment_plans').select('id,product,payment_method,notify_channel,email,phone,plan_type,sms_enabled').in('id', pids) : { data: [] },
       db.rpc('rp_list_mandates'),
       db.from('rp_prenotifications').select('id,item_id,status').in('item_id', list.map((i: any) => i.id).concat(['00000000-0000-0000-0000-000000000000'])),
     ]);
@@ -203,12 +206,16 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
   const sms = billable.filter((i) => ['sms', 'email_sms'].includes(meta['p' + i.plan_id]?.notify_channel)).length;
   const sepa = billable.filter((i) => meta['p' + i.plan_id]?.payment_method === 'sepa').length;
 
+  const stream = (i: any) => { const p = meta['p' + i.plan_id]; const pm = i.payment_method || p?.payment_method; return { pm, raten: p?.plan_type === 'raten' }; };
+  const byStream = (k: string) => billable.filter((i) => { const x = stream(i); return k === 'sepa' ? x.pm === 'sepa' : k === 'ueberweisung' ? ['ueberweisung', 'rechnung', 'sonstige', 'bar'].includes(x.pm) : k === 'dauerauftrag' ? x.pm === 'dauerauftrag' : k === 'raten' ? x.raten : true; });
   const rows = useMemo(() => items.filter((i) => {
-    const f = filter === 'alle' ? true : filter === 'bereit' ? i.status === 'ready' : filter === 'warnungen' ? i.status === 'warning' : filter === 'blocker' ? i.status === 'blocker' : filter === 'ausgesetzt' ? ['skipped', 'removed'].includes(i.status) : filter === 'zahlungen' ? ['paid', 'partially_paid', 'return_debit', 'ready_for_debit'].includes(i.status) : filter === 'benachrichtigungen' ? !!meta['n' + i.id] : true;
+    const x = stream(i);
+    if (mf !== 'alle' && !(mf === 'sepa' ? x.pm === 'sepa' : mf === 'ueberweisung' ? ['ueberweisung', 'rechnung', 'sonstige', 'bar'].includes(x.pm) : mf === 'dauerauftrag' ? x.pm === 'dauerauftrag' : x.raten)) return false;
+    const f = filter === 'alle' ? true : filter === 'bereit' ? i.status === 'ready' : filter === 'warnungen' ? i.status === 'warning' : filter === 'blocker' ? i.status === 'blocker' : filter === 'ausgesetzt' ? ['skipped', 'removed'].includes(i.status) : filter === 'zahlungen' ? ['paid', 'partially_paid', 'overpaid', 'return_debit', 'ready_for_debit'].includes(i.status) : filter === 'benachrichtigungen' ? !!meta['n' + i.id] : true;
     const c = meta['c' + i.customer_id];
     const s = `${c?.company_name || ''} ${c?.contact_name || ''} ${c?.external_customer_id || ''}`.toLowerCase();
     return f && (!q || s.includes(q.toLowerCase()));
-  }), [items, filter, q, meta]);
+  }), [items, filter, q, meta, mf]);
 
   async function doAction(action: string, value?: string, reason?: string) {
     setBusy(true);
@@ -257,11 +264,14 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
           <span>{billable.length} Zahler</span><span className="font-semibold">{eur(total)} Gesamt</span><span>{emails} E-Mails</span><span>{sms} SMS</span>
           <span className={warnings ? 'text-amber-500' : ''}>{warnings} Warnungen</span><span className={blockers ? 'text-red-500 font-semibold' : ''}>{blockers} Blocker</span>
         </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+          {[['sepa', 'SEPA'], ['ueberweisung', 'Überweisung / Selbstzahler'], ['dauerauftrag', 'Dauerauftrag'], ['raten', 'davon Ratenzahler']].map(([k, l]) => { const L = byStream(k); return <div key={k} className="rounded-md border border-border p-2"><div className="text-xs text-muted-foreground">{l}</div><div className="font-semibold">{L.length} Kunden · {eur(L.reduce((a, i) => a + Number(i.gross_amount), 0))}</div></div>; })}
+        </div>
         <div className="flex flex-wrap gap-2">
           {editable && <Button size="sm" variant="outline" disabled={busy} onClick={async () => { await rpc('rp_prepare_run', { p_period: run.billing_period }); await load(); }}><RefreshCw className="w-4 h-4 mr-1" /> Neu einlesen</Button>}
           {editable && <Button size="sm" variant="outline" disabled={busy} onClick={async () => { const r = await rpc('rp_validate_run', { p_run_id: runId }); toast.success(`Geprüft: ${r.ready} bereit, ${r.warning} Warnungen, ${r.blocker} Blocker`); await load(); }}><ShieldCheck className="w-4 h-4 mr-1" /> Fehler prüfen</Button>}
           {editable && <Button size="sm" disabled={busy || blockers > 0 || !billable.length} onClick={() => { setStep(1); setConfirmed(false); setApproveOpen(true); }}>Lauf freigeben</Button>}
-          {['rechnungen_erzeugt', 'prenotification_versendet'].includes(run.status) && <Button size="sm" disabled={busy} onClick={sendPn}><Send className="w-4 h-4 mr-1" /> Vorabinformationen senden</Button>}
+          {['rechnungen_erzeugt', 'prenotification_versendet'].includes(run.status) && <Button size="sm" disabled={busy} onClick={sendPn}><Send className="w-4 h-4 mr-1" /> Vorabinfos & Zahlungsinfos senden</Button>}
           {['rechnungen_erzeugt', 'prenotification_versendet'].includes(run.status) && <Button size="sm" variant="outline" disabled={busy} onClick={async () => { const r = await rpc('rp_prepare_direct_debit', { p_run_id: runId }); toast.success(`${r.items} Positionen bereit für Einzug (kein Bankeinzug ausgelöst)`); await load(); }}><Landmark className="w-4 h-4 mr-1" /> Einzug vorbereiten</Button>}
           {!editable && <Button size="sm" variant="outline" onClick={async () => { const n = await rpc('rp_sync_payments', { p_run_id: runId }); toast.success(`${n} Zahlungsstatus aktualisiert`); await load(); }}><RefreshCw className="w-4 h-4 mr-1" /> Zahlungen abgleichen</Button>}
           <Button size="sm" variant="ghost" onClick={exportCsv}><Download className="w-4 h-4 mr-1" /> CSV</Button>
@@ -272,6 +282,9 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
       <div className="flex flex-wrap gap-2 items-center">
         <Tabs value={filter} onValueChange={setFilter}><TabsList className="flex-wrap h-auto">
           {['alle', 'bereit', 'warnungen', 'blocker', 'ausgesetzt', 'benachrichtigungen', 'zahlungen'].map((f) => <TabsTrigger key={f} value={f} className="capitalize">{f}</TabsTrigger>)}
+        </TabsList></Tabs>
+        <Tabs value={mf} onValueChange={setMf}><TabsList>
+          {[['alle', 'Alle'], ['sepa', 'SEPA'], ['ueberweisung', 'Überweisung'], ['dauerauftrag', 'Dauerauftrag'], ['raten', 'Ratenzahler']].map(([k, l]) => <TabsTrigger key={k} value={k}>{l}</TabsTrigger>)}
         </TabsList></Tabs>
         <Input placeholder="Kunde suchen…" value={q} onChange={(e) => setQ(e.target.value)} className="w-56" />
       </div>
@@ -287,7 +300,7 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
             <Button size="sm" variant="outline" onClick={() => doAction('restore')}>Wiederherstellen</Button>
             <Button size="sm" variant="outline" onClick={() => doAction('revalidate')}>Fehler prüfen</Button>
           </>}
-          {!editable && <Button size="sm" variant="outline" onClick={resendSelected}>Vorabinfo erneut senden</Button>}
+          {!editable && <Button size="sm" variant="outline" onClick={resendSelected}>Vorab-/Zahlungsinfo erneut senden</Button>}
         </div>
       )}
 
@@ -295,7 +308,7 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
         <table className="w-full text-sm">
           <thead className="text-left text-muted-foreground text-xs"><tr className="border-b border-border">
             <th className="p-2"><Checkbox checked={rows.length > 0 && rows.every((r) => sel.has(r.id))} onCheckedChange={(v) => setSel(v ? new Set(rows.map((r) => r.id)) : new Set())} /></th>
-            <th>Status</th><th>Kunde</th><th>Kd-Nr.</th><th>Leistung</th><th className="text-right">Betrag</th><th className="text-right">MwSt.</th><th>Fällig</th><th>Zahlungsart</th><th>IBAN</th><th>Kontoinhaber</th><th>Mandat</th><th>Mandatsstatus</th><th>Vorabinfo</th><th>E-Mail</th><th>SMS</th><th>Warnungen</th>
+            <th>Status</th><th>Kunde</th><th>Kd-Nr.</th><th>Leistung</th><th>Rate</th><th className="text-right">Bezahlt</th><th className="text-right">Betrag</th><th className="text-right">MwSt.</th><th>Fällig</th><th>Zahlungsart</th><th>IBAN</th><th>Kontoinhaber</th><th>Mandat</th><th>Mandatsstatus</th><th>Vorabinfo</th><th>E-Mail</th><th>SMS</th><th>Warnungen</th>
           </tr></thead>
           <tbody>{rows.map((i) => {
             const c = meta['c' + i.customer_id]; const p = meta['p' + i.plan_id]; const m = meta['m' + i.mandate_id]; const n = meta['n' + i.id];
@@ -303,15 +316,15 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
               <tr key={i.id} className="border-b border-border hover:bg-muted/30 cursor-pointer" onClick={() => setDetail({ i, c, p, m, n })}>
                 <td className="p-2" onClick={(e) => e.stopPropagation()}><Checkbox checked={sel.has(i.id)} onCheckedChange={(v) => { const s = new Set(sel); v ? s.add(i.id) : s.delete(i.id); setSel(s); }} /></td>
                 <td><Pill m={ITEM_STATUS} k={i.status} /></td>
-                <td className="font-medium">{c?.company_name || c?.contact_name}</td><td>{c?.external_customer_id}</td><td>{p?.product}</td>
+                <td className="font-medium">{c?.company_name || c?.contact_name}</td><td>{c?.external_customer_id}</td><td>{p?.product}</td><td>{i.installment_number ? `${i.installment_number}/${i.installment_count ?? '?'}` : '—'}</td><td className="text-right">{Number(i.paid_amount) ? eur(i.paid_amount) : '—'}{Number(i.overpaid_amount) > 0 && <span className="text-amber-500"> (+{eur(i.overpaid_amount)})</span>}</td>
                 <td className="text-right">{eur(i.gross_amount)}{i.amount_overridden && <span className="text-amber-500"> *</span>}</td><td className="text-right">{eur(i.tax_amount)}</td>
-                <td>{dt(i.due_date)}</td><td>{p?.payment_method === 'sepa' ? 'SEPA' : 'Überweisung'}</td><td className="font-mono text-xs">{m?.iban_masked || '—'}</td><td>{m?.account_holder || '—'}</td>
+                <td>{dt(i.due_date)}</td><td>{METHOD[i.payment_method || p?.payment_method] || '—'}</td><td className="font-mono text-xs">{m?.iban_masked || '—'}</td><td>{m?.account_holder || '—'}</td>
                 <td>{m?.mandate_reference || '—'}</td><td>{m?.status || '—'}</td><td>{n?.status || '—'}</td>
                 <td>{['email', 'email_sms'].includes(p?.notify_channel) ? (p?.email || c?.email || '—') : '—'}</td>
                 <td>{['sms', 'email_sms'].includes(p?.notify_channel) ? (p?.phone || c?.phone || '—') : '—'}</td>
                 <td className="text-xs max-w-[280px]">{(i.issues || []).map((x: any, k: number) => <div key={k} className={x.level === 'BLOCKER' ? 'text-red-500' : x.level === 'WARNUNG' ? 'text-amber-500' : 'text-muted-foreground'}>{x.level}: {x.msg}</div>)}</td>
               </tr>);
-          })}{!rows.length && <tr><td colSpan={17} className="p-6 text-center text-muted-foreground">Keine Positionen</td></tr>}</tbody>
+          })}{!rows.length && <tr><td colSpan={19} className="p-6 text-center text-muted-foreground">Keine Positionen</td></tr>}</tbody>
         </table>
       </CardContent></Card>
 
@@ -329,7 +342,7 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
           {step === 1 && <p className="text-sm">Bitte prüfen Sie die Vorschau-Tabelle vollständig (Beträge, Fälligkeiten, Mandate).</p>}
           {step === 2 && <p className="text-sm">Die Validierung wird beim Freigeben serverseitig erneut ausgeführt. Aktuell: <b>{blockers} Blocker</b>, {warnings} Warnungen.</p>}
           {step === 3 && <div className="text-sm grid grid-cols-2 gap-1">
-            <span>Rechnungen</span><b>{billable.length}</b><span>Gesamtbetrag</span><b>{eur(total)}</b><span>SEPA-Zahlungen</span><b>{sepa}</b><span>E-Mails</span><b>{emails}</b><span>zusätzliche SMS</span><b>{sms}</b><span>Blocker</span><b>{blockers}</b><span>Warnungen</span><b>{warnings}</b>
+            <span>Rechnungen</span><b>{billable.length}</b><span>Gesamtbetrag</span><b>{eur(total)}</b><span>SEPA-Zahlungen</span><b>{sepa}</b><span>Überweisung / Ratenzahler</span><b>{billable.length - sepa}</b><span>E-Mails</span><b>{emails}</b><span>zusätzliche SMS</span><b>{sms}</b><span>Blocker</span><b>{blockers}</b><span>Warnungen</span><b>{warnings}</b>
           </div>}
           {step === 4 && <label className="flex gap-2 text-sm items-start"><Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} /> „{CONFIRM}"</label>}
           <DialogFooter>
@@ -344,7 +357,8 @@ function RunDetail({ runId, onBack }: { runId: string; onBack: () => void }) {
         <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>{detail?.c?.company_name || detail?.c?.contact_name}</DialogTitle></DialogHeader>
           {detail && <div className="text-sm space-y-1">
             <div>Leistung: {detail.p?.product} · {eur(detail.i.gross_amount)} (Original {eur(detail.i.original_gross_amount)})</div>
-            <div>Fällig: {dt(detail.i.due_date)} · Periode {detail.i.billing_period}</div>
+            <div>Fällig: {dt(detail.i.due_date)} · Periode {detail.i.billing_period} · {METHOD[detail.i.payment_method || detail.p?.payment_method]}</div>
+            {detail.i.installment_number && <div>Rate {detail.i.installment_number} von {detail.i.installment_count}</div>}
             <div>Mandat: {detail.m?.mandate_reference || '—'} · {detail.m?.status || '—'}</div>
             <IbanReveal mandateId={detail.i.mandate_id} masked={detail.m?.iban_masked} />
             <div className="pt-2">{(detail.i.issues || []).map((x: any, k: number) => <div key={k}>{x.level}: {x.msg}</div>)}</div>
@@ -372,7 +386,7 @@ function CustomerPicker({ value, onChange }: { value: string; onChange: (id: str
 function Plans() {
   const [rows, setRows] = useState<any[]>([]); const [names, setNames] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false); const [f, setF] = useState<any>({}); const [mands, setMands] = useState<any[]>([]);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(''); const [ratenFor, setRatenFor] = useState<any>(null);
   async function load() {
     const { data } = await db.from('rp_payment_plans').select('*').order('created_at', { ascending: false });
     setRows(data || []); const ids = [...new Set((data || []).map((r: any) => r.customer_id))];
@@ -382,7 +396,7 @@ function Plans() {
   useEffect(() => { load(); }, []);
   async function save() {
     const months = { monatlich: 1, quartalsweise: 3, halbjaehrlich: 6, jaehrlich: 12 } as any;
-    const payload = { customer_id: f.customer_id, product: f.product, description: f.description || null, net_amount: Number(f.net_amount), tax_rate: Number(f.tax_rate ?? 19), billing_interval: f.billing_interval || 'monatlich', interval_months: months[f.billing_interval || 'monatlich'] || Number(f.interval_months || 1), start_date: f.start_date, end_date: f.end_date || null, due_day: Number(f.due_day || 1), payment_method: f.payment_method || 'sepa', mandate_id: f.mandate_id || null, notify_channel: f.notify_channel || 'email', email: f.email || null, phone: f.phone || null, cost_center: f.cost_center || null, booking_account: f.booking_account || null };
+    const payload = { customer_id: f.customer_id, product: f.product, description: f.description || null, net_amount: Number(f.net_amount), tax_rate: Number(f.tax_rate ?? 19), billing_interval: f.billing_interval || 'monatlich', interval_months: months[f.billing_interval || 'monatlich'] || Number(f.interval_months || 1), start_date: f.start_date, end_date: f.end_date || null, due_day: Number(f.due_day || 1), payment_method: f.payment_method || 'sepa', mandate_id: (f.payment_method || 'sepa') === 'sepa' ? f.mandate_id || null : null, plan_type: f.plan_type || 'laufend', total_amount: f.total_amount ? Number(f.total_amount) : null, down_payment: Number(f.down_payment || 0), installment_count: f.plan_type === 'raten' && f.installment_count ? Number(f.installment_count) : null, sms_enabled: !!f.sms_enabled, notify_channel: f.notify_channel || 'email', email: f.email || null, phone: f.phone || null, cost_center: f.cost_center || null, booking_account: f.booking_account || null };
     const { error } = f.id ? await db.from('rp_payment_plans').update(payload).eq('id', f.id) : await db.from('rp_payment_plans').insert(payload);
     if (error) return toast.error(error.message); toast.success('Gespeichert'); setOpen(false); load();
   }
@@ -394,11 +408,13 @@ function Plans() {
       <div className="flex gap-2"><Input placeholder="Suchen…" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" /><Button size="sm" onClick={() => { setF({ tax_rate: 19, billing_interval: 'monatlich', due_day: 1, payment_method: 'sepa', notify_channel: 'email' }); setOpen(true); }}><Plus className="w-4 h-4 mr-1" /> Zahlungsplan anlegen</Button></div>
       <table className="w-full text-sm"><thead className="text-left text-muted-foreground text-xs"><tr><th className="py-2">Kunde</th><th>Leistung</th><th className="text-right">Netto</th><th className="text-right">Brutto</th><th>Intervall</th><th>Start</th><th>Ende</th><th>Fällig am</th><th>Zahlungsart</th><th>Status</th><th /></tr></thead>
         <tbody>{vis.map((r) => (
-          <tr key={r.id} className="border-t border-border"><td className="py-2">{names[r.customer_id]}</td><td>{r.product}</td><td className="text-right">{eur(r.net_amount)}</td><td className="text-right">{eur(r.gross_amount)}</td><td>{r.billing_interval}</td><td>{dt(r.start_date)}</td><td>{dt(r.end_date)}</td><td>{r.due_day}.</td><td>{r.payment_method === 'sepa' ? 'SEPA' : 'Überweisung'}</td>
+          <tr key={r.id} className="border-t border-border"><td className="py-2">{names[r.customer_id]}</td><td>{r.product}</td><td className="text-right">{eur(r.net_amount)}</td><td className="text-right">{eur(r.gross_amount)}</td><td>{r.billing_interval}</td><td>{dt(r.start_date)}</td><td>{dt(r.end_date)}</td><td>{r.due_day}.</td><td>{METHOD[r.payment_method]}{r.plan_type === 'raten' && <Badge variant="outline" className="ml-1">Raten {r.installment_count}×</Badge>}</td>
             <td><Badge variant="outline" className={r.status === 'aktiv' ? 'bg-emerald-500/15 text-emerald-500' : r.status === 'fehler' ? 'bg-red-500/15 text-red-500' : 'bg-muted text-muted-foreground'}>{r.status.toUpperCase()}</Badge></td>
             <td className="text-right whitespace-nowrap">
+              {r.plan_type === 'raten' && <Button size="sm" variant="ghost" onClick={() => setRatenFor({ ...r, _name: names[r.customer_id] })}>Ratenplan</Button>}
               <Button size="sm" variant="ghost" onClick={() => { setF(r); setOpen(true); }}>Bearbeiten</Button>
               {r.status === 'aktiv' ? <Button size="sm" variant="ghost" onClick={() => setStatus(r.id, 'pausiert')}>Pausieren</Button> : r.status === 'pausiert' ? <Button size="sm" variant="ghost" onClick={() => setStatus(r.id, 'aktiv')}>Aktivieren</Button> : null}
+              {r.status !== 'beendet' && <Button size="sm" variant="ghost" onClick={() => { if (confirm('Zahlungsplan beenden? Bereits erzeugte Rechnungen bleiben unverändert.')) setStatus(r.id, 'beendet'); }}>Beenden</Button>}
             </td></tr>))}
           {!vis.length && <tr><td colSpan={11} className="py-6 text-center text-muted-foreground">Noch keine Zahlungspläne</td></tr>}</tbody></table>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -414,8 +430,17 @@ function Plans() {
             <div><Label className="text-xs">Fälligkeitstag (1–28)</Label><Input type="number" min={1} max={28} value={f.due_day || 1} onChange={(e) => set('due_day', e.target.value)} /></div>
             <div><Label className="text-xs">Startdatum</Label><Input type="date" value={f.start_date || ''} onChange={(e) => set('start_date', e.target.value)} /></div>
             <div><Label className="text-xs">Enddatum (optional)</Label><Input type="date" value={f.end_date || ''} onChange={(e) => set('end_date', e.target.value)} /></div>
-            <div><Label className="text-xs">Zahlungsart</Label><Select value={f.payment_method || 'sepa'} onValueChange={(v) => set('payment_method', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="sepa">SEPA-Lastschrift</SelectItem><SelectItem value="ueberweisung">Überweisung</SelectItem></SelectContent></Select></div>
-            <div><Label className="text-xs">SEPA-Mandat</Label><Select value={f.mandate_id || 'none'} onValueChange={(v) => set('mandate_id', v === 'none' ? null : v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">— kein Mandat —</SelectItem>{mands.filter((m) => m.customer_id === f.customer_id).map((m) => <SelectItem key={m.id} value={m.id}>{m.mandate_reference} · {m.iban_masked}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label className="text-xs">Zahlungsart</Label><Select value={f.payment_method || 'sepa'} onValueChange={(v) => set('payment_method', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(METHOD).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent></Select></div>
+            {(f.payment_method || 'sepa') === 'sepa' ? <div><Label className="text-xs">SEPA-Mandat (Pflicht)</Label><Select value={f.mandate_id || 'none'} onValueChange={(v) => set('mandate_id', v === 'none' ? null : v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">— kein Mandat —</SelectItem>{mands.filter((m) => m.customer_id === f.customer_id).map((m) => <SelectItem key={m.id} value={m.id}>{m.mandate_reference} · {m.iban_masked}</SelectItem>)}</SelectContent></Select></div> : <div className="text-xs text-muted-foreground self-end pb-2">Kein SEPA-Mandat nötig – der Kunde zahlt selbst.</div>}
+            <div><Label className="text-xs">Planart</Label><Select value={f.plan_type || 'laufend'} onValueChange={(v) => set('plan_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="laufend">Laufend (Abo / Miete)</SelectItem><SelectItem value="raten">Ratenzahlung</SelectItem></SelectContent></Select></div>
+            <div className="flex items-end gap-2 pb-2"><Checkbox checked={!!f.sms_enabled} onCheckedChange={(v) => set('sms_enabled', !!v)} /><span className="text-sm">SMS zusätzlich senden</span></div>
+            {f.plan_type === 'raten' && <>
+              <div><Label className="text-xs">Vertragssumme gesamt (brutto)</Label><Input type="number" step="0.01" value={f.total_amount ?? ''} onChange={(e) => set('total_amount', e.target.value)} /></div>
+              <div><Label className="text-xs">Anzahlung (brutto)</Label><Input type="number" step="0.01" value={f.down_payment ?? 0} onChange={(e) => set('down_payment', e.target.value)} /></div>
+              <div><Label className="text-xs">Anzahl Raten</Label><Input type="number" min={1} value={f.installment_count ?? ''} onChange={(e) => set('installment_count', e.target.value)} /></div>
+              <div className="text-xs self-end pb-2">{(() => { const g = Number(f.net_amount || 0) * (1 + Number(f.tax_rate ?? 19) / 100); const sum = Number(f.down_payment || 0) + Number(f.installment_count || 0) * g; const ok = !f.total_amount || Math.abs(sum - Number(f.total_amount)) < 0.05; return <span className={ok ? 'text-emerald-500' : 'text-amber-500'}>Rate brutto {eur(g)} · Anzahlung + Raten = {eur(sum)}{!ok && ` ≠ ${eur(Number(f.total_amount))}`}</span>; })()}</div>
+              <p className="col-span-2 text-xs text-muted-foreground">Änderungen an Ratenhöhe oder Anzahl gelten nur für künftige Raten. Bereits erzeugte Rechnungen bleiben unverändert.</p>
+            </>}
             <div><Label className="text-xs">Benachrichtigung</Label><Select value={f.notify_channel || 'email'} onValueChange={(v) => set('notify_channel', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="email">E-Mail</SelectItem><SelectItem value="sms">SMS</SelectItem><SelectItem value="email_sms">E-Mail + SMS</SelectItem></SelectContent></Select></div>
             <div><Label className="text-xs">E-Mail</Label><Input value={f.email || ''} onChange={(e) => set('email', e.target.value)} /></div>
             <div><Label className="text-xs">Mobilnummer</Label><Input value={f.phone || ''} onChange={(e) => set('phone', e.target.value)} /></div>
@@ -425,8 +450,62 @@ function Plans() {
           <DialogFooter><Button disabled={!f.customer_id || !f.product || !f.net_amount || !f.start_date} onClick={save}>Speichern</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+      {ratenFor && <InstallmentPlanDialog plan={ratenFor} onClose={() => { setRatenFor(null); load(); }} />}
     </CardContent></Card>
   );
+}
+
+const SCHED_C = (s: string) => s.startsWith('BEZAHLT') ? 'text-emerald-500' : s.startsWith('ÜBERFÄLLIG') ? 'text-red-500' : ['TEILBEZAHLT', 'ÜBERZAHLUNG'].includes(s) ? 'text-amber-500' : 'text-muted-foreground';
+
+export function InstallmentPlanView({ plan, canEdit = true }: { plan: any; canEdit?: boolean }) {
+  const [rows, setRows] = useState<any[]>([]); const [sp, setSp] = useState<any[]>([]);
+  const [dlg, setDlg] = useState<'' | 'skip' | 'special'>(''); const [v1, setV1] = useState(''); const [v2, setV2] = useState(''); const [note, setNote] = useState('');
+  const load = async () => {
+    const [a, b] = await Promise.all([db.rpc('rp_installment_schedule', { p_plan_id: plan.id }), db.from('rp_special_payments').select('*').eq('plan_id', plan.id).order('payment_date')]);
+    setRows(a.data || []); setSp(b.data || []);
+  };
+  useEffect(() => { load(); }, [plan.id]);
+  const rates = rows.filter((r) => r.installment_number);
+  const invoiced = rates.filter((r) => r.invoice_id);
+  const paidN = rates.filter((r) => r.status === 'BEZAHLT' || r.status === 'ÜBERZAHLUNG').length;
+  const paid = invoiced.reduce((a, r) => a + Number(r.paid_amount), 0) + sp.reduce((a, x) => a + Number(x.amount), 0);
+  const openDue = invoiced.reduce((a, r) => a + Math.max(Number(r.open_amount), 0), 0);
+  const notDue = rates.filter((r) => !r.invoice_id).reduce((a, r) => a + Number(r.amount), 0);
+  const overdue = invoiced.filter((r) => r.status.startsWith('ÜBERFÄLLIG')).reduce((a, r) => a + Number(r.open_amount), 0);
+  const next = rates.find((r) => !r.invoice_id);
+  const total = plan.total_amount != null ? Number(plan.total_amount) : null;
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+        {[['Vertragssumme', total != null ? eur(total) : '—'], ['Anzahlung', eur(plan.down_payment)], ['Zahlungsart', METHOD[plan.payment_method]], ['Vereinbarung', `${plan.installment_count} × ${eur(plan.gross_amount)}`],
+          ['Rechnungen erstellt', `${invoiced.length} / ${plan.installment_count}`], ['Bezahlt', `${paidN} / ${plan.installment_count} · ${eur(paid)}`], ['Offen / fällig', eur(openDue)], ['Überfällig', eur(overdue)],
+          ['Noch nicht fällig', eur(notDue)], ['Restschuld gesamt', eur(openDue + notDue)], ['Nächste Rate', next ? `${next.installment_number}/${plan.installment_count} · ${dt(next.due_date)}` : '—'], ['Status', String(plan.status).toUpperCase()]]
+          .map(([l, v]) => <div key={l} className="rounded-md border border-border p-2"><div className="text-xs text-muted-foreground">{l}</div><div className="font-semibold">{v}</div></div>)}
+      </div>
+      <div className="h-2 rounded bg-muted overflow-hidden"><div className="h-full bg-primary" style={{ width: `${plan.installment_count ? (paidN / plan.installment_count) * 100 : 0}%` }} /></div>
+      <div className="text-xs text-muted-foreground">{paidN} von {plan.installment_count} Raten bezahlt</div>
+      {canEdit && <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => setDlg('skip')}>Rate verschieben / Monat aussetzen</Button><Button size="sm" variant="outline" onClick={() => setDlg('special')}>Sonderzahlung erfassen</Button></div>}
+      <table className="w-full text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="py-1">Rate</th><th>Fälligkeit</th><th className="text-right">Betrag</th><th>Rechnung</th><th className="text-right">Zahlung</th><th>Status</th></tr></thead>
+        <tbody>{rows.map((r, k) => <tr key={k} className="border-t border-border"><td className="py-1">{r.installment_number ? `${r.installment_number}/${plan.installment_count}` : '—'}</td><td>{dt(r.due_date)}</td><td className="text-right">{r.installment_number ? eur(r.amount) : '—'}</td><td>{r.invoice_number || '—'}</td><td className="text-right">{Number(r.paid_amount) ? eur(r.paid_amount) : '—'}</td>
+          <td className={SCHED_C(r.status)}>{r.status}{r.days_overdue > 0 && ` · ${r.days_overdue} Tage`}</td></tr>)}</tbody></table>
+      {sp.length > 0 && <div className="text-sm"><b>Sonderzahlungen</b>{sp.map((x) => <div key={x.id}>{dt(x.payment_date)} · {eur(x.amount)} {x.note && `– ${x.note}`}</div>)}</div>}
+      <Dialog open={!!dlg} onOpenChange={(o) => !o && setDlg('')}>
+        <DialogContent><DialogHeader><DialogTitle>{dlg === 'skip' ? 'Monat aussetzen (Raten verschieben sich um einen Monat)' : 'Sonderzahlung erfassen'}</DialogTitle></DialogHeader>
+          {dlg === 'skip' ? <Input type="month" value={v1} onChange={(e) => setV1(e.target.value)} /> : <><Input type="number" step="0.01" placeholder="Betrag" value={v1} onChange={(e) => setV1(e.target.value)} /><Input type="date" value={v2} onChange={(e) => setV2(e.target.value)} /></>}
+          <Textarea placeholder="Grund / Notiz (wird protokolliert)" value={note} onChange={(e) => setNote(e.target.value)} />
+          <p className="text-xs text-muted-foreground">Bereits erzeugte Rechnungen und verbuchte Zahlungen werden nicht verändert.</p>
+          <DialogFooter><Button disabled={!v1} onClick={async () => {
+            const { error } = dlg === 'skip' ? await db.from('rp_period_skips').insert({ plan_id: plan.id, billing_period: v1, reason: note || null }) : await db.from('rp_special_payments').insert({ plan_id: plan.id, amount: Number(v1), payment_date: v2 || undefined, note: note || null });
+            if (error) return toast.error(error.message); toast.success('Gespeichert'); setDlg(''); setV1(''); setV2(''); setNote(''); load();
+          }}>Speichern</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function InstallmentPlanDialog({ plan, onClose }: { plan: any; onClose: () => void }) {
+  return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>Ratenplan · {plan._name} · {plan.product}</DialogTitle></DialogHeader><InstallmentPlanView plan={plan} /></DialogContent></Dialog>;
 }
 
 /* ---------------- Mandate ---------------- */
@@ -511,7 +590,7 @@ function Settings() {
   useEffect(() => { load(); }, []);
   if (!s) return <Loader2 className="w-5 h-5 animate-spin" />;
   const suspicious = /O/.test((s.creditor_id || '').slice(7));
-  async function save() { const { error } = await db.from('rp_settings').update({ creditor_name: s.creditor_name, prenotification_days: Number(s.prenotification_days), email_subject: s.email_subject, email_body: s.email_body, sms_body: s.sms_body }).eq('id', 1); if (error) toast.error(error.message); else { toast.success('Gespeichert'); load(); } }
+  async function save() { const { error } = await db.from('rp_settings').update({ creditor_name: s.creditor_name, prenotification_days: Number(s.prenotification_days), email_subject: s.email_subject, email_body: s.email_body, sms_body: s.sms_body, info_email_subject: s.info_email_subject, info_email_body: s.info_email_body, info_sms_body: s.info_sms_body }).eq('id', 1); if (error) toast.error(error.message); else { toast.success('Gespeichert'); load(); } }
   return (
     <Card><CardContent className="p-4 space-y-4 max-w-3xl">
       <div className="space-y-1">
@@ -529,6 +608,11 @@ function Settings() {
       <div><Label className="text-xs">SMS-Text (keine vollständige IBAN!)</Label><Textarea rows={3} value={s.sms_body} onChange={(e) => setS({ ...s, sms_body: e.target.value })} /></div>
       <p className="text-xs text-muted-foreground">Platzhalter: {'{{customer_name}} {{amount}} {{collection_date}} {{invoice_number}} {{mandate_reference}} {{creditor_id}} {{creditor_name}}'}</p>
       <Card className="bg-muted/30"><CardContent className="p-3 text-sm whitespace-pre-line"><b>Vorschau:</b>{'\n'}{s.email_body.replace(/\{\{\s*(\w+)\s*\}\}/g, (_: string, k: string) => ({ customer_name: 'Max Muster', amount: '119,00 €', collection_date: '15.11.2026', invoice_number: '2026-11-0001', mandate_reference: 'M-0001', creditor_id: s.creditor_id, creditor_name: s.creditor_name } as any)[k] ?? '')}</CardContent></Card>
+      <h3 className="font-semibold pt-4">Zahlungsinformation für Überweiser / Ratenzahler (keine SEPA-Vorabinformation)</h3>
+      <div><Label className="text-xs">E-Mail-Betreff</Label><Input value={s.info_email_subject} onChange={(e) => setS({ ...s, info_email_subject: e.target.value })} /></div>
+      <div><Label className="text-xs">E-Mail-Text</Label><Textarea rows={10} value={s.info_email_body} onChange={(e) => setS({ ...s, info_email_body: e.target.value })} /></div>
+      <div><Label className="text-xs">SMS-Text</Label><Textarea rows={3} value={s.info_sms_body} onChange={(e) => setS({ ...s, info_sms_body: e.target.value })} /></div>
+      <p className="text-xs text-muted-foreground">Zusätzliche Platzhalter: {'{{due_date}} {{installment_number}} {{installment_count}}'}</p>
       <Button onClick={save}>Speichern</Button>
     </CardContent></Card>
   );
