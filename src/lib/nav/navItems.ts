@@ -266,6 +266,7 @@ export const navItems: NavItem[] = [
           { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/angebotsanalyse', label: 'Angebotsanalyse', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/nachfassen', label: 'Nachfassen', icon: CalendarClock, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/verkaufsfuehrer', label: 'Verkaufsführer', icon: LineChart, roles: ['Admin', 'Super Admin', 'Vertriebsleitung', 'Finance'] },
           { path: '/verkauf/angebotskalender', label: 'Angebotskalender', icon: CalendarDays, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/freigabe', label: 'Freigabe', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
         ],
