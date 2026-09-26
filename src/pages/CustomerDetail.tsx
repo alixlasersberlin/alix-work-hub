@@ -17,6 +17,7 @@ import CustomerAllTransactions from '@/components/customer/CustomerAllTransactio
 import CustomerKontoauszug from '@/components/customer/CustomerKontoauszug';
 
 import CustomerReturnDebits, { PaymentRiskWarning } from '@/components/finance/CustomerReturnDebits';
+import CustomerPaymentPlans from '@/components/customer/CustomerPaymentPlans';
 import { withAt } from '@/lib/atSuffix';
 
 /** Nur die in der Übersicht angezeigten Spalten — `raw_data` (im Schnitt 3 KB pro Kunde) bleibt draußen. */
@@ -216,6 +217,7 @@ export default function CustomerDetail() {
         </TabsContent>
 
         <TabsContent value="finance" className="mt-4 space-y-4">
+          <CustomerPaymentPlans customerId={customer.id} />
           <FinanceAccountTab customerId={customer.id} />
           <CustomerReturnDebits customerId={customer.id} />
         </TabsContent>
