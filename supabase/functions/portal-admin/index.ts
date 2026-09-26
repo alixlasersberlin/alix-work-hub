@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Portal-Admin – privilegierte Aktionen für den AlixWork-Kundendetail-Tab "Kundenportal".
 // Aktionen: activate, deactivate, change_email, resend_invite, revoke_sessions, list_audit
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';

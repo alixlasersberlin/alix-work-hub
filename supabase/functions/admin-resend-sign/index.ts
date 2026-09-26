@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import * as React from 'npm:react@18.3.1'

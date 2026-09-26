@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Phase 8: Tägliche Wartungs-Erinnerungen
 // - berechnet 30d/14d/0d/overdue je Datensatz in device_maintenance
 // - sendet via ticket-customer-notify (Resend) und loggt in maintenance_reminder_log

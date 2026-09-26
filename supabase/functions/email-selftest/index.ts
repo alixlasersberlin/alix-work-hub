@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 
 const corsHeaders = {
