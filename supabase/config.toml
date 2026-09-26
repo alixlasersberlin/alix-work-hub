@@ -482,3 +482,9 @@ verify_jwt = false
 
 [functions.op-light-mail-open]
 verify_jwt = false
+
+[functions.rp-prepare-run]
+verify_jwt = false
+
+[functions.rp-send-prenotifications]
+verify_jwt = false
