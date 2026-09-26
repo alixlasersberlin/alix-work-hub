@@ -46165,12 +46165,17 @@ export type Database = {
           due_date: string | null
           gross_amount: number
           id: string
+          installment_count: number | null
+          installment_number: number | null
           invoice_id: string | null
           issues: Json
           mandate_id: string | null
           net_amount: number
           original_gross_amount: number
+          overpaid_amount: number
+          paid_amount: number
           paid_at: string | null
+          payment_method: string | null
           plan_id: string
           run_id: string
           status: string
@@ -46187,12 +46192,17 @@ export type Database = {
           due_date?: string | null
           gross_amount: number
           id?: string
+          installment_count?: number | null
+          installment_number?: number | null
           invoice_id?: string | null
           issues?: Json
           mandate_id?: string | null
           net_amount: number
           original_gross_amount: number
+          overpaid_amount?: number
+          paid_amount?: number
           paid_at?: string | null
+          payment_method?: string | null
           plan_id: string
           run_id: string
           status?: string
@@ -46209,12 +46219,17 @@ export type Database = {
           due_date?: string | null
           gross_amount?: number
           id?: string
+          installment_count?: number | null
+          installment_number?: number | null
           invoice_id?: string | null
           issues?: Json
           mandate_id?: string | null
           net_amount?: number
           original_gross_amount?: number
+          overpaid_amount?: number
+          paid_amount?: number
           paid_at?: string | null
+          payment_method?: string | null
           plan_id?: string
           run_id?: string
           status?: string
@@ -46525,21 +46540,26 @@ export type Database = {
           created_by: string | null
           customer_id: string
           description: string | null
+          down_payment: number
           due_day: number
           email: string | null
           end_date: string | null
           gross_amount: number | null
           id: string
+          installment_count: number | null
           interval_months: number
           mandate_id: string | null
           net_amount: number
           notify_channel: string
           payment_method: string
           phone: string | null
+          plan_type: string
           product: string
+          sms_enabled: boolean
           start_date: string
           status: string
           tax_rate: number | null
+          total_amount: number | null
           updated_at: string
           zoho_recurring_invoice_id: string | null
         }
@@ -46552,21 +46572,26 @@ export type Database = {
           created_by?: string | null
           customer_id: string
           description?: string | null
+          down_payment?: number
           due_day?: number
           email?: string | null
           end_date?: string | null
           gross_amount?: number | null
           id?: string
+          installment_count?: number | null
           interval_months?: number
           mandate_id?: string | null
           net_amount: number
           notify_channel?: string
           payment_method?: string
           phone?: string | null
+          plan_type?: string
           product: string
+          sms_enabled?: boolean
           start_date: string
           status?: string
           tax_rate?: number | null
+          total_amount?: number | null
           updated_at?: string
           zoho_recurring_invoice_id?: string | null
         }
@@ -46579,21 +46604,26 @@ export type Database = {
           created_by?: string | null
           customer_id?: string
           description?: string | null
+          down_payment?: number
           due_day?: number
           email?: string | null
           end_date?: string | null
           gross_amount?: number | null
           id?: string
+          installment_count?: number | null
           interval_months?: number
           mandate_id?: string | null
           net_amount?: number
           notify_channel?: string
           payment_method?: string
           phone?: string | null
+          plan_type?: string
           product?: string
+          sms_enabled?: boolean
           start_date?: string
           status?: string
           tax_rate?: number | null
+          total_amount?: number | null
           updated_at?: string
           zoho_recurring_invoice_id?: string | null
         }
@@ -46668,12 +46698,13 @@ export type Database = {
           amount: number
           collection_date: string
           created_at: string
-          creditor_id: string
+          creditor_id: string | null
           creditor_name: string
           customer_id: string
           id: string
           invoice_id: string | null
           item_id: string
+          kind: string
           mandate_reference: string | null
           status: string
           updated_at: string
@@ -46682,12 +46713,13 @@ export type Database = {
           amount: number
           collection_date: string
           created_at?: string
-          creditor_id: string
+          creditor_id?: string | null
           creditor_name: string
           customer_id: string
           id?: string
           invoice_id?: string | null
           item_id: string
+          kind?: string
           mandate_reference?: string | null
           status?: string
           updated_at?: string
@@ -46696,12 +46728,13 @@ export type Database = {
           amount?: number
           collection_date?: string
           created_at?: string
-          creditor_id?: string
+          creditor_id?: string | null
           creditor_name?: string
           customer_id?: string
           id?: string
           invoice_id?: string | null
           item_id?: string
+          kind?: string
           mandate_reference?: string | null
           status?: string
           updated_at?: string
@@ -46828,6 +46861,9 @@ export type Database = {
           email_body: string
           email_subject: string
           id: number
+          info_email_body: string
+          info_email_subject: string
+          info_sms_body: string
           prenotification_days: number
           sms_body: string
           updated_at: string
@@ -46840,6 +46876,9 @@ export type Database = {
           email_body?: string
           email_subject?: string
           id?: number
+          info_email_body?: string
+          info_email_subject?: string
+          info_sms_body?: string
           prenotification_days?: number
           sms_body?: string
           updated_at?: string
@@ -46852,12 +46891,53 @@ export type Database = {
           email_body?: string
           email_subject?: string
           id?: number
+          info_email_body?: string
+          info_email_subject?: string
+          info_sms_body?: string
           prenotification_days?: number
           sms_body?: string
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: []
+      }
+      rp_special_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          payment_date: string
+          plan_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          payment_date?: string
+          plan_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          payment_date?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_special_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "rp_payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rz_reminder_log: {
         Row: {
@@ -58581,7 +58661,27 @@ export type Database = {
         Args: { p_creditor_id: string }
         Returns: undefined
       }
+      rp_financed_amount: {
+        Args: { p: Database["public"]["Tables"]["rp_payment_plans"]["Row"] }
+        Returns: number
+      }
       rp_get_mandate_iban: { Args: { p_mandate_id: string }; Returns: string }
+      rp_installment_schedule: {
+        Args: { p_plan_id: string }
+        Returns: {
+          amount: number
+          billing_period: string
+          days_overdue: number
+          due_date: string
+          installment_number: number
+          invoice_id: string
+          invoice_number: string
+          open_amount: number
+          paid_amount: number
+          status: string
+        }[]
+      }
+      rp_invoiced_count: { Args: { p_plan: string }; Returns: number }
       rp_is_system: { Args: never; Returns: boolean }
       rp_item_action: {
         Args: {
