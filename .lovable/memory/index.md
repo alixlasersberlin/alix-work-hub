@@ -4,7 +4,7 @@
 - **PRIVATE INTERNE APP** — nie öffentlich, nie Public-Signup, noindex/nofollow, Publish-Visibility=private, keine öffentlichen Kalenderlinks, Zero-Trust auf jedem Request. Details: mem://constraints/private-internal-app
 - Internal business app "Alix Work" (Orders, Customers, Route Planning, Finance).
 - Dark theme, Premium Enterprise UI (Black / Gold style). Modern and clean.
-- Supabase backend. NEVER create new tables; strictly use existing schema.
+- Supabase backend. NEVER create new tables; strictly use existing schema (Ausnahme: Modul Wiederkehrende Zahler V1, freigegeben).
 - Role-Based Access Control (RBAC): Admins have full access, specialists have scoped access.
 - Zoho `orders.order_number` is immutable — never overwrite in DB or sync; combine only for display.
 - Production-Bestellungen (inkl. Reklamationen) müssen von Super Admin/Admin genehmigt werden, bevor PDF gesendet/heruntergeladen werden kann und bevor Lieferanten sie sehen.
