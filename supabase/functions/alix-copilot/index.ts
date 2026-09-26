@@ -358,18 +358,25 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
   try {
     switch (name) {
       case "search_orders": {
-        let q = admin
-          .from("orders")
-          .select("id, order_number, customer_name, customer_email, status, total, currency_code, source_system, date, created_at")
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        if (args?.query) q = q.or(`order_number.ilike.%${args.query}%,customer_name.ilike.%${args.query}%`);
-        if (args?.status) q = q.eq("status", args.status);
+        const qt = String(args?.query ?? "").replace(/[%,()]/g, " ").trim();
+        let ids: string[] = [];
+        if (qt) {
+          const { data: cs } = await admin.from("customers").select("id").or(`company_name.ilike.%${qt}%,contact_name.ilike.%${qt}%,email.ilike.%${qt}%`).limit(50);
+          ids = (cs ?? []).map((c: any) => c.id);
+        }
+        let q = admin.from("orders")
+          .select("id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date, finance_open_amount, finance_payment_status, source_system, customer_id, salesperson_name")
+          .order("order_date", { ascending: false }).limit(limit);
+        if (qt) q = q.or([`order_number.ilike.%${qt}%`, ids.length ? `customer_id.in.(${ids.join(",")})` : ""].filter(Boolean).join(","));
+        if (args?.status) q = q.eq("order_status", args.status);
         if (args?.source_system) q = q.eq("source_system", args.source_system);
         q = sourceFilter(q);
         const { data, error } = await q;
         if (error) throw error;
-        return data;
+        const cids = [...new Set((data ?? []).map((o: any) => o.customer_id).filter(Boolean))];
+        const { data: cs2 } = cids.length ? await admin.from("customers").select("id, company_name, contact_name").in("id", cids) : { data: [] as any[] };
+        const nm = new Map((cs2 ?? []).map((c: any) => [c.id, c.company_name || c.contact_name]));
+        return (data ?? []).map((o: any) => ({ ...o, kunde: nm.get(o.customer_id) ?? null }));
       }
       case "get_order": {
         const num = String(args.order_number).trim().replace(/-AT$/i, "");
@@ -417,8 +424,12 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
           if (data && data.length) out[key] = data.map((r: any) => { delete r.raw_data; delete r.html_body; delete r.body_html; return r; });
         }));
         const onum = o.order_number;
+        if (o.customer_id) {
+          const { data: c } = await admin.from("customers").select("company_name, contact_name, email, phone, billing_address, external_customer_id, is_vip").eq("id", o.customer_id).maybeSingle();
+          if (c) out.kunde = c;
+        }
         const [devs, invs] = await Promise.all([
-          admin.from("lager_devices").select("serial_number, model, status, location, reserved_for, updated_at").or(`reserved_for.ilike.%${onum}%,notes.ilike.%${onum}%`).limit(20),
+          admin.from("lager_devices").select("serial_number, model_name, device_status, customer_name, notes, entry_date, commissioning_date, updated_at").or(`reserved_order_id.eq.${id},delivered_order_id.eq.${id}`).limit(20),
           fin ? admin.from("zoho_invoices").select("invoice_number, legal_invoice_number, invoice_date, due_date, total, balance, status").or(`reference_number.ilike.%${onum}%,invoice_number.ilike.%${onum}%`).limit(30) : Promise.resolve({ data: null }),
         ]);
         if (devs.data?.length) out.geraete = devs.data;
@@ -426,35 +437,24 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return out;
       }
       case "search_customers": {
-        const term = `%${args.query}%`;
-        const { data, error } = await admin
-          .from("customers")
-          .select("id, customer_number, customer_name, email, phone, city, country, source_system, vip")
-          .or(`customer_name.ilike.${term},email.ilike.${term},phone.ilike.${term},customer_number.ilike.${term}`)
+        const qt = String(args.query ?? "").replace(/[%,()]/g, " ").trim();
+        const { data, error } = await admin.from("customers")
+          .select("id, external_customer_id, company_name, contact_name, email, phone, source_system, is_vip, billing_address")
+          .or(`company_name.ilike.%${qt}%,contact_name.ilike.%${qt}%,email.ilike.%${qt}%,phone.ilike.%${qt}%,external_customer_id.ilike.%${qt}%`)
           .limit(limit);
         if (error) throw error;
         return data;
       }
       case "get_customer": {
-        const num = String(args.customer_number).replace(/-AT$/i, "");
-        const { data: cust } = await admin
-          .from("customers")
-          .select("*")
-          .eq("customer_number", num)
-          .maybeSingle();
-        if (!cust) return { error: "Kunde nicht gefunden", customer_number: num };
-        const { data: orders } = await admin
-          .from("orders")
-          .select("order_number, status, total, currency_code, date")
-          .eq("customer_id", (cust as any).id)
-          .order("date", { ascending: false })
-          .limit(20);
-        const { data: invoices } = await admin
-          .from("zoho_unpaid_invoices")
-          .select("invoice_number, balance, due_date, status")
-          .eq("customer_id", (cust as any).id)
-          .limit(20);
-        return { customer: pick(cust as any, ["customer_number", "customer_name", "email", "phone", "city", "country", "source_system", "vip"]), orders, unpaid_invoices: invoices ?? [] };
+        const qt = String(args.customer_number ?? "").replace(/-AT$/i, "").replace(/[%,()]/g, " ").trim();
+        const { data: cust } = await admin.from("customers")
+          .select("id, external_customer_id, company_name, contact_name, email, phone, billing_address, shipping_address, source_system, is_vip")
+          .or(`external_customer_id.eq.${qt},company_name.ilike.%${qt}%,contact_name.ilike.%${qt}%`).limit(1).maybeSingle();
+        if (!cust) return { error: "Kunde nicht gefunden", suche: qt };
+        const { data: orders } = await admin.from("orders")
+          .select("order_number, order_status, total_amount, currency, order_date, expected_shipment_date, finance_open_amount")
+          .eq("customer_id", (cust as any).id).order("order_date", { ascending: false }).limit(30);
+        return { customer: cust, orders: orders ?? [], hinweis: "Offene Posten über customer_statement abrufen." };
       }
       case "customer_statement": {
         if (!ctx.isAdmin && !ctx.isFinance) return { error: "Nicht berechtigt – Finance-/Buchhaltungsrolle nötig." };
@@ -551,13 +551,11 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return data;
       }
       case "search_lager_devices": {
-        let q = admin
-          .from("lager_devices")
-          .select("id, serial_number, model, status, location, reserved_for, source_system, updated_at")
-          .order("updated_at", { ascending: false })
-          .limit(limit);
-        if (args?.query) q = q.or(`serial_number.ilike.%${args.query}%,model.ilike.%${args.query}%,reserved_for.ilike.%${args.query}%`);
-        if (args?.status) q = q.eq("status", args.status);
+        let q = admin.from("lager_devices")
+          .select("id, serial_number, model_name, device_status, customer_name, notes, source_system, updated_at")
+          .order("updated_at", { ascending: false }).limit(limit);
+        if (args?.query) q = q.or(`serial_number.ilike.%${args.query}%,model_name.ilike.%${args.query}%,customer_name.ilike.%${args.query}%`);
+        if (args?.status) q = q.eq("device_status", args.status);
         const { data, error } = await q;
         if (error) throw error;
         return data;
@@ -566,7 +564,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         const today = new Date().toISOString().slice(0, 10);
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
         const [orders, tickets, overdue, leads] = await Promise.all([
-          admin.from("orders").select("id", { count: "exact", head: true }).neq("status", "closed"),
+          admin.from("orders").select("id", { count: "exact", head: true }).neq("order_status", "closed"),
           admin.from("tickets").select("id", { count: "exact", head: true }).neq("status", "closed"),
           admin.from("zoho_unpaid_invoices").select("invoice_number", { count: "exact", head: true }).lt("due_date", today),
           admin.from("sales_leads").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
