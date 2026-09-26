@@ -59,7 +59,7 @@ Antworte auf Deutsch, präzise, mit Listen oder kurzen Tabellen falls hilfreich.
 Wenn du Echtdaten brauchst, nutze deine Tools.
 Für offene Posten / Kontoauszug eines Kunden IMMER customer_statement nutzen und das Ergebnis als Tabelle (Rechnung, Datum, Fällig, Betrag, Offen, Tage überfällig) mit Summenzeile und Stand-Zeitpunkt zeigen.
 Alle Tabellen von Alix Work sind über describe_table/query_table lesbar (außer sicherheitskritische); list_modules zeigt nur die wichtigsten.
-Spezialisierte Tools: customer_statement, search_orders, get_order, search_customers, get_customer, search_invoices, search_tickets, search_production_orders, search_repair_orders, search_sales_leads, search_lager_devices, kpi_overview.
+Bei Fragen zu einem Auftrag (Status, Liefertermin, Gerät, Zahlung …) IMMER get_order nutzen; findest du nur den Kunden, erst search_orders, dann get_order.\nSpezialisierte Tools: customer_statement, search_orders, get_order, search_customers, get_customer, search_invoices, search_tickets, search_production_orders, search_repair_orders, search_sales_leads, search_lager_devices, kpi_overview.
 Universelle Tools (für ALLE anderen Module wie Finance, ISO 13485, MDR, QM/Bugs/CAPA, Mail, WhatsApp, Tourenplanung, Warranty, Maintenance, Lieferanten, Dispatch, Lager, Reviews, Academy, AI-Service, Device-Lifecycle, Stammdaten usw.):
   • list_modules() – Übersicht aller verfügbaren Tabellen mit Modul-Gruppierung
   • describe_table(table) – Spalten einer Tabelle anzeigen (vor query_table aufrufen, wenn Struktur unbekannt)
@@ -90,7 +90,7 @@ const tools = [
     type: "function",
     function: {
       name: "get_order",
-      description: "Hole einen einzelnen Auftrag inkl. Positionen.",
+      description: "Kompletter Auftrag mit ALLEN Daten: Kopfdaten, Status, Positionen, Statusverlauf, Notizen, Dokumente, Liefertermine/-status/-ETA/-blocker, Touren, Production, Reparaturen, Tickets, Mediapaket, Geräte/Seriennummern, Anzahlungen, Rechnungen, Finanzierung, Zahlungen. Bei jeder Frage zu einem Auftrag nutzen.",
       parameters: { type: "object", properties: { order_number: { type: "string" } }, required: ["order_number"] },
     },
   },
@@ -372,25 +372,58 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return data;
       }
       case "get_order": {
-        const num = String(args.order_number).replace(/-AT$/i, "");
-        const { data: order, error } = await admin
-          .from("orders")
-          .select("id, order_number, customer_name, customer_email, customer_phone, billing_address, shipping_address, status, total, currency_code, source_system, date, created_at, notes")
-          .eq("order_number", num)
-          .maybeSingle();
+        const num = String(args.order_number).trim().replace(/-AT$/i, "");
+        const { data: order, error } = await admin.from("orders").select("*")
+          .or(`order_number.eq.${num},order_number.ilike.%${num.replace(/[%,()]/g, "")}%`).limit(1).maybeSingle();
         if (error) throw error;
         if (!order) return { error: "Auftrag nicht gefunden", order_number: num };
-        const { data: items } = await admin
-          .from("order_items")
-          .select("id, item_name, sku, quantity, rate, amount")
-          .eq("order_id", (order as any).id);
-        const { data: history } = await admin
-          .from("order_status_history")
-          .select("status, created_at, note")
-          .eq("order_id", (order as any).id)
-          .order("created_at", { ascending: false })
-          .limit(5);
-        return { order, items: items ?? [], history: history ?? [] };
+        const o: any = order; const id = o.id;
+        delete o.raw_data;
+        const fin = ctx.isAdmin || ctx.isFinance;
+        const rel: [string, string, string, boolean][] = [
+          ["positionen", "order_items", "order_id", false],
+          ["status_verlauf", "order_status_history", "order_id", false],
+          ["notizen", "order_notes", "order_id", false],
+          ["dokumente", "order_documents", "order_id", false],
+          ["liefertermine", "delivery_appointments", "order_id", false],
+          ["lieferstatus", "order_delivery_status", "order_id", false],
+          ["liefer_ereignisse", "order_delivery_events", "order_id", false],
+          ["liefer_eta_verlauf", "order_delivery_eta_history", "order_id", false],
+          ["liefer_blocker", "order_delivery_blockers", "order_id", false],
+          ["liefer_kommunikation", "order_delivery_comms", "order_id", false],
+          ["lieferfreigaben", "delivery_approvals", "order_id", false],
+          ["touren", "route_plans", "order_id", false],
+          ["retouren", "delivery_returns", "order_id", false],
+          ["aenderungsantraege", "order_change_requests", "order_id", false],
+          ["production", "production_orders", "order_id", false],
+          ["reparaturen", "repair_orders", "order_id", false],
+          ["tickets", "tickets", "order_id", false],
+          ["mediapaket", "media_packages", "order_id", false],
+          ["after_sales", "as_cases", "order_id", false],
+          ["mails", "mail_messages", "order_id", false],
+          ["anzahlungen", "finance_deposits", "order_id", true],
+          ["zusatz_anzahlungen", "order_additional_deposits", "order_id", true],
+          ["finanzierung", "bank_financing_requests", "order_id", true],
+          ["zahlungszuordnungen", "bank_transaction_allocations", "order_id", true],
+          ["ruecklastschriften", "bank_return_debits", "order_id", true],
+          ["vertraege", "finance_contracts", "order_id", true],
+          ["einkauf_at", "order_at_purchase", "order_id", true],
+        ];
+        const out: Record<string, unknown> = { auftrag: o };
+        await Promise.all(rel.map(async ([key, table, col, needFin]) => {
+          if (needFin && !fin) return;
+          if (ctx.extraBlocked.has(table)) return;
+          const { data } = await admin.from(table).select("*").eq(col, id).limit(30);
+          if (data && data.length) out[key] = data.map((r: any) => { delete r.raw_data; delete r.html_body; delete r.body_html; return r; });
+        }));
+        const onum = o.order_number;
+        const [devs, invs] = await Promise.all([
+          admin.from("lager_devices").select("serial_number, model, status, location, reserved_for, updated_at").or(`reserved_for.ilike.%${onum}%,notes.ilike.%${onum}%`).limit(20),
+          fin ? admin.from("zoho_invoices").select("invoice_number, legal_invoice_number, invoice_date, due_date, total, balance, status").or(`reference_number.ilike.%${onum}%,invoice_number.ilike.%${onum}%`).limit(30) : Promise.resolve({ data: null }),
+        ]);
+        if (devs.data?.length) out.geraete = devs.data;
+        if ((invs as any).data?.length) out.rechnungen = (invs as any).data;
+        return out;
       }
       case "search_customers": {
         const term = `%${args.query}%`;
