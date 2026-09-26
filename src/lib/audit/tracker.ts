@@ -81,6 +81,11 @@ class AuditTracker {
       const info = collectDeviceInfo();
       const { data, error } = await supabase.functions.invoke("audit-session-start", { body: info });
       if (error) throw error;
+      if ((data as any)?.skipped === "unauthorized") {
+        this.started = false;
+        await this.handleUnauthorized();
+        return;
+      }
       this.sessionId = (data as any)?.session_id ?? null;
       if (!this.sessionId) throw new Error("no session id");
     } catch (e) {
