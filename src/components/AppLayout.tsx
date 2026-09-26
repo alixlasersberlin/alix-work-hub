@@ -178,6 +178,16 @@ function GeraetesperrenMenu(_props: { roles: string[] }) {
 
 
 
+// Hauptmenü: sechs feste Bereiche; bestehende Menüs werden darunter einsortiert.
+const MAIN_SECTIONS = [
+  { key: 'kunden', title: 'KUNDEN', icon: Users, labels: ['CUSTOMER CARE', 'TICKETS', 'ALIX i-COM'] },
+  { key: 'verkauf', title: 'VERKAUF', icon: TrendingUp, labels: ['VERKAUF', 'PRODUCT HUB', 'ARTIKEL & PRODUKTE'] },
+  { key: 'einkauf', title: 'EINKAUF', icon: ShoppingCart, labels: ['EINKAUF'] },
+  { key: 'finance', title: 'FINANCE', icon: Banknote, labels: ['BUCHHALTUNG', 'GERÄTESPERREN'] },
+  { key: 'produktion', title: 'PRODUKTION', icon: Factory, labels: ['LAGER & WERKSTATT', 'CAPA 2.0 COCKPIT'] },
+  { key: 'operation', title: 'OPERATION', icon: Settings, labels: ['OPERATIONS', 'TOURENPLANUNG', 'TEAMKALENDER', 'ALIXDOCS', 'MAGIC STATUS'] },
+];
+
 export default function AppLayout() {
   const { profile, roles, signOut, impersonatedUserId, impersonatedName, stopImpersonation } = useAuth();
   const { variant } = useDesignVariant();
@@ -202,6 +212,8 @@ export default function AppLayout() {
   // Mobile: Drawer offen?
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
+  // Hauptbereich: nur einer offen (null = automatisch nach aktueller Seite)
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
 
@@ -955,7 +967,8 @@ export default function AppLayout() {
             );
           })()}
 
-          {visibleItems.map(item => {
+          {(() => {
+            const renderItem = (item: (typeof visibleItems)[number]) => {
             const active = isActive(item.path);
             const hasChildren = item.children && item.children.length > 0;
             const childActive = hasChildren && item.children!.some(c => isActive(c.path));
@@ -1258,7 +1271,52 @@ export default function AppLayout() {
                 {!isCollapsedView && <FavStar path={item.path} label={item.label} />}
               </div>
             );
-          })}
+          };
+            const byPath = new Map(visibleItems.map(i => [i.label, i] as const));
+            const used = new Set<string>();
+            const take = (labels: string[]) => labels.map(l => byPath.get(l)).filter(Boolean).map(i => { used.add(i!.label); return i!; });
+            const top = take(['DASHBOARDS']);
+            const sections = MAIN_SECTIONS.map(s => ({ ...s, items: take(s.labels) }));
+            const rest = visibleItems.filter(i => !used.has(i.label));
+            const opSec = sections.find(s => s.key === 'operation');
+            if (opSec) opSec.items.push(...rest);
+            const isCollapsedView = collapsed && !mobileOpen;
+            const pathActive = (it: any): boolean => isActive(it.path) || (it.children ?? []).some((c: any) => pathActive(c));
+            return (
+              <>
+                {top.map(renderItem)}
+                {sections.filter(s => s.items.length > 0).map(s => {
+                  const secActive = s.items.some(pathActive);
+                  const secOpen = openSection === null ? secActive : openSection === s.key;
+                  return (
+                    <div key={s.key} className="mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setOpenSection(secOpen ? '__none' : s.key)}
+                        title={isCollapsedView ? s.title : undefined}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 rounded-lg px-3.5 py-3 md:py-2.5 text-[15px] font-bold tracking-wide border transition-colors",
+                          isCollapsedView && "md:px-0 md:justify-center",
+                          secOpen || secActive
+                            ? "border-primary/40 bg-primary/10 text-primary"
+                            : "border-transparent text-sidebar-foreground hover:bg-primary/10 hover:text-primary"
+                        )}
+                      >
+                        <s.icon className="w-5 h-5 flex-shrink-0" />
+                        {!isCollapsedView && <span className="flex-1 text-left">{s.title}</span>}
+                        {!isCollapsedView && <ChevronDown className={cn("w-4 h-4 transition-transform", secOpen && "rotate-180")} />}
+                      </button>
+                      {secOpen && (
+                        <div className={cn("mt-1 space-y-0.5", !isCollapsedView && "ml-2 pl-2 border-l border-primary/20")}>
+                          {s.items.map(renderItem)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            );
+          })()}
           </div>
         </nav>
 
