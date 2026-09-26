@@ -106,3 +106,4 @@
 - [GoBD Phase 16](mem://features/gobd-phase16-abschluss) — /finance/gobd/abschluss: Verantwortlichkeiten, WORM-Freigaben, versionierte Abschlussberichte mit Freigabestatus
 - [GoBD Besetzungsregeln](mem://features/gobd-organisatorischer-abschluss) — Verantwortlicher ≠ Vertretung, Vier-Augen und Löschfreigabe durch verschiedene Personen, Freigabe-Reihenfolge
 - [FIBU LIGHT Phase 2](mem://features/fibu-light-phase2) — Ampel, Schnellbuchung, Mahncenter mit Prüfschritt, Klärungsfälle/Mahnsperre, Ratenvereinbarungen, Buchungsfehler-Meldung, Bank-Vorschläge (lesend)
+- [Wiederkehrende Zahler V1](mem://features/recurring-payers-v1) — SEPA-Monatslauf, AlixWork erzeugt Rechnungen, neue Tabellen erlaubt, Gläubiger-ID offen
