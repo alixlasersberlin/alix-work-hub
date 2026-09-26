@@ -364,11 +364,13 @@ export default function Geraetesperren() {
         .replace(/\{betrag\}/g, fmt(g.total))
         .replace(/\{rechnungen\}/g, g.invoices.join(', ') || '—')
         .replace(/\{kunde\}/g, g.name);
-      const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
-        body: { to: g.phone.trim(), message },
-      });
-      if (error || (data as any)?.error) { fail++; errors.push(`${g.name}: ${(data as any)?.error || error?.message}`); }
-      else ok++;
+      try {
+        const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
+          body: { to: g.phone.trim(), message },
+        });
+        if (error || (data as any)?.error) { fail++; errors.push(`${g.name}: ${(data as any)?.error || error?.message}`); }
+        else ok++;
+      } catch (e: any) { fail++; errors.push(`${g.name}: ${e?.message ?? 'Fehler'}`); }
     }
     setSmsBusy(false);
     setSmsOpen(false);
