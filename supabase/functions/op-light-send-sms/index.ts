@@ -86,7 +86,12 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       const errorBody = await res.text();
       console.error(`twilio failed [${res.status}]: ${errorBody}`);
-      return json({ error: 'SMS-Versand fehlgeschlagen', status: res.status, details: errorBody }, res.status);
+      let code: number | null = null;
+      try { code = JSON.parse(errorBody)?.code ?? null; } catch { /* ignore */ }
+      const reason = code === 21408
+        ? 'SMS in dieses Land ist bei Twilio nicht freigeschaltet (Geo-Berechtigung)'
+        : code === 21211 ? 'Ungültige Mobilnummer' : 'SMS-Versand fehlgeschlagen';
+      return json({ success: false, error: reason, twilio_code: code, status: res.status, details: errorBody }, 200);
     }
     const payload = await res.json().catch(() => ({}));
     return json({ success: true, sid: payload?.sid ?? null, to });
