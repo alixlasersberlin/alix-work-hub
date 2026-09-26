@@ -128,6 +128,7 @@ const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
 const WzErinnerungen = lazy(() => import("./pages/Finance/WiederkehrendeZahlerErinnerungen"));
+const SepaMonatslauf = lazy(() => import("./pages/Finance/SepaMonatslauf"));
 const RatenEndeLegal = lazy(() => import("./pages/Finance/RatenEndeLegal"));
 const RatenPruefung = lazy(() => import("./pages/Finance/RatenPruefung"));
 const Bestandsuebersicht = lazy(() => import("./pages/Finance/Bestandsuebersicht"));
@@ -1801,6 +1802,7 @@ function AppRoutes() {
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
           <Route path="/finance/wiederkehrende-zahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WiederkehrendeZahler /></ProtectedRoute>} />
+          <Route path="/finance/sepa-monatslauf" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><SepaMonatslauf /></ProtectedRoute>} />
           <Route path="/finance/raten-pruefung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><RatenPruefung /></ProtectedRoute>} />
           <Route path="/finance/raten-ende-legal" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><RatenEndeLegal /></ProtectedRoute>} />
           <Route path="/finance/wz-erinnerungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WzErinnerungen /></ProtectedRoute>} />
