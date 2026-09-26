@@ -4,7 +4,7 @@
 - **PRIVATE INTERNE APP** — nie öffentlich, nie Public-Signup, noindex/nofollow, Publish-Visibility=private, keine öffentlichen Kalenderlinks, Zero-Trust auf jedem Request. Details: mem://constraints/private-internal-app
 - Internal business app "Alix Work" (Orders, Customers, Route Planning, Finance).
 - Dark theme, Premium Enterprise UI (Black / Gold style). Modern and clean.
-- Supabase backend. NEVER create new tables; strictly use existing schema.
+- Supabase backend. NEVER create new tables; strictly use existing schema (Ausnahme: Modul Wiederkehrende Zahler V1, freigegeben).
 - Role-Based Access Control (RBAC): Admins have full access, specialists have scoped access.
 - Zoho `orders.order_number` is immutable — never overwrite in DB or sync; combine only for display.
 - Production-Bestellungen (inkl. Reklamationen) müssen von Super Admin/Admin genehmigt werden, bevor PDF gesendet/heruntergeladen werden kann und bevor Lieferanten sie sehen.
@@ -106,3 +106,4 @@
 - [GoBD Phase 16](mem://features/gobd-phase16-abschluss) — /finance/gobd/abschluss: Verantwortlichkeiten, WORM-Freigaben, versionierte Abschlussberichte mit Freigabestatus
 - [GoBD Besetzungsregeln](mem://features/gobd-organisatorischer-abschluss) — Verantwortlicher ≠ Vertretung, Vier-Augen und Löschfreigabe durch verschiedene Personen, Freigabe-Reihenfolge
 - [FIBU LIGHT Phase 2](mem://features/fibu-light-phase2) — Ampel, Schnellbuchung, Mahncenter mit Prüfschritt, Klärungsfälle/Mahnsperre, Ratenvereinbarungen, Buchungsfehler-Meldung, Bank-Vorschläge (lesend)
+- [Wiederkehrende Zahler V1](mem://features/recurring-payers-v1) — SEPA-Monatslauf, AlixWork erzeugt Rechnungen, neue Tabellen erlaubt, Gläubiger-ID offen
