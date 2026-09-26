@@ -451,6 +451,7 @@ export const navItems: NavItem[] = [
         children: [
           { path: '/offene-posten-light', label: 'Offene Posten Light', icon: Wallet, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin', 'FIBU LIGHT'] },
           { path: '/fibu-light/bank', label: 'Bank & Zuordnung', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin', 'FIBU LIGHT'] },
+          { path: '/finance/sepa-monatslauf', label: 'SEPA Monatslauf', icon: Repeat, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung Admin'] },
         ],
       },
       {
