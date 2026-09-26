@@ -37,3 +37,8 @@ Testskript: `docs/wiederkehrende-zahler/v1-tests.sql`.
 
 ## Nicht in V1
 SEPA-XML (pain.008), Bankeinreichung, Rücklastschrift-Automatik, vollständige Bankabstimmung.
+
+## Erweiterung V1b – Ratenzahler / Selbstzahler ohne SEPA (26.09.2026)
+Zahlungsarten SEPA, Überweisung, Dauerauftrag, Rechnung, Bar, Sonstige; SEPA-Pflichten nur bei SEPA. Ratenpläne (Vertragssumme, Anzahlung, Anzahl Raten, Sonderzahlungen, Summenprüfung), Ratennummer x/y mit DB-Sperre gegen doppelte Rate, Zahlungsinformation statt Vorabinfo, Teil-/Überzahlung (Klärung), Tage überfällig, Ratenplan-Tabelle, Kundenakte „Zahlungsplan“, Filter nach Zahlungsweg.
+Test (27 Testkunden: 10 SEPA, 10 Ratenzahler, 5 Dauerauftrag, 1 SEPA ohne Mandat; zurückgerollt): **24/24 BESTANDEN** – `docs/wiederkehrende-zahler/v1b-tests-ratenzahler.sql`.
+Nicht umgesetzt: automatische Erinnerungen vor/an/nach Fälligkeit (bewusst kein automatischer Versand), kein Browsertest, kein echter Versand.
