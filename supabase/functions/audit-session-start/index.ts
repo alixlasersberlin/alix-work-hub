@@ -18,7 +18,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const auth = await requireAuditUser(req);
-    if ("response" in auth) return auth.response;
+    // Abgelaufene/fehlende Session: still überspringen statt 401 (sonst Laufzeitfehler-Overlay im Client).
+    if ("response" in auth) return jsonResponse({ skipped: "unauthorized" }, 200);
     const { user } = auth;
     const supabase = createAuditServiceClient();
 
