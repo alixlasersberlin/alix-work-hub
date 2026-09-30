@@ -414,8 +414,9 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         doc.text('Gesamt (netto):', totalsX, finalY);
         doc.text(fmtMoney(displayTotal, currency), RIGHT, finalY, { align: 'right' });
       } else {
-        const taxInfo = displayTotal * 0.19;
-        doc.text('zzgl. MwSt (19%):', totalsX, finalY);
+        // Preise sind Bruttopreise → enthaltene MwSt herausrechnen (nicht aufschlagen)
+        const taxInfo = displayTotal - displayTotal / 1.19;
+        doc.text('darin enth. MwSt (19%):', totalsX, finalY);
         doc.text(fmtMoney(taxInfo, currency), RIGHT, finalY, { align: 'right' });
         doc.setDrawColor(20, 60, 110);
         doc.line(totalsX, finalY + 3, RIGHT, finalY + 3);
