@@ -230,9 +230,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Selbst angelegte Webseiten (ph_channels): nur aktive Kanäle, Geräte über ph_product_channels
+    let customIds: string[] | null = null;
+    if (channel && !activeCol[channel] && !CH_ALLOWED.includes(channel)) {
+      const { data: chRow } = await supabase.from("ph_channels").select("code,is_active").eq("code", channel).maybeSingle();
+      if (!chRow || !chRow.is_active) return json(404, { error: "unknown channel" });
+      const { data: pcs } = await supabase.from("ph_product_channels").select("product_id,status").eq("channel_code", channel);
+      customIds = (pcs || []).filter((r: any) => r.status !== "inactive").map((r: any) => r.product_id);
+    }
+
     if (!productId) {
       let q = supabase.from("ph_products").select(`id,${PUBLIC_FIELDS}`).eq("status", "published").order("sort_order");
       if (channel && activeCol[channel]) q = q.eq(activeCol[channel], true);
+      if (customIds) q = q.in("id", customIds.length ? customIds : ["00000000-0000-0000-0000-000000000000"]);
       const { data, error } = await q;
       if (error) throw error;
       const rows = (data || []) as any[];
@@ -251,6 +261,7 @@ Deno.serve(async (req) => {
       .select(`id,${PUBLIC_FIELDS}`).eq("alix_product_id", productId).maybeSingle();
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
+    if (customIds && !customIds.includes((prod as any).id)) return json(404, { error: "not_found" });
     const comps1 = await complianceMap(supabase, [(prod as any).id]);
     const trs1 = await translationMap(supabase, [(prod as any).id], locale);
     const pubProd = applyLocale(
