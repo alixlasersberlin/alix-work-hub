@@ -142,6 +142,24 @@ Deno.serve(async (req) => {
           rate,
           amount: qty * rate,
           item_order: idx + 1,
+          tax_amount: qty * rate * ((Number(l.tax_percentage) || 0) / 100),
+          // Gerätekonfiguration aus dem unterschriebenen Angebot übernehmen
+          ph_product_id: l.ph_product_id || null,
+          ph_product_name: l.ph_product_name || null,
+          product_image_url: l.product_image_url || l.image_url || null,
+          device_color: l.device_color || null,
+          ral_color_code: l.ral_color_code || null,
+          laser_module_power: l.laser_module_power || null,
+          raw_data: (l.device_color || l.laser_module_power) ? {
+            device_config: {
+              product_id: l.ph_product_id || null,
+              product_name: l.ph_product_name || l.name,
+              product_image_url: l.product_image_url || l.image_url || null,
+              device_color: l.device_color || null,
+              ral_color_code: l.ral_color_code || null,
+              laser_module_power: l.laser_module_power || null,
+            },
+          } : null,
         };
       });
       const { error: iErr } = await supabase.from('order_items').insert(items);
