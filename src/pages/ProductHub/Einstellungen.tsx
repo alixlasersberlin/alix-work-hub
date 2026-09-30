@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { PH_ROLES } from '@/lib/producthub/config';
 import { phSaveSetting } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
+import { WebsiteManager } from '@/components/producthub/WebsiteManager';
 
 const db = supabase as any;
 
@@ -92,6 +93,8 @@ export default function ProductHubEinstellungen() {
       </Card>
 
 
+
+      <WebsiteManager canWrite={canWrite} />
 
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Product-Hub-Rollen (zusätzlich zu bestehenden AlixWork-Rollen)</CardTitle></CardHeader>

@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { PH_CHANNELS, PH_ACTIVE_FIELD, phLabel, PH_CRITICAL_FIELDS } from '@/lib/producthub/config';
 import { phUpsertChannel } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
+import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 
 const db = supabase as any;
 const COMPARE_FIELDS = ['name', 'model', 'short_description', 'wavelengths', 'power', 'fluence', 'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class', 'mdr_status', 'ce_status', 'seo_title', 'seo_description'];
@@ -20,6 +21,7 @@ const COMPARE_FIELDS = ['name', 'model', 'short_description', 'wavelengths', 'po
 export default function ProductHubWebseiten() {
   const { roles } = useAuth();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
+  const { channels: SITES } = usePhChannels(false);
   const [products, setProducts] = useState<any[]>([]);
   const [chan, setChan] = useState<any[]>([]);
   const [compare, setCompare] = useState<any | null>(null);
@@ -51,7 +53,7 @@ export default function ProductHubWebseiten() {
 
   const publishAll = async () => {
     const code = bulkChannel;
-    const chLabel = PH_CHANNELS.find(c => c.code === code)?.label || code;
+    const chLabel = SITES.find(c => c.code === code)?.label || code;
     if (!window.confirm(`Wirklich alle ${products.length} Geräte für ${chLabel} freigeben?`)) return;
     setBulkBusy(true);
     try {
@@ -96,14 +98,14 @@ export default function ProductHubWebseiten() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <PageHeader title="Product Hub · Webseiten" subtitle="Veröffentlichungskanäle COM / DE (später AT, USA, Dubai)" icon={Globe} />
+      <PageHeader title="Product Hub · Webseiten" subtitle="Veröffentlichungskanäle – neue Webseiten unter Einstellungen anlegen" icon={Globe} />
       {canWrite && (
         <Card><CardContent className="p-4 flex flex-wrap items-center gap-3">
           <span className="text-sm text-muted-foreground">Sammelfreigabe:</span>
           <Select value={bulkChannel} onValueChange={setBulkChannel}>
             <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {PH_CHANNELS.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
+              {SITES.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button onClick={publishAll} disabled={bulkBusy || products.length === 0}>
@@ -115,21 +117,22 @@ export default function ProductHubWebseiten() {
         <Table>
           <TableHeader><TableRow>
             <TableHead>Gerät</TableHead>
-            {PH_CHANNELS.map(c => <TableHead key={c.code}>{c.short}</TableHead>)}
+            {SITES.map(c => <TableHead key={c.code}>{c.short}</TableHead>)}
             <TableHead>Aktionen</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {products.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Keine Produkte importiert.</TableCell></TableRow>}
+            {products.length === 0 && <TableRow><TableCell colSpan={SITES.length + 2} className="text-center py-8 text-muted-foreground">Keine Produkte importiert.</TableCell></TableRow>}
             {products.map(p => (
               <TableRow key={p.id}>
                 <TableCell><Link to={`/product-hub/geraete/${p.id}`} className="text-primary hover:underline">{p.name}</Link></TableCell>
-                {PH_CHANNELS.map(c => {
+                {SITES.map(c => {
                   const r = row(p.id, c.code);
+                  const on = phIsActiveOn(p, c.code, r);
                   return (
                     <TableCell key={c.code} className="text-xs">
                       <div className="flex flex-col gap-0.5">
-                        <Badge variant="outline" className={p[PH_ACTIVE_FIELD[c.code]] ? 'border-emerald-500/40 text-emerald-500 w-fit' : 'w-fit'}>
-                          {r?.status || (p[PH_ACTIVE_FIELD[c.code]] ? 'aktiv' : '—')}
+                        <Badge variant="outline" className={on ? 'border-emerald-500/40 text-emerald-500 w-fit' : 'w-fit'}>
+                          {r?.status || (on ? 'aktiv' : '—')}
                         </Badge>
                         {r?.last_sync_at && <span className="text-muted-foreground">{new Date(r.last_sync_at).toLocaleDateString('de-DE')}</span>}
                         {r?.has_pending_changes && <span className="text-sky-500">Änderungen</span>}
