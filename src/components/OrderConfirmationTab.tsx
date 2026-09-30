@@ -354,7 +354,14 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         body: items.map((i, idx) => {
           const name = String(i.item_name || '—');
           const sku = i.sku ? ` (${i.sku})` : '';
-          const desc = i.description ? `\n${i.description}` : '';
+          const cfgParts: string[] = [];
+          const dc = (i as any).device_color;
+          const ral = (i as any).ral_color_code;
+          const lp = (i as any).laser_module_power;
+          if (dc) cfgParts.push(`Farbe: ${dc}${ral ? ` (RAL ${ral})` : ''}`);
+          if (lp) cfgParts.push(`Lasermodul: ${lp}`);
+          const cfg = cfgParts.length ? `\n${cfgParts.join(' · ')}` : '';
+          const desc = `${cfg}${i.description ? `\n${i.description}` : ''}`;
           const qty = Number(i.quantity) || 0;
           const rate = Number(i.rate) || 0;
           const lineNet = qty * rate;
