@@ -240,7 +240,6 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ offer_number: r.offer_number }),
     })
     if (!convRes.ok) console.warn('convert-signed-offer-to-order failed', r.offer_number, convRes.status, await convRes.text())
-    else await admin.from('offers').update({ status: 'order' }).eq('offer_number', r.offer_number).then(() => null, () => null)
   } catch (e) {
     console.warn('convert-signed-offer-to-order error', r.offer_number, e)
   }
