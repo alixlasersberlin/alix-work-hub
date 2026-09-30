@@ -27,6 +27,7 @@ import { displayMediaUrl, displayMediaFileName } from '@/lib/mediaDisplay';
 import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceConfig';
 import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
 import { TranslationsTab } from '@/components/producthub/TranslationsTab';
+import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 
 import { catalogsForProduct } from '@/lib/producthub/catalog';
 import {
@@ -287,6 +288,7 @@ export default function ProductHubEditor() {
   const [media, setMedia] = useState<any[]>([]);
   const [docs, setDocs] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
+  const { channels: siteList } = usePhChannels(false);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [mainKeyword, setMainKeyword] = useState('');
   const [kwInput, setKwInput] = useState('');
@@ -643,14 +645,19 @@ export default function ProductHubEditor() {
 
         <TabsContent value="webseiten">
           <Card><CardContent className="p-4 space-y-4">
-            {PH_CHANNELS.map(ch => {
+            {siteList.map(ch => {
               const row = channels.find(c => c.channel_code === ch.code);
+              const activeField = PH_ACTIVE_FIELD[ch.code];
               return (
                 <div key={ch.code} className="border border-border rounded-lg p-3 flex flex-wrap items-center gap-4">
                   <div className="font-medium w-44">{ch.label}</div>
                   <div className="flex items-center gap-2">
-                    <Switch checked={!!form[PH_ACTIVE_FIELD[ch.code]]} disabled={!canWrite}
-                      onCheckedChange={v => set(PH_ACTIVE_FIELD[ch.code], v)} />
+                    <Switch checked={activeField ? !!form[activeField] : phIsActiveOn(form, ch.code, row)} disabled={!canWrite}
+                      onCheckedChange={async v => {
+                        if (activeField) { set(activeField, v); return; }
+                        await phUpsertChannel(id!, ch.code, { status: v ? (row?.status && row.status !== 'inactive' ? row.status : 'draft') : 'inactive' });
+                        load();
+                      }} />
                     <span className="text-xs text-muted-foreground">aktiv</span>
                   </div>
                   <Badge variant="outline">{row?.status || 'not_published'}</Badge>
