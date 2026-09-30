@@ -261,6 +261,7 @@ Deno.serve(async (req) => {
       .select(`id,${PUBLIC_FIELDS}`).eq("alix_product_id", productId).maybeSingle();
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
+    if (customIds && !customIds.includes((prod as any).id)) return json(404, { error: "not_found" });
     const comps1 = await complianceMap(supabase, [(prod as any).id]);
     const trs1 = await translationMap(supabase, [(prod as any).id], locale);
     const pubProd = applyLocale(
