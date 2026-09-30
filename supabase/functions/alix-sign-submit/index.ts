@@ -229,6 +229,22 @@ Deno.serve(async (req) => {
   // Der spätere PDF-/E-Mail-Teil kann speicherintensiv sein; die SMS darf davon nicht abhängen.
   await sendInternalSmsNotification(admin, r.id, r.offer_number, signerName, now)
 
+  // Angebot sofort nach Unterschrift in einen Auftrag umwandeln (idempotent in der Zielfunktion).
+  try {
+    const convRes = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/convert-signed-offer-to-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify({ offer_number: r.offer_number }),
+    })
+    if (!convRes.ok) console.warn('convert-signed-offer-to-order failed', r.offer_number, convRes.status, await convRes.text())
+    else await admin.from('offers').update({ status: 'order' }).eq('offer_number', r.offer_number).then(() => null, () => null)
+  } catch (e) {
+    console.warn('convert-signed-offer-to-order error', r.offer_number, e)
+  }
+
   // Send customer confirmation email (no auth context — send directly)
   // Upload signed PDF to private storage bucket and create a 90-day signed URL
   let downloadUrl: string | undefined
