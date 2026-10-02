@@ -14,9 +14,6 @@ Deno.serve(async (req) => {
   }> = [];
 
   // 1) Tables in public without RLS enabled
-  const { data: noRls } = await supabase.rpc('exec_sql_readonly' as any, {}).catch(() => ({ data: null }));
-  // Fallback: query via a definer helper we create in a migration, but simplest is to inline SQL via a dedicated RPC.
-  // We instead use the built-in postgres_meta-like query via supabase.from on a view we create.
 
   const { data: rlsRows } = await (supabase as any).from('security_scan_tables_without_rls').select('*');
   (rlsRows ?? []).forEach((t: any) => {
