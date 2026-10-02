@@ -13,16 +13,16 @@ export type NavItem = NavChild & { children?: NavChild[] };
 
 export const navItems: NavItem[] = [
   {
-    path: '/magic', label: 'MAGIC STATUS', icon: Sparkles, roles: null,
+    path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock,
+    roles: null,
+    children: [
+      { path: '/geraetesperren', label: 'Übersicht', icon: Lock, roles: null },
+      { path: '/geraetesperren/bearbeitung', label: 'Bearbeitung', icon: Lock, roles: null },
+    ],
   },
 
   {
-    path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock,
-    roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
-    children: [
-      { path: '/geraetesperren', label: 'Übersicht', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
-      { path: '/geraetesperren/bearbeitung', label: 'Bearbeitung', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
-    ],
+    path: '/magic', label: 'MAGIC STATUS', icon: Sparkles, roles: null,
   },
 
   {
@@ -586,9 +586,9 @@ export const navItems: NavItem[] = [
         ],
       },
       {
-        path: '/finance/anwaltsfaelle', label: 'ANWALTSFÄLLE', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
+        path: '/finance/anwaltsfaelle', label: 'ANWALTSFÄLLE', icon: Gavel, roles: null,
         children: [
-          { path: '/finance/anwaltsfaelle', label: 'Anwaltsfälle', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
+          { path: '/finance/anwaltsfaelle', label: 'Anwaltsfälle', icon: Gavel, roles: null },
         ],
       },
       {
