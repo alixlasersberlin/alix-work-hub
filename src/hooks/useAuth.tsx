@@ -74,7 +74,15 @@ const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
 const MFA_GRACE_KEY = 'alixwork.mfa_grace_until';
 const MFA_PRIV_KEY = 'alixwork.mfa_privileged';
 const MFA_SMS_TAB_KEY = 'alixwork.mfa_sms_verified_tab';
-const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const MFA_GRACE_MS = 48 * 60 * 60 * 1000; // 48 Stunden – SMS-Code max. 1× pro 48 h je Gerät
+const MFA_GRACE_USER_KEY = 'alixwork.mfa_grace_user';
+let keepMfaGraceOnSignOut = false;
+
+/** Beendet das 48h-Fenster sofort (Logout, Benutzerwechsel, Sicherheitsrisiko). */
+export function clearMfaGrace() {
+  try { localStorage.removeItem(MFA_GRACE_KEY); } catch { /* ignore */ }
+  try { localStorage.removeItem(MFA_GRACE_USER_KEY); } catch { /* ignore */ }
+}
 
 const MFA_TAB_USER_KEY = 'alixwork.mfa_verified_user';
 
@@ -90,8 +98,13 @@ async function rememberMfaUser() {
 
 export async function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
-  // Beim erfolgreichen TOTP startet ein 24h-Grace-Window auf diesem Gerät
+  // Nach erfolgreicher Code-Prüfung startet ein 48h-Fenster auf diesem Gerät (an den Benutzer gebunden)
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
+  try {
+    const { data } = await supabase.auth.getSession();
+    const uid = data?.session?.user?.id;
+    if (uid) localStorage.setItem(MFA_GRACE_USER_KEY, uid);
+  } catch { /* ignore */ }
   await rememberMfaUser();
 }
 
@@ -134,14 +147,16 @@ function isMfaVerifiedThisTab() {
   try { return sessionStorage.getItem(MFA_TAB_KEY) === '1'; } catch { return false; }
 }
 
-function isMfaWithinGrace() {
+function isMfaWithinGrace(userId?: string | null) {
   try {
     const raw = localStorage.getItem(MFA_GRACE_KEY);
     if (!raw) return false;
     const until = Number(raw);
-    if (!Number.isFinite(until)) return false;
+    const owner = localStorage.getItem(MFA_GRACE_USER_KEY);
+    // Fenster gehört einem anderen Benutzer → Sicherheitsrisiko, verwerfen
+    if (!Number.isFinite(until) || !owner || (userId && owner !== userId)) { clearMfaGrace(); return false; }
     if (Date.now() < until) return true;
-    localStorage.removeItem(MFA_GRACE_KEY);
+    clearMfaGrace();
     return false;
   } catch { return false; }
 }
@@ -161,6 +176,8 @@ async function hasEnabledSmsFactor(): Promise<boolean> {
 
 async function computeMfaState(): Promise<MfaState> {
   try {
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess?.session?.user?.id ?? null;
     // SMS-Zweitfaktor wurde in diesem Tab erfolgreich verifiziert (serverseitig geprüft).
     // Das hebt kein Supabase-AAL an, gilt aber als vollwertige Zweitfaktor-Verifikation.
     if (isMfaSmsVerifiedThisTab()) return 'verified';
@@ -172,7 +189,7 @@ async function computeMfaState(): Promise<MfaState> {
       if (await hasEnabledSmsFactor()) {
         if (isMfaVerifiedThisTab()) return 'verified';
         // Auch privilegierte Rollen: SMS-Code nur einmal pro 24 Stunden pro Gerät.
-        if (isMfaWithinGrace()) return 'verified';
+        if (isMfaWithinGrace(uid)) return 'verified';
         return 'challenge_required';
       }
 
@@ -181,14 +198,14 @@ async function computeMfaState(): Promise<MfaState> {
 
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     // Grace nach erfolgreichem TOTP: Tab gilt automatisch als verifiziert.
-    if (aalData?.currentLevel === 'aal2' && (isMfaVerifiedThisTab() || isMfaWithinGrace())) {
+    if (aalData?.currentLevel === 'aal2' && (isMfaVerifiedThisTab() || isMfaWithinGrace(uid))) {
       if (!isMfaVerifiedThisTab()) {
         try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
       }
       return 'verified';
     }
     // OTP nur einmal pro 24 Stunden pro Gerät (auch für privilegierte Rollen).
-    if (isMfaWithinGrace()) {
+    if (isMfaWithinGrace(uid)) {
       try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
       return 'verified';
     }
@@ -270,7 +287,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // auf /mfa-challenge.
       if (event === 'SIGNED_OUT') {
         clearMfaTabMarker();
-      } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        // Logout (manuell, Sitzung widerrufen, anderes Gerät) beendet das 48h-Fenster.
+        // Ausnahme: automatische Abmeldung wegen Inaktivität.
+        if (!keepMfaGraceOnSignOut) clearMfaGrace();
+        keepMfaGraceOnSignOut = false;
+      } else if (event === 'USER_UPDATED') {
+        // Passwort/E-Mail geändert = Sicherheitsrelevant → neuer Code nötig
+        clearMfaTabMarker();
+        clearMfaGrace();
+      } else if (event === 'SIGNED_IN') {
         if (!mfaMarkerBelongsTo(session?.user?.id)) clearMfaTabMarker();
       }
 
@@ -340,6 +365,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     clearMfaTabMarker();
+    if (!keepMfaGraceOnSignOut) clearMfaGrace();
     // Zero-Trust: Offline-Daten (Kalender-Outbox etc.) beim Logout löschen
     try {
       const { clearQueue } = await import('@/lib/offline/kalender-queue');
@@ -395,6 +421,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { toast } = await import('sonner');
           toast.warning(`Automatisch abgemeldet wegen Inaktivität (${IDLE_MINUTES} Min.)`);
         } catch { /* ignore */ }
+        keepMfaGraceOnSignOut = true;
         await signOut();
       }, IDLE_MS);
     };
