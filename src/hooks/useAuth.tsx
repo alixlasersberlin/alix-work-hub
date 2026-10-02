@@ -74,7 +74,14 @@ const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
 const MFA_GRACE_KEY = 'alixwork.mfa_grace_until';
 const MFA_PRIV_KEY = 'alixwork.mfa_privileged';
 const MFA_SMS_TAB_KEY = 'alixwork.mfa_sms_verified_tab';
-const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const MFA_GRACE_MS = 48 * 60 * 60 * 1000; // 48 Stunden – SMS-Code max. 1× pro 48 h je Gerät
+const MFA_GRACE_USER_KEY = 'alixwork.mfa_grace_user';
+
+/** Beendet das 48h-Fenster sofort (Logout, Benutzerwechsel, Sicherheitsrisiko). */
+export function clearMfaGrace() {
+  try { localStorage.removeItem(MFA_GRACE_KEY); } catch { /* ignore */ }
+  try { localStorage.removeItem(MFA_GRACE_USER_KEY); } catch { /* ignore */ }
+}
 
 const MFA_TAB_USER_KEY = 'alixwork.mfa_verified_user';
 
@@ -90,8 +97,13 @@ async function rememberMfaUser() {
 
 export async function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
-  // Beim erfolgreichen TOTP startet ein 24h-Grace-Window auf diesem Gerät
+  // Nach erfolgreicher Code-Prüfung startet ein 48h-Fenster auf diesem Gerät (an den Benutzer gebunden)
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
+  try {
+    const { data } = await supabase.auth.getSession();
+    const uid = data?.session?.user?.id;
+    if (uid) localStorage.setItem(MFA_GRACE_USER_KEY, uid);
+  } catch { /* ignore */ }
   await rememberMfaUser();
 }
 
@@ -134,14 +146,16 @@ function isMfaVerifiedThisTab() {
   try { return sessionStorage.getItem(MFA_TAB_KEY) === '1'; } catch { return false; }
 }
 
-function isMfaWithinGrace() {
+function isMfaWithinGrace(userId?: string | null) {
   try {
     const raw = localStorage.getItem(MFA_GRACE_KEY);
     if (!raw) return false;
     const until = Number(raw);
-    if (!Number.isFinite(until)) return false;
+    const owner = localStorage.getItem(MFA_GRACE_USER_KEY);
+    // Fenster gehört einem anderen Benutzer → Sicherheitsrisiko, verwerfen
+    if (!Number.isFinite(until) || !owner || (userId && owner !== userId)) { clearMfaGrace(); return false; }
     if (Date.now() < until) return true;
-    localStorage.removeItem(MFA_GRACE_KEY);
+    clearMfaGrace();
     return false;
   } catch { return false; }
 }
