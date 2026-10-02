@@ -26,7 +26,7 @@ interface AuthContextType {
   mfaState: MfaState;
   refreshMfaState: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: (opts?: { keepMfaGrace?: boolean }) => Promise<void>;
+  signOut: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
   isAdmin: boolean;
@@ -363,9 +363,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ? new Error(error.message) : null };
   };
 
-  const signOut = async (opts?: { keepMfaGrace?: boolean }) => {
+  const signOut = async () => {
     clearMfaTabMarker();
-    if (!opts?.keepMfaGrace) clearMfaGrace();
+    if (!keepMfaGraceOnSignOut) clearMfaGrace();
     // Zero-Trust: Offline-Daten (Kalender-Outbox etc.) beim Logout löschen
     try {
       const { clearQueue } = await import('@/lib/offline/kalender-queue');
@@ -422,7 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           toast.warning(`Automatisch abgemeldet wegen Inaktivität (${IDLE_MINUTES} Min.)`);
         } catch { /* ignore */ }
         keepMfaGraceOnSignOut = true;
-        await signOut({ keepMfaGrace: true });
+        await signOut();
       }, IDLE_MS);
     };
 
