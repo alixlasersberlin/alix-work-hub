@@ -58382,6 +58382,8 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_device_active: { Args: { _sub_id: string }; Returns: boolean }
       is_fibu_light: { Args: never; Returns: boolean }
+      is_internal_or_supplier: { Args: never; Returns: boolean }
+      is_internal_staff: { Args: never; Returns: boolean }
       is_internal_user: { Args: never; Returns: boolean }
       is_mobile_supervisor: { Args: never; Returns: boolean }
       is_portal_customer:
