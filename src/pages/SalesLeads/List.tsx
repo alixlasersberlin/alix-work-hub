@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTriangle, Download } from 'lucide-react';
+import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTriangle, Download, Globe, MessageCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -460,7 +460,14 @@ export default function SalesLeadsList() {
                       <AlertTriangle className="h-5 w-5 text-yellow-500" aria-label="Kein Auftrag gefunden" />
                     )}
                   </td>
-                  <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
+                  <td className="p-3 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-2">
+                      {/whatsapp|alixsmart|alix smart/i.test(`${r.source || ''} ${r.form_name || ''}`)
+                        ? <span title="WhatsApp (AlixSmart)"><MessageCircle className="h-4 w-4 text-emerald-400" /></span>
+                        : <span title="Webformular"><Globe className="h-4 w-4 text-primary" /></span>}
+                      {new Date(r.created_at).toLocaleString('de-DE')}
+                    </span>
+                  </td>
 
                   <td className="p-3 font-mono text-xs">
                     <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
