@@ -26,7 +26,7 @@ interface AuthContextType {
   mfaState: MfaState;
   refreshMfaState: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
+  signOut: (opts?: { keepMfaGrace?: boolean }) => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
   isAdmin: boolean;
