@@ -30,7 +30,6 @@ import WorkspaceNav from '@/components/workspace/WorkspaceNav';
 import MenuScaleControl from '@/components/MenuScaleControl';
 import { useUiPrefs } from '@/hooks/useUiPrefs';
 import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch, UserCircle2, LogOut as LogOutIcon } from 'lucide-react';
-import { DropdownMenu as PDropdownMenu } from '@/components/ui/dropdown-menu';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
