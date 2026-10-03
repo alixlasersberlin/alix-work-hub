@@ -29,7 +29,8 @@ import WorkspaceContextBar from '@/components/workspace/WorkspaceContextBar';
 import WorkspaceNav from '@/components/workspace/WorkspaceNav';
 import MenuScaleControl from '@/components/MenuScaleControl';
 import { useUiPrefs } from '@/hooks/useUiPrefs';
-import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch, UserCircle2, LogOut as LogOutIcon } from 'lucide-react';
+import { DropdownMenu as PDropdownMenu } from '@/components/ui/dropdown-menu';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
@@ -1535,6 +1536,24 @@ export default function AppLayout() {
 
             <TenantSwitcher />
             <SecurityStatusLamp />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1.5" aria-label="Profil">
+                  <UserCircle2 className="w-4 h-4" />
+                  <span className="hidden md:inline">Profil</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate">{profile?.full_name || profile?.email || 'Mein Profil'}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><Link to="/einstellungen/personalisierung">Personalisierung</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/einstellungen/mobile-geraete">Meine Geräte</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="text-destructive">
+                  <LogOutIcon className="w-4 h-4 mr-2" /> Abmelden
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
 
 
