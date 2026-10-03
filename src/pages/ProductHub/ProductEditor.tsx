@@ -275,7 +275,7 @@ function CopyFromProduct({ currentId, disabled, onApply }: { currentId?: string;
 export default function ProductHubEditor() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { roles } = useAuth();
+  const { roles, hasRole } = useAuth();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
   const isSuperAdmin = (roles || []).includes('Super Admin');
   const [form, setForm] = useState<any>(null);
