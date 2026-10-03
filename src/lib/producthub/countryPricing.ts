@@ -1,6 +1,6 @@
 /** Länder-Preise für Product-Hub-Geräte (Brutto/Netto-Umschalter je Land). */
 
-export type PhCountryCode = 'de' | 'at' | 'usa' | 'vietnam' | 'dubai';
+export type PhCountryCode = 'de' | 'at' | 'usa' | 'vietnam' | 'dubai' | 'beautyco';
 
 export interface PhCountryDef {
   code: PhCountryCode;
@@ -17,6 +17,7 @@ export const PH_PRICE_COUNTRIES: PhCountryDef[] = [
   { code: 'usa', label: 'USA', flag: '🇺🇸', currency: 'USD', locale: 'en-US', vat: 0 },
   { code: 'vietnam', label: 'Vietnam', flag: '🇻🇳', currency: 'VND', locale: 'vi-VN', vat: 10 },
   { code: 'dubai', label: 'Dubai', flag: '🇦🇪', currency: 'AED', locale: 'en-AE', vat: 5 },
+  { code: 'beautyco', label: 'Alix-beauty.com', flag: '🌐', currency: 'EUR', locale: 'de-DE', vat: 19 },
 ];
 
 /** Standard-Abschlag vom UVP für VK Minimal (in %). */
