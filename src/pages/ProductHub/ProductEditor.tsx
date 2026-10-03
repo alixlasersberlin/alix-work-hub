@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Cpu, Save, Loader2, ShieldAlert, ArrowLeft, Copy } from 'lucide-react';
+import { Cpu, Save, Loader2, ShieldAlert, ArrowLeft, Copy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -275,7 +275,7 @@ function CopyFromProduct({ currentId, disabled, onApply }: { currentId?: string;
 export default function ProductHubEditor() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { roles } = useAuth();
+  const { roles, hasRole } = useAuth();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
   const isSuperAdmin = (roles || []).includes('Super Admin');
   const [form, setForm] = useState<any>(null);
@@ -593,6 +593,23 @@ export default function ProductHubEditor() {
                       )}
                     </div>
                   )}
+                  {hasRole('Super Admin') && (
+                    <Button size="sm" variant="destructive" className="w-full h-7 text-[10px]"
+                      onClick={async () => {
+                        if (!confirm('Dieses Bild wirklich löschen?')) return;
+                        const { error } = await db.from('ph_media').delete().eq('id', m.id);
+                        if (error) return toast.error('Löschen fehlgeschlagen: ' + error.message);
+                        const patch: Record<string, any> = {};
+                        if (form.hero_image_url === m.url) { patch.hero_image_url = null; set('hero_image_url', null); }
+                        if (form.offer_image_url === m.url) { patch.offer_image_url = null; set('offer_image_url', null); }
+                        if (Object.keys(patch).length) await phUpdateProduct(id!, patch).catch(() => {});
+                        setMedia(prev => prev.filter(x => x.id !== m.id));
+                        toast.success('Bild gelöscht');
+                      }}>
+                      <Trash2 className="w-3 h-3 mr-1" /> Löschen
+                    </Button>
+                  )}
+
 
                 </div>
               ))}
