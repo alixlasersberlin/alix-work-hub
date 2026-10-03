@@ -91,31 +91,57 @@ export function buildSignedPdfBase64(snap: Snapshot, sig: Sig | null): string {
   });
 
   let fy = (doc as any).lastAutoTable.finalY + 8;
-  if (fy > PAGE_H - 60) { doc.addPage(); fy = 25; }
+  if (fy > PAGE_H - 70) { doc.addPage(); fy = 25; }
+  const pay: any = snap.payment || {};
+  const _disc = Math.max(0, Number(pay.discount) || 0);
+  const _gross = Number(snap.totals.gross) || 0;
+  const _final = Math.max(0, _gross - _disc);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(60, 60, 60);
-  doc.text('Netto:', 130, fy); doc.text(fmtMoney(snap.totals.net), RIGHT, fy, { align: 'right' });
-  doc.text('MwSt:', 130, fy + 5); doc.text(fmtMoney(snap.totals.tax), RIGHT, fy + 5, { align: 'right' });
+  if (_disc > 0) {
+    doc.text('Zwischensumme:', 130, fy); doc.text(fmtMoney(_gross), RIGHT, fy, { align: 'right' });
+    doc.text('Rabatt:', 130, fy + 5); doc.text(`-${fmtMoney(_disc)}`, RIGHT, fy + 5, { align: 'right' });
+  } else {
+    doc.text('Netto:', 130, fy); doc.text(fmtMoney(snap.totals.net), RIGHT, fy, { align: 'right' });
+    doc.text('MwSt:', 130, fy + 5); doc.text(fmtMoney(snap.totals.tax), RIGHT, fy + 5, { align: 'right' });
+  }
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 60, 110);
-  doc.text('Gesamt:', 130, fy + 13); doc.text(fmtMoney(snap.totals.gross), RIGHT, fy + 13, { align: 'right' });
+  doc.text('Gesamt:', 130, fy + 13); doc.text(fmtMoney(_final), RIGHT, fy + 13, { align: 'right' });
+  if (_disc > 0) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(60, 60, 60);
+    doc.text('inkl. gesetzlicher MwSt.', RIGHT, fy + 18, { align: 'right' });
+  }
 
-  let py = fy + 24;
+  let py = fy + 26;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20, 60, 110);
   doc.text(`Zahlung: ${snap.payment.type}`, LEFT, py);
   doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
   py += 5;
-  const _price = Number(snap.payment.price) || Number(snap.totals.gross) || 0;
+  const _price = Number(snap.payment.price) || _gross || 0;
   const _down = Number(snap.payment.down) || 0;
   const _term = Number(snap.payment.term) || 0;
-  const _base = Math.max(0, _price - _down);
+  const _base = Math.max(0, _price - _down - _disc);
   if (snap.payment.type === 'Direktkauf' || !snap.payment.type) {
     if (_down > 0) { doc.text(`Anzahlung: ${fmtMoney(_down)}`, LEFT, py); py += 5; }
-    doc.text(`Einmalzahlung: ${fmtMoney(_base > 0 ? _base : snap.totals.gross)}`, LEFT, py); py += 5;
+    if (_disc > 0) { doc.text(`Rabatt: -${fmtMoney(_disc)}`, LEFT, py); py += 5; }
+    doc.text(`Einmalzahlung: ${fmtMoney(_base > 0 ? _base : _final)}`, LEFT, py); py += 5;
   } else {
     if (_down > 0) { doc.text(`Anzahlung: ${fmtMoney(_down)}`, LEFT, py); py += 5; }
+    if (_disc > 0) { doc.text(`Rabatt: -${fmtMoney(_disc)}`, LEFT, py); py += 5; }
     doc.text(`Basis: ${fmtMoney(_base)}`, LEFT, py); py += 5;
     doc.text(`Laufzeit: ${_term} Monate`, LEFT, py); py += 5;
-    const _rate = _term > 0 ? _base / _term : 0;
+    const _rate = Number(pay.rate) > 0 ? Number(pay.rate) : (_term > 0 ? _base / _term : 0);
     doc.text(`Monatliche Rate: ${fmtMoney(_rate)}`, LEFT, py); py += 5;
+  }
+  if (snap.notes && String(snap.notes).trim()) {
+    py += 4;
+    if (py > PAGE_H - 30) { doc.addPage(); py = 25; }
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 60, 110);
+    doc.text('Anmerkungen / Bedingungen', LEFT, py); py += 5;
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+    doc.splitTextToSize(String(snap.notes), CONTENT_W).forEach((ln: string) => {
+      if (py > PAGE_H - 15) { doc.addPage(); py = 25; }
+      doc.text(ln, LEFT, py); py += 5;
+    });
   }
 
   // ---------- Signature page (nur beim signierten PDF) ----------
