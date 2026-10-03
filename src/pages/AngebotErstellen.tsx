@@ -1884,7 +1884,16 @@ export default function AngebotErstellen() {
     const t = toast.loading('Alix Sign Anfrage wird erstellt...');
     try {
       const snap = buildOfferSnapshot();
-      const signPdfBase64 = (() => { try { return buildOfferPdfBase64(snap as any); } catch { return null; } })();
+      // Dasselbe Angebots-PDF wie beim Drucken/Download anhängen (inkl. Rabatt,
+      // Anmerkungen, Farbe/Lasermodul). Nur im Fehlerfall vereinfachtes PDF.
+      let signPdfBase64: string | null = null;
+      try {
+        const fullDoc = await buildPDF();
+        if (fullDoc) signPdfBase64 = fullDoc.output('datauristring').split(',')[1] || null;
+      } catch { /* fallback below */ }
+      if (!signPdfBase64) {
+        try { signPdfBase64 = buildOfferPdfBase64(snap as any); } catch { signPdfBase64 = null; }
+      }
       const { data, error } = await supabase.functions.invoke('alix-sign-create', {
         body: {
           offer_number: offerNumber,
