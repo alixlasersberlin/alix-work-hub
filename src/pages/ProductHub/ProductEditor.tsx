@@ -577,6 +577,30 @@ export default function ProductHubEditor() {
                     {form.hero_image_url === m.url && <Badge className="text-[10px]">Hauptbild</Badge>}
                     {form.offer_image_url === m.url && <Badge className="text-[10px]">Angebotsbild</Badge>}
                   </div>
+                  {canWrite && (
+                    <div className="flex gap-1">
+                      {[-1, 1].map(dir => {
+                        const idx = media.findIndex(x => x.id === m.id);
+                        const target = idx + dir;
+                        return (
+                          <Button key={dir} size="sm" variant="outline" className="flex-1 h-7 text-[10px]"
+                            disabled={target < 0 || target >= media.length}
+                            title={dir < 0 ? 'Nach vorne' : 'Nach hinten'}
+                            onClick={async () => {
+                              const next = [...media];
+                              [next[idx], next[target]] = [next[target], next[idx]];
+                              setMedia(next);
+                              const results = await Promise.all(next.map((x, i) =>
+                                db.from('ph_media').update({ sort_order: i }).eq('id', x.id)));
+                              const err = results.find((r: any) => r.error);
+                              if (err) toast.error('Reihenfolge nicht gespeichert: ' + err.error.message);
+                            }}>
+                            {dir < 0 ? '← Vor' : 'Zurück →'}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
                   {canWrite && m.media_type === 'image' && (
                     <div className="space-y-1">
                       {form.hero_image_url !== m.url && (
