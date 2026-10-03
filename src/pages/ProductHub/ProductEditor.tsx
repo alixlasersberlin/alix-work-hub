@@ -593,7 +593,7 @@ export default function ProductHubEditor() {
                       )}
                     </div>
                   )}
-                  {canWrite && (
+                  {hasRole('Super Admin') && (
                     <Button size="sm" variant="destructive" className="w-full h-7 text-[10px]"
                       onClick={async () => {
                         if (!confirm('Dieses Bild wirklich löschen?')) return;
