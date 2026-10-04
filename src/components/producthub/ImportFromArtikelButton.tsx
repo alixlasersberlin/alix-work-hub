@@ -87,14 +87,14 @@ export function ImportFromArtikelButton({ onDone }: { onDone: () => void }) {
           <div className="flex flex-wrap gap-3 items-center">
             <Input placeholder="Suche Name, SKU, Hersteller…" value={q} onChange={e => setQ(e.target.value)} className="max-w-sm" />
             <label className="flex items-center gap-2 text-sm"><Checkbox checked={onlyNew} onCheckedChange={v => setOnlyNew(!!v)} /> Nur neue anzeigen</label>
-            <span className="text-sm text-muted-foreground ml-auto">{sel.size} ausgewählt · {filtered.length} angezeigt</span>
+            <span className="text-sm text-muted-foreground ml-auto">{sel.size} ausgewählt · {filtered.length} angezeigt · {filtered.filter(r => r.image_url).length} mit Bild</span>
           </div>
           <ScrollArea className="h-[55vh] border rounded-md">
             {loading ? <div className="p-8 text-center"><Loader2 className="w-5 h-5 animate-spin inline" /></div> : (
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 sticky top-0"><tr className="text-left">
                   <th className="p-2 w-8"><Checkbox checked={allOn} onCheckedChange={() => setSel(allOn ? new Set() : new Set(selectableIds))} /></th>
-                  <th className="p-2">Artikel</th><th className="p-2">SKU</th><th className="p-2">Hersteller</th><th className="p-2">Firma</th><th className="p-2">Stand</th>
+                  <th className="p-2">Artikel</th><th className="p-2">SKU</th><th className="p-2">Hersteller</th><th className="p-2">Bilder</th><th className="p-2">Firma</th><th className="p-2">Stand</th>
                 </tr></thead>
                 <tbody>
                   {filtered.map(r => (
@@ -103,11 +103,19 @@ export function ImportFromArtikelButton({ onDone }: { onDone: () => void }) {
                       <td className="p-2 font-medium">{r.name}</td>
                       <td className="p-2 text-muted-foreground">{r.sku || '—'}</td>
                       <td className="p-2">{r.manufacturer || '—'}</td>
+                      <td className="p-2">
+                        {r.image_url ? (
+                          <span className="inline-flex items-center gap-2">
+                            <img src={r.image_url} alt="" className="w-8 h-8 rounded object-cover border border-border" onError={e => (e.currentTarget.style.display = 'none')} />
+                            <span>1</span>
+                          </span>
+                        ) : <span className="text-muted-foreground">0</span>}
+                      </td>
                       <td className="p-2 text-xs">{r.source_system === 'zoho_eu_2' ? 'Austria' : 'Deutschland'}</td>
                       <td className="p-2">{r.exists ? <Badge variant="secondary">schon vorhanden</Badge> : <Badge>NEU</Badge>}</td>
                     </tr>
                   ))}
-                  {!filtered.length && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Keine Artikel gefunden.</td></tr>}
+                  {!filtered.length && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Keine Artikel gefunden.</td></tr>}
                 </tbody>
               </table>
             )}
