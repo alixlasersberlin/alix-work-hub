@@ -20,6 +20,7 @@ import { phGetProduct, phUpdateProduct, phChannelRows, phUpsertChannel } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
+import { DuplicateProductButton } from '@/components/producthub/DuplicateProductButton';
 import { SmartKiEditor } from '@/components/producthub/SmartKiEditor';
 import { SeoAiButton } from '@/components/producthub/SeoAiButton';
 import { AiFieldButton } from '@/components/producthub/AiFieldButton';
@@ -390,6 +391,7 @@ export default function ProductHubEditor() {
             <Button variant="outline" size="sm" onClick={() => nav('/product-hub/geraete')}><ArrowLeft className="w-4 h-4 mr-1" /> Zurück</Button>
             {id && <WebPreviewButton productId={id} product={form} />}
             {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
+            {canWrite && id && <DuplicateProductButton productId={id} product={form} />}
             {canWrite && <Button size="sm" onClick={save} disabled={saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />} Speichern</Button>}
           </div>
         } />
