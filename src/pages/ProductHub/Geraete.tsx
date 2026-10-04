@@ -17,6 +17,7 @@ import { phCreateProduct } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
+import { ImportFromArtikelButton } from '@/components/producthub/ImportFromArtikelButton';
 
 const db = supabase as any;
 
@@ -114,6 +115,7 @@ export default function ProductHubGeraete() {
             <Button size="sm" variant="outline" onClick={() => { setEnrichRes(null); setEnrichOpen(true); }}>
               <Sparkles className="w-4 h-4 mr-1" /> Daten anreichern
             </Button>
+            <ImportFromArtikelButton onDone={load} />
             <Button size="sm" onClick={createNew}><Plus className="w-4 h-4 mr-1" /> Neues Gerät</Button>
           </div>
         ) : undefined} />
