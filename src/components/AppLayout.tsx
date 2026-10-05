@@ -252,7 +252,22 @@ export default function AppLayout() {
   useEffect(() => {
     const REFRESH_MS = 15 * 60 * 1000;
     let lastRefresh = Date.now();
-    const tick = () => { lastRefresh = Date.now(); setRefreshKey(k => k + 1); };
+    // Niemals neu aufbauen, während jemand ein Formular bearbeitet
+    // (sonst gehen eingegebene Daten in Angeboten/Aufträgen verloren).
+    let lastInputAt = 0;
+    const markInput = () => { lastInputAt = Date.now(); };
+    window.addEventListener('input', markInput, true);
+    window.addEventListener('change', markInput, true);
+    const EDIT_ROUTE = /(\/neu\b|\/bearbeiten|\/edit|erstellen|neue-|angebot|pdf-import|\/m\/|\/mobil)/i;
+    const tick = () => {
+      lastRefresh = Date.now();
+      const path = window.location.pathname + window.location.search;
+      const el = document.activeElement as HTMLElement | null;
+      const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+      if (EDIT_ROUTE.test(path) || typing || Date.now() - lastInputAt < 30 * 60 * 1000) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      setRefreshKey(k => k + 1);
+    };
     const intervalId = window.setInterval(tick, REFRESH_MS);
     const onVisibility = () => {
       if (document.visibilityState === 'visible' && Date.now() - lastRefresh > REFRESH_MS) tick();
@@ -261,6 +276,8 @@ export default function AppLayout() {
     return () => {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('input', markInput, true);
+      window.removeEventListener('change', markInput, true);
     };
   }, []);
 

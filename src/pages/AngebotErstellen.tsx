@@ -150,6 +150,63 @@ export default function AngebotErstellen() {
   const activeDiscount = discountApplies ? discountAmount : 0;
   const [loading, setLoading] = useState(true);
 
+  // ── Automatische Zwischenspeicherung (Entwurf im Browser) ──────────────
+  const draftKey = `alix_offer_draft_v1:${searchParams.get('edit') || (sofortMode ? 'new-sofort' : 'new')}`;
+  const draftRestoreOffered = useRef(false);
+  const draftReady = useRef(false);
+  useEffect(() => {
+    if (loading || draftRestoreOffered.current) return;
+    draftRestoreOffered.current = true;
+    // kurz warten, bis Edit/Handoff-Daten gesetzt sind
+    window.setTimeout(() => {
+      draftReady.current = true;
+      try {
+        const raw = localStorage.getItem(draftKey);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (!d?.savedAt || Date.now() - d.savedAt > 14 * 86400000) { localStorage.removeItem(draftKey); return; }
+        const hasContent = d.customerId || (d.lines || []).some((l: any) => l.name) || d.notes;
+        if (!hasContent) return;
+        const when = new Date(d.savedAt).toLocaleString('de-DE');
+        toast.info(`Ungespeicherter Entwurf vom ${when} gefunden.`, {
+          duration: 30000,
+          action: { label: 'Wiederherstellen', onClick: () => {
+            if (d.customerId) setCustomerId(d.customerId);
+            if (Array.isArray(d.lines) && d.lines.length) setLines(d.lines);
+            if (d.offerDate) setOfferDate(d.offerDate);
+            setValidUntil(d.validUntil ?? ''); setSalesAdvisor(d.salesAdvisor ?? '');
+            if (d.deliveryWeek) setDeliveryWeek(d.deliveryWeek);
+            setSpecialOffer(d.specialOffer ?? ''); setNotes(d.notes ?? '');
+            if (typeof d.includeAppendix === 'boolean') setIncludeAppendix(d.includeAppendix);
+            if (d.payType) setPayType(d.payType);
+            setPayPrice(d.payPrice ?? ''); setPayDown(d.payDown ?? ''); setPayDiscount(d.payDiscount ?? '');
+            if (d.payDiscountMode) setPayDiscountMode(d.payDiscountMode);
+            if (d.priceMode) setPriceMode(d.priceMode);
+            if (d.payTerm) setPayTerm(d.payTerm);
+            setPayRate(d.payRate ?? '');
+            if (d.step) setStep(d.step);
+            toast.success('Entwurf wiederhergestellt');
+          } },
+          cancel: { label: 'Verwerfen', onClick: () => localStorage.removeItem(draftKey) },
+        });
+      } catch { /* ignore */ }
+    }, 1500);
+  }, [loading]);
+
+  useEffect(() => {
+    if (!draftReady.current) return;
+    const t = window.setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({
+          savedAt: Date.now(), customerId, lines, offerDate, validUntil, salesAdvisor, deliveryWeek,
+          specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode,
+          priceMode, payTerm, payRate, step,
+        }));
+      } catch { /* Speicher voll – ignorieren */ }
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [customerId, lines, offerDate, validUntil, salesAdvisor, deliveryWeek, specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode, priceMode, payTerm, payRate, step]);
+
   const [leadsOpen, setLeadsOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
@@ -1691,6 +1748,7 @@ export default function AngebotErstellen() {
 
       const snap = { ...buildOfferSnapshot(), offerNumber: effectiveOfferNumber, caseNumber: effectiveCaseNumber };
       await upsertOffer(snap as any);
+      try { localStorage.removeItem(draftKey); } catch {}
       // Lokale Kopie als Fallback weiter pflegen
       try {
         const KEY = 'alix_angebote_v1';
