@@ -27,11 +27,23 @@ export function ImportFromArtikelButton({ onDone }: { onDone: () => void }) {
   const load = async () => {
     setLoading(true);
     try {
-      const [items, prods] = await Promise.all([
-        db.from('zoho_items').select('id,zoho_item_id,name,sku,description,manufacturer,image_url,source_system,status').order('name').limit(5000),
-        db.from('ph_products').select('sku,name,source_product_id'),
+      // Supabase liefert max. 1000 Zeilen pro Anfrage → seitenweise laden
+      const all = async (table: string, cols: string) => {
+        const out: any[] = [];
+        for (let from = 0; ; from += 1000) {
+          const { data, error } = await db.from(table).select(cols).order('id').range(from, from + 999);
+          if (error) throw error;
+          out.push(...(data || []));
+          if (!data || data.length < 1000) break;
+        }
+        return out;
+      };
+      const [itemRows, prodRows] = await Promise.all([
+        all('zoho_items', 'id,zoho_item_id,name,sku,description,manufacturer,image_url,source_system,status'),
+        all('ph_products', 'id,sku,name,source_product_id'),
       ]);
-      if (items.error) throw items.error;
+      itemRows.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+      const items = { data: itemRows }; const prods = { data: prodRows };
       const skus = new Set((prods.data || []).map((p: any) => (p.sku || '').trim().toLowerCase()).filter(Boolean));
       const names = new Set((prods.data || []).map((p: any) => phNormName(p.name)));
       const srcs = new Set((prods.data || []).map((p: any) => p.source_product_id).filter(Boolean));
@@ -49,7 +61,13 @@ export function ImportFromArtikelButton({ onDone }: { onDone: () => void }) {
   const allOn = selectableIds.length > 0 && selectableIds.every(id => sel.has(id));
 
   const run = async () => {
-    const picked = rows.filter(r => sel.has(r.id) && !r.exists);
+    // Doppelte Auswahl (z. B. gleiche SKU/Name in DE und AT) nur einmal anlegen
+    const seenSku = new Set<string>(); const seenName = new Set<string>();
+    const picked = rows.filter(r => sel.has(r.id) && !r.exists).filter(r => {
+      const s = (r.sku || '').trim().toLowerCase(); const n = phNormName(r.name);
+      if ((s && seenSku.has(s)) || seenName.has(n)) return false;
+      if (s) seenSku.add(s); seenName.add(n); return true;
+    });
     if (!picked.length) return;
     setBusy(true);
     try {
