@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers, Bot, Film } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers, Bot, Film, Landmark } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -172,6 +172,19 @@ export default function TicketsList() {
     setRows(prev => prev.map(r => selected.includes(r.id) ? { ...r, status: 'geschlossen' } : r));
     toast.success(`${selected.length} Ticket(s) geschlossen`);
     setSelected([]);
+  }
+
+  async function assignDept(ids: string[], dept: string) {
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from('tickets').update({ department: dept }).in('id', ids);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => ids.includes(r.id) ? { ...r, department: dept } : r));
+    toast.success(dept === 'finance'
+      ? `${ids.length} Ticket(s) an die Buchhaltung übergeben`
+      : `${ids.length} Ticket(s) zurück an den Service`);
+    setSelected(prev => prev.filter(id => !ids.includes(id)));
   }
 
   async function bulkQueue(toQueue: boolean) {
@@ -353,13 +366,16 @@ export default function TicketsList() {
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const kinds = useMemo(() => classifyTickets(rows), [rows]);
   const kindOf = (r: TicketRow): TicketKind => kinds[r.id] || 'neu';
-  const mediaRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && isMediaPaketTicket(r)), [filtered]);
-  const kundeNeuRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) === 'neu'), [filtered, kinds]);
-  const vorgangRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) === 'vorgang'), [filtered, kinds]);
-  const autoRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) === 'auto'), [filtered, kinds]);
+  const isFinanceTicket = (r: TicketRow) => /finance|buchhaltung/i.test(r.department || '');
+  const isSpecial = (r: TicketRow) => isMediaPaketTicket(r) || isFinanceTicket(r);
+  const financeRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && isFinanceTicket(r)), [filtered]);
+  const mediaRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isFinanceTicket(r) && isMediaPaketTicket(r)), [filtered]);
+  const kundeNeuRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isSpecial(r) && kindOf(r) === 'neu'), [filtered, kinds]);
+  const vorgangRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isSpecial(r) && kindOf(r) === 'vorgang'), [filtered, kinds]);
+  const autoRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isSpecial(r) && kindOf(r) === 'auto'), [filtered, kinds]);
   const isQueued = (s: string) => s === 'queue';
   const queueRows = useMemo(() => filtered.filter(r => isQueued(r.status)), [filtered]);
-  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && !isMediaPaketTicket(r) && kindOf(r) !== 'auto'), [filtered, kinds]);
+  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && !isSpecial(r) && kindOf(r) !== 'auto'), [filtered, kinds]);
   const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
   const wartungRows = useMemo(
     () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'wartung'),
@@ -370,7 +386,7 @@ export default function TicketsList() {
     [filtered],
   );
   const neueRows = useMemo(
-    () => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) !== 'auto' && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
+    () => filtered.filter(r => !isClosed(r.status) && !isSpecial(r) && kindOf(r) !== 'auto' && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
     [filtered, kinds],
   );
   const overdueRows = useMemo(() => {
@@ -386,7 +402,7 @@ export default function TicketsList() {
     [filtered],
   );
 
-  type TabKey = 'media' | 'kunde_neu' | 'vorgang' | 'auto' | 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  type TabKey = 'finance' | 'media' | 'kunde_neu' | 'vorgang' | 'auto' | 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
   const initialTab: TabKey = (() => {
     const s = searchParams.get('status');
     const d = searchParams.get('due');
@@ -622,6 +638,7 @@ export default function TicketsList() {
         <TabsList className="mb-3 flex-wrap h-auto">
           <TabsTrigger value="kunde_neu"><Inbox className="w-3.5 h-3.5 mr-1 text-primary" />Neue Kundenanfragen ({kundeNeuRows.length})</TabsTrigger>
           <TabsTrigger value="vorgang"><Layers className="w-3.5 h-3.5 mr-1" />Bestehende Vorgänge ({vorgangRows.length})</TabsTrigger>
+          <TabsTrigger value="finance"><Landmark className="w-3.5 h-3.5 mr-1 text-primary" />Buchhaltung ({financeRows.length})</TabsTrigger>
           <TabsTrigger value="media"><Film className="w-3.5 h-3.5 mr-1 text-primary" />Media Paket ({mediaRows.length})</TabsTrigger>
           <TabsTrigger value="auto"><Bot className="w-3.5 h-3.5 mr-1" />Automatische Meldungen ({autoRows.length})</TabsTrigger>
           <TabsTrigger value="all">Alle ({filtered.length})</TabsTrigger>
@@ -641,9 +658,10 @@ export default function TicketsList() {
           <EscBookings />
         </TabsContent>
 
-        {(['media', 'kunde_neu', 'vorgang', 'auto', 'all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
+        {(['finance', 'media', 'kunde_neu', 'vorgang', 'auto', 'all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
-            key === 'media' ? mediaRows
+            key === 'finance' ? financeRows
+              : key === 'media' ? mediaRows
               : key === 'kunde_neu' ? kundeNeuRows
               : key === 'vorgang' ? vorgangRows
               : key === 'auto' ? autoRows
@@ -658,7 +676,8 @@ export default function TicketsList() {
               : key === 'escalated' ? escalatedRows
               : wartetKundeRows;
           const emptyTitle =
-            key === 'media' ? 'Keine offenen Media-Paket-Anfragen'
+            key === 'finance' ? 'Keine offenen Buchhaltungs-Anfragen'
+              : key === 'media' ? 'Keine offenen Media-Paket-Anfragen'
               : key === 'kunde_neu' ? 'Keine neuen Kundenanfragen'
               : key === 'vorgang' ? 'Keine offenen bestehenden Vorgänge'
               : key === 'auto' ? 'Keine automatischen Meldungen'
@@ -696,6 +715,10 @@ export default function TicketsList() {
                       <Button size="sm" variant="outline" disabled={bulkBusy} onClick={bulkClose}>
                         {bulkBusy ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
                         Schließen
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={bulkBusy}
+                        onClick={() => assignDept(selected, key === 'finance' ? 'service' : 'finance')}>
+                        <Landmark className="w-3.5 h-3.5 mr-1" /> {key === 'finance' ? 'Zurück an Service' : 'An Buchhaltung'}
                       </Button>
                       {key === 'queue' ? (
                         <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkQueue(false)}>
@@ -862,6 +885,13 @@ export default function TicketsList() {
                               <Button size="sm" variant="outline" asChild>
                                 <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
                               </Button>
+                              {!isFinanceTicket(r) && (
+                                <Button size="sm" variant="outline" disabled={bulkBusy}
+                                  onClick={() => assignDept([r.id], 'finance')}
+                                  title="An Buchhaltung übergeben">
+                                  <Landmark className="w-3 h-3" />
+                                </Button>
+                              )}
                               {isSuperAdmin && (
                                 <Button
                                   size="sm"
