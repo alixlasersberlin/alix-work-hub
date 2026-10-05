@@ -104,18 +104,23 @@ function priorityColor(p: string) {
   }
 }
 
+const LIST_STATE_KEY = 'alixwork.tickets.listState';
+
 export default function TicketsList() {
   const { sourceSystem } = useTenantFilter();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusF, setStatusF] = useState<string>('all');
-  const [prioF, setPrioF] = useState<string>('all');
-  const [deptF, setDeptF] = useState<string>('all');
-  const [sourceF, setSourceF] = useState<string>('all');
-  const [catF, setCatF] = useState<string>('all');
+  const saved = useMemo(() => {
+    try { return JSON.parse(sessionStorage.getItem(LIST_STATE_KEY) || 'null'); } catch { return null; }
+  }, []);
+  const [search, setSearch] = useState<string>(saved?.search ?? '');
+  const [statusF, setStatusF] = useState<string>(saved?.statusF ?? 'all');
+  const [prioF, setPrioF] = useState<string>(saved?.prioF ?? 'all');
+  const [deptF, setDeptF] = useState<string>(saved?.deptF ?? 'all');
+  const [sourceF, setSourceF] = useState<string>(saved?.sourceF ?? 'all');
+  const [catF, setCatF] = useState<string>(saved?.catF ?? 'all');
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [nt, setNt] = useState({
@@ -380,7 +385,43 @@ export default function TicketsList() {
     if (searchParams.get('view') === 'bookings') return 'bookings';
     return 'kunde_neu';
   })();
-  const [tab, setTab] = useState<TabKey>(initialTab);
+  const [tab, setTab] = useState<TabKey>(
+    saved?.tab && !searchParams.toString() ? saved.tab : initialTab,
+  );
+
+  // Ansicht (Reiter, Filter, Suche) für die Rückkehr aus dem Ticket merken
+  useEffect(() => {
+    try {
+      const prev = JSON.parse(sessionStorage.getItem(LIST_STATE_KEY) || '{}');
+      sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({ ...prev, tab, search, statusF, prioF, deptF, sourceF, catF }));
+    } catch { /* ignore */ }
+  }, [tab, search, statusF, prioF, deptF, sourceF, catF]);
+
+  // Scrollposition nach dem Laden wiederherstellen
+  const [scrollRestored, setScrollRestored] = useState(false);
+  useEffect(() => {
+    if (loading || scrollRestored) return;
+    setScrollRestored(true);
+    const y = Number(saved?.scrollY || 0);
+    if (!y) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const main = document.querySelector('main');
+      if (main) main.scrollTop = y;
+    }));
+  }, [loading, scrollRestored, saved]);
+
+  const openTicket = (id: string, e?: React.MouseEvent) => {
+    if (e && (e.ctrlKey || e.metaKey || e.button === 1)) {
+      window.open(`/tickets/${id}`, '_blank', 'noopener');
+      return;
+    }
+    try {
+      const prev = JSON.parse(sessionStorage.getItem(LIST_STATE_KEY) || '{}');
+      const main = document.querySelector('main');
+      sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({ ...prev, scrollY: main?.scrollTop ?? 0 }));
+    } catch { /* ignore */ }
+    navigate(`/tickets/${id}`);
+  };
 
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
@@ -701,7 +742,8 @@ export default function TicketsList() {
                       {list.map(r => (
                         <TableRow
                           key={r.id}
-                          onClick={() => navigate(`/tickets/${r.id}`)}
+                          onClick={(e) => openTicket(r.id, e)}
+                          onAuxClick={(e) => { if (e.button === 1) openTicket(r.id, e); }}
                           className="cursor-pointer hover:bg-muted/40"
                         >
                           {isSuperAdmin && (
