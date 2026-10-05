@@ -247,22 +247,32 @@ export default function Lagergeraete({
   const isOnLoan = (d: LagerDevice) =>
     getDeviceTypeFromNotes(d.notes) === 'Leihgerät' &&
     (!!parseLeihKunde(d.notes).name || !!d.reserved_order_id || !!(d as any).customer_name || getStatusFromNotes(d.notes) === 'Ausgeliefert');
+  const RETURN_CHECKS = [
+    'Gerät wurde desinfiziert.',
+    'Gerät ist vollständig und das Zubehör ist vorhanden.',
+    'Gerät wurde auf Funktionsfähigkeit geprüft.',
+  ];
+  const [returnDevice, setReturnDevice] = useState<LagerDevice | null>(null);
+  const [returnChecks, setReturnChecks] = useState<boolean[]>([false, false, false]);
+  const openReturnChecklist = (d: LagerDevice) => { setReturnChecks([false, false, false]); setReturnDevice(d); };
   const handleReturnToStock = async (d: LagerDevice) => {
+    if (!returnChecks.every(Boolean)) { toast.error('Bitte alle Prüfpunkte bestätigen.'); return; }
     const kunde = parseLeihKunde(d.notes).name || (d as any).customer_name || 'Kunde';
-    if (!confirm(`Leihgerät ${d.serial_number} ist von ${kunde} zurück?\n\nDas Gerät wird vom Kunden gelöst und wieder als „Bestand" im Lager geführt.`)) return;
     setReturningId(d.id);
     try {
       const today = new Date().toLocaleDateString('de-DE');
       const cleaned = (d.notes ?? '')
         .replace(/\[(Kunde|Leihstart|Status):\s*[^\]]*\]/g, '')
         .replace(/\s{2,}/g, ' ').trim();
-      const newNotes = `${cleaned} [Status: Bestand] [Rückgabe: ${today} von ${kunde}]`.trim();
+      const who = user?.email ?? 'unbekannt';
+      const newNotes = `${cleaned} [Status: Bestand] [Rückgabe: ${today} von ${kunde}] [Rückgabeprüfung: desinfiziert ✓ · vollständig/Zubehör ✓ · Funktion ✓ — ${today}, ${who}]`.trim();
       const patch: any = { notes: newNotes, reserved_order_id: null, reservation_week: null, customer_name: null, customer_email: null, updated_by: user?.id ?? null };
       const { error } = await supabase.from('lager_devices').update(patch).eq('id', d.id);
       if (error) throw error;
       setDevices((prev) => prev.map((x) => (x.id === d.id ? { ...x, ...patch, orders: null } : x)));
       window.dispatchEvent(new Event('lager-data-refresh'));
       toast.success(`Leihgerät ${d.serial_number} ist zurück im Lager`);
+      setReturnDevice(null);
     } catch (e: any) {
       toast.error('Rückgabe fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
     } finally {
@@ -2295,7 +2305,7 @@ export default function Lagergeraete({
                     {canManage && isOnLoan(d) && (
                       <Button variant="ghost" size="sm" disabled={returningId === d.id}
                         className="gap-1 h-8 text-emerald-500 hover:text-emerald-600"
-                        onClick={() => handleReturnToStock(d)} title="Leihgerät zurück ins Lager buchen">
+                        onClick={() => openReturnChecklist(d)} title="Leihgerät zurück ins Lager buchen">
                         <PackageCheck className="w-4 h-4" /> Zurück ins Lager
                       </Button>
                     )}
@@ -2549,7 +2559,7 @@ export default function Lagergeraete({
                       {canManage && isOnLoan(d) && (
                         <Button variant="ghost" size="sm" disabled={returningId === d.id}
                           className="gap-1 text-emerald-500 hover:text-emerald-600"
-                          onClick={() => handleReturnToStock(d)} title="Leihgerät zurück ins Lager buchen">
+                          onClick={() => openReturnChecklist(d)} title="Leihgerät zurück ins Lager buchen">
                           <PackageCheck className="w-4 h-4" /> Zurück ins Lager
                         </Button>
                       )}
@@ -2625,6 +2635,40 @@ export default function Lagergeraete({
       </div>
 
       <WareneingangDialog ref={wareneingangRef} order={{}} hideTrigger />
+      <Dialog open={!!returnDevice} onOpenChange={(o) => { if (!o && !returningId) setReturnDevice(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rückgabeprüfung Leihgerät</DialogTitle>
+            <DialogDescription>
+              {returnDevice?.serial_number} · {returnDevice?.model_name}
+              {returnDevice && ` — zurück von ${parseLeihKunde(returnDevice.notes).name || (returnDevice as any).customer_name || 'Kunde'}`}.
+              Erst wenn alle Punkte bestätigt sind, wird das Gerät wieder als verfügbar geführt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {RETURN_CHECKS.map((label, i) => (
+              <label key={i} className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer hover:bg-muted/40">
+                <Checkbox
+                  checked={returnChecks[i]}
+                  onCheckedChange={(v) => setReturnChecks((prev) => prev.map((x, k) => (k === i ? v === true : x)))}
+                  className="mt-0.5"
+                />
+                <span className="text-sm">{label}</span>
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReturnDevice(null)} disabled={!!returningId}>Abbrechen</Button>
+            <Button
+              disabled={!returnChecks.every(Boolean) || !!returningId}
+              onClick={() => returnDevice && handleReturnToStock(returnDevice)}
+            >
+              {returningId ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PackageCheck className="w-4 h-4 mr-1" />}
+              Zurück ins Lager buchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {deliverDevice && (() => {
         const isLeih = getDeviceTypeFromNotes(deliverDevice.notes) === 'Leihgerät';
