@@ -441,7 +441,6 @@ Deno.serve(async (req) => {
         console.warn("super admin phone lookup failed", e);
       }
 
-      const name = `${input.first_name ?? ""} ${input.last_name}`.trim();
       // Kurz & nur GSM-Zeichen: passt in 1 SMS statt 3 (kein "·", keine lange ID).
       const name = `${input.first_name ?? ""} ${input.last_name}`.trim();
       const gsm = (t: string) => t.normalize("NFKD").replace(/[^\x20-\x7E\n]/g, "");
