@@ -172,6 +172,16 @@ export default function Customers() {
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" /> Import
             </Button>
+            <Button variant="outline" onClick={async () => {
+              try {
+                const { exportCustomerContactsCsv } = await import('@/lib/customers/contactExport');
+                const n = await exportCustomerContactsCsv();
+                const { toast } = await import('sonner');
+                toast.success(`${n} Kontakte exportiert`);
+              } catch (e: any) { const { toast } = await import('sonner'); toast.error(e.message); }
+            }}>
+              <Upload className="w-4 h-4 mr-2 rotate-180" /> Kontakte-Export
+            </Button>
             <Button variant="outline" onClick={() => navigate('/kunden/doppelte')}>
               <Users className="w-4 h-4 mr-2" /> Doppelte suchen
             </Button>
