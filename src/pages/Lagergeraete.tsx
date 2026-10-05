@@ -243,6 +243,33 @@ export default function Lagergeraete({
     }
   };
 
+  const [returningId, setReturningId] = useState<string | null>(null);
+  const isOnLoan = (d: LagerDevice) =>
+    getDeviceTypeFromNotes(d.notes) === 'Leihgerät' &&
+    (!!parseLeihKunde(d.notes).name || !!d.reserved_order_id || !!(d as any).customer_name || getStatusFromNotes(d.notes) === 'Ausgeliefert');
+  const handleReturnToStock = async (d: LagerDevice) => {
+    const kunde = parseLeihKunde(d.notes).name || (d as any).customer_name || 'Kunde';
+    if (!confirm(`Leihgerät ${d.serial_number} ist von ${kunde} zurück?\n\nDas Gerät wird vom Kunden gelöst und wieder als „Bestand" im Lager geführt.`)) return;
+    setReturningId(d.id);
+    try {
+      const today = new Date().toLocaleDateString('de-DE');
+      const cleaned = (d.notes ?? '')
+        .replace(/\[(Kunde|Leihstart|Status):\s*[^\]]*\]/g, '')
+        .replace(/\s{2,}/g, ' ').trim();
+      const newNotes = `${cleaned} [Status: Bestand] [Rückgabe: ${today} von ${kunde}]`.trim();
+      const patch: any = { notes: newNotes, reserved_order_id: null, reservation_week: null, customer_name: null, customer_email: null, updated_by: user?.id ?? null };
+      const { error } = await supabase.from('lager_devices').update(patch).eq('id', d.id);
+      if (error) throw error;
+      setDevices((prev) => prev.map((x) => (x.id === d.id ? { ...x, ...patch, orders: null } : x)));
+      window.dispatchEvent(new Event('lager-data-refresh'));
+      toast.success(`Leihgerät ${d.serial_number} ist zurück im Lager`);
+    } catch (e: any) {
+      toast.error('Rückgabe fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setReturningId(null);
+    }
+  };
+
   const canReserve = isAdmin || hasRole('Order');
   const canManage = isAdmin || hasRole('Order') || hasRole('Auftragsverwaltung') || hasRole('SACHBEARBEITUNG');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
@@ -2265,6 +2292,13 @@ export default function Lagergeraete({
                     >
                       <Wrench className="w-4 h-4" /> {inRepair ? 'Reparatur öffnen' : 'An Reparatur'}
                     </Button>
+                    {canManage && isOnLoan(d) && (
+                      <Button variant="ghost" size="sm" disabled={returningId === d.id}
+                        className="gap-1 h-8 text-emerald-500 hover:text-emerald-600"
+                        onClick={() => handleReturnToStock(d)} title="Leihgerät zurück ins Lager buchen">
+                        <PackageCheck className="w-4 h-4" /> Zurück ins Lager
+                      </Button>
+                    )}
                     {d.reserved_order_id && (
                       <Button
                         variant="ghost"
@@ -2512,6 +2546,13 @@ export default function Lagergeraete({
                       >
                         <Wrench className="w-4 h-4" /> {inRepair ? 'Reparatur öffnen' : 'An Reparatur'}
                       </Button>
+                      {canManage && isOnLoan(d) && (
+                        <Button variant="ghost" size="sm" disabled={returningId === d.id}
+                          className="gap-1 text-emerald-500 hover:text-emerald-600"
+                          onClick={() => handleReturnToStock(d)} title="Leihgerät zurück ins Lager buchen">
+                          <PackageCheck className="w-4 h-4" /> Zurück ins Lager
+                        </Button>
+                      )}
                       {d.reserved_order_id && (
                         <Button
                           variant="ghost"
