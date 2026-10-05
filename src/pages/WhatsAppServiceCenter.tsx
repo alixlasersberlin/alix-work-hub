@@ -228,8 +228,8 @@ export default function WhatsAppServiceCenter() {
     if (!selected) return;
     const { data, error } = await supabase.from("tickets").insert({
       title: `WhatsApp: ${selected.customer_name ?? selected.customer_phone}`,
-      status: "Neu", priority: "Normal", department: "service",
-      source_system: "whatsapp",
+      status: "offen", priority: "normal", department: "service",
+      source_system: "alixwork", source: "whatsapp",
       customer_phone: selected.customer_phone,
       customer_name: selected.customer_name,
     }).select("id").single();
