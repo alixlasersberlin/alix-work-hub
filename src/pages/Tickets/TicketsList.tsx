@@ -37,6 +37,7 @@ function offerStatusColor(s: string | null) {
 
 interface TicketRow {
   id: string;
+  case_number?: string | null;
   external_ticket_id: string | null;
   source_system: string | null;
   customer_name: string | null;
