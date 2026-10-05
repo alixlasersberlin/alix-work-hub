@@ -88,7 +88,7 @@ export default function MfaChallenge() {
       return;
     }
     if (error || code) {
-      setErr('SMS konnte nicht gesendet werden.');
+      setErr('E-Mail konnte nicht gesendet werden.');
       return;
     }
     setSmsSent(true);
@@ -132,7 +132,7 @@ export default function MfaChallenge() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === 'sms'
-              ? 'Geben Sie den 6-stelligen Code aus der SMS ein.'
+              ? 'Geben Sie den 6-stelligen Code aus der E-Mail ein.'
               : 'Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.'}
           </p>
         </div>
@@ -141,18 +141,18 @@ export default function MfaChallenge() {
           {mode === 'sms' && !smsSent ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Wir senden Ihnen einen Bestätigungscode an Ihre hinterlegte Mobilnummer.
+                Wir senden Ihnen einen Bestätigungscode an Ihre E-Mail-Adresse.
               </p>
               {err && <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{err}</p>}
               <Button onClick={sendSms} disabled={busy} className="w-full gold-gradient font-semibold">
                 {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <MessageSquare className="w-4 h-4 mr-2" />}
-                Code per SMS senden
+                Code per E-Mail senden
               </Button>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="code">{mode === 'sms' ? 'SMS-Code' : 'Authenticator-Code'}</Label>
+                <Label htmlFor="code">{mode === 'sms' ? 'E-Mail-Code' : 'Authenticator-Code'}</Label>
                 <Input
                   id="code"
                   name="alix-mfa-code"
@@ -193,7 +193,7 @@ export default function MfaChallenge() {
                 onClick={() => { setMode(mode === 'sms' ? 'totp' : 'sms'); setCode(''); setErr(''); setSmsSent(false); }}
                 className="text-primary hover:underline"
               >
-                {mode === 'sms' ? 'Stattdessen Authenticator-App verwenden' : 'Stattdessen Code per SMS erhalten'}
+                {mode === 'sms' ? 'Stattdessen Authenticator-App verwenden' : 'Stattdessen Code per E-Mail erhalten'}
               </button>
             )}
             <div>

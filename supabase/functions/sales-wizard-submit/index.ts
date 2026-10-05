@@ -441,14 +441,12 @@ Deno.serve(async (req) => {
         console.warn("super admin phone lookup failed", e);
       }
 
+      // Kurz & nur GSM-Zeichen: passt in 1 SMS statt 3 (kein "·", keine lange ID).
       const name = `${input.first_name ?? ""} ${input.last_name}`.trim();
-      const body = [
-        "Neue Angebot Anfrage",
-        name + (input.company ? ` (${input.company})` : ""),
-        input.phone,
-        `Score ${ai.score} · ${ai.category}`,
-        `https://alixwork.de/verkauf/anfragen/${lead.id}`,
-      ].join("\n");
+      const gsm = (t: string) => t.normalize("NFKD").replace(/[^\x20-\x7E\n]/g, "");
+      const body = gsm(
+        `AlixWork Anfrage: ${name}${input.company ? `, ${input.company}` : ""}, ${input.phone ?? ""}, Score ${ai.score}. alixwork.de/verkauf/anfragen`,
+      ).slice(0, 160);
 
       for (const to of recipients) {
         const res = await fetch(
