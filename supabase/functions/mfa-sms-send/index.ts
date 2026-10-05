@@ -118,6 +118,29 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Login-Codes gehen per E-Mail (kostenlos); nur die Einrichtung der
+    // Mobilnummer wird weiterhin per SMS bestätigt.
+    if (purpose === "login") {
+      if (!user.email) return json({ error: "no_email" }, 400);
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
+        body: JSON.stringify({
+          templateName: "otp-code",
+          recipientEmail: user.email,
+          skipDefaultCopies: true,
+          idempotencyKey: `mfa-login-${user.id}-${codeHash.slice(0, 12)}`,
+          templateData: { otp: code },
+        }),
+      });
+      if (!r.ok) {
+        console.error("mfa email failed", r.status, await r.text());
+        return json({ error: "email_failed" }, 502);
+      }
+      const [local, domain] = user.email.split("@");
+      return json({ ok: true, channel: "email", email_masked: `${local.slice(0, 2)}•••@${domain}` });
+    }
+
     const cfg = await loadTwilioConfig();
     if (!cfg.sid || !cfg.token || !cfg.from) return json({ error: "twilio_not_configured" }, 500);
 
