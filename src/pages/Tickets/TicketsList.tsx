@@ -537,7 +537,7 @@ export default function TicketsList() {
 
         <div className="relative md:col-span-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suche Kunde, Gerät, Seriennr., Auftragsnr., Titel..." className="pl-9" />
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suche Kunde, E-Mail, Ticket-Nr., Gerät, Auftragsnr., Datum..." className="pl-9" />
         </div>
         <Select value={statusF} onValueChange={setStatusF}>
           <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
