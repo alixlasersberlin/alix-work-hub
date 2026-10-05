@@ -1,0 +1,1 @@
+DELETE FROM public.tickets WHERE customer_email ILIKE '%vertrieb@alixwork.de%' OR customer_email ILIKE '%noreply@alixlasers.ai%';
