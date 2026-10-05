@@ -401,31 +401,50 @@ export async function createTicketFromChat(opts: {
   deviceId?: string | null;
 }) {
   const { data: auth } = await supabase.auth.getUser();
-  const contact = opts.conv.ac_contacts;
+  const contact: any = opts.conv.ac_contacts;
+  const phone = contact?.whatsapp_number ?? contact?.phone ?? null;
+  // Kunde eindeutig zuordnen: verknüpfter Kunde, sonst Suche per Telefonnummer.
+  let cust: any = null;
+  if (contact?.customer_id) {
+    const { data } = await (supabase as any).from('customers')
+      .select('id, company_name, contact_name, email, phone').eq('id', contact.customer_id).maybeSingle();
+    cust = data;
+  }
+  if (!cust && phone) {
+    const digits = String(phone).replace(/\D/g, '').slice(-9);
+    if (digits.length >= 6) {
+      const { data } = await (supabase as any).from('customers')
+        .select('id, company_name, contact_name, email, phone').ilike('phone', `%${digits}%`).limit(2);
+      if (data?.length === 1) cust = data[0];
+    }
+  }
+  const dept = String(opts.department || 'service').toLowerCase();
+  const department = dept === 'buchhaltung' ? 'finance' : dept === 'logistik' ? 'lieferung' : dept;
   const { data: ticket, error } = await (supabase as any).from('tickets').insert({
     source_system: 'alixwork',
     source: 'whatsapp',
     title: opts.title,
-    subject: opts.title,
     description: opts.description,
-    status: 'open',
+    status: 'offen',
     priority: opts.priority,
-    department: opts.department,
+    department,
     category: opts.category ?? null,
-    customer_name: contact?.full_name ?? null,
-    customer_phone: contact?.whatsapp_number ?? contact?.phone ?? null,
-    customer_email: (contact as any)?.email ?? null,
+    customer_name: contact?.full_name ?? cust?.contact_name ?? null,
+    company_name: cust?.company_name ?? null,
+    customer_phone: phone,
+    customer_email: contact?.email ?? cust?.email ?? null,
     device_id: opts.deviceId ?? null,
     customer_visible_status: 'in_bearbeitung',
     assigned_to: auth?.user?.id ?? null,
   }).select('id, ticket_number, case_number').single();
   if (error) throw error;
 
-  await (supabase as any).from('conversation_tickets').insert({
+  const { error: linkErr } = await (supabase as any).from('conversation_tickets').insert({
     conversation_id: opts.conv.id,
     ticket_id: ticket.id,
     created_by_user_id: auth?.user?.id ?? null,
   });
+  if (linkErr) console.error('Ticket-Verknüpfung mit Chat fehlgeschlagen', linkErr);
   await logEvent(opts.conv.id, 'TICKET_CREATED', null, {
     ticket_id: ticket.id, ticket_number: ticket.ticket_number ?? ticket.case_number,
   });
