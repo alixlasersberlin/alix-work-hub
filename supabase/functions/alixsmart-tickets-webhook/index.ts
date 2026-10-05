@@ -100,6 +100,17 @@ Deno.serve(async (req) => {
     });
   }
 
+  if (isBlockedTicketSender(body.customer_email)) {
+    await supabase.from('ticket_sync_logs').insert({
+      external_ticket_id: body.external_ticket_id,
+      direction: 'inbound', action: 'create', status: 'blocked',
+      error_message: 'ignored_system_sender',
+    });
+    return new Response(JSON.stringify({ ok: true, ignored: 'system_sender' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const now = new Date().toISOString();
 
   // Phase 1 write-protection: existing tickets are immutable from AlixSmart.
