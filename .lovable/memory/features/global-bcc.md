@@ -10,3 +10,4 @@ Neue mailversendende Edge Functions MÜSSEN `import "../_shared/global-bcc.ts";`
 
 Signatur (`_shared/mail-signature.ts`): Rollen-/Funktionsbezeichnungen wie "Chief Operations" werden
 als Signaturname unterdrückt (`SUPPRESSED_NAMES`).
+- Ausnahme Angebote (Unterschrifts-E-Mail): Kunde + genau EINE Kopie an rde@alix-lasers.com, kein service@/buchhaltung@ (Nutzerwunsch 05.10.2026).

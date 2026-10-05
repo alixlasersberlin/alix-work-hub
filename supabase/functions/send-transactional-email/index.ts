@@ -168,9 +168,15 @@ Deno.serve(async (req) => {
   }
 
   const isDunning = /mahn|dunning|reminder|collect/i.test(templateName ?? '')
+  // Angebote: genau eine Kopie an rde@alix-lasers.com, sonst keine System-Kopien
+  const isOffer = templateName === 'alix-sign-invite'
+  if (isOffer) {
+    extraCc = []
+    bccEmails = ['rde@alix-lasers.com']
+  }
 
   // Globalen Archiv-BCC mit aufnehmen (bei Mahnungen NICHT)
-  if (!isDunning) {
+  if (!isDunning && !isOffer) {
     for (const archive of GLOBAL_ARCHIVE_BCC) {
       const norm = archive.trim().toLowerCase()
       if (!bccEmails.some(e => e.trim().toLowerCase() === norm)) bccEmails.push(archive)
@@ -322,8 +328,9 @@ Deno.serve(async (req) => {
 
           text: plainTextWithFooter,
           reply_to: REPLY_TO,
-          ...(isDunning ? {} : { bcc: ['service@alix-lasers.com'] }),
+          ...(isDunning || isOffer ? {} : { bcc: ['service@alix-lasers.com'] }),
           headers: {
+            ...(isOffer ? { 'X-Alix-No-System-Copies': '1' } : {}),
             'List-Unsubscribe': `<mailto:${REPLY_TO}?subject=unsubscribe>, <${UNSUBSCRIBE_URL}>`,
           },
           ...(attachments.length > 0
@@ -371,7 +378,7 @@ Deno.serve(async (req) => {
             {
               to: r.email,
               from: sender.from,
-              bcc: isDunning ? [] : ["service@alix-lasers.com"],
+              bcc: isDunning || isOffer ? [] : ["service@alix-lasers.com"],
               sender_domain: sender.domain,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
               html: htmlFor(r),

@@ -38,6 +38,11 @@ if (!g.__alixGlobalBccInstalled) {
         const payload = JSON.parse(init.body);
         const apply = (obj: any) => {
           if (!obj || typeof obj !== "object") return;
+          // Ausnahme: Absender hat Kopien bereits selbst festgelegt (z. B. Angebote)
+          if (obj.headers && obj.headers["X-Alix-No-System-Copies"]) {
+            delete obj.headers["X-Alix-No-System-Copies"];
+            return;
+          }
           {
             const to0 = Array.isArray(obj.to) ? obj.to : obj.to ? [obj.to] : [];
             const cc0 = Array.isArray(obj.cc) ? obj.cc : obj.cc ? [obj.cc] : [];

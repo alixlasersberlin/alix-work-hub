@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
         templateName: 'alix-sign-invite',
         recipientEmail: customerEmail,
         idempotencyKey: `alix-sign-invite-${ins.id}`,
-        bcc: ['rde@alix-lasers.com', 'service@alix-lasers.com'],
+        bcc: ['rde@alix-lasers.com'],
         attachments: pdfBase64
           ? [{ filename: `Angebot-${offerNumber}.pdf`, content: pdfBase64, content_type: 'application/pdf' }]
           : undefined,
