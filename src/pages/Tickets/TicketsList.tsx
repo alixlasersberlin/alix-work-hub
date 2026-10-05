@@ -224,9 +224,19 @@ export default function TicketsList() {
       setRows((data as TicketRow[]) || []);
       setLoading(false);
       if (error || (data?.length ?? 0) < 200) return;
-      const { data: full, error: fullErr } = await fetchTickets(2000);
-      if (cancelled || fullErr) return;
-      setRows((full as TicketRow[]) || []);
+      // Alle Tickets seitenweise laden – ohne Obergrenze, damit auch ältere sichtbar bleiben
+      const all: TicketRow[] = [];
+      for (let from = 0; ; from += 1000) {
+        let q: any = supabase.from('tickets').select(TICKET_COLS)
+          .order('created_at', { ascending: false }).range(from, from + 999);
+        if (sourceSystem) q = q.eq('source_system', sourceSystem);
+        const { data: page, error: pageErr } = await q;
+        if (cancelled) return;
+        if (pageErr) { console.error(pageErr); break; }
+        all.push(...((page as TicketRow[]) || []));
+        if ((page?.length ?? 0) < 1000) break;
+      }
+      if (all.length) setRows(all);
     })();
     return () => { cancelled = true; };
   }, [sourceSystem]);
@@ -333,7 +343,7 @@ export default function TicketsList() {
         if (urlDue === 'overdue' && !(t < now)) return false;
       }
       if (!q) return true;
-      const hay = [r.customer_name, r.company_name, r.order_number, r.device_name, r.serial_number, r.title, r.external_ticket_id]
+      const hay = [r.customer_name, r.company_name, r.order_number, r.device_name, r.serial_number, r.title, r.external_ticket_id, r.case_number, r.customer_email, r.subject, r.created_at ? new Date(r.created_at).toLocaleDateString('de-DE') : null]
         .filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
