@@ -113,6 +113,15 @@ Deno.serve(async (req) => {
     return json({ error: 'invalid_json' }, 400);
   }
 
+  if (isBlockedTicketSender(body.customer_email)) {
+    await supabase.from('ticket_sync_logs').insert({
+      external_ticket_id: body.external_ticket_id ?? null,
+      direction: 'inbound', action: 'create', status: 'blocked',
+      error_message: 'ignored_system_sender',
+    });
+    return json({ ok: true, ignored: 'system_sender' }, 200);
+  }
+
   // --- Pflichtfelder ---
   const required: (keyof Payload)[] = [
     'external_ticket_id', 'customer_name', 'customer_email',
