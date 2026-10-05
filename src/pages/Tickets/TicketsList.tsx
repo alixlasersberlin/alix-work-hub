@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers, Bot } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { classifyTickets, type TicketKind } from '@/lib/ticketKind';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 
@@ -55,6 +56,11 @@ interface TicketRow {
   escalation_count: number | null;
   assigned_to: string | null;
   due_at: string | null;
+  customer_email?: string | null;
+  subject?: string | null;
+  repair_order_id?: string | null;
+  merged_into_ticket_id?: string | null;
+  last_agent_reply_at?: string | null;
 }
 
 function slaBadge(s: string | null) {
@@ -194,7 +200,7 @@ export default function TicketsList() {
 
   useEffect(() => {
     let cancelled = false;
-    const TICKET_COLS = 'id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at';
+    const TICKET_COLS = 'id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at, customer_email, subject, repair_order_id, merged_into_ticket_id, last_agent_reply_at';
     const fetchTickets = (limit: number) => {
       let q: any = supabase
         .from('tickets')
@@ -329,9 +335,14 @@ export default function TicketsList() {
   }, [rows, search, statusF, prioF, deptF, sourceF, catF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
 
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
+  const kinds = useMemo(() => classifyTickets(rows), [rows]);
+  const kindOf = (r: TicketRow): TicketKind => kinds[r.id] || 'neu';
+  const kundeNeuRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && kindOf(r) === 'neu'), [filtered, kinds]);
+  const vorgangRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && kindOf(r) === 'vorgang'), [filtered, kinds]);
+  const autoRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && kindOf(r) === 'auto'), [filtered, kinds]);
   const isQueued = (s: string) => s === 'queue';
   const queueRows = useMemo(() => filtered.filter(r => isQueued(r.status)), [filtered]);
-  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status)), [filtered]);
+  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && kindOf(r) !== 'auto'), [filtered, kinds]);
   const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
   const wartungRows = useMemo(
     () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'wartung'),
@@ -342,8 +353,8 @@ export default function TicketsList() {
     [filtered],
   );
   const neueRows = useMemo(
-    () => filtered.filter(r => !isClosed(r.status) && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
-    [filtered],
+    () => filtered.filter(r => !isClosed(r.status) && kindOf(r) !== 'auto' && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
+    [filtered, kinds],
   );
   const overdueRows = useMemo(() => {
     const now = Date.now();
@@ -358,7 +369,7 @@ export default function TicketsList() {
     [filtered],
   );
 
-  type TabKey = 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  type TabKey = 'kunde_neu' | 'vorgang' | 'auto' | 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
   const initialTab: TabKey = (() => {
     const s = searchParams.get('status');
     const d = searchParams.get('due');
@@ -367,7 +378,7 @@ export default function TicketsList() {
     if (s === 'Neu' || s === 'neu' || s === 'offen' || s === 'open') return 'neu';
     if (s && s.toLowerCase().startsWith('warten')) return 'wartet';
     if (searchParams.get('view') === 'bookings') return 'bookings';
-    return 'open';
+    return 'kunde_neu';
   })();
   const [tab, setTab] = useState<TabKey>(initialTab);
 
@@ -556,6 +567,9 @@ export default function TicketsList() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
         <TabsList className="mb-3 flex-wrap h-auto">
+          <TabsTrigger value="kunde_neu"><Inbox className="w-3.5 h-3.5 mr-1 text-primary" />Neue Kundenanfragen ({kundeNeuRows.length})</TabsTrigger>
+          <TabsTrigger value="vorgang"><Layers className="w-3.5 h-3.5 mr-1" />Bestehende Vorgänge ({vorgangRows.length})</TabsTrigger>
+          <TabsTrigger value="auto"><Bot className="w-3.5 h-3.5 mr-1" />Automatische Meldungen ({autoRows.length})</TabsTrigger>
           <TabsTrigger value="all">Alle ({filtered.length})</TabsTrigger>
           <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
           <TabsTrigger value="queue"><Layers className="w-3.5 h-3.5 mr-1 text-sky-400" />Queue ({queueRows.length})</TabsTrigger>
@@ -573,9 +587,12 @@ export default function TicketsList() {
           <EscBookings />
         </TabsContent>
 
-        {(['all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
+        {(['kunde_neu', 'vorgang', 'auto', 'all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
-            key === 'all' ? filtered
+            key === 'kunde_neu' ? kundeNeuRows
+              : key === 'vorgang' ? vorgangRows
+              : key === 'auto' ? autoRows
+              : key === 'all' ? filtered
               : key === 'open' ? openRows
               : key === 'queue' ? queueRows
               : key === 'closed' ? closedRows
@@ -586,7 +603,10 @@ export default function TicketsList() {
               : key === 'escalated' ? escalatedRows
               : wartetKundeRows;
           const emptyTitle =
-            key === 'all' ? 'Keine Tickets'
+            key === 'kunde_neu' ? 'Keine neuen Kundenanfragen'
+              : key === 'vorgang' ? 'Keine offenen bestehenden Vorgänge'
+              : key === 'auto' ? 'Keine automatischen Meldungen'
+              : key === 'all' ? 'Keine Tickets'
               : key === 'open' ? 'Keine offenen Tickets'
               : key === 'queue' ? 'Keine Tickets in der Queue'
               : key === 'closed' ? 'Keine geschlossenen Tickets'
