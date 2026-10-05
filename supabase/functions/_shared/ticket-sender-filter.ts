@@ -1,9 +1,9 @@
 // Absender, aus denen NIE Tickets entstehen dürfen (eigene System-/Kopie-Mails).
 const BLOCKED_SENDERS = [
-  "noreply@alixwork.de",
+  "@alixwork.de", // alle eigenen alixwork.de-Absender
   "service@alix-lasers.com",
-  "vertrieb@alixwork.de",
   "noreply@alixlasers.ai",
+  "noreply@eanamnese.de",
 ];
 
 export function isBlockedTicketSender(raw: unknown): boolean {
