@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers, Bot } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers, Bot, Film } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -19,7 +19,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { classifyTickets, type TicketKind } from '@/lib/ticketKind';
+import { isMediaPaketTicket, classifyTickets, type TicketKind } from '@/lib/ticketKind';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 
@@ -353,12 +353,13 @@ export default function TicketsList() {
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const kinds = useMemo(() => classifyTickets(rows), [rows]);
   const kindOf = (r: TicketRow): TicketKind => kinds[r.id] || 'neu';
-  const kundeNeuRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && kindOf(r) === 'neu'), [filtered, kinds]);
-  const vorgangRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && kindOf(r) === 'vorgang'), [filtered, kinds]);
-  const autoRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && kindOf(r) === 'auto'), [filtered, kinds]);
+  const mediaRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && isMediaPaketTicket(r)), [filtered]);
+  const kundeNeuRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) === 'neu'), [filtered, kinds]);
+  const vorgangRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) === 'vorgang'), [filtered, kinds]);
+  const autoRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) === 'auto'), [filtered, kinds]);
   const isQueued = (s: string) => s === 'queue';
   const queueRows = useMemo(() => filtered.filter(r => isQueued(r.status)), [filtered]);
-  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && kindOf(r) !== 'auto'), [filtered, kinds]);
+  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && !isMediaPaketTicket(r) && kindOf(r) !== 'auto'), [filtered, kinds]);
   const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
   const wartungRows = useMemo(
     () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'wartung'),
@@ -369,7 +370,7 @@ export default function TicketsList() {
     [filtered],
   );
   const neueRows = useMemo(
-    () => filtered.filter(r => !isClosed(r.status) && kindOf(r) !== 'auto' && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
+    () => filtered.filter(r => !isClosed(r.status) && !isMediaPaketTicket(r) && kindOf(r) !== 'auto' && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
     [filtered, kinds],
   );
   const overdueRows = useMemo(() => {
@@ -385,7 +386,7 @@ export default function TicketsList() {
     [filtered],
   );
 
-  type TabKey = 'kunde_neu' | 'vorgang' | 'auto' | 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  type TabKey = 'media' | 'kunde_neu' | 'vorgang' | 'auto' | 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
   const initialTab: TabKey = (() => {
     const s = searchParams.get('status');
     const d = searchParams.get('due');
@@ -621,6 +622,7 @@ export default function TicketsList() {
         <TabsList className="mb-3 flex-wrap h-auto">
           <TabsTrigger value="kunde_neu"><Inbox className="w-3.5 h-3.5 mr-1 text-primary" />Neue Kundenanfragen ({kundeNeuRows.length})</TabsTrigger>
           <TabsTrigger value="vorgang"><Layers className="w-3.5 h-3.5 mr-1" />Bestehende Vorgänge ({vorgangRows.length})</TabsTrigger>
+          <TabsTrigger value="media"><Film className="w-3.5 h-3.5 mr-1 text-primary" />Media Paket ({mediaRows.length})</TabsTrigger>
           <TabsTrigger value="auto"><Bot className="w-3.5 h-3.5 mr-1" />Automatische Meldungen ({autoRows.length})</TabsTrigger>
           <TabsTrigger value="all">Alle ({filtered.length})</TabsTrigger>
           <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
@@ -639,9 +641,10 @@ export default function TicketsList() {
           <EscBookings />
         </TabsContent>
 
-        {(['kunde_neu', 'vorgang', 'auto', 'all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
+        {(['media', 'kunde_neu', 'vorgang', 'auto', 'all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
-            key === 'kunde_neu' ? kundeNeuRows
+            key === 'media' ? mediaRows
+              : key === 'kunde_neu' ? kundeNeuRows
               : key === 'vorgang' ? vorgangRows
               : key === 'auto' ? autoRows
               : key === 'all' ? filtered
@@ -655,7 +658,8 @@ export default function TicketsList() {
               : key === 'escalated' ? escalatedRows
               : wartetKundeRows;
           const emptyTitle =
-            key === 'kunde_neu' ? 'Keine neuen Kundenanfragen'
+            key === 'media' ? 'Keine offenen Media-Paket-Anfragen'
+              : key === 'kunde_neu' ? 'Keine neuen Kundenanfragen'
               : key === 'vorgang' ? 'Keine offenen bestehenden Vorgänge'
               : key === 'auto' ? 'Keine automatischen Meldungen'
               : key === 'all' ? 'Keine Tickets'

@@ -52,3 +52,9 @@ export function classifyTickets(rows: TicketKindInput[]): Record<string, TicketK
   }
   return out;
 }
+
+/** Media-Paket-Anfragen erkennen (Kategorie, Titel oder Betreff). */
+const MEDIA_RE = /media[\s\-_]?pa(ket|ckage)/i;
+export function isMediaPaketTicket(t: { category?: string | null; auto_category?: string | null; title?: string | null; subject?: string | null }): boolean {
+  return [t.category, t.auto_category, t.title, t.subject].some(v => !!v && MEDIA_RE.test(v));
+}
