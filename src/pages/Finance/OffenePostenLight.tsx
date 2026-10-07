@@ -172,6 +172,7 @@ export default function OffenePostenLight() {
   const [dunEmail, setDunEmail] = useState('');
   const [dunMessage, setDunMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
   // Mahncenter
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -661,12 +662,24 @@ export default function OffenePostenLight() {
 
   const sendBulk = async () => {
     setBulkBusy(true);
-    let ok = 0, fail = 0, skipped = 0;
-    for (const row of bulkRows) {
-      if (!row.email.includes('@')) { skipped += 1; continue; }
-      const res = await sendDunningFor(row.item, row.level, row.email, '');
-      if (res.ok) ok += 1; else fail += 1;
-    }
+    let ok = 0, fail = 0, skipped = 0, done = 0;
+    const queue = bulkRows.filter((r) => {
+      if (!r.email.includes('@')) { skipped += 1; return false; }
+      return true;
+    });
+    setBulkProgress({ done: 0, total: queue.length });
+    let idx = 0;
+    const worker = async () => {
+      while (idx < queue.length) {
+        const row = queue[idx++];
+        const res = await sendDunningFor(row.item, row.level, row.email, '');
+        if (res.ok) ok += 1; else fail += 1;
+        done += 1;
+        setBulkProgress({ done, total: queue.length });
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker));
+    setBulkProgress({ done: 0, total: 0 });
     setBulkBusy(false);
     setBulkOpen(false);
     setChecked({});
@@ -1830,7 +1843,9 @@ export default function OffenePostenLight() {
             <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkBusy}>Abbrechen</Button>
             <Button onClick={() => void sendBulk()} disabled={bulkBusy}>
               {bulkBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Geprüft – jetzt senden
+              {bulkBusy && bulkProgress.total > 0
+                ? `Wird gesendet … ${bulkProgress.done} / ${bulkProgress.total}`
+                : 'Geprüft – jetzt senden'}
             </Button>
           </DialogFooter>
         </DialogContent>
