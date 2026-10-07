@@ -3,6 +3,7 @@
 // Upsert in tickets (per external_ticket_id), dedup von messages (external_message_id) und attachments (file_url).
 // Loggt jeden Aufruf in ticket_sync_logs.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { isBlockedTicketSender } from '../_shared/ticket-sender-filter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

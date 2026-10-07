@@ -3,6 +3,7 @@
 // tickets are rejected with 409 and logged as conflicts. AlixWork is master.
 // Auth: shared secret in `x-alixsmart-secret` header (ALIXSMART_WEBHOOK_SECRET).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { isBlockedTicketSender } from '../_shared/ticket-sender-filter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
