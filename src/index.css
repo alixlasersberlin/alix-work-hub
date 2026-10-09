@@ -358,8 +358,17 @@ table tbody tr:hover {
   background-color: hsl(var(--muted) / 0.6);
   box-shadow: inset 3px 0 0 0 hsl(var(--primary) / 0.6);
 }
+/* Dunkelmodus: abwechselnde Zeilenfarben in allen Listen + zarter roter Rahmen beim Überfahren */
+.dark table tbody tr:nth-child(even) {
+  background-color: hsl(var(--muted) / 0.3);
+}
 .dark table tbody tr:hover {
   background-color: hsl(var(--muted) / 0.5);
+  outline: 1px solid hsl(var(--destructive) / 0.45);
+  outline-offset: -1px;
+}
+.dark [role="row"]:nth-child(even):not([role="columnheader"]) {
+  background-color: hsl(var(--muted) / 0.3);
 }
 
 
