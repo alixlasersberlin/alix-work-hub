@@ -18,6 +18,11 @@ import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip, vipFirst } from '@/lib/vip';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { withAt } from '@/lib/atSuffix';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FileDown, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -37,6 +42,8 @@ export default function OrdersAt() {
   const [editOrder, setEditOrder] = useState<any>(null);
   const [deferOrder, setDeferOrder] = useState<any>(null);
   const [itemsOrder, setItemsOrder] = useState<any>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleSel = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
 
@@ -130,6 +137,44 @@ export default function OrdersAt() {
 
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, pageSize]);
 
+  const exportRows = () => {
+    const src = sorted.filter(o => selected.has(o.id));
+    return src.map(o => [
+      o._displayNumber || o.order_number || '',
+      o.customers?.company_name || o.customers?.contact_name || '',
+      o.salesperson_name || '',
+      o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '',
+      o.total_amount != null ? Number(o.total_amount) : '',
+      o.order_status || '',
+      ...(canSeeApproval ? [o._atApproved ? 'freigegeben' : 'an Hold'] : []),
+    ]);
+  };
+  const exportHeaders = ['Auftrag Nr.', 'Kunde', 'Vertrieb', 'Datum', 'Betrag (EUR)', 'Status', ...(canSeeApproval ? ['Freigabe AT'] : [])];
+  const fileBase = `Auftraege_AT_${new Date().toISOString().slice(0, 10)}`;
+  const exportExcel = () => {
+    const ws = XLSX.utils.aoa_to_sheet([exportHeaders, ...exportRows()]);
+    ws['!cols'] = exportHeaders.map((_, i) => ({ wch: i === 1 ? 36 : 16 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Aufträge AT');
+    XLSX.writeFile(wb, `${fileBase}.xlsx`);
+  };
+  const exportPdf = () => {
+    const rows = exportRows();
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(14); doc.text('Aufträge AT – Alix Austria', 14, 16);
+    doc.setFontSize(9); doc.text(`${rows.length} Aufträge · Stand ${new Date().toLocaleString('de-DE')}`, 14, 22);
+    const sum = rows.reduce((a, r) => a + (typeof r[4] === 'number' ? r[4] : 0), 0);
+    autoTable(doc, {
+      head: [exportHeaders],
+      body: rows.map(r => r.map((c, i) => i === 4 && typeof c === 'number' ? c.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(c))),
+      foot: [exportHeaders.map((_, i) => i === 0 ? 'Summe' : i === 4 ? sum.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '')],
+      startY: 27, styles: { fontSize: 8 }, headStyles: { fillColor: [200, 162, 74] }, footStyles: { fillColor: [40, 40, 40] },
+    });
+    doc.save(`${fileBase}.pdf`);
+  };
+  const pageAllSelected = paged.length > 0 && paged.every(o => selected.has(o.id));
+  const toggleAllPage = () => setSelected(prev => { const n = new Set(prev); paged.forEach(o => pageAllSelected ? n.delete(o.id) : n.add(o.id)); return n; });
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
@@ -206,6 +251,16 @@ export default function OrdersAt() {
           </Select>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">{selected.size} markiert</span>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set(sorted.map(o => o.id)))}>Alle {sorted.length} markieren</Button>
+          {selected.size > 0 && <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Markierung aufheben</Button>}
+          <div className="ml-auto flex gap-2">
+            <Button size="sm" variant="outline" disabled={!selected.size} onClick={exportExcel}><FileSpreadsheet className="w-4 h-4 mr-1" />Excel</Button>
+            <Button size="sm" variant="outline" disabled={!selected.size} onClick={exportPdf}><FileDown className="w-4 h-4 mr-1" />PDF</Button>
+          </div>
+        </div>
+
         {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
         <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
@@ -213,6 +268,7 @@ export default function OrdersAt() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-secondary/50">
+                  <th className="w-10 px-3 py-3"><Checkbox checked={pageAllSelected} onCheckedChange={toggleAllPage} aria-label="Seite markieren" /></th>
                   <SortHeader field="order_number" label="Auftrag Nr." />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                   <SortHeader field="order_date" label="Datum" />
@@ -227,13 +283,13 @@ export default function OrdersAt() {
               </thead>
               {loading ? (
                 <tbody>
-                  <tr><td colSpan={(canWrite ? 7 : 6) + (canSeeApproval ? 1 : 0)} className="px-4 py-12 text-center">
+                  <tr><td colSpan={(canWrite ? 8 : 7) + (canSeeApproval ? 1 : 0)} className="px-4 py-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                   </td></tr>
                 </tbody>
               ) : filtered.length === 0 ? (
                 <tbody>
-                  <tr><td colSpan={(canWrite ? 7 : 6) + (canSeeApproval ? 1 : 0)} className="px-4 py-12 text-center">
+                  <tr><td colSpan={(canWrite ? 8 : 7) + (canSeeApproval ? 1 : 0)} className="px-4 py-12 text-center">
                     <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                   </td></tr>
@@ -249,6 +305,9 @@ export default function OrdersAt() {
                       }`}
                       onClick={() => navigate(`/auftraege/${o.id}`)}
                     >
+                      <td className="w-10 px-3 py-3" onClick={e => e.stopPropagation()}>
+                        <Checkbox checked={selected.has(o.id)} onCheckedChange={() => toggleSel(o.id)} aria-label="Auftrag markieren" />
+                      </td>
                       <td className={`px-4 py-3 font-medium text-foreground ${canSeeApproval && !o._atApproved ? 'border-l-4 border-red-500' : ''}`}>
                         <span className="inline-flex items-center gap-2">
                           {isOrderVip(o) && <VipBadge size="sm" iconOnly />}
