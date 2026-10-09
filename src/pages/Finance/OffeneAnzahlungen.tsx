@@ -245,6 +245,17 @@ export default function OffeneAnzahlungen() {
   };
 
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+  const notifyNoPdf = (d: Deposit) => {
+    toast.error('Für diese Anzahlung wurde noch keine Rechnungs-PDF erstellt.', {
+      description: 'Bitte im Auftrag unter „AZ Rechnung“ die PDF erzeugen und danach erneut senden.',
+      duration: 10000,
+      action: d.order_id ? {
+        label: 'Zum Auftrag',
+        onClick: () => window.open(`/auftraege/${d.order_id}?tab=az_invoice`, '_blank'),
+      } : undefined,
+    });
+  };
+
   const sendInvoiceEmail = async (d: Deposit) => {
     if (!d.order_id) { toast.error('Kein Auftrag verknüpft'); return; }
     if (!confirm(`Anzahlungsrechnung ${d.invoice_number || ''} per E-Mail an ${d.company_name || d.customer_name || 'Kunde'} versenden?`)) return;
@@ -273,7 +284,7 @@ export default function OffeneAnzahlungen() {
         .order('created_at', { ascending: false })
         .limit(1);
       const doc = (docs ?? [])[0];
-      if (!doc) throw new Error('Keine Anzahlungsrechnungs-PDF gefunden. Bitte zuerst PDF erstellen.');
+      if (!doc) throw Object.assign(new Error('NO_PDF'), { noPdf: true });
 
       let token: string | null = (doc as any).download_token ?? null;
       if (!token) {
@@ -343,6 +354,7 @@ export default function OffeneAnzahlungen() {
 
       toast.success(`Anzahlungsrechnung an ${cust.email} versendet.`);
     } catch (e: any) {
+      if (e?.noPdf) { notifyNoPdf(d); return; }
       toast.error('Fehler beim Versenden: ' + (e?.message ?? 'Unbekannt'));
     } finally {
       setSendingInvoiceId(null);
@@ -363,7 +375,7 @@ export default function OffeneAnzahlungen() {
         .limit(1);
       if (error) throw error;
       const doc = (docs ?? [])[0] as any;
-      if (!doc?.file_path) throw new Error('Keine Anzahlungsrechnungs-PDF gefunden. Bitte zuerst PDF erstellen.');
+      if (!doc?.file_path) throw Object.assign(new Error('NO_PDF'), { noPdf: true });
 
       const { data: file, error: dlErr } = await supabase.storage
         .from('order-invoices')
@@ -378,6 +390,7 @@ export default function OffeneAnzahlungen() {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast.success('PDF heruntergeladen');
     } catch (e: any) {
+      if (e?.noPdf) { notifyNoPdf(d); return; }
       toast.error('Download fehlgeschlagen: ' + (e?.message ?? 'Unbekannt'));
     } finally {
       setDownloadingId(null);
