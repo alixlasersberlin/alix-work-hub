@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
@@ -199,6 +199,46 @@ export default function OffeneAnzahlungen() {
     } finally {
       setSendingId(null);
     }
+  };
+
+  const [smsFor, setSmsFor] = useState<Deposit | null>(null);
+  const [smsPhone, setSmsPhone] = useState('');
+  const [smsText, setSmsText] = useState('');
+  const [smsSending, setSmsSending] = useState(false);
+  const openSms = async (d: Deposit) => {
+    const name = d.contact_name || d.customer_name || d.company_name || '';
+    const nr = d.invoice_number || d.deposit_number || d.order_number || '';
+    const due = d.due_date ? ` (fällig seit ${format(parseISO(d.due_date), 'dd.MM.yyyy', { locale: de })})` : '';
+    setSmsText(
+      `Guten Tag ${name}, zu Ihrer Anzahlungsrechnung ${nr} ist noch ein Betrag von ${fmtMoney(d.open_amount, d.currency || 'EUR')} offen${due}. ` +
+      `Bitte überweisen Sie den Betrag zeitnah, damit wir Ihren Auftrag weiter bearbeiten können. Vielen Dank – Ihr Alix Lasers Team`
+    );
+    setSmsPhone('');
+    setSmsFor(d);
+    let cid = d.customer_id;
+    if (!cid && d.order_id) {
+      const { data: o } = await supabase.from('orders').select('customer_id').eq('id', d.order_id).maybeSingle();
+      cid = (o as any)?.customer_id ?? null;
+    }
+    if (cid) {
+      const { data: c } = await supabase.from('customers').select('phone').eq('id', cid).maybeSingle();
+      if ((c as any)?.phone) setSmsPhone((c as any).phone);
+    }
+  };
+  const submitSms = async () => {
+    if (!smsFor) return;
+    setSmsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
+        body: { to: smsPhone, message: smsText },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Versand fehlgeschlagen');
+      toast.success('SMS gesendet');
+      setSmsFor(null);
+    } catch (e: any) {
+      toast.error('SMS fehlgeschlagen: ' + (e?.message ?? 'Unbekannt'));
+    } finally { setSmsSending(false); }
   };
 
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
@@ -575,6 +615,12 @@ export default function OffeneAnzahlungen() {
                             : <MessageSquare className="w-3.5 h-3.5" />}
                         </Button>
                       )}
+                      {canWrite && (
+                        <Button size="sm" variant="outline" onClick={() => openSms(r)}
+                          title="SMS-Mahnung zur Anzahlung mit eigenem Text senden">
+                          <MessageSquare className="w-3.5 h-3.5 mr-1" /> SMS
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" onClick={() => openHistory(r)} title="Historie">
                         <HistoryIcon className="w-3.5 h-3.5" />
                       </Button>
@@ -627,6 +673,35 @@ export default function OffeneAnzahlungen() {
 
       
       <BookingDialog open={!!bookFor} deposit={bookFor} onClose={() => setBookFor(null)} onDone={load} />
+
+      <Dialog open={!!smsFor} onOpenChange={(o) => !o && setSmsFor(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>SMS-Mahnung Anzahlung</DialogTitle>
+            <DialogDescription>
+              {smsFor?.company_name || smsFor?.customer_name} · {smsFor?.invoice_number || smsFor?.deposit_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Mobilnummer</Label>
+              <Input value={smsPhone} onChange={(e) => setSmsPhone(e.target.value)} placeholder="+49 …" />
+            </div>
+            <div>
+              <Label>Text (frei ergänzbar)</Label>
+              <Textarea rows={7} value={smsText} maxLength={600} onChange={(e) => setSmsText(e.target.value)} />
+              <div className="text-xs text-muted-foreground mt-1">{smsText.length} / 600 Zeichen{smsText.length > 160 ? ' · mehrteilige SMS' : ''}</div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSmsFor(null)}>Abbrechen</Button>
+            <Button onClick={submitSms} disabled={smsSending || !smsPhone.trim() || !smsText.trim()}>
+              {smsSending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Send className="w-4 h-4 mr-1" />}
+              SMS senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!historyFor} onOpenChange={(o) => !o && setHistoryFor(null)}>
         <DialogContent className="max-w-2xl">
