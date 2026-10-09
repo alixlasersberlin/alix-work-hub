@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare, Send, Download } from 'lucide-react';
+import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare, Send, Download, ChevronDown, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format, parseISO, differenceInCalendarDays, startOfMonth, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -565,70 +568,91 @@ export default function OffeneAnzahlungen() {
               {filtered.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="align-top">
-                    <div className="flex flex-wrap gap-1">
-                      {canWrite && (
-                        <Button size="sm" variant="default" onClick={() => setBookFor(r)} className="gap-1">
-                          <Upload className="w-3.5 h-3.5" /> Buchen
-                        </Button>
-                      )}
-                      {canWrite && (
-                        <Button size="sm" variant="outline" onClick={() => toggleLock(r)} title={r.finance_lock ? 'Sperre aufheben' : 'Sperren'}>
-                          {r.finance_lock ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                        </Button>
-                      )}
-                      {canWrite && r.release_status !== 'auto_freigegeben' && r.release_status !== 'manuell_freigegeben' && (
-                        <Button size="sm" variant="outline" onClick={() => manualRelease(r)} title="Manuell freigeben">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        </Button>
-                      )}
-                      {r.order_id && (
-                        <Button size="sm" variant="outline" onClick={() => downloadInvoicePdf(r)}
-                          disabled={downloadingId === r.id}
-                          title="Anzahlungsrechnung (PDF) herunterladen">
-                          {downloadingId === r.id
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : <Download className="w-3.5 h-3.5" />}
-                        </Button>
-                      )}
-                      {canWrite && r.order_id && (
-                        <Button size="sm" variant="outline" onClick={() => sendInvoiceEmail(r)}
-                          disabled={sendingInvoiceId === r.id}
-                          title="Anzahlungsrechnung (PDF) per E-Mail an den Kunden versenden">
-                          {sendingInvoiceId === r.id
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : <Send className="w-3.5 h-3.5" />}
-                        </Button>
-                      )}
-                      {canWrite && r.order_id && (
-                        <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'email')}
-                          disabled={sendingId === r.id + 'email'} title="Anzahlungs-Erinnerung per E-Mail senden">
-                          {sendingId === r.id + 'email'
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : <Mail className="w-3.5 h-3.5" />}
-                        </Button>
-                      )}
-                      {canWrite && r.order_id && (
-                        <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'sms')}
-                          disabled={sendingId === r.id + 'sms'} title="Anzahlungs-Erinnerung per SMS senden">
-                          {sendingId === r.id + 'sms'
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : <MessageSquare className="w-3.5 h-3.5" />}
-                        </Button>
-                      )}
-                      {canWrite && (
-                        <Button size="sm" variant="outline" onClick={() => openSms(r)}
-                          title="SMS-Mahnung zur Anzahlung mit eigenem Text senden">
-                          <MessageSquare className="w-3.5 h-3.5 mr-1" /> SMS
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost" onClick={() => openHistory(r)} title="Historie">
-                        <HistoryIcon className="w-3.5 h-3.5" />
-                      </Button>
-                      <AccountStatementActions
-                        customerName={r.company_name || r.customer_name || 'Unbekannt'}
-                        customerNumber={r.customer_id}
-                        rows={statementByCustomer.get(statementKey(r))?.rows ?? []}
-                      />
+                    <div className="flex flex-col gap-1.5 min-w-[220px]">
+                      <div className="flex items-center gap-1.5">
+                        {canWrite && (
+                          <Button size="sm" variant="default" onClick={() => setBookFor(r)} className="gap-1">
+                            <Upload className="w-3.5 h-3.5" /> Buchen
+                          </Button>
+                        )}
+                        {canWrite && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="sm" variant="outline" className="gap-1"
+                                disabled={sendingId?.startsWith(r.id) || sendingInvoiceId === r.id}>
+                                {(sendingId?.startsWith(r.id) || sendingInvoiceId === r.id)
+                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  : <Send className="w-3.5 h-3.5" />}
+                                Senden <ChevronDown className="w-3 h-3 opacity-60" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-64">
+                              <DropdownMenuLabel>Mahnen</DropdownMenuLabel>
+                              {r.order_id && (
+                                <DropdownMenuItem onClick={() => sendReminder(r, 'email')}>
+                                  <Mail className="w-4 h-4 mr-2" /> Erinnerung per E-Mail
+                                </DropdownMenuItem>
+                              )}
+                              {r.order_id && (
+                                <DropdownMenuItem onClick={() => sendReminder(r, 'sms')}>
+                                  <MessageSquare className="w-4 h-4 mr-2" /> Erinnerung per SMS (Standard)
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => openSms(r)}>
+                                <MessageSquare className="w-4 h-4 mr-2" /> SMS mit eigenem Text …
+                              </DropdownMenuItem>
+                              {r.order_id && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuLabel>Rechnung</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => sendInvoiceEmail(r)}>
+                                    <Send className="w-4 h-4 mr-2" /> Anzahlungsrechnung per E-Mail
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="ghost" title="Weitere Aktionen">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-60">
+                            {r.order_id && (
+                              <DropdownMenuItem onClick={() => downloadInvoicePdf(r)} disabled={downloadingId === r.id}>
+                                <Download className="w-4 h-4 mr-2" /> Rechnung (PDF) herunterladen
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => openHistory(r)}>
+                              <HistoryIcon className="w-4 h-4 mr-2" /> Historie
+                            </DropdownMenuItem>
+                            {canWrite && (
+                              <>
+                                <DropdownMenuSeparator />
+                                {r.release_status !== 'auto_freigegeben' && r.release_status !== 'manuell_freigegeben' && (
+                                  <DropdownMenuItem onClick={() => manualRelease(r)}>
+                                    <CheckCircle2 className="w-4 h-4 mr-2" /> Manuell freigeben
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => toggleLock(r)}>
+                                  {r.finance_lock
+                                    ? <><Unlock className="w-4 h-4 mr-2" /> Sperre aufheben</>
+                                    : <><Lock className="w-4 h-4 mr-2" /> Sperren</>}
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="flex items-center gap-1.5 [&_button]:h-7 [&_button]:text-xs">
+                        <AccountStatementActions
+                          customerName={r.company_name || r.customer_name || 'Unbekannt'}
+                          customerNumber={r.customer_id}
+                          rows={statementByCustomer.get(statementKey(r))?.rows ?? []}
+                        />
+                      </div>
                     </div>
 
                   </TableCell>
