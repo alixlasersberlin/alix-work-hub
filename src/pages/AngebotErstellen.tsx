@@ -287,7 +287,7 @@ export default function AngebotErstellen() {
       const CHUNK = 1000;
       // Kunden + Artikel werden im HINTERGRUND geladen (nicht blockierend),
       // damit das Angebot sofort erscheint.
-      const loadAllCustomers = async () => {
+      const loadAllCustomers = () => cachedList('customers', async () => {
         const out: any[] = [];
         for (let from = 0; ; from += CHUNK) {
           const { data: chunk, error } = await supabase
@@ -300,8 +300,8 @@ export default function AngebotErstellen() {
           if (chunk.length < CHUNK) break;
         }
         return out;
-      };
-      const loadAllItems = async () => {
+      });
+      const loadAllItems = () => cachedList('items', async () => {
         const out: any[] = [];
         for (let from = 0; ; from += CHUNK) {
           const { data: chunk, error } = await supabase
@@ -315,7 +315,7 @@ export default function AngebotErstellen() {
           if (chunk.length < CHUNK) break;
         }
         return out;
-      };
+      });
 
       const customersPromise = loadAllCustomers();
       customersPromise.then((all) => {
