@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       return json({ error: "user_id and new_password are required" }, 400);
     }
     if (typeof new_password !== "string" || new_password.length < 8) {
-      return json({ error: "Passwort muss mindestens 8 Zeichen lang sein" }, 400);
+      return json({ error: "Passwort muss mindestens 8 Zeichen lang sein" }, 200);
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
@@ -49,9 +49,9 @@ Deno.serve(async (req) => {
         return json({
           error:
             "Das Passwort ist zu schwach oder wurde in bekannten Datenlecks gefunden. Bitte wähle ein längeres Passwort mit Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen.",
-        }, 400);
+        }, 200);
       }
-      return json({ error: `Auth error: ${msg}` }, 400);
+      return json({ error: `Auth error: ${msg}` }, 200);
     }
 
     await adminClient
