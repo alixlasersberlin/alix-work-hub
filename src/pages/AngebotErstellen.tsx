@@ -57,6 +57,21 @@ type LineItem = {
   config_powers?: string[];
 };
 
+// Kunden-/Artikellisten werden 10 Min. im Speicher gehalten, damit nicht jedes
+// Öffnen eines Angebots die komplette Liste erneut vom Server lädt.
+const LIST_TTL_MS = 10 * 60 * 1000;
+const listCache = new Map<string, { at: number; promise: Promise<any[]> }>();
+function cachedList(key: string, loader: () => Promise<any[]>): Promise<any[]> {
+  const hit = listCache.get(key);
+  if (hit && Date.now() - hit.at < LIST_TTL_MS) return hit.promise;
+  const promise = loader().then((rows) => {
+    if (rows.length === 0) listCache.delete(key);
+    return rows;
+  }).catch((e) => { listCache.delete(key); throw e; });
+  listCache.set(key, { at: Date.now(), promise });
+  return promise;
+}
+
 
 const newLine = (): LineItem => ({
   id: crypto.randomUUID(),
