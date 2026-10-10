@@ -57,6 +57,21 @@ type LineItem = {
   config_powers?: string[];
 };
 
+// Kunden-/Artikellisten werden 10 Min. im Speicher gehalten, damit nicht jedes
+// Öffnen eines Angebots die komplette Liste erneut vom Server lädt.
+const LIST_TTL_MS = 10 * 60 * 1000;
+const listCache = new Map<string, { at: number; promise: Promise<any[]> }>();
+function cachedList(key: string, loader: () => Promise<any[]>): Promise<any[]> {
+  const hit = listCache.get(key);
+  if (hit && Date.now() - hit.at < LIST_TTL_MS) return hit.promise;
+  const promise = loader().then((rows) => {
+    if (rows.length === 0) listCache.delete(key);
+    return rows;
+  }).catch((e) => { listCache.delete(key); throw e; });
+  listCache.set(key, { at: Date.now(), promise });
+  return promise;
+}
+
 
 const newLine = (): LineItem => ({
   id: crypto.randomUUID(),
@@ -287,7 +302,7 @@ export default function AngebotErstellen() {
       const CHUNK = 1000;
       // Kunden + Artikel werden im HINTERGRUND geladen (nicht blockierend),
       // damit das Angebot sofort erscheint.
-      const loadAllCustomers = async () => {
+      const loadAllCustomers = () => cachedList('customers', async () => {
         const out: any[] = [];
         for (let from = 0; ; from += CHUNK) {
           const { data: chunk, error } = await supabase
@@ -300,8 +315,8 @@ export default function AngebotErstellen() {
           if (chunk.length < CHUNK) break;
         }
         return out;
-      };
-      const loadAllItems = async () => {
+      });
+      const loadAllItems = () => cachedList('items', async () => {
         const out: any[] = [];
         for (let from = 0; ; from += CHUNK) {
           const { data: chunk, error } = await supabase
@@ -315,7 +330,7 @@ export default function AngebotErstellen() {
           if (chunk.length < CHUNK) break;
         }
         return out;
-      };
+      });
 
       const customersPromise = loadAllCustomers();
       customersPromise.then((all) => {
