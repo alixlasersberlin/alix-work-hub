@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
       .eq('id', order.customer_id)
       .maybeSingle()
     if (!customer?.email) {
-      return json({ error: 'Kunde hat keine E-Mail-Adresse' }, 400)
+      // Erwarteter Fall – kein HTTP-Fehler, damit der Statuswechsel nicht abbricht
+      return json({ skipped: true, error: 'Kunde hat keine E-Mail-Adresse' }, 200)
     }
     const customerName = customer.contact_name || customer.company_name || ''
 
