@@ -97,6 +97,8 @@ serve(async (req) => {
       is_test = false,
       attachments = [],
       bcc = null,
+      skip_system_copies = false,
+      skip_signature = false,
     } = body ?? {};
 
     if (!to_email || !from_email) {
@@ -242,9 +244,14 @@ serve(async (req) => {
       .replace(/\b\w/g, (c) => c.toUpperCase())
       .trim();
     const loginName = rawName || emailLocalPart || "Alix Lasers Team";
-    const withSig = appendSignature(finalHtml, finalText, loginName);
-    finalHtml = withSig.html;
-    finalText = withSig.text;
+    const { data: isAdminForFlags } = await authClient.rpc("is_admin");
+    const rawMode = !!isAdminForFlags && (skip_system_copies === true || skip_signature === true);
+    if (!(rawMode && skip_signature === true)) {
+      const withSig = appendSignature(finalHtml, finalText, loginName);
+      finalHtml = withSig.html;
+      finalText = withSig.text;
+    }
+    const noCopies = !!isAdminForFlags && skip_system_copies === true;
 
     if (!finalSubject || (!finalHtml && !finalText)) {
       return jsonResponse({ error: "Subject and body are required" }, 400);
@@ -268,6 +275,7 @@ serve(async (req) => {
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: (() => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);
+          if (noCopies) return list;
           const isInvoice = !!invoice_id || String(templateCategory ?? '').toLowerCase() === 'finance';
           const archives = isInvoice
             ? ['rde@alix-lasers.com', 'k.trinh@alix-operation.de', 'service@alix-lasers.com']
@@ -278,6 +286,7 @@ serve(async (req) => {
           return list;
         })(),
         reply_to: REPLY_TO_MAP[String(from_email).toLowerCase()] || undefined,
+        ...(noCopies ? { headers: { "X-Alix-No-System-Copies": "1" } } : {}),
         subject: finalSubject,
         html: finalHtml || undefined,
         text: finalText || undefined,
