@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'google/gemini-3-flash-preview',
             messages: [
               { role: 'system', content: 'Du bist der Finance-Assistent von Alix Lasers. Schreibe einen kurzen, sachlichen deutschen Morgenreport für die Geschäftsführung. Maximal 10 Sätze, keine Aufzählungszeichen-Orgie, konkrete Zahlen, konkrete Handlungsempfehlungen.' },
               { role: 'user', content: `Kennzahlen: ${JSON.stringify(kpis)}\nEmpfehlungen: ${JSON.stringify(recommendations)}\nMahnstopps wegen Reklamation: ${holds.length}` },

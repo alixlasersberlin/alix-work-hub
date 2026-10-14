@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
           const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
             method: 'POST',
             headers: { 'Lovable-API-Key': key, 'Content-Type': 'application/json', 'X-Lovable-AIG-SDK': 'raw-fetch' },
-            body: JSON.stringify({ model: 'google/gemini-3.6-flash', messages: [{ role: 'user', content: prompt }] }),
+            body: JSON.stringify({ model: 'google/gemini-3-flash-preview', messages: [{ role: 'user', content: prompt }] }),
           });
           if (r.ok) {
             const d = await r.json();
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
               const p = JSON.parse(m[0]);
               aiSummary = String(p.summary || '');
               aiAdj = Math.max(-30, Math.min(10, Number(p.risk_adjust || 0)));
-              aiModel = 'google/gemini-3.6-flash';
+              aiModel = 'google/gemini-3-flash-preview';
               factors.push({ category: 'ki', label: 'KI-Risikoanalyse', points: aiAdj, weight_pct: 100, source: 'ai', evidence: { summary: aiSummary } });
             }
           }

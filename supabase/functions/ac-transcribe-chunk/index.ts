@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'file required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const fd = new FormData();
-    fd.append('model', 'openai/gpt-4o-mini-transcribe');
+    fd.append('model', 'openai/gpt-transcribe');
     fd.append('file', file, 'chunk.wav');
     const r = await fetch('https://ai.gateway.lovable.dev/v1/audio/transcriptions', {
       method: 'POST',

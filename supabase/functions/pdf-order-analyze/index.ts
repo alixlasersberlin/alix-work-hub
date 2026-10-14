@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
         "X-Lovable-AIG-SDK": "raw-fetch",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
         detected_language: parsed.document_language ?? null,
         document_type: parsed.document_type ?? "other",
         parser_version: "unpdf-0.12",
-        ai_model: "google/gemini-2.5-flash",
+        ai_model: "google/gemini-3-flash-preview",
         analyzed_at: new Date().toISOString(),
       })
       .eq("id", importId);

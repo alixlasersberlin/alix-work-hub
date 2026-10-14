@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
     }
 
     // Ask Gemini for structured extraction
-    const model = 'google/gemini-2.5-flash';
+    const model = 'google/gemini-3-flash-preview';
     const systemPrompt =
       'Du bist eine deutschsprachige Dokumenten-KI für ein Medizintechnik-Unternehmen (Laser-Geräte). ' +
       'Du erhältst ein Dokument (PDF oder Bild). Antworte AUSSCHLIESSLICH mit gültigem JSON – kein Markdown, kein Fließtext davor oder danach. ' +

@@ -61,7 +61,7 @@ Erzeuge jetzt die vollständige Anleitung als JSON.`;
       method: "POST",
       headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
@@ -90,7 +90,7 @@ Erzeuge jetzt die vollständige Anleitung als JSON.`;
         reparaturschritte: parsed.reparaturschritte ?? [],
         sicherheit: parsed.sicherheit ?? [],
         abschlusspruefung: parsed.abschlusspruefung ?? [],
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         created_by: userId,
       })
       .select()
