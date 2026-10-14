@@ -29733,31 +29733,55 @@ export type Database = {
       }
       invoice_corrections: {
         Row: {
+          amount_gross: number | null
+          amount_net: number | null
+          amount_vat: number | null
           correction_invoice_id: string | null
           correction_type: string
           created_at: string
           created_by: string | null
+          credit_note_number: string | null
           id: string
+          is_partial: boolean
           original_invoice_id: string
           reason: string
+          sent_at: string | null
+          sent_to: string | null
+          vat_rate: number | null
         }
         Insert: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          amount_vat?: number | null
           correction_invoice_id?: string | null
           correction_type: string
           created_at?: string
           created_by?: string | null
+          credit_note_number?: string | null
           id?: string
+          is_partial?: boolean
           original_invoice_id: string
           reason: string
+          sent_at?: string | null
+          sent_to?: string | null
+          vat_rate?: number | null
         }
         Update: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          amount_vat?: number | null
           correction_invoice_id?: string | null
           correction_type?: string
           created_at?: string
           created_by?: string | null
+          credit_note_number?: string | null
           id?: string
+          is_partial?: boolean
           original_invoice_id?: string
           reason?: string
+          sent_at?: string | null
+          sent_to?: string | null
+          vat_rate?: number | null
         }
         Relationships: []
       }
@@ -57526,6 +57550,37 @@ export type Database = {
         }
         Returns: string
       }
+      create_credit_note: {
+        Args: {
+          _amount_gross: number
+          _original_invoice_id: string
+          _reason: string
+          _vat_rate: number
+        }
+        Returns: {
+          amount_gross: number | null
+          amount_net: number | null
+          amount_vat: number | null
+          correction_invoice_id: string | null
+          correction_type: string
+          created_at: string
+          created_by: string | null
+          credit_note_number: string | null
+          id: string
+          is_partial: boolean
+          original_invoice_id: string
+          reason: string
+          sent_at: string | null
+          sent_to: string | null
+          vat_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoice_corrections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_finance_stakeholder: {
         Args: {
           p_allowed_reports?: Json
@@ -58412,6 +58467,10 @@ export type Database = {
           p_tenant_selected?: boolean
         }
         Returns: Json
+      }
+      mark_credit_note_sent: {
+        Args: { _id: string; _to: string }
+        Returns: undefined
       }
       med_can_write: { Args: never; Returns: boolean }
       merge_customers: {
