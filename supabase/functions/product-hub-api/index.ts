@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
   const key = req.headers.get("x-api-key");
   const expected = Deno.env.get("PRODUCT_HUB_API_KEY");
   if (!expected || key !== expected) return json(401, { error: "unauthorized" });
-  if (req.method !== "GET") return json(405, { error: "read_only" });
+  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : (["smart_ki","smartki"].includes((rawChannel||"").toLowerCase()) ? null : rawChannel);
 
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean); // [product-hub-api, products, {id}, media?]
