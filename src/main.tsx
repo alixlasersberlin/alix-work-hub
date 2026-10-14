@@ -104,4 +104,21 @@ if (typeof Node === "function" && Node.prototype) {
   } as typeof Node.prototype.insertBefore;
 }
 
+// Fehlgeschlagene Hintergrund-Aufrufe von Edge Functions (z. B. 502 Bad Gateway)
+// dürfen nie die ganze Seite leeren – nur protokollieren.
+if (typeof window !== "undefined") {
+  window.addEventListener("unhandledrejection", (event) => {
+    const r: any = event.reason;
+    const name = r?.name || "";
+    const msg = String(r?.message || r || "");
+    if (
+      name === "FunctionsHttpError" || name === "FunctionsFetchError" || name === "FunctionsRelayError" ||
+      /Edge function returned/i.test(msg)
+    ) {
+      event.preventDefault();
+      console.warn("Edge-Function-Aufruf fehlgeschlagen (abgefangen):", msg);
+    }
+  });
+}
+
 createRoot(document.getElementById("root")!).render(<App />);
