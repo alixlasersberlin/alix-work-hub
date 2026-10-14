@@ -149,6 +149,7 @@ export async function upsertOffer(snap: OfferSnapshot): Promise<void> {
     status: snap.status || 'draft',
     signed_at: snap.signedAt || null,
     payload: snap,
+    ...((snap as any).leadSource ? { lead_source: (snap as any).leadSource } : {}),
   };
 
 

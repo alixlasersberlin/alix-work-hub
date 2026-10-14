@@ -83,6 +83,8 @@ const newLine = (): LineItem => ({
   tax_percentage: 19,
 });
 
+const LEAD_SOURCES = ['ChatGPT', 'Google', 'Instagram', 'Facebook', 'Empfehlung', 'Vermittlung', 'Sonstiges'];
+
 export default function AngebotErstellen() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -122,6 +124,7 @@ export default function AngebotErstellen() {
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
+  const [leadSource, setLeadSource] = useState('');
   const [deliveryWeek, setDeliveryWeek] = useState(() => {
     // Default: aktuelle KW + 4 Wochen im ISO-Format YYYY-Www
     const d = new Date();
@@ -189,7 +192,7 @@ export default function AngebotErstellen() {
             if (d.customerId) setCustomerId(d.customerId);
             if (Array.isArray(d.lines) && d.lines.length) setLines(d.lines);
             if (d.offerDate) setOfferDate(d.offerDate);
-            setValidUntil(d.validUntil ?? ''); setSalesAdvisor(d.salesAdvisor ?? '');
+            setValidUntil(d.validUntil ?? ''); setSalesAdvisor(d.salesAdvisor ?? ''); setLeadSource(d.leadSource ?? '');
             if (d.deliveryWeek) setDeliveryWeek(d.deliveryWeek);
             setSpecialOffer(d.specialOffer ?? ''); setNotes(d.notes ?? '');
             if (typeof d.includeAppendix === 'boolean') setIncludeAppendix(d.includeAppendix);
@@ -213,14 +216,14 @@ export default function AngebotErstellen() {
     const t = window.setTimeout(() => {
       try {
         localStorage.setItem(draftKey, JSON.stringify({
-          savedAt: Date.now(), customerId, lines, offerDate, validUntil, salesAdvisor, deliveryWeek,
+          savedAt: Date.now(), customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, deliveryWeek,
           specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode,
           priceMode, payTerm, payRate, step,
         }));
       } catch { /* Speicher voll – ignorieren */ }
     }, 800);
     return () => window.clearTimeout(t);
-  }, [customerId, lines, offerDate, validUntil, salesAdvisor, deliveryWeek, specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode, priceMode, payTerm, payRate, step]);
+  }, [customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, deliveryWeek, specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode, priceMode, payTerm, payRate, step]);
 
   const [leadsOpen, setLeadsOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
@@ -389,6 +392,7 @@ export default function AngebotErstellen() {
             if (snap.offerDate) setOfferDate(snap.offerDate);
             if (snap.validUntil) setValidUntil(snap.validUntil);
             if (snap.salesAdvisor) setSalesAdvisor(snap.salesAdvisor);
+            if ((snap as any).leadSource) setLeadSource((snap as any).leadSource);
             if (snap.deliveryWeek) setDeliveryWeek(snap.deliveryWeek);
             if (snap.specialOffer) setSpecialOffer(snap.specialOffer);
             setExistingApproval((snap.approvalStatus as any) || 'pending');
@@ -1712,6 +1716,7 @@ export default function AngebotErstellen() {
     offerDate,
     validUntil,
     salesAdvisor,
+    leadSource,
     deliveryWeek,
     specialOffer,
     notes,
@@ -1732,6 +1737,7 @@ export default function AngebotErstellen() {
 
   const saveOffer = async (silent = false): Promise<boolean> => {
     if (isLockedForEdit) { toast.error('Bereits erstelltes Angebot – Änderungen benötigen Freigabe durch Admin oder Super Admin.'); return false; }
+    if (!leadSource) { toast.error('Bitte die Herkunft des Angebots auswählen.'); setStep(1); return false; }
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return false; }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return false; }
@@ -1995,6 +2001,7 @@ export default function AngebotErstellen() {
     if (s === 1) {
       if (!offerNumber.trim()) return 'Bitte eine Nummer vergeben.';
       if (!offerDate) return 'Bitte ein Datum wählen.';
+      if (!leadSource) return 'Bitte die Herkunft auswählen.';
       return null;
     }
     if (s === 2) {
@@ -2154,6 +2161,15 @@ export default function AngebotErstellen() {
         <div>
           <Label>Gültig bis</Label>
           <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="bg-secondary border-border mt-1.5" />
+        </div>
+        <div>
+          <Label>Herkunft <span className="text-destructive">*</span></Label>
+          <Select value={leadSource} onValueChange={setLeadSource}>
+            <SelectTrigger className={`bg-secondary border-border mt-1.5 ${!leadSource ? 'border-destructive/60' : ''}`}><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
+            <SelectContent>
+              {LEAD_SOURCES.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label>Verkaufsberater</Label>
