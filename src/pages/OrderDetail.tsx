@@ -423,6 +423,8 @@ export default function OrderDetail() {
   }
 
   async function toggleDepositGeleistet(depId: string, value: boolean) {
+    toast.info('Anzahlungen können nur unter Buchhaltung → Anzahlungen gebucht werden.');
+    if (depId || value || !depId) return;
     const prev = additionalDeposits.find(d => d.id === depId);
     const { error } = await supabase.from('order_additional_deposits' as any).update({ geleistet: value } as any).eq('id', depId);
     if (error) { toast.error('Fehler: ' + error.message); return; }
@@ -1238,35 +1240,22 @@ export default function OrderDetail() {
           })()}
           <div className="space-y-4">
 
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={depositOk}
-                onCheckedChange={v => setDepositOk(!!v)}
-                disabled={!canWriteDeposit}
-              />
+            <label className="flex items-center gap-3">
+              <Checkbox checked={depositOk} disabled />
               <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
+              <Link to="/finance/anzahlungen" className="text-xs text-primary hover:underline">
+                Buchung nur unter Buchhaltung → Anzahlungen
+              </Link>
             </label>
             {depositOk && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
-                  <Input
-                    value={depositBy}
-                    onChange={e => setDepositBy(e.target.value)}
-                    placeholder="Name des Mitarbeiters"
-                    disabled={!canWriteDeposit}
-                    className="bg-secondary border-border mt-1"
-                  />
+                  <Input value={depositBy} disabled readOnly className="bg-secondary border-border mt-1" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Buchungsdatum</Label>
-                  <Input
-                    type="date"
-                    value={depositBookingDate}
-                    onChange={e => setDepositBookingDate(e.target.value)}
-                    disabled={!canWriteDeposit}
-                    className="bg-secondary border-border mt-1"
-                  />
+                  <Input type="date" value={depositBookingDate} disabled readOnly className="bg-secondary border-border mt-1" />
                 </div>
               </div>
             )}
