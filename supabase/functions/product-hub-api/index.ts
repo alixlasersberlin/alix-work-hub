@@ -186,7 +186,6 @@ Deno.serve(async (req) => {
   const key = req.headers.get("x-api-key");
   const expected = Deno.env.get("PRODUCT_HUB_API_KEY");
   if (!expected || key !== expected) return json(401, { error: "unauthorized" });
-  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : (["smart_ki","smartki"].includes((rawChannel||"").toLowerCase()) ? null : rawChannel);
 
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean); // [product-hub-api, products, {id}, media?]
@@ -195,7 +194,7 @@ Deno.serve(async (req) => {
   const sub = idx >= 0 ? parts[idx + 2] : undefined;
   const rawChannel = url.searchParams.get("channel");
   // alix-lasers.ae darf als ae/uae/dubai angefragt werden – intern immer "dubai"
-  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : rawChannel;
+  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : (["smart_ki","smartki"].includes((rawChannel||"").toLowerCase()) ? null : rawChannel);
   // Alix Smart KI: niemals Preise ausliefern (consumer=smart_ki|ai oder channel=smart_ki)
   const consumer = (url.searchParams.get("consumer") || "").toLowerCase();
   const noPrices = ["smart_ki", "smartki", "ai", "ki"].includes(consumer) || ["smart_ki", "smartki"].includes((rawChannel || "").toLowerCase()) || url.searchParams.get("no_prices") === "1";
