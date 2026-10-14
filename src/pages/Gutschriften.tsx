@@ -178,7 +178,10 @@ export default function Gutschriften() {
                   <button key={h.id} onClick={() => pick(h)} className="w-full text-left p-2 rounded border border-border hover:border-primary text-sm">
                     <div className="font-medium">{h.invoice_number} · {eur(h.total)}</div>
                     <div className="text-muted-foreground">{h.customer_name} · {date(h.invoice_date)}</div>
-                  </button>))}</div>
+                  </button>))}
+                  {q.trim().length >= 2 && hits.length === 0 && (
+                    <div className="text-sm text-muted-foreground p-2">Keine Rechnung gefunden. Bitte Rechnungsnummer (z. B. RE-SO-4143) oder Kundennamen eingeben.</div>
+                  )}</div>
               </div>
             ) : (<>
               <div className="p-3 rounded border border-border text-sm">
