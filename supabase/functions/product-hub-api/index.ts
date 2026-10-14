@@ -31,9 +31,18 @@ const CHANNEL_COUNTRY: Record<string, string> = {
  * Länderpreise werden nur ausgeliefert, wenn das jeweilige Land freigeschaltet ist;
  * bei gesetztem Kanal wird auf dessen Land reduziert. Brutto-/Nettowerte werden mitgeliefert.
  */
+const ALL_PRICE_FIELDS = ["price_public", "price_uvp", "vk_min_mode", "vk_min_value", "vk_max_mode", "vk_max_value", "promo_active", "promo_name", "price_countries"];
+let NO_PRICES = false;
+
 function stripPrices<T extends Record<string, unknown>>(row: T, channel?: string | null): T {
   if (!row) return row;
   const out: Record<string, unknown> = { ...row };
+  if (NO_PRICES) {
+    for (const f of ALL_PRICE_FIELDS) delete out[f];
+    out.prices = {};
+    out.price_notice = "Die Preise erhalten Sie bei Ihrem zuständigen Berater.";
+    return out as T;
+  }
 
   const all = (row.price_countries && typeof row.price_countries === "object")
     ? row.price_countries as Record<string, any>
@@ -177,7 +186,6 @@ Deno.serve(async (req) => {
   const key = req.headers.get("x-api-key");
   const expected = Deno.env.get("PRODUCT_HUB_API_KEY");
   if (!expected || key !== expected) return json(401, { error: "unauthorized" });
-  if (req.method !== "GET") return json(405, { error: "read_only" });
 
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean); // [product-hub-api, products, {id}, media?]
@@ -186,7 +194,11 @@ Deno.serve(async (req) => {
   const sub = idx >= 0 ? parts[idx + 2] : undefined;
   const rawChannel = url.searchParams.get("channel");
   // alix-lasers.ae darf als ae/uae/dubai angefragt werden – intern immer "dubai"
-  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : rawChannel;
+  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : (["smart_ki","smartki"].includes((rawChannel||"").toLowerCase()) ? null : rawChannel);
+  // Alix Smart KI: niemals Preise ausliefern (consumer=smart_ki|ai oder channel=smart_ki)
+  const consumer = (url.searchParams.get("consumer") || "").toLowerCase();
+  const noPrices = ["smart_ki", "smartki", "ai", "ki"].includes(consumer) || ["smart_ki", "smartki"].includes((rawChannel || "").toLowerCase()) || url.searchParams.get("no_prices") === "1";
+  NO_PRICES = noPrices;
   const rawLocale = (url.searchParams.get("locale") || "de").toLowerCase();
   const locale = LOCALES.includes(rawLocale) ? rawLocale : "de";
 
