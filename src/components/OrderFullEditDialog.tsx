@@ -82,10 +82,6 @@ export default function OrderFullEditDialog({ order, open, onClose, onSaved }: P
       toast.error('Intern Nummer: max. 10 Zeichen, nur Buchstaben und Zahlen');
       return;
     }
-    if (form.deposit_ok && !String(form.deposit_ok_by || '').trim()) {
-      toast.error('Bitte Mitarbeitername für "ANZAHLUNG OK" eintragen');
-      return;
-    }
     setSaving(true);
 
     const update: any = {
@@ -101,12 +97,6 @@ export default function OrderFullEditDialog({ order, open, onClose, onSaved }: P
       lawyer_reason: form.order_status === 'Anwalt' ? (form.lawyer_reason || null) : null,
       deposit_amount: num(form.deposit_amount),
       deposit_additional: num(form.deposit_additional),
-      deposit_booking_date: form.deposit_booking_date || null,
-      deposit_ok: !!form.deposit_ok,
-      deposit_ok_by: form.deposit_ok ? String(form.deposit_ok_by).trim() : null,
-      deposit_ok_at: form.deposit_ok
-        ? (order.deposit_ok && order.deposit_ok_at ? order.deposit_ok_at : new Date().toISOString())
-        : null,
       is_vip: !!form.is_vip,
       finance_payment_status: form.finance_payment_status || null,
       finance_total_amount: num(form.finance_total_amount),
@@ -257,18 +247,15 @@ export default function OrderFullEditDialog({ order, open, onClose, onSaved }: P
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Anzahlung Buchungsdatum</Label>
-                <Input type="date" value={form.deposit_booking_date}
-                  onChange={e => set('deposit_booking_date', e.target.value)} className="bg-secondary border-border mt-1" />
+                <Input type="date" value={form.deposit_booking_date} disabled readOnly
+                  className="bg-secondary border-border mt-1" />
               </div>
               <div className="rounded-md border border-border bg-secondary/40 p-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={form.deposit_ok} onCheckedChange={v => set('deposit_ok', !!v)} />
+                <label className="flex items-center gap-2">
+                  <Checkbox checked={form.deposit_ok} disabled />
                   <span className="text-xs font-semibold">ANZAHLUNG OK</span>
                 </label>
-                {form.deposit_ok && (
-                  <Input value={form.deposit_ok_by} onChange={e => set('deposit_ok_by', e.target.value)}
-                    placeholder="Mitarbeiter" className="bg-background border-border mt-2 h-8 text-xs" />
-                )}
+                <p className="text-[11px] text-muted-foreground mt-1">Buchung nur unter Buchhaltung → Anzahlungen</p>
               </div>
             </div>
           </section>
