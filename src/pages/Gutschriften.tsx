@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Undo2, Plus, Download, Mail, Search, Loader2 } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { generateCreditNotePdf } from '@/lib/finance/credit-note-pdf';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,30 +20,17 @@ type Credit = { id: string; credit_note_number: string; original_invoice_id: str
 const eur = (n: number | null | undefined) => (n ?? 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 const date = (s?: string | null) => (s ? new Date(s).toLocaleDateString('de-DE') : '–');
 
-function buildPdf(c: Credit) {
-  const doc = new jsPDF();
+async function buildPdf(c: Credit) {
   const inv = c.inv;
-  doc.setFontSize(18); doc.text('Gutschrift', 20, 25);
-  doc.setFontSize(10);
-  doc.text('Alix Lasers Deutschland', 140, 25);
-  doc.text(`Nr.: ${c.credit_note_number}`, 140, 32);
-  doc.text(`Datum: ${date(c.created_at)}`, 140, 38);
-  doc.setFontSize(11);
-  doc.text(inv?.customer_name || 'Kunde', 20, 45);
   const addr = inv?.billing_address || {};
-  [addr.address || addr.street, [addr.zip, addr.city].filter(Boolean).join(' ')].filter(Boolean).forEach((l: string, i: number) => doc.text(String(l), 20, 51 + i * 6));
-  doc.text(`Bezug: Rechnung ${inv?.invoice_number || ''} vom ${date(inv?.invoice_date)}`, 20, 75);
-  doc.text(c.is_partial ? 'Teilgutschrift' : 'Gutschrift über den vollen Rechnungsbetrag', 20, 82);
-  doc.text('Grund:', 20, 94);
-  doc.text(doc.splitTextToSize(c.reason, 170), 20, 100);
-  let y = 125;
-  const row = (l: string, v: string, bold = false) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.text(l, 110, y); doc.text(v, 190, y, { align: 'right' }); y += 7; };
-  row('Nettobetrag', eur(c.amount_net));
-  row(`USt. ${c.vat_rate} %`, eur(c.amount_vat));
-  row('Gutschriftbetrag', eur(c.amount_gross), true);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Der Betrag wird mit offenen Forderungen verrechnet bzw. Ihnen erstattet.', 20, y + 12);
-  return doc;
+  const address = typeof addr === 'string' ? addr : [addr.attention, addr.address || addr.street, addr.street2, [addr.zip, addr.city].filter(Boolean).join(' '), addr.country].filter(Boolean).join('\n');
+  return generateCreditNotePdf({
+    creditNoteNumber: c.credit_note_number, date: c.created_at,
+    customerName: inv?.customer_name || 'Kunde', customerAddress: address || null,
+    invoiceNumber: inv?.invoice_number, invoiceDate: inv?.invoice_date,
+    reason: c.reason, isPartial: c.is_partial,
+    net: Number(c.amount_net), vat: Number(c.amount_vat), vatRate: Number(c.vat_rate), gross: Number(c.amount_gross),
+  });
 }
 
 export default function Gutschriften() {
@@ -124,7 +111,7 @@ export default function Gutschriften() {
     if (!mail?.to.includes('@')) return;
     setSending(true);
     try {
-      const pdf = buildPdf(mail.c).output('datauristring').split(',')[1];
+      const pdf = (await buildPdf(mail.c)).output('datauristring').split(',')[1];
       const { error } = await supabase.functions.invoke('send-mail', { body: {
         to_email: mail.to, to_name: mail.c.inv?.customer_name || undefined,
         subject: `Ihre Gutschrift ${mail.c.credit_note_number}`,
@@ -158,7 +145,7 @@ export default function Gutschriften() {
               <TableCell className="text-right">{eur(c.amount_gross)}</TableCell>
               <TableCell>{c.sent_at ? <Badge variant="secondary" title={c.sent_to || ''}>versendet {date(c.sent_at)}</Badge> : <Badge variant="outline">{c.is_partial ? 'Teilgutschrift' : 'Voll'}</Badge>}</TableCell>
               <TableCell className="text-right whitespace-nowrap">
-                <Button size="sm" variant="ghost" onClick={() => buildPdf(c).save(`${c.credit_note_number}.pdf`)}><Download className="w-4 h-4" /></Button>
+                <Button size="sm" variant="ghost" onClick={async () => (await buildPdf(c)).save(`${c.credit_note_number}.pdf`)}><Download className="w-4 h-4" /></Button>
                 <Button size="sm" variant="ghost" onClick={() => openMail(c)}><Mail className="w-4 h-4" /></Button>
               </TableCell>
             </TableRow>))}
