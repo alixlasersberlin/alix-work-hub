@@ -72,7 +72,7 @@ ${(ocrText || "").slice(0, 8000)}`;
         "Lovable-API-Key": LOVABLE_API_KEY,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: "Du bist ein präziser Feldextraktor. Antworte NUR mit gültigem JSON, keine Erklärung." },
           { role: "user", content: prompt },

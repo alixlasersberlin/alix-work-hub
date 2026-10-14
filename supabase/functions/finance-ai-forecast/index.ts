@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: `Du bist Finanz-Forecaster. Antworte STRENG als JSON-Array mit ${months} Zahlen (EUR, ohne Trennzeichen), basierend auf historischer Saisonalität & Trend. Kein Markdown, kein Text drumherum.` },
           { role: "user", content: `Kategorie: ${category}\nHistorie (Monat → EUR):\n${history.map(([m,v])=>`${m}: ${v.toFixed(0)}`).join("\n")}\n\nProgose für die nächsten ${months} Monate als JSON-Array, z.B. [12345, 13000, ...]` },

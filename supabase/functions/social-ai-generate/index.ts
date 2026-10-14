@@ -67,7 +67,7 @@ Antworte AUSSCHLIESSLICH mit gültigem JSON in genau diesem Format:
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': LOVABLE_API_KEY },
         body: JSON.stringify({
-          model: 'google/gemini-3.6-flash',
+          model: 'google/gemini-3-flash-preview',
           messages: [
             { role: 'system', content: system },
             { role: 'user', content: String(prompt) },

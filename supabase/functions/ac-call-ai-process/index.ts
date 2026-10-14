@@ -14,7 +14,7 @@ async function transcribe(url: string): Promise<string> {
   if (!audio.ok) throw new Error(`fetch recording failed: ${audio.status}`);
   const blob = await audio.blob();
   const fd = new FormData();
-  fd.append('model', 'openai/gpt-4o-mini-transcribe');
+  fd.append('model', 'openai/gpt-transcribe');
   fd.append('file', blob, 'recording.mp3');
   const r = await fetch('https://ai.gateway.lovable.dev/v1/audio/transcriptions', {
     method: 'POST',

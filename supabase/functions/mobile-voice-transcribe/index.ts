@@ -1,6 +1,6 @@
 // Edge Function: mobile-voice-transcribe
 // Nimmt eine Audio-Datei (multipart/form-data 'file') vom Techniker entgegen,
-// leitet sie an die Lovable AI Gateway STT weiter (openai/gpt-4o-mini-transcribe)
+// leitet sie an die Lovable AI Gateway STT weiter (openai/gpt-transcribe)
 // und schreibt das Transkript optional als ticket_message oder route-plan-Notiz.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     if (file.size > 24 * 1024 * 1024) return json({ error: 'audio too large' }, 400);
 
     const upstream = new FormData();
-    upstream.append('model', 'openai/gpt-4o-mini-transcribe');
+    upstream.append('model', 'openai/gpt-transcribe');
     const ext = ({ 'audio/webm': 'webm', 'audio/mp4': 'mp4', 'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'audio/ogg': 'ogg' } as any)[file.type.split(';')[0]] ?? 'webm';
     upstream.append('file', file, `voice.${ext}`);
 

@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
         "X-Lovable-AIG-SDK": "raw-fetch",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
         arbeitszeit: parsed.arbeitszeit ?? null,
         technikerempfehlung: parsed.technikerempfehlung ?? null,
         raw_response: aiJson,
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         tokens_input: aiJson.usage?.prompt_tokens ?? null,
         tokens_output: aiJson.usage?.completion_tokens ?? null,
         created_by: userId,

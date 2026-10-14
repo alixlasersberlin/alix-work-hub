@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     if (file.size < 2048) return new Response(JSON.stringify({ error: 'audio_too_short' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const upstream = new FormData();
-    upstream.append('model', 'openai/gpt-4o-mini-transcribe');
+    upstream.append('model', 'openai/gpt-transcribe');
     upstream.append('file', file, file.name || 'recording.webm');
 
     const r = await fetch('https://ai.gateway.lovable.dev/v1/audio/transcriptions', {

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const ext = ct.includes('wav') ? 'wav' : ct.includes('mp4') ? 'mp4' : ct.includes('webm') ? 'webm' : 'mp3';
 
     const form = new FormData();
-    form.append('model', 'openai/gpt-4o-mini-transcribe');
+    form.append('model', 'openai/gpt-transcribe');
     form.append('file', audioBlob, `voicemail.${ext}`);
 
     const key = Deno.env.get('LOVABLE_API_KEY');

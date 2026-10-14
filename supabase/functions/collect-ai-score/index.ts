@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
             method: 'POST',
             headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: 'google/gemini-2.5-flash',
+              model: 'google/gemini-3-flash-preview',
               messages: [
                 { role: 'system', content: 'Du bist Forderungsmanager bei einem Medizintechnik-Unternehmen. Antworte NUR mit kompaktem JSON: {"empfehlung":"...","begruendung":"..."} auf Deutsch, maximal 2 Sätze je Feld, konkret und umsetzbar.' },
                 { role: 'user', content: JSON.stringify({ kunde: c.customer_name, offen: c.open_amount, ueberfaellig: c.overdue_amount, verzugstage: c.max_days_overdue, stufe: c.stage_code, status: c.status, risiko: risk, historie: history }) },
