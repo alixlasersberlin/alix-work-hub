@@ -63,7 +63,10 @@ Deno.serve(async (req) => {
   // Fallback: ältere Anfragen wurden ohne Positionen gespeichert –
   // Payload aus dem Angebot nachladen.
   let payload: any = r.offer_payload || {}
-  if (!Array.isArray(payload?.lines) || payload.lines.length === 0) {
+  // Solange noch nicht unterschrieben: immer den neuesten Stand des Angebots zeigen
+  // und den Snapshot aktualisieren, damit Unterschrift + Auftrag denselben Stand nutzen.
+  const mustRefresh = status !== 'unterschrieben'
+  if (mustRefresh || !Array.isArray(payload?.lines) || payload.lines.length === 0) {
     const { data: off } = await admin
       .from('offers')
       .select('payload, total_net, total_tax, total_gross')
@@ -79,6 +82,9 @@ Deno.serve(async (req) => {
           tax: Number(off?.total_tax || 0),
           gross: Number(off?.total_gross || 0),
         },
+      }
+      if (mustRefresh) {
+        await admin.from('alix_sign_requests').update({ offer_payload: payload }).eq('id', r.id)
       }
     }
   }
