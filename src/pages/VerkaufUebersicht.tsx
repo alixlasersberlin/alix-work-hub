@@ -104,7 +104,13 @@ const TILES: Tile[] = [
     icon: Undo2,
     to: '/verkauf/gutschriften',
     accent: 'from-rose-500/20 to-rose-500/5 border-rose-500/30',
-    load: async () => null,
+    load: async () => {
+      const { count, error } = await supabase
+        .from('invoice_corrections' as any)
+        .select('*', { count: 'exact', head: true })
+        .not('credit_note_number', 'is', null);
+      return error ? null : count ?? 0;
+    },
   },
 ];
 
@@ -148,7 +154,15 @@ export default function VerkaufUebersicht() {
     reload();
   }, [reload]);
 
-  useRealtimeRefresh(['offers', 'orders', 'customers'], reload, { debounceMs: 600 });
+  useRealtimeRefresh(['offers', 'orders', 'customers', 'invoice_corrections'], reload, { debounceMs: 600 });
+
+  // Zusätzlich alle 15 s aktualisieren, falls ein Live-Ereignis ausbleibt.
+  useEffect(() => {
+    const id = setInterval(() => { if (!document.hidden) reload(); }, 15000);
+    const onVis = () => { if (!document.hidden) reload(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
+  }, [reload]);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
@@ -157,6 +171,7 @@ export default function VerkaufUebersicht() {
         title="Verkäufe – Übersicht"
         subtitle="Schneller Zugriff auf alle Verkaufsbereiche"
         noBreadcrumbs
+        meta={<span className="inline-flex items-center gap-1.5 text-xs text-emerald-400"><span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />Live</span>}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
