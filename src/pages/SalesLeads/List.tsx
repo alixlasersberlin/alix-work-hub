@@ -424,7 +424,7 @@ export default function SalesLeadsList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-left">
               <tr>
-                <th className="p-3 w-8">
+                <th className="p-3 w-8 sticky left-0 z-10 bg-card">
                   <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAllVisible} aria-label="Alle auswählen" />
                 </th>
                 <th className="p-3 w-8" title="Auftrag vorhanden?"></th>
@@ -449,7 +449,7 @@ export default function SalesLeadsList() {
                 <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : paged.map((r) => (
                 <tr key={r.id} className={`border-t hover:bg-muted/30 ${selected.has(r.id) ? 'bg-primary/10' : ''}`}>
-                  <td className="p-3 align-middle">
+                  <td className="p-3 align-middle sticky left-0 z-10 bg-card">
                     <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleRow(r.id)} aria-label="Anfrage auswählen" />
                   </td>
                   <td className="p-3 align-middle">
