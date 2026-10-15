@@ -113,7 +113,7 @@ export default function Gutschriften() {
     try {
       const pdf = (await buildPdf(mail.c)).output('datauristring').split(',')[1];
       const { error } = await supabase.functions.invoke('send-mail', { body: {
-        to_email: mail.to, to_name: mail.c.inv?.customer_name || undefined,
+        to_email: mail.to, from_email: 'finance@alixwork.de', to_name: mail.c.inv?.customer_name || undefined,
         subject: `Ihre Gutschrift ${mail.c.credit_note_number}`,
         body_html: `<p>Guten Tag,</p><p>anbei erhalten Sie die Gutschrift ${mail.c.credit_note_number} zur Rechnung ${mail.c.inv?.invoice_number || ''} über ${eur(mail.c.amount_gross)}.</p><p>Mit freundlichen Grüßen<br>Alix Lasers Deutschland</p>`,
         attachments: [{ filename: `${mail.c.credit_note_number}.pdf`, content: pdf, contentType: 'application/pdf' }],

@@ -32,12 +32,12 @@ const CHANNEL_COUNTRY: Record<string, string> = {
  * bei gesetztem Kanal wird auf dessen Land reduziert. Brutto-/Nettowerte werden mitgeliefert.
  */
 const ALL_PRICE_FIELDS = ["price_public", "price_uvp", "vk_min_mode", "vk_min_value", "vk_max_mode", "vk_max_value", "promo_active", "promo_name", "price_countries"];
-let NO_PRICES = false;
 
-function stripPrices<T extends Record<string, unknown>>(row: T, channel?: string | null): T {
+
+function stripPrices<T extends Record<string, unknown>>(row: T, channel?: string | null, noPrices = false): T {
   if (!row) return row;
   const out: Record<string, unknown> = { ...row };
-  if (NO_PRICES) {
+  if (noPrices) {
     for (const f of ALL_PRICE_FIELDS) delete out[f];
     out.prices = {};
     out.price_notice = "Die Preise erhalten Sie bei Ihrem zuständigen Berater.";
@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
   // Alix Smart KI: niemals Preise ausliefern (consumer=smart_ki|ai oder channel=smart_ki)
   const consumer = (url.searchParams.get("consumer") || "").toLowerCase();
   const noPrices = ["smart_ki", "smartki", "ai", "ki"].includes(consumer) || ["smart_ki", "smartki"].includes((rawChannel || "").toLowerCase()) || url.searchParams.get("no_prices") === "1";
-  NO_PRICES = noPrices;
+
   const rawLocale = (url.searchParams.get("locale") || "de").toLowerCase();
   const locale = LOCALES.includes(rawLocale) ? rawLocale : "de";
 
@@ -263,7 +263,7 @@ Deno.serve(async (req) => {
       return json(200, {
         locale,
         products: rows.map((r) => {
-          const { id, ...rest } = applyLocale(withUae(stripPrices(r, channel), comps[r.id]), trs[r.id], locale);
+          const { id, ...rest } = applyLocale(withUae(stripPrices(r, channel, noPrices), comps[r.id]), trs[r.id], locale);
           return rest;
         }),
       });
@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
     const comps1 = await complianceMap(supabase, [(prod as any).id]);
     const trs1 = await translationMap(supabase, [(prod as any).id], locale);
     const pubProd = applyLocale(
-      withUae(stripPrices(prod as any, channel), comps1[(prod as any).id]),
+      withUae(stripPrices(prod as any, channel, noPrices), comps1[(prod as any).id]),
       trs1[(prod as any).id],
       locale,
     );
