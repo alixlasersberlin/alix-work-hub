@@ -2140,12 +2140,12 @@ export default function AngebotErstellen() {
         </div>
       )}
 
-      {renderStepNav()}
-
-      {renderStepper()}
 
 
-      {step === 1 && (
+
+
+
+      {(/* Abschnitt 1 */ true) && (
       <>
       <div className="rounded-xl border border-border bg-card card-glow p-4 grid gap-3 md:grid-cols-3">
 
@@ -2301,7 +2301,7 @@ export default function AngebotErstellen() {
 
 
 
-      {step === 2 && (
+      {(/* Abschnitt 2 */ true) && (
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
         <h2 className="font-semibold text-foreground">Kunde</h2>
 
@@ -2531,7 +2531,7 @@ export default function AngebotErstellen() {
       </div>
       )}
 
-      {step === 3 && (
+      {(/* Abschnitt 3 */ true) && (
 
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
 
@@ -2819,7 +2819,7 @@ export default function AngebotErstellen() {
 
       
 
-      {step === 4 && (
+      {(/* Abschnitt 4 */ true) && (
       <>
       {/* Zahlungsberechnung */}
       <div className="rounded-xl border border-border bg-card card-glow p-4 space-y-3">
