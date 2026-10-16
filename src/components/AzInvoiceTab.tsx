@@ -13,6 +13,7 @@ import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { downloadStampedPdf, stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
+import { depositInvoiceUpdate, findDepositInvoiceTarget, type DepositInvoiceTarget } from '@/lib/finance/deposit-invoice-target';
 
 type BuildMode = 'download' | 'blob';
 
@@ -649,13 +650,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       const vatAmt = Number(taxAmount.toFixed(2));
       const grossAmt = Number(grossDeposit.toFixed(2));
       const sourceRef = order?.id ? `order:${order.id}:${invoiceNumber}` : `inv:${invoiceNumber}`;
-      const { data: existing } = await supabase
-        .from('finance_deposits' as any)
-        .select('id, status')
-        .eq('source', 'alixwork')
-        .eq('source_ref', sourceRef)
-        .limit(1);
-      if (existing && existing.length > 0) return; // Bereits Entwurf/Offen vorhanden
+      const existingRow = await resolveDepositTarget(sourceRef);
+      if (existingRow?.source_ref === sourceRef) return; // Bereits Entwurf/Offen vorhanden
       const payload: any = {
         source: 'alixwork',
         source_ref: sourceRef,
@@ -678,11 +674,37 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         release_status: 'nicht_freigegeben',
         note: `Entwurf Anzahlungsrechnung ${invoiceNumber} – ${positionLabel || `Anzahlung Auftrag ${orderNo}`} (MwSt ${taxPercentage}%).`,
       };
-      const { error } = await supabase.from('finance_deposits' as any).insert(payload);
+      const { error } = existingRow
+        ? await updateDepositTarget(payload, existingRow, true)
+        : await supabase.from('finance_deposits' as any).insert(payload);
       if (error) console.warn('[AzInvoice] saveDraftDeposit failed:', error.message);
     } catch (e: any) {
       console.warn('[AzInvoice] saveDraftDeposit exception:', e?.message);
     }
+  }
+
+  async function resolveDepositTarget(sourceRef: string): Promise<DepositInvoiceTarget | undefined> {
+    const refs = [sourceRef];
+    if (order?.id) refs.push(`order:${order.id}`);
+    const { data, error } = await supabase.from('finance_deposits' as any)
+      .select('id, source_ref, invoice_number, gross_amount, paid_amount, status, release_status')
+      .eq('source', 'alixwork')
+      .in('source_ref', refs);
+    if (error) throw error;
+    return findDepositInvoiceTarget((data || []) as unknown as DepositInvoiceTarget[], sourceRef, order?.id ?? null, grossDeposit);
+  }
+
+  async function updateDepositTarget(payload: Record<string, unknown>, existing: DepositInvoiceTarget, draft: boolean) {
+    let query = supabase.from('finance_deposits' as any)
+      .update(depositInvoiceUpdate(payload, existing, draft))
+      .eq('id', existing.id);
+    // Do not overwrite a concurrent payment, release decision or invoice creation.
+    for (const column of ['source_ref', 'paid_amount', 'release_status', 'status', 'invoice_number'] as const) {
+      query = existing[column] === null ? query.is(column, null) : query.eq(column, existing[column]);
+    }
+    const result = await query.select('id').maybeSingle();
+    if (!result.error && !result.data) throw new Error('Die Anzahlung wurde zwischenzeitlich geändert. Bitte neu laden und erneut versuchen.');
+    return result;
   }
 
   async function postToBuchhaltung(): Promise<boolean> {
@@ -694,15 +716,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     setPostingToBuchhaltung(true);
     try {
       const sourceRef = order?.id ? `order:${order.id}:${invoiceNumber}` : `inv:${invoiceNumber}`;
-      // Bestehenden Datensatz suchen – ggf. Entwurf zu "Offen" hochstufen
-      const { data: existing } = await supabase
-        .from('finance_deposits' as any)
-        .select('id, status')
-        .eq('source', 'alixwork')
-        .eq('source_ref', sourceRef)
-        .limit(1);
-      const existingRow: any = existing?.[0];
-      if (existingRow && existingRow.status !== 'entwurf') {
+      // Vorhandenen Auftragsplatzhalter zur Rechnung machen, statt eine zweite Forderung anzulegen.
+      const existingRow = await resolveDepositTarget(sourceRef);
+      if (existingRow?.source_ref === sourceRef && existingRow.status !== 'entwurf') {
         toast.info(`Anzahlung ${invoiceNumber} ist bereits in der Buchhaltung erfasst.`);
         return true;
       }
@@ -735,9 +751,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       };
       let insertedId: string | null = null;
       if (existingRow) {
-        const { error: updErr } = await supabase.from('finance_deposits' as any)
-          .update({ ...payload, status: 'offen' })
-          .eq('id', existingRow.id);
+        const { error: updErr } = await updateDepositTarget(payload, existingRow, false);
         if (updErr) throw updErr;
         insertedId = existingRow.id;
       } else {

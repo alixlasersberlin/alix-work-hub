@@ -1,2 +1,3 @@
 - Wiederkehrende Zahler V1 lebt in rp_*-Tabellen; Läufe/Positionen nur über Security-Definer-RPCs (rp_prepare_run/rp_approve_run …) änderbar — Freigabe, Duplikatsperre und Beträge müssen serverseitig erzwungen werden.
 - Ticket-Art (neue Kundenanfrage / bestehender Vorgang / automatische Meldung) wird clientseitig in src/lib/ticketKind.ts abgeleitet — keine Schemaänderung nötig, Regeln zentral testbar.
+- Deposit invoice creation resolves existing invoice drafts or equal-amount unissued order placeholders through deposit-invoice-target; update the same row and preserve payments and releases to avoid duplicate receivables.
