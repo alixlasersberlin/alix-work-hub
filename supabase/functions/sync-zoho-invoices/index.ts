@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
       if (!names.includes("Admin") && !names.includes("Super Admin")) return json({ error: "Forbidden" }, 403);
     }
 
-    const body = (await req.json().catch(() => ({}))) as Payload;
+    const body = (await req.json().catch(() => ({}))) as Payload & { count_only?: boolean };
     const sourceSystem = body.source_system ?? "zoho_eu_1";
     const dateFrom = body.date_from ?? "2025-01-01";
     const dateTo = body.date_to;
@@ -197,6 +197,26 @@ Deno.serve(async (req) => {
     }
 
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
+    if (body.count_only === true) {
+      if (!dateTo || dateFrom !== dateTo || !/^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) return json({ error: "Zählung nur für ein exaktes Datum" }, 400);
+      const excluded = await getExcludedRecurringIds(cfg, token, sourceSystem, excludeProfileName);
+      const counts = { total: 0, importable: 0, recurring: 0, draft: 0, void: 0, region_skipped: 0 };
+      for (let p = 1; p <= 20; p++) {
+        const r = await fetch(`${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}&page=${p}&per_page=200&date=${dateFrom}&filter_by=Status.All`, { headers: authH });
+        if (!r.ok) return json({ error: `Zoho-Zählung fehlgeschlagen (${r.status})` }, 502);
+        const d = await r.json();
+        for (const inv of (d.invoices ?? []).filter((x: any) => x.date === dateFrom)) {
+          counts.total++;
+          if (inv.status === 'draft') counts.draft++;
+          if (inv.status === 'void') counts.void++;
+          if (inv.recurring_invoice_id) { counts.recurring++; continue; }
+          if (regionFilter !== "all" && detectInvoiceRegion(inv) !== regionFilter) { counts.region_skipped++; continue; }
+          counts.importable++;
+        }
+        if (d.page_context?.has_more_page !== true) return json({ success: true, date: dateFrom, excluded_profiles: excluded.size, ...counts });
+      }
+      return json({ error: "Zu viele Rechnungen für eine sichere Zählung" }, 413);
+    }
     const excludedIds = await getExcludedRecurringIds(cfg, token, sourceSystem, excludeProfileName);
 
     let imported = 0, updated = 0, failed = 0, skippedSepa = 0, skippedRecurring = 0, processed = 0, duplicates = 0;
