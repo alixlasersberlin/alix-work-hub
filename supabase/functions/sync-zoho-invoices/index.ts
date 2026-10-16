@@ -240,9 +240,10 @@ Deno.serve(async (req) => {
 
     while (hasMore && page <= startPage + maxPages - 1) {
       if (Date.now() - startedAt > SOFT_DEADLINE_MS) break;
+      const exactDay = !!dateTo && dateTo === dateFrom;
       const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
-        `&page=${page}&per_page=${perPage}&date_after=${dateFrom}` +
-        (dateTo ? `&date_before=${dateTo}` : "") +
+        `&page=${page}&per_page=${perPage}` +
+        (exactDay ? `&date=${dateFrom}` : `&date_start=${dateFrom}` + (dateTo ? `&date_end=${dateTo}` : "")) +
         `&filter_by=Status.All&sort_column=date&sort_order=A`;
       const r = await fetch(url, { headers: authH });
       if (!r.ok) {
@@ -254,6 +255,8 @@ Deno.serve(async (req) => {
       hasMore = d.page_context?.has_more_page === true;
 
       for (const inv of invoices) {
+        // Sicherheitsnetz: nur Rechnungen im angefragten Zeitraum übernehmen
+        if (inv.date && (inv.date < dateFrom || (dateTo && inv.date > dateTo))) continue;
         processed++;
         const recurringId = inv.recurring_invoice_id ? String(inv.recurring_invoice_id) : null;
         // Exclude all periodic (recurring-generated) invoices
