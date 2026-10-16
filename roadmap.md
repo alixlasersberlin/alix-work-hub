@@ -1,4 +1,4 @@
-- [ ] Alix-Sign-Festschreibung und vorhandenen Rechnungs-/Versandablauf prüfen.
+- [x] Alix-Sign-Festschreibung und vorhandenen Rechnungs-/Versandablauf prüfen.
 - [ ] Automatische Anzahlungsrechnung nach zwei Stunden ohne Duplikate einrichten: PDF, Ablage, Kunde + CC Buchhaltung.
 - [ ] Zeitregel, Wiederholungssicherheit und Versand prüfen; verbleibende Einschränkungen benennen.
-- [ ] Anzahl Zoho-DE-Rechnungen vom 15.10.2026 ermitteln und beantworten.
+- [x] Anzahl Zoho-DE-Rechnungen vom 15.10.2026 ermitteln und beantworten: 176, direkt in Zoho gelesen.
