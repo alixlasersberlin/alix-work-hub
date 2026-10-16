@@ -1,0 +1,3 @@
+- [ ] Alix-Sign-Festschreibung und vorhandenen Rechnungs-/Versandablauf prüfen.
+- [ ] Automatische Anzahlungsrechnung nach zwei Stunden ohne Duplikate einrichten: PDF, Ablage, Kunde + CC Buchhaltung.
+- [ ] Zeitregel, Wiederholungssicherheit und Versand prüfen; verbleibende Einschränkungen benennen.

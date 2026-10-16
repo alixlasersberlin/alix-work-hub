@@ -36669,6 +36669,7 @@ export type Database = {
       orders: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
+          auto_az: Json | null
           az_tax_percentage: number | null
           billing_address: Json | null
           case_number: string | null
@@ -36718,6 +36719,7 @@ export type Database = {
         }
         Insert: {
           accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          auto_az?: Json | null
           az_tax_percentage?: number | null
           billing_address?: Json | null
           case_number?: string | null
@@ -36767,6 +36769,7 @@ export type Database = {
         }
         Update: {
           accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          auto_az?: Json | null
           az_tax_percentage?: number | null
           billing_address?: Json | null
           case_number?: string | null
@@ -57432,6 +57435,26 @@ export type Database = {
       }
       assign_invoice_number: { Args: { p_invoice_id: string }; Returns: string }
       audit_retention_purge: { Args: never; Returns: Json }
+      auto_az_arm: {
+        Args: { p_at: string; p_order_id: string }
+        Returns: undefined
+      }
+      auto_az_claim: { Args: { p_order_id: string }; Returns: Json }
+      auto_az_dispatch: { Args: { p_order_id: string }; Returns: undefined }
+      auto_az_enqueue: { Args: { p_order_id: string }; Returns: Json }
+      auto_az_finish: {
+        Args: {
+          p_claim: string
+          p_details: Json
+          p_order_id: string
+          p_success: boolean
+        }
+        Returns: undefined
+      }
+      auto_az_prepare: {
+        Args: { p_claim: string; p_order_id: string }
+        Returns: Json
+      }
       auto_merge_safe_customer_duplicates: {
         Args: { _dry_run?: boolean }
         Returns: Json

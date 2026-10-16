@@ -182,6 +182,9 @@ Deno.serve(async (req) => {
       if (bfErr) console.warn('bank_financing_requests insert failed', bfErr);
     }
 
+    // Erst nach vollständiger Anlage der Positionen und Finanzierung festschreiben und einplanen.
+    const { error: scheduleError } = await supabase.rpc('auto_az_enqueue', { p_order_id: order.id });
+    if (scheduleError) throw scheduleError;
 
     return new Response(JSON.stringify({ ok: true, order_id: order.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
