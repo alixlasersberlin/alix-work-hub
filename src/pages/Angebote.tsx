@@ -4,6 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { matchesOfferSearch } from '@/lib/sales/offer-search';
 import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search, AlertTriangle, XCircle, Save } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -88,6 +92,7 @@ export default function Angebote() {
   const [viewMode, setViewMode] = useViewMode();
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
+  const [advisorSelectOpen, setAdvisorSelectOpen] = useState(false);
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
   const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag' | 'signed'>('offen');
   const [dealFilter, setDealFilter] = useState<'alle' | 'offen' | 'angenommen' | 'abgelehnt'>('alle');
@@ -144,13 +149,7 @@ export default function Angebote() {
         if (dealFilter === 'angenommen' && !angenommen) return false;
         if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
       }
-      if (!q) return true;
-      return (
-        (o.offerNumber || '').toLowerCase().includes(q) ||
-        (o.customer?.company_name || '').toLowerCase().includes(q) ||
-        (o.customer?.contact_name || '').toLowerCase().includes(q) ||
-        (o.customer?.email || '').toLowerCase().includes(q)
-      );
+      return matchesOfferSearch(o, q);
     });
   })();
   const visibleOffers = pageSize === 'all' ? filteredOffers : filteredOffers.slice(0, parseInt(pageSize, 10));
@@ -640,7 +639,8 @@ export default function Angebote() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Suche: Name oder Angebotsnr."
+                  placeholder="Kunde, Angebotsnr. oder Verkaufsberater"
+                  aria-label="Angebote durchsuchen"
                   className="pl-8"
                 />
               </div>
@@ -657,15 +657,30 @@ export default function Angebote() {
                 <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={creatorFilter} onValueChange={setCreatorFilter}>
-              <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Ersteller" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="alle">Alle Ersteller</SelectItem>
-                {Array.from(new Set(offers.map(o => o.createdByName || '—'))).sort().map(name => (
-                  <SelectItem key={name} value={name}>{name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={advisorSelectOpen} onOpenChange={setAdvisorSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" aria-label="Verkaufsberater auswählen" aria-expanded={advisorSelectOpen} className="w-full sm:w-[240px] h-9 justify-between gap-2 font-normal">
+                  <span className="truncate">{creatorFilter === 'alle' ? 'Alle Verkaufsberater' : creatorFilter}</span>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+                <Command>
+                  <CommandInput placeholder="Verkaufsberater suchen…" />
+                  <CommandList>
+                    <CommandEmpty>Kein Verkaufsberater gefunden.</CommandEmpty>
+                    <CommandGroup>
+                      {['alle', ...Array.from(new Set(offers.map(o => o.createdByName || '—'))).sort((a, b) => a.localeCompare(b, 'de'))].map(name => (
+                        <CommandItem key={name} value={name === 'alle' ? 'Alle Verkaufsberater' : name} onSelect={() => { setCreatorFilter(name); setAdvisorSelectOpen(false); }}>
+                          <Check className={`mr-2 h-4 w-4 shrink-0 ${creatorFilter === name ? 'opacity-100' : 'opacity-0'}`} />
+                          <span className="break-words">{name === 'alle' ? 'Alle Verkaufsberater' : name}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <Select value={dateRange} onValueChange={(v) => setDateRange(v as any)}>
               <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Zeitraum" /></SelectTrigger>
               <SelectContent>
@@ -768,7 +783,7 @@ export default function Angebote() {
                   <TableHead>Datum</TableHead>
                   <TableHead>Kunde</TableHead>
                   <TableHead>E-Mail</TableHead>
-                  <TableHead>Ersteller</TableHead>
+                  <TableHead>Verkaufsberater</TableHead>
                   <TableHead className="text-right">Gesamt</TableHead>
                   <TableHead>Freigabe</TableHead>
                   <TableHead>Status</TableHead>
