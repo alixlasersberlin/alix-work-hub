@@ -156,13 +156,25 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Missing authorization" }, 401);
+    const cronSecret = req.headers.get("x-cron-secret");
+    if (!authHeader && !cronSecret) return json({ error: "Missing authorization" }, 401);
 
     const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    if (authHeader !== `Bearer ${serviceKey}`) {
+    let cronOk = false;
+    if (cronSecret) {
+      const envSecret = Deno.env.get("CRON_SECRET");
+      if (envSecret && cronSecret === envSecret) cronOk = true;
+      else {
+        const check = await admin.rpc("auto_az_secret_ok", { p_secret: cronSecret });
+        cronOk = !check.error && check.data === true;
+      }
+      if (!cronOk) return json({ error: "Unauthorized" }, 401);
+    }
+
+    if (!cronOk && authHeader !== `Bearer ${serviceKey}`) {
       const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
+        global: { headers: { Authorization: authHeader! } },
         auth: { autoRefreshToken: false, persistSession: false },
       });
       const { data: { user } } = await userClient.auth.getUser();
