@@ -12,7 +12,8 @@ Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   const secret = Deno.env.get('CRON_SECRET');
-  if (!secret || req.headers.get('x-cron-secret') !== secret) return json({ error: 'Unauthorized' }, 401);
+  const suppliedSecret = req.headers.get('x-cron-secret');
+  if (!suppliedSecret) return json({ error: 'Unauthorized' }, 401);
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json({ error: 'Ungültige Eingabe' }, 400);
   const url = Deno.env.get('SUPABASE_URL');
@@ -21,6 +22,10 @@ Deno.serve(async req => {
   const resendKey = Deno.env.get('RESEND_API_KEY');
   if (!url || !key || !gatewayKey || !resendKey) return json({ error: 'Versandkonfiguration fehlt' }, 500);
   const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (!secret || suppliedSecret !== secret) {
+    const check = await admin.rpc('auto_az_secret_ok', { p_secret: suppliedSecret });
+    if (check.error || check.data !== true) return json({ error: 'Unauthorized' }, 401);
+  }
   const orderId = parsed.data.order_id;
   if (parsed.data.dry_run) {
     const { data, error } = await admin.from('orders').select('id, auto_az').eq('id', orderId).maybeSingle();
