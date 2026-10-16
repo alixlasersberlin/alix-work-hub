@@ -180,7 +180,12 @@ Deno.serve(async (req) => {
       sent_by: userId,
     });
 
-    if (errorMessage) return json({ ok: false, error: errorMessage }, 502);
+    if (errorMessage) {
+      const friendly = /region indicated|21408/i.test(errorMessage)
+        ? `SMS in dieses Land ist bei Twilio nicht freigeschaltet (${to.slice(0, 3)}…). Bitte Geo-Berechtigung in Twilio aktivieren.`
+        : errorMessage;
+      return json({ ok: false, error: friendly }, 200);
+    }
     return json({ ok: true, sid: twilioSid, status: twilioStatus, link });
   } catch (e: any) {
     return json({ error: e?.message ?? "Unbekannter Fehler" }, 500);
