@@ -57455,6 +57455,7 @@ export type Database = {
         Args: { p_claim: string; p_order_id: string }
         Returns: Json
       }
+      auto_az_secret_ok: { Args: { p_secret: string }; Returns: boolean }
       auto_merge_safe_customer_duplicates: {
         Args: { _dry_run?: boolean }
         Returns: Json
