@@ -71,7 +71,7 @@ export default function CustomerAllTransactions({
   const navigate = useNavigate();
   const { roles } = useAuth();
   const canOpenOfferEditor = (roles ?? []).some(role =>
-    ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order'].includes(role.name),
+    ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order'].includes(role),
   );
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
