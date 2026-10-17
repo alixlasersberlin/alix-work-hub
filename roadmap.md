@@ -4,4 +4,4 @@
 - [x] Anzahl Zoho-DE-Rechnungen vom 15.10.2026 ermitteln und beantworten: 176, direkt in Zoho gelesen.
 - [x] Provisionsregel „new“ mit zwei getrennten Netto-Tranchen gespeichert, Berechnung und Prüfung vor Freigabe/Auszahlung aktiviert; drei Regeltests bestanden.
 - [ ] Provisionsregel „new“ im angemeldeten Ablauf prüfen — externe Supabase-Anmeldung steht für automatisierte Prüfungen nicht zur Verfügung; Mitarbeiterzuordnungen bleiben unverändert.
-- [ ] Kundennamen in Provisionslisten anzeigen und durchsuchbar machen.
+- [x] Kundennamen in Provisionslisten und Abrechnungen durchsuchbar gemacht; drei Suchtests bestanden, Prüfung mit echten Daten in angemeldeter Ansicht bleibt wegen externer Anmeldung unverifiziert.
