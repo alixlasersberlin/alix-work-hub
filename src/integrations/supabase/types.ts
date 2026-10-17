@@ -57559,6 +57559,10 @@ export type Database = {
       collect_sync_customer: { Args: { p_key: string }; Returns: undefined }
       comm_can_manage: { Args: { _uid: string }; Returns: boolean }
       comm_can_read: { Args: { _uid: string }; Returns: boolean }
+      comm_order_payment_evidence: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
       complete_password_setup: { Args: never; Returns: undefined }
       compliance_can_write: { Args: { _project_id: string }; Returns: boolean }
       compliance_has_access: { Args: never; Returns: boolean }

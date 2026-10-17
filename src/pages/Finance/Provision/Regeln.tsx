@@ -95,11 +95,11 @@ export default function ProvisionRegeln() {
                 <tbody>
                   {rules.map((r) => (
                     <tr key={r.id} className="border-t border-border">
-                      <td className="p-3 font-medium">{r.name}</td>
+                      <td className="p-3 font-medium">{r.name}{r.installment_mode === 'custom_schedule' && <div className="mt-1 max-w-sm text-xs font-normal text-muted-foreground">{r.description}</div>}</td>
                       <td className="p-3">{COMMISSION_TYPES.find((t) => t.value === r.commission_type)?.label}</td>
                       <td className="p-3">{r.commission_type === 'percent' ? fmtPercent(r.percent_value) : fmtMoney(r.fixed_amount, r.currency)}</td>
                       <td className="p-3">{BASIS_OPTIONS.find((b) => b.value === r.basis)?.label}</td>
-                      <td className="p-3">{EFFECTIVE_EVENTS.find((e) => e.value === r.effective_event)?.label}</td>
+                      <td className="p-3">{r.installment_mode === 'custom_schedule' && r.installment_schedule?.length ? r.installment_schedule.map((s: any) => <div key={s.key}>{fmtPercent(s.percent)} {s.event === 'deposit_received' ? 'nach Anzahlung' : 'nach Auslieferung + 3 bezahlten Monatsraten'}</div>) : EFFECTIVE_EVENTS.find((e) => e.value === r.effective_event)?.label}</td>
                       <td className="p-3">{PAYOUT_TIMINGS.find((p) => p.value === r.payout_timing)?.label}</td>
                       <td className="p-3">{fmtDate(r.valid_from)} – {r.valid_to ? fmtDate(r.valid_to) : 'offen'}</td>
                       <td className="p-3">{r.is_active ? 'aktiv' : 'inaktiv'}</td>

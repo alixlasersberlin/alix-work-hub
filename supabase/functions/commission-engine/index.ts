@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { stagesFor, stageEffective, type Stage, type Evidence } from './stages.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -156,6 +157,29 @@ Deno.serve(async (req) => {
       ...entry,
     });
 
+  const evidenceFor = async (orderId: string): Promise<Evidence> => {
+    const { data, error } = await supabase.rpc('comm_order_payment_evidence', { p_order_id: orderId });
+    if (error) throw new Error('Zahlungsnachweise konnten nicht geprüft werden: ' + error.message);
+    return { deposit_received: data?.deposit_received === true, first_three_paid: data?.first_three_paid === true };
+  };
+  const evaluateStage = async (o: Record<string, any>, rule: Record<string, any>, stage?: Stage) => {
+    const ev = evaluateConditions(o, rule);
+    if (!stage) return ev;
+    const evidence = await evidenceFor(o.id);
+    ev.effective = !!rule.is_active && stageEffective(stage, o, evidence);
+    ev.conditions.push({ condition_key: 'stage_ready', label: stage.event === 'deposit_received' ? 'Gebuchte Anzahlung' : 'Auslieferung und erste drei Monatsraten bezahlt', state: ev.effective ? 'green' : 'yellow' });
+    return ev;
+  };
+  const verifyEntryStage = async (entry: Record<string, any>) => {
+    const stage = entry.rule_snapshot?.commission_stage as Stage | undefined;
+    if (!stage) return;
+    const { data: order } = await supabase.from('orders').select('*').eq('id', entry.order_id).maybeSingle();
+    const { data: rule } = await supabase.from('commission_rules').select('*').eq('id', entry.rule_id).maybeSingle();
+    if (!order || !rule || !(await evaluateStage(order, rule, stage)).effective) {
+      throw new Error('Provision noch nicht fällig: Anzahlung bzw. Auslieferung und erste drei bezahlte Monatsraten prüfen.');
+    }
+  };
+
   try {
     if (action === 'scan_orders') {
       // 1. Regeln laden
@@ -192,8 +216,8 @@ Deno.serve(async (req) => {
         .order('order_date', { ascending: false })
         .limit(limit);
 
-      const { data: existing } = await supabase.from('commission_entries').select('order_id, employee_id');
-      const existingKeys = new Set((existing ?? []).map((e) => `${e.order_id}|${e.employee_id}`));
+      const { data: existing } = await supabase.from('commission_entries').select('order_id, employee_id, calc_hash');
+      const existingKeys = new Set((existing ?? []).map((e) => e.calc_hash ?? `${e.order_id}|${e.employee_id}`));
 
       const { data: assignments } = await supabase.from('commission_assignments').select('*');
       const assignByOrder = new Map<string, any[]>();
@@ -227,14 +251,17 @@ Deno.serve(async (req) => {
           ?? rules.find((r) => r.id === defaultRuleId)
           ?? rules[0];
 
-        const ev = evaluateConditions(o, rule);
         const base = round2(basisAmount(rule.basis, o));
         const gross = Number(o.total_amount ?? 0);
 
         for (const t of targets) {
-          const key = `${o.id}|${t.employee_id}`;
-          if (existingKeys.has(key)) continue;
-          const calc = computeAmount(rule, base, 1);
+          const stages = stagesFor(rule);
+          for (const stage of stages.length ? stages : [undefined]) {
+          const key = `${o.id}:${t.employee_id}:${rule.id}${stage ? ':' + stage.key : ''}`;
+          if (existingKeys.has(key) || (existing ?? []).some((e) => e.order_id === o.id && e.employee_id === t.employee_id && (!stage || !e.calc_hash?.startsWith(`${o.id}:${t.employee_id}:${rule.id}:`)))) continue;
+          const ev = await evaluateStage(o, rule, stage);
+          const stageRule = stage ? { ...rule, percent_value: stage.percent } : rule;
+          const calc = computeAmount(stageRule, base, 1);
           const amount = round2((calc.amount * t.share) / 100);
           const status = ev.cancelled ? 'blocked' : ev.effective ? (rule.approval_required ? 'pending_approval' : 'effective') : 'condition_open';
           const effectiveAt = ev.effective ? new Date().toISOString().slice(0, 10) : null;
@@ -247,7 +274,8 @@ Deno.serve(async (req) => {
             employee_id: t.employee_id,
             employee_role: t.employee_role,
             rule_id: rule.id,
-            rule_snapshot: rule,
+            rule_snapshot: stage ? { ...rule, commission_stage: stage } : rule,
+            notes: stage ? `Tranche: ${stage.key}` : null,
             cost_center: rule.cost_center,
             account_number: rule.account_number,
             order_date: o.order_date ? String(o.order_date).slice(0, 10) : null,
@@ -265,7 +293,7 @@ Deno.serve(async (req) => {
             effective_at: effectiveAt,
             payout_due_date: ev.effective ? payoutDueDate(rule.payout_timing, new Date(), rule.payout_retention_days, rule.payout_min_wait_days) : null,
             status,
-            calc_hash: `${o.id}:${t.employee_id}:${rule.id}`,
+            calc_hash: key,
             created_by: user.id,
           }).select('id').maybeSingle();
 
@@ -275,6 +303,7 @@ Deno.serve(async (req) => {
           await supabase.from('commission_conditions').insert(
             ev.conditions.map((c) => ({ ...c, entry_id: inserted.id })),
           );
+          }
         }
       }
       await logAudit({ action: 'Provision berechnet', object_type: 'scan', new_value: { created, unassigned } });
@@ -291,9 +320,10 @@ Deno.serve(async (req) => {
       const { data: rule } = await supabase.from('commission_rules').select('*').eq('id', entry.rule_id).maybeSingle();
       if (!o || !rule) return json({ error: 'Auftrag oder Regel fehlt' }, 404);
 
-      const ev = evaluateConditions(o, rule);
+      const stage = entry.rule_snapshot?.commission_stage as Stage | undefined;
+      const ev = await evaluateStage(o, rule, stage);
       const base = round2(basisAmount(rule.basis, o));
-      const calc = computeAmount(rule, base, entry.device_count ?? 1);
+      const calc = computeAmount(stage ? { ...rule, percent_value: stage.percent } : rule, base, entry.device_count ?? 1);
       const status = ev.cancelled ? 'blocked' : ev.effective
         ? (['approved', 'payout_scheduled', 'paid', 'partially_paid'].includes(entry.status) ? entry.status : (rule.approval_required ? 'pending_approval' : 'effective'))
         : 'condition_open';
@@ -340,6 +370,8 @@ Deno.serve(async (req) => {
       for (const id of entryIds) {
         const { data: e } = await supabase.from('commission_entries').select('*').eq('id', id).maybeSingle();
         if (!e) continue;
+
+        if (decision === 'approve' || decision === 'schedule') await verifyEntryStage(e);
 
         if (decision === 'approve') {
           const needsSuper = fourEyes && Number(e.commission_amount) >= threshold;
@@ -406,6 +438,7 @@ Deno.serve(async (req) => {
       const { data: entries } = await supabase.from('commission_entries').select('*').in('id', entryIds);
       const valid = (entries ?? []).filter((e) => ['approved', 'payout_scheduled', 'partially_paid', 'reclaimed'].includes(e.status));
       if (!valid.length) return json({ error: 'Nur freigegebene Provisionen können ausgezahlt werden' }, 400);
+      for (const entry of valid) await verifyEntryStage(entry);
       const employeeId = valid[0].employee_id;
       if (valid.some((e) => e.employee_id !== employeeId)) return json({ error: 'Auszahlung nur je Mitarbeiter möglich' }, 400);
 
