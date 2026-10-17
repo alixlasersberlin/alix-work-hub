@@ -5,3 +5,4 @@
 - Automatic Alix Sign deposit invoices use service-only auto_az RPCs and an order-scoped one-shot timer after completed conversion; stop timers on completion and bound retries so no permanent sweeper or duplicate receivable is introduced.
 - Commission custom schedules create one uniquely hashed entry per stage; payment evidence is read through an invoker RPC and rechecked before approval and payout so stages cannot bypass deposit, delivery, or installment requirements.
 - Commission customer display and search resolve missing names through existing customer/order relationships in a shared frontend helper; never mutate financial snapshots to support search.
+- Customer transaction offer actions reuse the existing offer editor and persistence flow, so edits update the original offer rather than creating a separate document.

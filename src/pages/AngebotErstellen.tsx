@@ -2121,9 +2121,9 @@ export default function AngebotErstellen() {
         </Button>
         <h1 className="text-xl font-display font-bold text-foreground flex items-center gap-2">
           {sofortMode ? <Zap className="w-6 h-6 text-primary" /> : <FilePlus className="w-6 h-6 text-primary" />}
-          {sofortMode ? 'Sofortauftrag erstellen' : 'Angebot erstellen'}
+          {searchParams.get('edit') ? 'Angebot bearbeiten' : sofortMode ? 'Sofortauftrag erstellen' : 'Angebot erstellen'}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">{sofortMode ? 'Erstellen Sie direkt einen Auftrag ohne vorheriges Angebot.' : 'Erstellen Sie ein neues Angebot für einen Kunden.'}</p>
+        <p className="text-sm text-muted-foreground mt-1">{searchParams.get('edit') ? searchParams.get('edit') : sofortMode ? 'Erstellen Sie direkt einen Auftrag ohne vorheriges Angebot.' : 'Erstellen Sie ein neues Angebot für einen Kunden.'}</p>
 
       </div>
 

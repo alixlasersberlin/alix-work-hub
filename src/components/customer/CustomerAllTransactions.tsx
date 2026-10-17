@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Loader2, Search, ChevronRight, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers,
+  Loader2, Search, ChevronRight, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers, Pencil,
 } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
@@ -67,6 +69,10 @@ export default function CustomerAllTransactions({
   customerName?: string | null;
 }) {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  const canOpenOfferEditor = (roles ?? []).some(role =>
+    ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order'].includes(role),
+  );
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -156,7 +162,7 @@ export default function CustomerAllTransactions({
           status: o.approval_status === 'pending' ? 'In Freigabe' : o.status,
           amount: o.total_gross,
           currency: 'EUR',
-          href: `/angebote?nr=${encodeURIComponent(o.offer_number)}`,
+          href: `/verkauf/angebot/neu?edit=${encodeURIComponent(o.offer_number)}`,
         }),
       );
 
@@ -341,6 +347,7 @@ export default function CustomerAllTransactions({
                         <th className="text-left px-4 py-3">Bezeichnung</th>
                         <th className="text-left px-4 py-3">Status</th>
                         <th className="text-right px-4 py-3">Betrag</th>
+                        {k === 'angebot' && canOpenOfferEditor && <th className="text-right px-4 py-3">Aktion</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -367,6 +374,13 @@ export default function CustomerAllTransactions({
                           <td className={`px-4 py-2 text-right font-medium ${r.kind === 'zahlung' ? 'text-success' : ''}`}>
                             {r.kind === 'beleg' ? '—' : fmtMoney(r.amount, r.currency)}
                           </td>
+                          {k === 'angebot' && canOpenOfferEditor && (
+                            <td className="px-4 py-2 text-right">
+                              <Button variant="outline" size="sm" onClick={() => openRow(r)} aria-label={`Angebot ${r.number} bearbeiten`}>
+                                <Pencil className="h-4 w-4 mr-1.5" /> Bearbeiten
+                              </Button>
+                            </td>
+                          )}
                         </tr>
                       ))}
 

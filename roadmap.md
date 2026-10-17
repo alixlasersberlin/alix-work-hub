@@ -5,3 +5,4 @@
 - [x] Provisionsregel „new“ mit zwei getrennten Netto-Tranchen gespeichert, Berechnung und Prüfung vor Freigabe/Auszahlung aktiviert; drei Regeltests bestanden.
 - [ ] Provisionsregel „new“ im angemeldeten Ablauf prüfen — externe Supabase-Anmeldung steht für automatisierte Prüfungen nicht zur Verfügung; Mitarbeiterzuordnungen bleiben unverändert.
 - [x] Kundennamen in Provisionslisten und Abrechnungen durchsuchbar gemacht; drei Suchtests bestanden, Prüfung mit echten Daten in angemeldeter Ansicht bleibt wegen externer Anmeldung unverifiziert.
+- [x] „Angebot bearbeiten“ in Kundenakte → Alle Vorgänge → Angebote ergänzt und mit dem bestehenden Angebotseditor verknüpft.
