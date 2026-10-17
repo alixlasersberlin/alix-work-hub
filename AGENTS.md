@@ -3,3 +3,4 @@
 - Offer list text search is centralized in the pure sales/offer-search helper so customer, offer number and advisor matching stay testable without database changes.
 - Deposit invoice creation resolves existing invoice drafts or equal-amount unissued order placeholders through deposit-invoice-target; update the same row and preserve payments and releases to avoid duplicate receivables.
 - Automatic Alix Sign deposit invoices use service-only auto_az RPCs and an order-scoped one-shot timer after completed conversion; stop timers on completion and bound retries so no permanent sweeper or duplicate receivable is introduced.
+- Commission custom schedules create one uniquely hashed entry per stage; payment evidence is read through an invoker RPC and rechecked before approval and payout so stages cannot bypass deposit, delivery, or installment requirements.
