@@ -2,4 +2,5 @@
 - [x] Automatische Anzahlungsrechnung nach zwei Stunden ohne Duplikate einrichten: PDF, Ablage, Kunde + CC Buchhaltung.
 - [ ] Echten Ablauf mit einem neuen Alix-Sign-Auftrag beobachten — wartet auf eine echte Unterschrift, damit keine Testrechnung an einen Kunden geht.
 - [x] Anzahl Zoho-DE-Rechnungen vom 15.10.2026 ermitteln und beantworten: 176, direkt in Zoho gelesen.
-- [ ] Provisionsregel „new“: 2,5 % netto nach Anzahlung + 2,5 % nach Auslieferung und drei bezahlten Monatsraten erstellen und prüfen.
+- [x] Provisionsregel „new“ mit zwei getrennten Netto-Tranchen gespeichert, Berechnung und Prüfung vor Freigabe/Auszahlung aktiviert; drei Regeltests bestanden.
+- [ ] Provisionsregel „new“ im angemeldeten Ablauf prüfen — externe Supabase-Anmeldung steht für automatisierte Prüfungen nicht zur Verfügung; Mitarbeiterzuordnungen bleiben unverändert.
