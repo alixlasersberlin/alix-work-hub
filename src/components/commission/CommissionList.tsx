@@ -18,8 +18,9 @@ import {
   fmtMoney, fmtDate, fmtPercent, type CommissionStatus,
 } from '@/lib/commission/constants';
 import { useCommissionPermissions } from '@/hooks/useCommissionPermissions';
+import { COMMISSION_CUSTOMER_SELECT, commissionCustomerName, matchesCommissionSearch, type SearchableCommission } from '@/lib/commission/search';
 
-export type Entry = {
+export type Entry = SearchableCommission & {
   id: string;
   entry_number: string;
   order_id: string | null;
@@ -99,7 +100,7 @@ export function CommissionList({ bucket }: { bucket: BucketKey }) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    let q = supabase.from('commission_entries').select('*').order('created_at', { ascending: false }).limit(1000);
+    let q = supabase.from('commission_entries').select(`*, ${COMMISSION_CUSTOMER_SELECT}`).order('created_at', { ascending: false }).limit(1000);
     const list = BUCKETS[bucket];
     if (list.length) q = q.in('status', list);
     const { data, error } = await q;
@@ -139,12 +140,9 @@ export function CommissionList({ bucket }: { bucket: BucketKey }) {
   };
 
   const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
     return rows.filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-      if (!s) return true;
-      return [r.entry_number, r.order_number, r.customer_name, names[r.employee_id], r.device_name]
-        .filter(Boolean).some((v) => String(v).toLowerCase().includes(s));
+      return matchesCommissionSearch(r, search, names[r.employee_id]);
     });
   }, [rows, search, statusFilter, names]);
 
@@ -166,7 +164,7 @@ export function CommissionList({ bucket }: { bucket: BucketKey }) {
       {error && <PageError message={error} onRetry={load} />}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input placeholder="Suche Provisionsnr., Auftrag, Kunde, Mitarbeiter…" value={search}
+        <Input aria-label="Provisionen durchsuchen" placeholder="Kundenname, Auftrag, Provision oder Mitarbeiter…" value={search}
           onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-56"><SelectValue placeholder="Status" /></SelectTrigger>
@@ -232,7 +230,7 @@ export function CommissionList({ bucket }: { bucket: BucketKey }) {
                     <td className="p-3 font-mono text-xs">{r.entry_number}</td>
                     <td className="p-3">{names[r.employee_id] ?? '–'}</td>
                     <td className="p-3">{r.order_number ?? '–'}</td>
-                    <td className="p-3">{r.customer_name ?? '–'}</td>
+                    <td className="p-3">{commissionCustomerName(r) ?? '–'}</td>
                     <td className="p-3 text-right">{fmtMoney(r.basis_amount, r.currency)}</td>
                     <td className="p-3 text-right">{r.commission_type === 'fixed_per_device' ? 'fix' : fmtPercent(r.commission_percent)}</td>
                     <td className="p-3 text-right font-medium">{fmtMoney(r.commission_amount, r.currency)}</td>
@@ -263,7 +261,7 @@ export function CommissionList({ bucket }: { bucket: BucketKey }) {
                   <Info label="Mitarbeiter" value={names[detail.employee_id]} />
                   <Info label="Rolle" value={EMPLOYEE_ROLES.find((r) => r.value === detail.employee_role)?.label} />
                   <Info label="Auftrag" value={detail.order_number} />
-                  <Info label="Kunde" value={detail.customer_name} />
+                  <Info label="Kunde" value={commissionCustomerName(detail)} />
                   <Info label="Gerät" value={detail.device_name} />
                   <Info label="Anzahl Geräte" value={String(detail.device_count)} />
                   <Info label="Netto" value={fmtMoney(detail.net_amount, detail.currency)} />
