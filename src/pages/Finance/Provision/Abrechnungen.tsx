@@ -12,11 +12,14 @@ import { toast } from 'sonner';
 import { FileSpreadsheet, Plus, Download } from 'lucide-react';
 import { fmtMoney, fmtDate } from '@/lib/commission/constants';
 import { useCommissionPermissions } from '@/hooks/useCommissionPermissions';
+import { COMMISSION_CUSTOMER_SELECT, matchesCommissionSearch, type SearchableCommission } from '@/lib/commission/search';
 
 export default function ProvisionAbrechnungen() {
   const perms = useCommissionPermissions();
   const [rows, setRows] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [entries, setEntries] = useState<Record<string, SearchableCommission>>({});
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const today = new Date();
@@ -32,10 +35,27 @@ export default function ProvisionAbrechnungen() {
       supabase.from('user_profiles').select('id, full_name, email').order('full_name'),
     ]);
     setRows(s ?? []); setProfiles(p ?? []);
+    const entryIds = [...new Set<string>((s ?? []).flatMap((statement) => statement.entry_ids ?? []))];
+    const byId: Record<string, SearchableCommission> = {};
+    for (let offset = 0; offset < entryIds.length; offset += 200) {
+      const { data, error } = await supabase.from('commission_entries')
+        .select(`id, customer_name, order_number, ${COMMISSION_CUSTOMER_SELECT}`)
+        .in('id', entryIds.slice(offset, offset + 200));
+      if (error) { toast.error('Kundennamen konnten nicht geladen werden: ' + error.message); break; }
+      for (const entry of data ?? []) {
+        const resolved = entry as unknown as SearchableCommission & { id: string };
+        byId[resolved.id] = resolved;
+      }
+    }
+    setEntries(byId);
   };
   useEffect(() => { load(); }, []);
 
   const nameOf = (id: string) => profiles.find((p) => p.id === id)?.full_name || profiles.find((p) => p.id === id)?.email || '–';
+  const filtered = rows.filter((statement) =>
+    matchesCommissionSearch({ entry_number: statement.statement_number }, search, nameOf(statement.employee_id)) ||
+    (statement.entry_ids ?? []).some((id: string) => entries[id] && matchesCommissionSearch(entries[id], search))
+  );
 
   const create = async () => {
     if (!form.employee_id) return toast.error('Bitte Mitarbeiter wählen');
@@ -48,7 +68,7 @@ export default function ProvisionAbrechnungen() {
 
   const exportCsv = () => {
     const head = ['Abrechnungsnr', 'Mitarbeiter', 'Von', 'Bis', 'Gesamt', 'Rueckforderungen', 'Bereits gezahlt', 'Auszahlung', 'Status'];
-    const lines = rows.map((r) => [r.statement_number, nameOf(r.employee_id), r.period_start, r.period_end, r.total_amount, r.reclaims_amount, r.already_paid_amount, r.payout_amount, r.status].join(';'));
+    const lines = filtered.map((r) => [r.statement_number, nameOf(r.employee_id), r.period_start, r.period_end, r.total_amount, r.reclaims_amount, r.already_paid_amount, r.payout_amount, r.status].join(';'));
     const blob = new Blob([[head.join(';'), ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -70,10 +90,12 @@ export default function ProvisionAbrechnungen() {
         }
       />
 
+      <Input aria-label="Provisionsabrechnungen durchsuchen" placeholder="Kundenname, Abrechnungsnummer oder Mitarbeiter…" value={search} onChange={(event) => setSearch(event.target.value)} className="max-w-md" />
+
       <DataCard className="p-0">
         <div className="p-5">
-          {rows.length === 0 ? (
-            <EmptyState icon={FileSpreadsheet} title="Keine Abrechnungen" description="Erstelle eine Monatsabrechnung für einen Mitarbeiter." />
+          {filtered.length === 0 ? (
+            <EmptyState icon={FileSpreadsheet} title="Keine Abrechnungen" description={search.trim() ? 'Keine Abrechnung zur Suche gefunden.' : 'Erstelle eine Monatsabrechnung für einen Mitarbeiter.'} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -90,7 +112,7 @@ export default function ProvisionAbrechnungen() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
+                  {filtered.map((r) => (
                     <tr key={r.id} className="border-t border-border">
                       <td className="p-3 font-mono text-xs">{r.statement_number}</td>
                       <td className="p-3">{nameOf(r.employee_id)}</td>
