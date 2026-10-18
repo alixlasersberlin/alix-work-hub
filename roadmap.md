@@ -6,4 +6,5 @@
 - [ ] Provisionsregel „new“ im angemeldeten Ablauf prüfen — externe Supabase-Anmeldung steht für automatisierte Prüfungen nicht zur Verfügung; Mitarbeiterzuordnungen bleiben unverändert.
 - [x] Kundennamen in Provisionslisten und Abrechnungen durchsuchbar gemacht; drei Suchtests bestanden, Prüfung mit echten Daten in angemeldeter Ansicht bleibt wegen externer Anmeldung unverifiziert.
 - [x] „Angebot bearbeiten“ in Kundenakte → Alle Vorgänge → Angebote ergänzt und mit dem bestehenden Angebotseditor verknüpft.
-- [ ] Auftragsbilder einzeln herunterladen oder alle Bilder als ZIP zusammenfassen und herunterladen; Download prüfen.
+- [x] Bilder in Mediapaket und AlixDocs einzeln als Download oder gesammelt als ZIP angeboten; drei Tests und Browser-Downloads mit Testbildern bestanden.
+- [ ] Bild-Downloads mit echten Auftragsdaten prüfen — externe Anmeldung verhindert den automatisierten Zugriff auf die angemeldete Auftragsansicht.
