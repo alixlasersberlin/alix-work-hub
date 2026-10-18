@@ -16,6 +16,19 @@ import { toast } from 'sonner';
 import MediapaketReviewPanel, { SECTION_LABEL } from './MediapaketReviewPanel';
 import MediapaketExtrasPanel from './MediapaketExtrasPanel';
 import { notifyBus } from '@/hooks/useNotifications';
+import { FileDownloadButton } from '@/components/FileDownloadButton';
+import type { DownloadSource } from '@/lib/file-download';
+
+function mediaDownloadSource(file: any): DownloadSource {
+  return {
+    name: file.original_filename || 'bild',
+    load: async () => {
+      const { data, error } = await supabase.storage.from('mediapaket-files').download(file.storage_path);
+      if (error || !data) throw new Error(`${file.original_filename}: ${error?.message || 'Datei konnte nicht geladen werden'}`);
+      return data;
+    },
+  };
+}
 
 interface Props {
   orderId: string;
@@ -701,6 +714,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       </SectionCard>
 
       <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files} onMarkRead={markIdsRead}>
+        <div className="flex justify-end mb-2">
+          <FileDownloadButton zip filename={`Mediapaket-${orderId}-Bilder.zip`}
+            sources={(sections.files || []).filter((f: any) => (f.mime_type || '').startsWith('image/')).map(mediaDownloadSource)}
+            disabled={!(sections.files || []).some((f: any) => (f.mime_type || '').startsWith('image/'))} />
+        </div>
         {sections.files?.map((f: any) => (
           <FileRow key={f.id} file={f} mpId={mp.id} />
         ))}
@@ -832,20 +850,6 @@ function FileRow({ file, mpId }: { file: any; mpId: string }) {
     logDownload();
   };
 
-  const download = async () => {
-    setBusy(true);
-    const url = await getSignedUrl();
-    setBusy(false);
-    if (!url) return;
-    logDownload();
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.original_filename || 'download';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
   const loadLogs = async () => {
     setLogsOpen(true);
     const { data } = await supabase
@@ -878,14 +882,13 @@ function FileRow({ file, mpId }: { file: any; mpId: string }) {
         </div>
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        {(isImage || isPdf) && (
+        {isPdf && (
           <Button size="sm" variant="ghost" className="h-7 px-2" onClick={preview} disabled={busy} title="Vorschau">
             <Eye className="w-3.5 h-3.5" />
           </Button>
         )}
-        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={download} disabled={busy} title="Herunterladen">
-          <Download className="w-3.5 h-3.5" />
-        </Button>
+        <FileDownloadButton sources={[mediaDownloadSource(file)]} filename={file.original_filename || 'datei'}
+          label={isImage ? undefined : 'Herunterladen'} onDelivered={logDownload} />
         <Button size="sm" variant="ghost" className="h-7 px-2" onClick={loadLogs} title="Download-Historie">
           <HistoryIcon className="w-3.5 h-3.5" />
         </Button>

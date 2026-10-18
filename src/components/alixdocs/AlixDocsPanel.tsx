@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import DocActionsMenu from './DocActionsMenu';
 import PdfPreview from './PdfPreview';
+import { FileDownloadButton } from '@/components/FileDownloadButton';
+import type { DownloadSource } from '@/lib/file-download';
 
 const ALLOWED = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
 const ALLOWED_MIME = new Set([
@@ -120,6 +122,20 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
   }, [docs, showDeleted, catFilter, q, catMap]);
 
   const isImage = (m: string) => m.startsWith('image/');
+
+  const downloadSource = (d: Doc): DownloadSource => ({
+    name: d.original_filename || `${d.title}.${d.mime_type.split('/')[1] || 'bin'}`,
+    load: async () => {
+      const { data, error } = await supabase.functions.invoke('alixdocs-signed-url', {
+        body: { document_id: d.id, version_number: d.current_version },
+      });
+      if (error || data?.error || !data?.url) throw new Error(data?.error || error?.message || 'Datei nicht verfügbar');
+      const response = await fetch(data.url);
+      if (!response.ok) throw new Error(`${d.title}: Datei konnte nicht geladen werden`);
+      return response.blob();
+    },
+  });
+  const imageDocs = docs.filter(d => !d.deleted_at && isImage(d.mime_type));
 
   const resetUploadForm = () => {
     setFile(null); setTitle(''); setCategory('sonstiges'); setConfLevel('normal');
@@ -311,6 +327,8 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
           <Trash2 className="w-4 h-4 mr-1" /> Papierkorb
         </Button>
         <Button onClick={() => openUpload()}><Upload className="w-4 h-4 mr-1" /> Hochladen</Button>
+        {!showDeleted && <FileDownloadButton zip sources={imageDocs.map(downloadSource)} disabled={loading || !imageDocs.length}
+          filename={`Bilder-${orderNumber || orderId || customerId || 'AlixDocs'}.zip`} />}
       </div>
 
       {loading ? (
@@ -370,7 +388,9 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
                       <Button size="sm" variant="ghost" onClick={() => restore(d)}><RotateCcw className="w-4 h-4" /></Button>
                     ) : (
                       <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => openPreview(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
+                        {isImage(d.mime_type)
+                          ? <FileDownloadButton sources={[downloadSource(d)]} filename={downloadSource(d).name} />
+                          : <Button size="sm" variant="ghost" onClick={() => openPreview(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>}
                         <Button size="sm" variant="ghost" onClick={() => analyze(d)} title="KI-Analyse"><Sparkles className="w-4 h-4 text-primary" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => openUpload(d.id)} title="Neue Version"><Plus className="w-4 h-4" /></Button>
                         {d.status === 'entwurf' && (
@@ -410,7 +430,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filtered.map(d => (
-            <Card key={d.id} className="p-3 group cursor-pointer hover:border-primary/50" onClick={() => openPreview(d)}>
+            <Card key={d.id} className="p-3 group hover:border-primary/50" onClick={() => { if (!isImage(d.mime_type)) void openPreview(d); }}>
               <div className="aspect-square bg-muted/40 rounded flex items-center justify-center mb-2">
                 {isImage(d.mime_type) ? <ImageIcon className="w-10 h-10 text-blue-400" /> : <FileText className="w-10 h-10 text-primary" />}
               </div>
@@ -419,6 +439,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
                 {catBadge(d.category_id)}
                 <span className="text-[10px] text-muted-foreground">v{d.current_version}</span>
               </div>
+              {!showDeleted && isImage(d.mime_type) && <div className="mt-2"><FileDownloadButton sources={[downloadSource(d)]} filename={downloadSource(d).name} label="Herunterladen" /></div>}
             </Card>
           ))}
         </div>
