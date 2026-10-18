@@ -161,7 +161,7 @@ export default function MediapaketOverview() {
       return { data };
     };
     const [custs, ords, profs, comments] = await Promise.all([
-      related(cids, ids => supabase.from('customers').select('id, company_name, first_name, last_name').in('id', ids)),
+      related(cids, ids => supabase.from('customers').select('id, company_name, contact_name').in('id', ids)),
       related(oids, ids => supabase.from('orders').select('id, order_number').in('id', ids)),
       related(uids, ids => supabase.from('user_profiles').select('id, full_name, email').in('id', ids)),
       related(mpIds, async ids => ({ data: await loadAllPages(async (from, to) => await supabase
@@ -178,7 +178,7 @@ export default function MediapaketOverview() {
 
     const custMap: Record<string, string> = {};
     (custs.data || []).forEach((c: any) => {
-      custMap[c.id] = c.company_name || [c.first_name, c.last_name].filter(Boolean).join(' ') || '—';
+      custMap[c.id] = c.company_name || c.contact_name || '—';
     });
     const ordMap: Record<string, string> = {};
     (ords.data || []).forEach((o: any) => { ordMap[o.id] = o.order_number || o.id.slice(0, 8); });

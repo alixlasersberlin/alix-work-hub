@@ -32,17 +32,17 @@ export default function MediapaketAnalytics() {
           ? supabase.from('media_packages').select('id, status, customer_id, assigned_user_id, created_at, updated_at, submitted_at, due_date, studio_name').eq('tenant_id', tenantId)
           : supabase.from('media_packages').select('id, status, customer_id, assigned_user_id, created_at, updated_at, submitted_at, due_date, studio_name')),
         supabase.from('media_package_history').select('media_package_id, action, created_at, new_value').in('action', ['status_changed', 'submitted', 'customer_answered', 'refresh_reminder_sent']).order('created_at', { ascending: true }).limit(5000),
-        supabase.from('user_profiles').select('id, first_name, last_name, email'),
-        supabase.from('customers').select('id, name'),
+        supabase.from('user_profiles').select('id, full_name, email'),
+        supabase.from('customers').select('id, company_name, contact_name'),
         supabase.from('reviews').select('id, rating_delivery, rating_driver_friendliness, customer_id, created_at, product_name').ilike('product_name', '%Mediapaket%'),
       ]);
       setMps(mpRes.data || []);
       setHistory(hRes.data || []);
       const p: Record<string, string> = {};
-      (pRes.data || []).forEach((r: any) => { p[r.id] = [r.first_name, r.last_name].filter(Boolean).join(' ') || r.email || r.id.slice(0, 6); });
+      (pRes.data || []).forEach((r: any) => { p[r.id] = r.full_name || r.email || r.id.slice(0, 6); });
       setProfiles(p);
       const c: Record<string, string> = {};
-      (cRes.data || []).forEach((r: any) => { c[r.id] = r.name || r.id.slice(0, 6); });
+      (cRes.data || []).forEach((r: any) => { c[r.id] = r.company_name || r.contact_name || r.id.slice(0, 6); });
       setCustomers(c);
       setReviews(rRes.data || []);
       setLoading(false);
