@@ -10,3 +10,4 @@
 - [ ] Bild-Downloads mit echten Auftragsdaten prüfen — externe Anmeldung verhindert den automatisierten Zugriff auf die angemeldete Auftragsansicht.
 - [x] OPERATION → Mediapaket ergänzt; bestehende geschützte Übersicht mit Status-Auswahl/Zählern und vollständigem Laden statt 500er-Limit, zwei Tests bestanden.
 - [ ] Mediapaket-Übersicht mit echten Daten prüfen — externe Anmeldung verhindert automatisierten Zugriff auf die angemeldete Ansicht.
+- [x] Mediapaket-Ladefehler durch nicht vorhandene Namensfelder korrigiert; Übersicht, Analytics und Administration verwenden die bestehenden Kunden- und Mitarbeiternamen.

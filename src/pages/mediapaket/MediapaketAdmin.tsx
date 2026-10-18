@@ -59,11 +59,11 @@ export default function MediapaketAdmin() {
         supabase.from('media_packages').select('status, progress_percent, due_date, submitted_at, created_at, assigned_user_id'),
         supabase.from('media_package_files').select('id', { count: 'exact', head: true }),
         supabase.from('media_package_file_downloads').select('id', { count: 'exact', head: true }),
-        supabase.from('user_profiles').select('id, first_name, last_name, email'),
+        supabase.from('user_profiles').select('id, full_name, email'),
       ]);
       const nameById: Record<string, string> = {};
       (profiles.data || []).forEach((p: any) => {
-        nameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || p.id.slice(0, 6);
+        nameById[p.id] = p.full_name || p.email || p.id.slice(0, 6);
       });
       const byStatus: Record<string, number> = {};
       const byAssignee: Record<string, number> = {};
