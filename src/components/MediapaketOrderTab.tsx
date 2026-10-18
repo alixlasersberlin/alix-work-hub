@@ -710,6 +710,13 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       </SectionCard>
 
       <SectionCard sectionKey="branding" title="Branding / Anmerkungen" empty={!sections.branding} comments={commentsBySection.branding} onMarkRead={markIdsRead}>
+        {sections.branding && <div className="flex justify-end mb-3">
+          <FileDownloadButton label="Branding als PDF" filename={`Branding-${mp?.studio_name || orderId}.pdf`}
+            sources={async () => {
+              const { createBrandingPdf } = await import('@/lib/mediapaket/branding-pdf');
+              return [{ name: 'Branding.pdf', load: async () => createBrandingPdf(sections.branding, sections.studio?.studio_name || mp?.studio_name) }];
+            }} />
+        </div>}
         {sections.branding && <KV data={sections.branding} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
