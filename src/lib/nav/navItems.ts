@@ -742,6 +742,7 @@ export const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
+      { path: '/mediapaket', label: 'Mediapaket', icon: PackageIcon, roles: ['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG'] },
       // 1) Freigaben & Genehmigungen
       {
         path: '#freigaben', label: 'FREIGABEN', icon: ShieldCheck, roles: ['Super Admin', 'Admin'],

@@ -7,3 +7,4 @@
 - Commission customer display and search resolve missing names through existing customer/order relationships in a shared frontend helper; never mutate financial snapshots to support search.
 - Customer transaction offer actions reuse the existing offer editor and persistence flow, so edits update the original offer rather than creating a separate document.
 - Order media downloads use a shared prepare-then-download control with authenticated existing storage access and uniquely numbered ZIP entries, preserving browser user activation and duplicate filenames.
+- Operation reuses the existing protected Mediapaket overview; paginated authenticated reads keep every package accessible without introducing a second data source.
