@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, History as HistoryIcon, GitBranch, Send, Package, CheckCircle2, PlayCircle, Eye, Download, MessageCircle, Upload, Mail, Copy as CopyIcon, PenTool, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { FileDownloadButton } from '@/components/FileDownloadButton';
 
 interface Props {
   mpId: string;
@@ -44,7 +45,6 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
   const [snapshotOpen, setSnapshotOpen] = useState<any | null>(null);
   const [duplicating, setDuplicating] = useState(false);
   const [transitioning, setTransitioning] = useState<string | null>(null);
-  const [zipping, setZipping] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -177,25 +177,17 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
     finally { setDuplicating(false); }
   };
 
-  const downloadAll = async () => {
-    setZipping(true);
-    try {
-      const { data: files } = await supabase.from('media_package_files').select('storage_path, original_filename').eq('media_package_id', mpId);
-      if (!files?.length) { toast.info('Keine Dateien vorhanden'); return; }
-      for (const f of files) {
-        const { data: url } = await supabase.storage.from('mediapaket-files').createSignedUrl(f.storage_path, 3600);
-        if (url?.signedUrl) {
-          const a = document.createElement('a');
-          a.href = url.signedUrl;
-          a.download = f.original_filename;
-          a.target = '_blank';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          await new Promise(r => setTimeout(r, 300));
-        }
-      }
-      toast.success(`${files.length} Datei${files.length === 1 ? '' : 'en'} heruntergeladen`);
-    } catch (e: any) { toast.error(e.message); }
-    finally { setZipping(false); }
+  const allFiles = async () => {
+    const { data: files, error } = await supabase.from('media_package_files').select('storage_path, original_filename').eq('media_package_id', mpId);
+    if (error) throw error;
+    return (files || []).map(f => ({
+      name: f.original_filename || 'datei',
+      load: async () => {
+        const { data, error } = await supabase.storage.from('mediapaket-files').download(f.storage_path);
+        if (error || !data) throw new Error(`${f.original_filename}: ${error?.message || 'Datei nicht verfügbar'}`);
+        return data;
+      },
+    }));
   };
 
   const copyPreviewLink = async () => {
@@ -348,10 +340,7 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
             </div>
           )}
           <div className="pt-2 border-t border-border/40 flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={downloadAll} disabled={zipping} className="gap-2">
-              {zipping ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-              Alle Dateien herunterladen
-            </Button>
+            <FileDownloadButton zip sources={allFiles} filename={`Mediapaket-${mpId}.zip`} label="Alle Dateien als ZIP" />
           </div>
         </TabsContent>
 
