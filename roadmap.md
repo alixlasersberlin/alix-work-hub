@@ -8,3 +8,5 @@
 - [x] „Angebot bearbeiten“ in Kundenakte → Alle Vorgänge → Angebote ergänzt und mit dem bestehenden Angebotseditor verknüpft.
 - [x] Bilder in Mediapaket und AlixDocs einzeln als Download oder gesammelt als ZIP angeboten; drei Tests und Browser-Downloads mit Testbildern bestanden.
 - [ ] Bild-Downloads mit echten Auftragsdaten prüfen — externe Anmeldung verhindert den automatisierten Zugriff auf die angemeldete Auftragsansicht.
+- [x] OPERATION → Mediapaket ergänzt; bestehende geschützte Übersicht mit Status-Auswahl/Zählern und vollständigem Laden statt 500er-Limit, zwei Tests bestanden.
+- [ ] Mediapaket-Übersicht mit echten Daten prüfen — externe Anmeldung verhindert automatisierten Zugriff auf die angemeldete Ansicht.

@@ -1,4 +1,4 @@
-import { Workflow, MessagesSquare, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck, Activity, FileUp, ListChecks } from 'lucide-react';
+import { Workflow, MessagesSquare, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck, Activity, FileUp, ListChecks, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -7,6 +7,7 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 
 
 const tiles = [
+  { to: '/mediapaket', icon: Package, title: 'Mediapaket', desc: 'Alle Mediapakete nach Status, Kunde und Auftrag.' },
   { to: '/operation/email-vorlagen', icon: Mail, title: 'E-Mail Vorlagen', desc: 'Inhalte automatisch versendeter E-Mails bearbeiten.' },
   { to: '/operation/sms-konfiguration', icon: MessageSquare, title: 'SMS Konfiguration', desc: 'Twilio-Verbindung prüfen und SMS-Vorlagen verwalten.' },
   { to: '/operation/beratung', icon: MessagesSquare, title: 'Beratung', desc: 'Öffentliche Beratungsformulare öffnen, einbetten und Texte bearbeiten.' },
