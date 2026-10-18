@@ -16,7 +16,7 @@ export async function buildDownload(sources: DownloadSource[], zip: boolean, onP
     const blob = await sources[i].load();
     if (!blob.size) throw new Error(`Datei ist leer: ${sources[i].name}`);
     if (!zip) return blob;
-    archive.file(`${String(i + 1).padStart(3, '0')}-${safeDownloadName(sources[i].name)}`, await blob.arrayBuffer());
+    archive.file(`${String(i + 1).padStart(3, '0')}-${safeDownloadName(sources[i].name)}`, new Uint8Array(await blob.arrayBuffer()));
     onProgress?.(i + 1);
   }
   return archive.generateAsync({ type: 'blob', compression: 'STORE' });

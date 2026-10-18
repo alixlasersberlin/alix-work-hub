@@ -11,7 +11,7 @@ describe('Bild-Downloads', () => {
       { name: 'foto.jpg', load: async () => new Blob(['bild-1']) },
       { name: 'foto.jpg', load: async () => new Blob(['bild-2']) },
     ], true);
-    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    const zip = await JSZip.loadAsync(new Uint8Array(await blob.arrayBuffer()));
     expect(Object.keys(zip.files)).toEqual(['001-foto.jpg', '002-foto.jpg']);
     expect(await zip.file('001-foto.jpg')?.async('string')).toBe('bild-1');
     expect(await zip.file('002-foto.jpg')?.async('string')).toBe('bild-2');
