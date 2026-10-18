@@ -11,3 +11,5 @@
 - [x] OPERATION → Mediapaket ergänzt; bestehende geschützte Übersicht mit Status-Auswahl/Zählern und vollständigem Laden statt 500er-Limit, zwei Tests bestanden.
 - [ ] Mediapaket-Übersicht mit echten Daten prüfen — externe Anmeldung verhindert automatisierten Zugriff auf die angemeldete Ansicht.
 - [x] Mediapaket-Ladefehler durch nicht vorhandene Namensfelder korrigiert; Übersicht, Analytics und Administration verwenden die bestehenden Kunden- und Mitarbeiternamen.
+- [x] Branding-PDF-Download ergänzt; vollständige Beispieltexte und Umlaute über zwei Seiten visuell ohne Abschneiden geprüft, drei Download-Tests bestanden.
+- [ ] Branding-PDF mit echten Auftragsdaten herunterladen — externe Anmeldung verhindert die automatisierte Prüfung der angemeldeten Ansicht.
