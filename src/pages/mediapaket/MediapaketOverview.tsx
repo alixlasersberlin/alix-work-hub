@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { exportMediaPackagePdf } from '@/lib/mediapaket/exportPdf';
 import { useTenantFilter } from '@/hooks/useTenantFilter';
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen',
@@ -62,6 +63,7 @@ export default function MediapaketOverview() {
   const { tenantId } = useTenantFilter();
   const [rows, setRows] = useState<MpRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('__all__');
@@ -130,32 +132,48 @@ export default function MediapaketOverview() {
 
   const load = async () => {
     setLoading(true);
-    let mpQuery = supabase
+    setLoadError(null);
+    try {
+    const list = await loadAllPages<MpRow>(async (from, to) => {
+      let mpQuery = supabase
       .from('media_packages')
       .select('id, order_id, customer_id, status, progress_percent, assigned_user_id, due_date, studio_name, updated_at, submitted_at')
       .order('updated_at', { ascending: false })
-      .limit(500);
-    if (tenantId) mpQuery = mpQuery.eq('tenant_id', tenantId) as any;
-    const { data: mps } = await mpQuery;
-    const list = (mps || []) as MpRow[];
+      .order('id')
+      .range(from, to);
+      if (tenantId) mpQuery = mpQuery.eq('tenant_id', tenantId);
+      return await mpQuery;
+    });
 
     const cids = Array.from(new Set(list.map(r => r.customer_id).filter(Boolean))) as string[];
     const oids = Array.from(new Set(list.map(r => r.order_id).filter(Boolean))) as string[];
     const uids = Array.from(new Set(list.map(r => r.assigned_user_id).filter(Boolean))) as string[];
     const mpIds = list.map(r => r.id);
 
+    // Small ID batches avoid URL limits; page comments as well so counts stay complete.
+    const related = async (ids: string[], fetch: (batch: string[]) => PromiseLike<{ data: any[] | null; error: { message: string } | null }>) => {
+      const data: any[] = [];
+      for (let i = 0; i < ids.length; i += 200) {
+        const result = await fetch(ids.slice(i, i + 200));
+        if (result.error) throw new Error(result.error.message);
+        data.push(...(result.data ?? []));
+      }
+      return { data };
+    };
     const [custs, ords, profs, comments] = await Promise.all([
-      cids.length ? supabase.from('customers').select('id, company_name, first_name, last_name').in('id', cids) : Promise.resolve({ data: [] as any[] }),
-      oids.length ? supabase.from('orders').select('id, order_number').in('id', oids) : Promise.resolve({ data: [] as any[] }),
-      uids.length ? supabase.from('user_profiles').select('id, full_name, email').in('id', uids) : Promise.resolve({ data: [] as any[] }),
-      mpIds.length ? supabase
+      related(cids, ids => supabase.from('customers').select('id, company_name, first_name, last_name').in('id', ids)),
+      related(oids, ids => supabase.from('orders').select('id, order_number').in('id', ids)),
+      related(uids, ids => supabase.from('user_profiles').select('id, full_name, email').in('id', ids)),
+      related(mpIds, async ids => ({ data: await loadAllPages(async (from, to) => await supabase
         .from('media_package_comments')
         .select('media_package_id')
-        .in('media_package_id', mpIds)
+        .in('media_package_id', ids)
         .eq('author_type', 'customer')
         .eq('recipient_type', 'staff')
         .eq('internal_only', false)
-        .is('read_at', null) : Promise.resolve({ data: [] as any[] }),
+        .is('read_at', null)
+        .order('id')
+        .range(from, to)), error: null })),
     ]);
 
     const custMap: Record<string, string> = {};
@@ -176,7 +194,12 @@ export default function MediapaketOverview() {
       _assignee_name: r.assigned_user_id ? profMap[r.assigned_user_id] : undefined,
       _unread_count: unreadMap[r.id] || 0,
     })));
-    setLoading(false);
+    } catch (error) {
+      setRows([]);
+      setLoadError(error instanceof Error ? error.message : 'Mediapakete konnten nicht geladen werden.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [tenantId]);
@@ -245,6 +268,17 @@ export default function MediapaketOverview() {
         <Kpi label="Überfällig" value={stats.overdue} tone={stats.overdue > 0 ? 'red' : undefined} icon={<AlertTriangle className={cn('w-4 h-4', stats.overdue > 0 ? 'text-red-500' : 'text-muted-foreground')} />} />
         <Kpi label="Ungelesene Antworten" value={stats.unread} tone={stats.unread > 0 ? 'amber' : undefined} icon={<CalendarClock className={cn('w-4 h-4', stats.unread > 0 ? 'text-amber-500' : 'text-muted-foreground')} />} />
         <Kpi label="Nicht zugewiesen" value={stats.unassigned} tone={stats.unassigned > 0 ? 'sky' : undefined} icon={<User className={cn('w-4 h-4', stats.unassigned > 0 ? 'text-sky-400' : 'text-muted-foreground')} />} />
+      </div>
+
+      <div className="flex flex-wrap gap-2" aria-label="Mediapakete nach Status">
+        <Button variant={statusFilter === '__all__' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('__all__')}>
+          Alle <span className="ml-2 tabular-nums">{rows.length}</span>
+        </Button>
+        {STATUS_ORDER.map(status => (
+          <Button key={status} variant={statusFilter === status ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter(status)}>
+            {STATUS_LABEL[status]} <span className="ml-2 tabular-nums">{rows.filter(row => row.status === status).length}</span>
+          </Button>
+        ))}
       </div>
 
       {/* Filters */}
@@ -335,7 +369,13 @@ export default function MediapaketOverview() {
         </div>
       )}
 
-      {loading ? (
+      {loadError ? (
+        <div role="alert" className="flex flex-wrap items-center gap-3 border border-destructive/40 rounded-md p-4 text-destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <span>{loadError}</span>
+          <Button variant="outline" size="sm" onClick={load}>Erneut laden</Button>
+        </div>
+      ) : loading ? (
         <div className="flex items-center gap-2 p-8 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>
       ) : view === 'list' ? (
         <ListView rows={filtered} selected={selected} onToggle={toggleOne} onToggleAll={(checked) => toggleAll(filtered.map(r => r.id), checked)} />
