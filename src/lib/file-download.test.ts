@@ -1,10 +1,11 @@
-// Node's Blob provides arrayBuffer, which jsdom's Blob does not implement.
-// @vitest-environment node
-import { describe, expect, it } from 'vitest';
+import { Blob as NodeBlob } from 'node:buffer';
+import { describe, expect, it, beforeAll, afterAll, vi } from 'vitest';
 import JSZip from 'jszip';
 import { buildDownload } from './file-download';
 
 describe('Bild-Downloads', () => {
+  beforeAll(() => vi.stubGlobal('Blob', NodeBlob));
+  afterAll(() => vi.unstubAllGlobals());
   it('enthält beide Bilder auch bei identischen Dateinamen', async () => {
     const blob = await buildDownload([
       { name: 'foto.jpg', load: async () => new Blob(['bild-1']) },
