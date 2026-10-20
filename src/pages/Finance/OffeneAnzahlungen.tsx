@@ -115,7 +115,7 @@ export default function OffeneAnzahlungen() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
   const [statusFilter, setStatusFilter] = useState<string>('alle');
   const [releaseFilter, setReleaseFilter] = useState<string>('alle');
   const [sourceFilter, setSourceFilter] = useState<string>('alle');

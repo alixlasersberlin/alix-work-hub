@@ -1243,8 +1243,8 @@ export default function OrderDetail() {
             <label className="flex items-center gap-3">
               <Checkbox checked={depositOk} disabled />
               <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
-              <Link to="/finance/anzahlungen" className="text-xs text-primary hover:underline">
-                Buchung nur unter Buchhaltung → Anzahlungen
+              <Link to={`/finance/offene-anzahlungen?q=${encodeURIComponent(order?.order_number ?? '')}`} className="text-xs text-primary hover:underline">
+                Jetzt buchen unter Buchhaltung → Offene Anzahlungen
               </Link>
             </label>
             {depositOk && (
