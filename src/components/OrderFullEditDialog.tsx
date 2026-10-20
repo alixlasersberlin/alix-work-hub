@@ -255,7 +255,7 @@ export default function OrderFullEditDialog({ order, open, onClose, onSaved }: P
                   <Checkbox checked={form.deposit_ok} disabled />
                   <span className="text-xs font-semibold">ANZAHLUNG OK</span>
                 </label>
-                <p className="text-[11px] text-muted-foreground mt-1">Buchung nur unter Buchhaltung → Anzahlungen</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Buchung nur unter Buchhaltung → Offene Anzahlungen</p>
               </div>
             </div>
           </section>
