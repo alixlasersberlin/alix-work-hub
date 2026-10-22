@@ -13,3 +13,5 @@
 - [x] Mediapaket-Ladefehler durch nicht vorhandene Namensfelder korrigiert; Übersicht, Analytics und Administration verwenden die bestehenden Kunden- und Mitarbeiternamen.
 - [x] Branding-PDF-Download ergänzt; vollständige Beispieltexte und Umlaute über zwei Seiten visuell ohne Abschneiden geprüft, drei Download-Tests bestanden.
 - [ ] Branding-PDF mit echten Auftragsdaten herunterladen — externe Anmeldung verhindert die automatisierte Prüfung der angemeldeten Ansicht.
+- [x] Anzahlungsversand AB-2026-04568 untersucht: gespeicherte Adresse mit „İ“ wird vom echten Versandvalidator abgelehnt; verständliche Fehlermeldung ergänzt, keine Kundenadresse geändert und keine E-Mail erneut versendet.
+- [ ] Versand der vorhandenen Anzahlungsrechnung AB-2026-04568 prüfen — korrekte Kundenadresse muss bestätigt werden; externe Anmeldung verhindert angemeldeten End-to-End-Test.

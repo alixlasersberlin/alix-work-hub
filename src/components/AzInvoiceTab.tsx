@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck, BookOpen, Ban } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -929,7 +930,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         'Alix Lasers Deutschland',
       ].join('\n');
 
-      const { error } = await supabase.functions.invoke('send-transactional-email', {
+      const { data, error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
@@ -944,6 +945,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         },
       });
       if (error) throw error;
+      if (data?.error || data?.success === false) {
+        throw new Error(data?.message || data?.error || 'Die E-Mail wurde nicht versendet.');
+      }
 
       if (!isResend) await recordNoteAndOrderDeposit();
       try {
@@ -990,7 +994,21 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       onReload?.();
       return true;
     } catch (e: any) {
-      toast.error('Fehler beim Versenden: ' + (e?.message || 'Unbekannter Fehler'));
+      let details = e?.message || 'Unbekannter Fehler';
+      if (e instanceof FunctionsHttpError) {
+        try {
+          const response = await e.context.clone().json();
+          details = response?.message || response?.error || details;
+          if (response?.error === 'invalid_recipient') {
+            details += ' Bitte die E-Mail-Adresse in der Kundenakte prüfen und korrigieren.';
+          } else if (e.context.status === 401) {
+            details = 'Die Anmeldung ist abgelaufen. Bitte erneut anmelden und die vorhandene Rechnung per E-Mail versenden.';
+          } else if (e.context.status === 403) {
+            details = 'Für den E-Mail-Versand fehlt die Berechtigung. Bitte einen Administrator kontaktieren.';
+          }
+        } catch { /* Die ursprüngliche Fehlermeldung bleibt erhalten. */ }
+      }
+      toast.error('Fehler beim Versenden: ' + details);
       return false;
     } finally {
       setSending(false);
