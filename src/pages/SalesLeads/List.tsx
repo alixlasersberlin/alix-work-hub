@@ -59,9 +59,12 @@ function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'ou
 
 export default function SalesLeadsList() {
   const { tenantId } = useTenantFilter();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth() as any;
   const canDelete = hasRole('Super Admin');
-  const canAssign = hasRole('Super Admin');
+  // Zuweisen: Super Admin sowie ausdrücklich freigegeben L. Scheidler.
+  // Serverseitig erlaubt die Rolle "Order" die Änderung ohnehin.
+  const ASSIGN_ALLOWED_USERS = ['45820f2c-6d6c-4067-9816-cc6dc4500db4'];
+  const canAssign = hasRole('Super Admin') || ASSIGN_ALLOWED_USERS.includes(user?.id);
 
   const [rows, setRows] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
