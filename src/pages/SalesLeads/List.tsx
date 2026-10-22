@@ -109,12 +109,10 @@ export default function SalesLeadsList() {
     (async () => {
       setLoading(true);
       await loadLeads();
-      const { data: u } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, email')
-        .eq('is_active', true)
-        .order('full_name', { ascending: true });
-      setUsers((u ?? []) as any);
+      // Namen über geschützte Funktion laden – Mitarbeiter ohne Admin-Rechte
+      // dürfen fremde Profile nicht direkt lesen, sollen aber Namen sehen.
+      const { data: u } = await (supabase as any).rpc('list_staff_names', { _ids: null });
+      setUsers(((u ?? []) as any[]).map((x) => ({ id: x.id, full_name: x.full_name, email: null })));
       setLoading(false);
     })();
   }, [tenantId]);
