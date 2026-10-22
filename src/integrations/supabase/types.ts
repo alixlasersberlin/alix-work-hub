@@ -58475,6 +58475,14 @@ export type Database = {
       is_supplier: { Args: never; Returns: boolean }
       lager_overview_counts: { Args: never; Returns: Json }
       license_next_number: { Args: { p_prefix: string }; Returns: string }
+      list_staff_names: {
+        Args: { _ids?: string[] }
+        Returns: {
+          full_name: string
+          id: string
+          is_active: boolean
+        }[]
+      }
       log_audit_event: {
         Args: {
           _action: string
