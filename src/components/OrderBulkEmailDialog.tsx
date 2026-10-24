@@ -18,9 +18,11 @@ type Outcome = { status: 'sent' | 'failed' | 'uncertain'; detail: string };
 export default function OrderBulkEmailDialog({ recipients, onClose }: { recipients: OrderMailRecipient[]; onClose: () => void }) {
   const permissions = useMailPermissions();
   const senders = [
+    ...(permissions.canUseMailbox('vertrieb') || permissions.canUseMailbox('service')
+      ? [['vertrieb', 'service@alix-lasers.com']] : []),
     ['vertrieb', 'vertrieb@alixwork.de'], ['finance', 'finance@alixwork.de'],
     ['service', 'service@alixwork.de'], ['marketing', 'news@alixwork.de'],
-  ].filter(([mailbox]) => permissions.canUseMailbox(mailbox as 'vertrieb' | 'finance' | 'service' | 'marketing'));
+  ].filter(([mailbox, address]) => address === 'service@alix-lasers.com' || permissions.canUseMailbox(mailbox as 'vertrieb' | 'finance' | 'service' | 'marketing'));
   const [from, setFrom] = useState(senders[0]?.[1] ?? '');
   const [subject, setSubject] = useState('');
   const [text, setText] = useState('');

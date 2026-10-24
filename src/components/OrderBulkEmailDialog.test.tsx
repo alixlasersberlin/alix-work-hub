@@ -18,7 +18,7 @@ describe('Sammeltext einzeln versenden', () => {
     await waitFor(() => expect(invoke).toHaveBeenCalledTimes(2));
     expect(invoke.mock.calls.map(call => call[1].body)).toEqual(recipients.map(r => ({
       order_bulk: true, order_id: r.orderId, customer_id: customerId,
-      to_email: r.email, to_name: r.name, from_email: 'vertrieb@alixwork.de',
+       to_email: r.email, to_name: r.name, from_email: 'service@alix-lasers.com',
       subject: `Ihr Auftrag ${r.orderNumber}`, body_text: `Hallo ${r.name}`, attachments: [],
     })));
     await waitFor(() => expect(screen.getAllByText('Gesendet · in Kundenakte gespeichert')).toHaveLength(2));
