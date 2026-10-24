@@ -2,12 +2,8 @@ import "../_shared/global-bcc.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { appendSignature } from "../_shared/mail-signature.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { bulkOrderMailSchema } from './order-bulk-validation.ts';
 
 // Map from-email -> allowed roles (Super Admin/Admin always allowed)
 const SENDER_ROLE_MAP: Record<string, string[]> = {
@@ -137,6 +133,50 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
+    // Bulk order mail stays on the existing transport, but checks the concrete
+    // order through the caller's RLS and archives before provider submission.
+    let bulkDraftId: string | null = null;
+    if (body.order_bulk === true) {
+      const parsed = bulkOrderMailSchema.safeParse(body);
+      if (!parsed.success) return jsonResponse({ error: 'Nachricht oder Anhänge ungültig', details: parsed.error.flatten() }, 400);
+      if (template_id || rawHtml || is_test || skip_system_copies || skip_signature) return jsonResponse({ error: 'Ungültiger Auftragsversand' }, 400);
+      const { data: profile } = await supabase.from('user_profiles').select('status').eq('id', userData.user.id).maybeSingle();
+      if (profile?.status !== 'active') return jsonResponse({ error: 'Benutzer nicht aktiv' }, 403);
+      const { data: callerRoles } = await supabase.from('user_roles').select('role').eq('user_id', userData.user.id);
+      const senderRoles = ['Super Admin', 'Admin', ...(SENDER_ROLE_MAP[parsed.data.from_email] ?? [])];
+      if (!(callerRoles ?? []).some(r => senderRoles.includes(r.role))) return jsonResponse({ error: 'Keine Versandberechtigung' }, 403);
+      const { data: authorizedOrder, error: orderError } = await authClient.from('orders').select('id,customer_id,tenant_id').eq('id', parsed.data.order_id).maybeSingle();
+      if (orderError || !authorizedOrder || authorizedOrder.customer_id !== parsed.data.customer_id) return jsonResponse({ error: 'Auftrag oder Kundenzuordnung nicht zugänglich' }, 403);
+      const { data: authorizedCustomer } = await authClient.from('customers').select('email').eq('id', parsed.data.customer_id).maybeSingle();
+      if (authorizedCustomer?.email?.trim().toLowerCase() !== parsed.data.to_email.toLowerCase()) return jsonResponse({ error: 'Kundenadresse wurde geändert. Bitte Aufträge neu laden.' }, 409);
+      const { data: draft, error: draftError } = await supabase.from('mail_messages').insert({
+        customer_id, order_id, tenant_id: authorizedOrder.tenant_id, to_email, to_name, from_email,
+        subject: parsed.data.subject, body_text: parsed.data.body_text,
+        status: 'draft', direction: 'outbound', created_by: userData.user.id,
+      }).select('id').single();
+      if (draftError || !draft) return jsonResponse({ error: 'Kundenakte konnte nicht gespeichert werden. Keine E-Mail versendet.' }, 500);
+      bulkDraftId = draft.id;
+      try {
+        for (const [index, attachment] of parsed.data.attachments.entries()) {
+          const bytes = Uint8Array.from(atob(attachment.content), c => c.charCodeAt(0));
+          const path = `${order_id}/mail/${draft.id}/${index}-${attachment.filename}`;
+          const { error: uploadError } = await supabase.storage.from('order-invoices').upload(path, bytes, { contentType: attachment.contentType, upsert: false });
+          if (uploadError) throw uploadError;
+          const { error: documentError } = await supabase.from('order_documents').insert({ order_id, file_name: attachment.filename, file_path: path, file_type: attachment.contentType, document_type: 'E-Mail-Anhang', uploaded_by: userData.user.id });
+          if (documentError) throw documentError;
+          const { error: attachmentError } = await supabase.from('mail_attachments').insert({
+            message_id: draft.id, customer_id, order_id, file_name: attachment.filename,
+            storage_bucket: 'order-invoices', storage_path: path, file_size: bytes.length,
+            mime_type: attachment.contentType, document_type: 'E-Mail-Anhang', created_by: userData.user.id,
+          });
+          if (attachmentError) throw attachmentError;
+        }
+      } catch (e) {
+        await supabase.from('mail_messages').update({ status: 'failed', error_message: String(e) }).eq('id', draft.id);
+        return jsonResponse({ error: 'Anhänge konnten nicht archiviert werden. Keine E-Mail versendet.' }, 500);
+      }
+    }
 
     let baseSubject = rawSubject ?? "";
     let baseHtml = rawHtml ?? "";
@@ -309,7 +349,7 @@ serve(async (req) => {
     }
 
     if (!resendResponse.ok) {
-      await supabase.from("mail_messages").insert({
+      const failedPayload = {
         customer_id,
         order_id,
         invoice_id,
@@ -326,7 +366,9 @@ serve(async (req) => {
         status: "failed",
         error_message: JSON.stringify(resendData),
         created_by: userData.user.id,
-      });
+      };
+      if (bulkDraftId) await supabase.from('mail_messages').update(failedPayload).eq('id', bulkDraftId);
+      else await supabase.from('mail_messages').insert(failedPayload);
       return jsonResponse({ error: "Provider request failed", status: resendResponse.status, details: resendData }, resendResponse.status);
     }
 
@@ -337,9 +379,7 @@ serve(async (req) => {
       fromLc.startsWith("vertrieb@") ? "vertrieb" :
       fromLc.startsWith("service@") ? "service" : "personal";
 
-    const { data: message, error: insertError } = await supabase
-      .from("mail_messages")
-      .insert({
+    const messagePayload = {
         customer_id,
         order_id,
         invoice_id,
@@ -360,11 +400,13 @@ serve(async (req) => {
         provider_message_id: resendData.id,
         sent_at: new Date().toISOString(),
         created_by: userData.user.id,
-      })
-      .select()
-      .single();
+      };
+    const { data: message, error: insertError } = bulkDraftId
+      ? await supabase.from('mail_messages').update(messagePayload).eq('id', bulkDraftId).select().single()
+      : await supabase.from('mail_messages').insert(messagePayload).select().single();
 
     if (insertError) {
+      if (bulkDraftId) return jsonResponse({ success: true, message_id: bulkDraftId, resend_id: resendData.id, archive_warning: 'E-Mail versendet; Entwurf in Kundenakte vorhanden, Versandstatus konnte nicht aktualisiert werden. Nicht erneut senden.' });
       return jsonResponse({ error: insertError.message }, 500);
     }
 
