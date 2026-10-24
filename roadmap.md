@@ -1,6 +1,7 @@
 - [x] Aufträge AT: markierte Aufträge einzeln per frei formulierter E-Mail mit Anhängen, Vorschau und Versandstatus anschreiben; Nachrichten und Anhänge vor Versand in bestehender Kundenakte speichern; 13 Tests bestanden.
 - [ ] Auftrags-Sammelversand mit echten Kundendaten prüfen — externe Anmeldung verhindert automatisierten End-to-End-Test; keine Kunden-E-Mails zur Prüfung versendet.
-- [ ] Auftrags-Sammelversand: echten Absender unter alix-lasers.com ergänzen und Versandfreigabe der Domain prüfen.
+- [x] Auftrags-Sammelversand: service@alix-lasers.com als echten Absender ergänzt, 15 Tests bestanden und Versandfunktion bereitgestellt.
+- [ ] Versand über alix-lasers.com aktivieren — DNS-Einträge müssen beim Domainanbieter ergänzt und von Resend verifiziert werden; Anleitung als Download bereitgestellt, kein Test an Kunden versendet.
 - [x] Alix-Sign-Festschreibung und vorhandenen Rechnungs-/Versandablauf prüfen.
 - [x] Automatische Anzahlungsrechnung nach zwei Stunden ohne Duplikate einrichten: PDF, Ablage, Kunde + CC Buchhaltung.
 - [ ] Echten Ablauf mit einem neuen Alix-Sign-Auftrag beobachten — wartet auf eine echte Unterschrift, damit keine Testrechnung an einen Kunden geht.
