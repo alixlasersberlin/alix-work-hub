@@ -1,3 +1,7 @@
+import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
+import { useOrderSelection } from '@/hooks/useOrderSelection';
+import { Checkbox } from '@/components/ui/checkbox';
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,6 +72,8 @@ export default function CustomerAllTransactions({
   externalCustomerId?: string | null;
   customerName?: string | null;
 }) {
+  const { selected, setSelected, toggle: toggleOrder } = useOrderSelection();
+  const [mailOrders, setMailOrders] = useState<any[]>([]);
   const navigate = useNavigate();
   const { roles } = useAuth();
   const canOpenOfferEditor = (roles ?? []).some(role =>
@@ -127,12 +133,11 @@ export default function CustomerAllTransactions({
           .eq('customer_id', customerId)
           .order('offer_date', { ascending: false })
           .limit(200),
-        supabase
+        loadAllPages((from, to) => supabase
           .from('orders')
-          .select('id, order_number, order_date, order_status, total_amount, currency')
+          .select('id, customer_id, order_number, order_date, order_status, total_amount, currency, source_system, customers(company_name, contact_name, email)')
           .eq('customer_id', customerId)
-          .order('order_date', { ascending: false })
-          .limit(300),
+          .order('order_date', { ascending: false }).order('id').range(from, to)).then(data => ({ data })).catch(() => ({ data: [] })),
         ext ? invQ.eq('customer_id', ext) : name ? invQ.eq('customer_name', name) : invQ.eq('customer_id', '__none__'),
         ext ? cnQ.eq('customer_id', ext) : name ? cnQ.eq('customer_name', name) : cnQ.eq('customer_id', '__none__'),
         supabase
@@ -150,6 +155,7 @@ export default function CustomerAllTransactions({
           .limit(200),
       ]);
 
+      if (!cancelled) setMailOrders(ordersRes.data ?? []);
       const list: Row[] = [];
 
       (offersRes.data ?? []).forEach((o: any) =>
@@ -334,6 +340,8 @@ export default function CustomerAllTransactions({
                   </span>
                 </button>
 
+                {isOpen && k === 'auftrag' && <div className="px-4 pt-3"><OrderSelectionToolbar orders={mailOrders.filter(o => items.some(r => r.id === `auf-${o.id}`))} selected={selected} onSelectionChange={setSelected} /></div>}
+
                 {isOpen && items.length === 0 && (
                   <div className="border-t border-border px-4 py-6 text-sm text-muted-foreground">Keine Einträge</div>
                 )}
@@ -342,6 +350,7 @@ export default function CustomerAllTransactions({
                   <table className="w-full text-sm border-t border-border">
                     <thead className="bg-secondary/50 text-muted-foreground">
                       <tr>
+                        {k === 'auftrag' && <th className="w-10 px-3 py-3"><OrderPageCheckbox orders={mailOrders.filter(o => items.some(r => r.id === `auf-${o.id}`))} selected={selected} onSelectionChange={setSelected} /></th>}
                         <th className="text-left px-4 py-3">Datum</th>
                         <th className="text-left px-4 py-3">Nummer</th>
                         <th className="text-left px-4 py-3">Bezeichnung</th>
@@ -353,6 +362,7 @@ export default function CustomerAllTransactions({
                     <tbody className="divide-y divide-border">
                       {items.map((r) => (
                         <tr key={r.id} className="hover:bg-secondary/30">
+                          {k === 'auftrag' && <td className="w-10 px-3 py-2"><Checkbox checked={selected.has(r.id.slice(4))} onCheckedChange={() => toggleOrder(r.id.slice(4))} aria-label={`Auftrag ${r.number} markieren`} /></td>}
                           <td className="px-4 py-2 whitespace-nowrap">{fmtDate(r.date)}</td>
                           <td className="px-4 py-2 font-medium">
                             {r.zohoInvoiceId || r.docId || r.href ? (
