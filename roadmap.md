@@ -20,3 +20,4 @@
 - [ ] Branding-PDF mit echten Auftragsdaten herunterladen — externe Anmeldung verhindert die automatisierte Prüfung der angemeldeten Ansicht.
 - [x] Anzahlungsversand AB-2026-04568 untersucht: gespeicherte Adresse mit „İ“ wird vom echten Versandvalidator abgelehnt; verständliche Fehlermeldung ergänzt, keine Kundenadresse geändert und keine E-Mail erneut versendet.
 - [ ] Versand der vorhandenen Anzahlungsrechnung AB-2026-04568 prüfen — korrekte Kundenadresse muss bestätigt werden; externe Anmeldung verhindert angemeldeten End-to-End-Test.
+- [ ] Auftrags-Sammelversand: falsche Rollenabfrage korrigieren und Berechtigungen ohne Kundenversand prüfen.
