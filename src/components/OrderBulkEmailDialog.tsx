@@ -68,7 +68,9 @@ export default function OrderBulkEmailDialog({ recipients, onClose }: { recipien
             if (status === 401 || status === 403) {
               outcome = { status: 'failed', detail: status === 401
                 ? 'Anmeldung abgelaufen. Keine E-Mail versendet. Bitte erneut anmelden und den Versanddialog neu öffnen.'
-                : 'Keine Versandberechtigung für diesen Absender. Keine E-Mail versendet. Bitte Berechtigung prüfen und den Versanddialog neu öffnen.' };
+                : details.includes('Auftrag oder Kundenzuordnung')
+                  ? 'Auftrag oder Kunde nicht zugänglich. Keine E-Mail versendet. Bitte Seite neu laden und erneut versuchen.'
+                  : 'Keine Versandberechtigung für diesen Absender. Keine E-Mail versendet. Bitte Berechtigung prüfen und den Versanddialog neu öffnen.' };
             } else {
               let message = details;
               try { const parsed = JSON.parse(details); if (typeof parsed.error === 'string') message = parsed.error; } catch { /* non-JSON error */ }
