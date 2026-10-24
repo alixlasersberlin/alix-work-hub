@@ -1,3 +1,4 @@
+- [ ] Auswahlkästchen und bestehenden Einzel-E-Mail-Sammelversand auf alle Kundenauftragslisten erweitern.
 - [x] Aufträge AT: markierte Aufträge einzeln per frei formulierter E-Mail mit Anhängen, Vorschau und Versandstatus anschreiben; Nachrichten und Anhänge vor Versand in bestehender Kundenakte speichern; 13 Tests bestanden.
 - [ ] Auftrags-Sammelversand mit echten Kundendaten prüfen — externe Anmeldung verhindert automatisierten End-to-End-Test; keine Kunden-E-Mails zur Prüfung versendet.
 - [x] Auftrags-Sammelversand: service@alix-lasers.com als echten Absender ergänzt, 15 Tests bestanden und Versandfunktion bereitgestellt.
