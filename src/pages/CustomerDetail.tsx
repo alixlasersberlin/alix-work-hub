@@ -1,3 +1,4 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
 import { useOrderSelection } from '@/hooks/useOrderSelection';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,7 +54,7 @@ export default function CustomerDetail() {
     setFullCustomer(null);
     const [cRes, oRes, bRes] = await Promise.all([
       supabase.from('customers').select(CUSTOMER_COLS).eq('id', id!).maybeSingle(),
-      supabase.from('orders').select(ORDER_COLS).eq('customer_id', id!).order('order_date', { ascending: false }).limit(200),
+      loadAllPages((from, to) => supabase.from('orders').select(ORDER_COLS).eq('customer_id', id ?? '').order('order_date', { ascending: false }).order('id').range(from, to)).then(data => ({ data })).catch(() => ({ data: [] })),
       // Bankdaten sind Finance-only; für andere Rollen liefert RLS ein leeres Ergebnis.
       supabase.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', id!).maybeSingle(),
     ]);

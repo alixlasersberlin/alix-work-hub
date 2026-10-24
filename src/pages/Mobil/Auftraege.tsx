@@ -1,3 +1,4 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
 import { useOrderSelection } from '@/hooks/useOrderSelection';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,14 +21,16 @@ export default function MobilAuftraege() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase
+      try {
+      const data = await loadAllPages((from, to) => supabase
         .from('orders')
         .select('id, order_number, order_status, order_date, shipping_address, billing_address, customer_id, customers:customer_id(company_name, contact_name, email, phone)')
         .order('order_date', { ascending: false })
-        .limit(50);
+        .order('id').range(from, to));
       if (cancelled) return;
-      if (error) setError('Keine Verbindung – gespeicherte Daten werden angezeigt.');
-      else { setRows(data ?? []); cacheSet('orders', data ?? []); }
+      setRows(data ?? []); cacheSet('orders', data ?? []);
+      } catch { if (!cancelled) setError('Keine Verbindung – gespeicherte Daten werden angezeigt.'); }
+      if (cancelled) return;
       setLoading(false);
     })();
     return () => { cancelled = true; };
