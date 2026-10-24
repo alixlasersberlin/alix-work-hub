@@ -141,8 +141,8 @@ serve(async (req) => {
       const parsed = bulkOrderMailSchema.safeParse(body);
       if (!parsed.success) return jsonResponse({ error: 'Nachricht oder Anhänge ungültig', details: parsed.error.flatten() }, 400);
       if (template_id || rawHtml || is_test || skip_system_copies || skip_signature) return jsonResponse({ error: 'Ungültiger Auftragsversand' }, 400);
-      const { data: profile } = await supabase.from('user_profiles').select('status').eq('id', userData.user.id).maybeSingle();
-      if (profile?.status !== 'active') return jsonResponse({ error: 'Benutzer nicht aktiv' }, 403);
+      const { data: profile } = await supabase.from('user_profiles').select('account_status,is_active,invitation_status,password_reset_required').eq('id', userData.user.id).maybeSingle();
+      if (profile?.account_status !== 'active' || !profile.is_active || profile.invitation_status !== 'accepted' || profile.password_reset_required) return jsonResponse({ error: 'Benutzer nicht freigegeben' }, 403);
       const { data: callerRoles } = await supabase.from('user_roles').select('role').eq('user_id', userData.user.id);
       const senderRoles = ['Super Admin', 'Admin', ...(SENDER_ROLE_MAP[parsed.data.from_email] ?? [])];
       if (!(callerRoles ?? []).some(r => senderRoles.includes(r.role))) return jsonResponse({ error: 'Keine Versandberechtigung' }, 403);

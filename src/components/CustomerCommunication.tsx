@@ -15,6 +15,7 @@ import {
   MessageSquare, Mail, Send, Search, Loader2, Inbox, RotateCw, Plus, ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { FileDownloadButton } from '@/components/FileDownloadButton';
 
 type MailMessage = {
   id: string;
@@ -94,6 +95,7 @@ export default function CustomerCommunication({ customer }: { customer: any }) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<MailMessage | null>(null);
   const [events, setEvents] = useState<MailEvent[]>([]);
+  const [attachments, setAttachments] = useState<{ id: string; file_name: string; storage_bucket: string; storage_path: string }[]>([]);
   const [resendingId, setResendingId] = useState<string | null>(null);
 
   async function loadMessages() {
@@ -150,6 +152,9 @@ export default function CustomerCommunication({ customer }: { customer: any }) {
   async function openDetail(m: MailMessage) {
     setSelected(m);
     setEvents([]);
+    setAttachments([]);
+    const { data: files } = await supabase.from('mail_attachments').select('id,file_name,storage_bucket,storage_path').eq('message_id', m.id);
+    setAttachments(files ?? []);
     const { data } = await supabase
       .from('mail_events')
       .select('*')
@@ -397,6 +402,17 @@ export default function CustomerCommunication({ customer }: { customer: any }) {
                   </ol>
                 )}
               </div>
+              {attachments.length > 0 && <div className="space-y-2">
+                <h3 className="text-sm font-medium">Anhänge</h3>
+                {attachments.map(file => <div key={file.id} className="flex items-center justify-between gap-2">
+                  <span className="break-all">{file.file_name}</span>
+                  <FileDownloadButton filename={file.file_name} label="Anhang herunterladen" sources={[{ name: file.file_name, load: async () => {
+                    const { data, error } = await supabase.storage.from(file.storage_bucket).download(file.storage_path);
+                    if (error || !data) throw new Error(error?.message || 'Anhang konnte nicht geladen werden');
+                    return data;
+                  } }]} />
+                </div>)}
+              </div>}
             </div>
           )}
 
