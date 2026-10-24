@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import OrderBulkEmailDialog from './OrderBulkEmailDialog';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke } } }));
 vi.mock('@/hooks/useMailPermissions', () => ({ useMailPermissions: () => ({ canUseMailbox: () => true, can: () => true }) }));
@@ -33,5 +34,20 @@ describe('Sammeltext einzeln versenden', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Einzeln senden (2)' }));
     await screen.findByText(/Verbindung abgebrochen/);
     expect(invoke).toHaveBeenCalledTimes(1);
+  });
+  it('behandelt die gemeldete 403-Versandsperre ohne Absturz oder weitere Sendungen', async () => {
+    invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(new Response(
+      JSON.stringify({ error: 'Keine Versandberechtigung' }), { status: 403 },
+    )) });
+    const close = vi.fn();
+    render(<OrderBulkEmailDialog recipients={recipients} onClose={close} />);
+    fireEvent.change(screen.getByLabelText('Betreff'), { target: { value: 'Auftrag' } });
+    fireEvent.change(screen.getByLabelText('Nachricht'), { target: { value: 'Nachricht' } });
+    fireEvent.click(screen.getByLabelText(/Empfänger, Text und Anhänge geprüft/));
+    fireEvent.click(screen.getByRole('button', { name: 'Einzeln senden (2)' }));
+    await waitFor(() => expect(screen.getByText(/Keine Versandberechtigung für diesen Absender/)).toBeInTheDocument());
+    expect(invoke).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Schließen' }));
+    expect(close).toHaveBeenCalledTimes(1);
   });
 });
