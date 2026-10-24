@@ -10,3 +10,4 @@
 - Operation reuses the existing protected Mediapaket overview; paginated authenticated reads keep every package accessible without introducing a second data source.
 - Branding PDFs export the full already-authorized Mediapaket record through the shared prepare-then-download control; embedded fonts and flowing tables preserve complete customer text without new data access.
 - Order bulk email reuses send-mail with one request per order, caller-scoped order/customer checks and pre-send message/attachment archiving in existing tables; ambiguous sends stop without automatic retries to avoid duplicates.
+- Order bulk email's external-domain sender retains its exact provider From address and existing order/service role scopes; DNS verification is required before delivery, never silently substitute another domain.

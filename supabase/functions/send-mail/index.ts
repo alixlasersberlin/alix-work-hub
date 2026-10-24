@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { appendSignature } from "../_shared/mail-signature.ts";
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { bulkOrderMailSchema } from './order-bulk-validation.ts';
+import { providerSender, ORDER_SERVICE_ROLES } from './provider-sender.ts';
 
 // Map from-email -> allowed roles (Super Admin/Admin always allowed)
 const SENDER_ROLE_MAP: Record<string, string[]> = {
@@ -19,6 +20,7 @@ const REPLY_TO_MAP: Record<string, string> = {
   "vertrieb@alixwork.de": "rde@alix-lasers.com",
   "service@alixwork.de": "support@alix-lasers.com",
   "news@alixwork.de": "support@alix-operation.de",
+  "service@alix-lasers.com": "service@alix-lasers.com",
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -110,7 +112,8 @@ serve(async (req) => {
     // Sender allow-list per role (Super Admin/Admin bypass)
     const { data: isAdminRpc } = await authClient.rpc("is_admin");
     if (!isAdminRpc) {
-      const allowedRoles = SENDER_ROLE_MAP[String(from_email).toLowerCase()];
+      const allowedRoles = body.order_bulk === true && from_email === 'service@alix-lasers.com'
+        ? ORDER_SERVICE_ROLES : SENDER_ROLE_MAP[String(from_email).toLowerCase()];
       if (!allowedRoles) {
         return jsonResponse({ error: "Sender address not allowed" }, 403);
       }
@@ -144,7 +147,8 @@ serve(async (req) => {
       const { data: profile } = await supabase.from('user_profiles').select('account_status,is_active,invitation_status,password_reset_required').eq('id', userData.user.id).maybeSingle();
       if (profile?.account_status !== 'active' || !profile.is_active || profile.invitation_status !== 'accepted' || profile.password_reset_required) return jsonResponse({ error: 'Benutzer nicht freigegeben' }, 403);
       const { data: callerRoles } = await supabase.from('user_roles').select('role').eq('user_id', userData.user.id);
-      const senderRoles = ['Super Admin', 'Admin', ...(SENDER_ROLE_MAP[parsed.data.from_email] ?? [])];
+      const senderRoles = ['Super Admin', 'Admin', ...(parsed.data.from_email === 'service@alix-lasers.com'
+        ? ORDER_SERVICE_ROLES : SENDER_ROLE_MAP[parsed.data.from_email] ?? [])];
       if (!(callerRoles ?? []).some(r => senderRoles.includes(r.role))) return jsonResponse({ error: 'Keine Versandberechtigung' }, 403);
       const { data: authorizedOrder, error: orderError } = await authClient.from('orders').select('id,customer_id,tenant_id').eq('id', parsed.data.order_id).maybeSingle();
       if (orderError || !authorizedOrder || authorizedOrder.customer_id !== parsed.data.customer_id) return jsonResponse({ error: 'Auftrag oder Kundenzuordnung nicht zugänglich' }, 403);
@@ -306,12 +310,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Nur in Resend verifizierte Domain verwenden (alixwork.de)
-        from: (() => {
-          const addr = String(from_email).toLowerCase().trim();
-          const safe = addr.endsWith("@alixwork.de") ? addr : "noreply@alixwork.de";
-          return `Alix Lasers ® <${safe}>`;
-        })(),
+        // The selected alix-lasers.com sender must never silently become alixwork.de.
+        // Resend rejects sending until the domain's DNS is verified.
+        from: providerSender(String(from_email)),
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: (() => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);

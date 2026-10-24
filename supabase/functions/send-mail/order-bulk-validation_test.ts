@@ -10,6 +10,10 @@ Deno.test('Kundenakte benötigt Kunden-ID', () => {
 Deno.test('freier Text akzeptiert', () => {
   assertEquals(bulkOrderMailSchema.safeParse(payload).success, true);
 });
+Deno.test('Auftragsversand erlaubt service@alix-lasers.com', () => {
+  assertEquals(bulkOrderMailSchema.safeParse({ ...payload, from_email: 'service@alix-lasers.com' }).success, true);
+  assertEquals(bulkOrderMailSchema.safeParse({ ...payload, from_email: 'other@alix-lasers.com' }).success, false);
+});
 Deno.test('Upload mit ungültiger Kodierung abgelehnt', () => {
   assertEquals(bulkOrderMailSchema.safeParse({ ...payload, attachments: [{ filename: 'a.pdf', content: '<script>', contentType: 'application/pdf' }] }).success, false);
 });
