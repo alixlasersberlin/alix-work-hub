@@ -62,10 +62,23 @@ export default function OrderBulkEmailDialog({ recipients, onClose }: { recipien
           } });
           if (error) {
             const details = error instanceof FunctionsHttpError ? await error.context.text() : error.message;
-            throw new Error(details);
+            const status = error instanceof FunctionsHttpError ? error.context.status : null;
+            // Authentication/authorization failures happen before provider submission.
+            // Keep these expected refusals in the dialog instead of throwing them.
+            if (status === 401 || status === 403) {
+              outcome = { status: 'failed', detail: status === 401
+                ? 'Anmeldung abgelaufen. Keine E-Mail versendet. Bitte erneut anmelden und den Versanddialog neu öffnen.'
+                : 'Keine Versandberechtigung für diesen Absender. Keine E-Mail versendet. Bitte Berechtigung prüfen und den Versanddialog neu öffnen.' };
+            } else {
+              let message = details;
+              try { const parsed = JSON.parse(details); if (typeof parsed.error === 'string') message = parsed.error; } catch { /* non-JSON error */ }
+              outcome = { status: 'uncertain', detail: `${message} — vor erneutem Versand Kundenakte prüfen.` };
+            }
+          } else if (!data?.success) {
+            outcome = { status: 'uncertain', detail: `${data?.error || 'Versandstatus unbekannt'} — vor erneutem Versand Kundenakte prüfen.` };
+          } else {
+            outcome = { status: 'sent', detail: data.archive_warning || 'Gesendet · in Kundenakte gespeichert' };
           }
-          if (!data?.success) throw new Error(data?.error || 'Versandstatus unbekannt');
-          outcome = { status: 'sent', detail: data.archive_warning || 'Gesendet · in Kundenakte gespeichert' };
         } catch (e) {
           outcome = { status: 'uncertain', detail: `${e instanceof Error ? e.message : 'Versandstatus unbekannt'} — vor erneutem Versand Kundenakte prüfen.` };
         }

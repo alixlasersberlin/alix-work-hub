@@ -12,3 +12,4 @@
 - Order bulk email reuses send-mail with one request per order, caller-scoped order/customer checks and pre-send message/attachment archiving in existing tables; ambiguous sends stop without automatic retries to avoid duplicates.
 - Customer-order lists share OrderSelectionToolbar and OrderPageCheckbox; mail recipients are restricted to selected orders in the current filtered list so hidden selections cannot receive unintended mail.
 - Order bulk email's external-domain sender retains its exact provider From address and existing order/service role scopes; DNS verification is required before delivery, never silently substitute another domain.
+- Send-mail sender permissions use the existing caller-scoped is_admin/has_role RPCs for both regular and bulk mail; user_roles references roles by role_id, so direct role-name reads from user_roles must not replace these checks.

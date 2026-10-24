@@ -20,3 +20,5 @@
 - [ ] Branding-PDF mit echten Auftragsdaten herunterladen — externe Anmeldung verhindert die automatisierte Prüfung der angemeldeten Ansicht.
 - [x] Anzahlungsversand AB-2026-04568 untersucht: gespeicherte Adresse mit „İ“ wird vom echten Versandvalidator abgelehnt; verständliche Fehlermeldung ergänzt, keine Kundenadresse geändert und keine E-Mail erneut versendet.
 - [ ] Versand der vorhandenen Anzahlungsrechnung AB-2026-04568 prüfen — korrekte Kundenadresse muss bestätigt werden; externe Anmeldung verhindert angemeldeten End-to-End-Test.
+- [x] Auftrags-Sammelversand: Abfrage der nicht vorhandenen user_roles.role-Spalte entfernt; bestehende is_admin/has_role-Prüfung bleibt maßgeblich. 19 Tests bestanden, send-mail bereitgestellt; keine Kunden-E-Mail versendet.
+- [ ] Korrigierten Auftragsversand angemeldet prüfen — externe Anmeldung steht automatisiert nicht zur Verfügung; direkter Prü Aufruf wurde mit 401 abgewiesen.

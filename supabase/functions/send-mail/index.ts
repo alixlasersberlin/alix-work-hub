@@ -5,6 +5,7 @@ import { appendSignature } from "../_shared/mail-signature.ts";
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { bulkOrderMailSchema } from './order-bulk-validation.ts';
 import { providerSender, ORDER_SERVICE_ROLES } from './provider-sender.ts';
+import { isSenderAuthorized } from './sender-authorization.ts';
 
 // Map from-email -> allowed roles (Super Admin/Admin always allowed)
 const SENDER_ROLE_MAP: Record<string, string[]> = {
@@ -117,14 +118,8 @@ serve(async (req) => {
       if (!allowedRoles) {
         return jsonResponse({ error: "Sender address not allowed" }, 403);
       }
-      let granted = false;
-      for (const role of allowedRoles) {
-        const { data: hasIt } = await authClient.rpc("has_role", { check_role: role });
-        if (hasIt) {
-          granted = true;
-          break;
-        }
-      }
+      const granted = await isSenderAuthorized(isAdminRpc, allowedRoles,
+        async role => authClient.rpc("has_role", { check_role: role }));
       if (!granted) {
         return jsonResponse(
           { error: "You are not allowed to send from this address" },
@@ -146,10 +141,8 @@ serve(async (req) => {
       if (template_id || rawHtml || is_test || skip_system_copies || skip_signature) return jsonResponse({ error: 'Ungültiger Auftragsversand' }, 400);
       const { data: profile } = await supabase.from('user_profiles').select('account_status,is_active,invitation_status,password_reset_required').eq('id', userData.user.id).maybeSingle();
       if (profile?.account_status !== 'active' || !profile.is_active || profile.invitation_status !== 'accepted' || profile.password_reset_required) return jsonResponse({ error: 'Benutzer nicht freigegeben' }, 403);
-      const { data: callerRoles } = await supabase.from('user_roles').select('role').eq('user_id', userData.user.id);
-      const senderRoles = ['Super Admin', 'Admin', ...(parsed.data.from_email === 'service@alix-lasers.com'
-        ? ORDER_SERVICE_ROLES : SENDER_ROLE_MAP[parsed.data.from_email] ?? [])];
-      if (!(callerRoles ?? []).some(r => senderRoles.includes(r.role))) return jsonResponse({ error: 'Keine Versandberechtigung' }, 403);
+      // Sender permission was checked above with the existing is_admin/has_role
+      // RPCs. Do not query a nonexistent user_roles.role column here.
       const { data: authorizedOrder, error: orderError } = await authClient.from('orders').select('id,customer_id,tenant_id').eq('id', parsed.data.order_id).maybeSingle();
       if (orderError || !authorizedOrder || authorizedOrder.customer_id !== parsed.data.customer_id) return jsonResponse({ error: 'Auftrag oder Kundenzuordnung nicht zugänglich' }, 403);
       const { data: authorizedCustomer } = await authClient.from('customers').select('email').eq('id', parsed.data.customer_id).maybeSingle();
