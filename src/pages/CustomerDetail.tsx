@@ -1,3 +1,6 @@
+import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
+import { useOrderSelection } from '@/hooks/useOrderSelection';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +31,7 @@ const ORDER_COLS = 'id, order_number, order_date, order_status, total_amount, cu
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { selected, setSelected, toggle } = useOrderSelection();
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,6 +185,7 @@ export default function CustomerDetail() {
               <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2 mb-4">
                 <ClipboardList className="w-5 h-5 text-primary" /> Aufträge ({orders.length})
               </h2>
+              <OrderSelectionToolbar orders={orders.map(o => ({ ...o, customer_id: customer.id, customers: customer }))} selected={selected} onSelectionChange={setSelected} />
               {orders.length === 0 ? (
                 <div className="text-center py-8">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
@@ -194,7 +199,8 @@ export default function CustomerDetail() {
                       className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors"
                       onClick={() => navigate(`/auftraege/${o.id}`)}
                     >
-                      <div>
+                      <div onClick={e => e.stopPropagation()} className="mr-3"><Checkbox checked={selected.has(o.id)} onCheckedChange={() => toggle(o.id)} aria-label={`Auftrag ${o.order_number} markieren`} /></div>
+                      <div className="flex-1">
                         <p className="font-medium text-foreground text-sm">{withAt(o.order_number, o.source_system)}</p>
                         <p className="text-xs text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</p>
                       </div>

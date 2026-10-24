@@ -1,3 +1,6 @@
+import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
+import { useOrderSelection } from '@/hooks/useOrderSelection';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +11,7 @@ import { ClipboardList, Loader2, Search, Navigation, Phone, User } from 'lucide-
 import { formatAddress, mapsHref, telHref, cacheGet, cacheSet } from '@/lib/mobil/utils';
 
 export default function MobilAuftraege() {
+  const { selected, setSelected, toggle } = useOrderSelection();
   const [rows, setRows] = useState<any[]>(cacheGet<any[]>('orders') ?? []);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -18,7 +22,7 @@ export default function MobilAuftraege() {
     (async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, shipping_address, billing_address, customer_id, customers:customer_id(company_name, contact_name, phone)')
+        .select('id, order_number, order_status, order_date, shipping_address, billing_address, customer_id, customers:customer_id(company_name, contact_name, email, phone)')
         .order('order_date', { ascending: false })
         .limit(50);
       if (cancelled) return;
@@ -47,6 +51,7 @@ export default function MobilAuftraege() {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftrag oder Kunde…" className="pl-9 h-12 text-base" />
       </div>
 
+      <OrderSelectionToolbar orders={list} selected={selected} onSelectionChange={setSelected} loading={loading} />
       {error && <Card className="p-3 text-xs text-amber-500">{error}</Card>}
       {loading && <div className="py-8 text-center text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>}
       {!loading && list.length === 0 && <Card className="p-6 text-center text-sm text-muted-foreground">Keine Aufträge gefunden.</Card>}
@@ -56,6 +61,7 @@ export default function MobilAuftraege() {
         const tel = telHref(r.customers?.phone);
         return (
           <Card key={r.id} className="p-4 space-y-3">
+            <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggle(r.id)} aria-label={`Auftrag ${r.order_number} markieren`} />
             <div>
               <div className="text-base font-bold">{r.customers?.company_name || r.customers?.contact_name || '—'}</div>
               {address && <div className="text-sm">{address}</div>}
