@@ -1,3 +1,4 @@
+- [ ] Aufträge AT: markierte Aufträge einzeln per frei formulierter E-Mail mit Anhängen, Vorschau und Versandstatus anschreiben; Nachrichten in bestehender Kundenakte speichern.
 - [x] Alix-Sign-Festschreibung und vorhandenen Rechnungs-/Versandablauf prüfen.
 - [x] Automatische Anzahlungsrechnung nach zwei Stunden ohne Duplikate einrichten: PDF, Ablage, Kunde + CC Buchhaltung.
 - [ ] Echten Ablauf mit einem neuen Alix-Sign-Auftrag beobachten — wartet auf eine echte Unterschrift, damit keine Testrechnung an einen Kunden geht.
