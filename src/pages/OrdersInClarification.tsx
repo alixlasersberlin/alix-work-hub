@@ -1,3 +1,7 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
+import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
+import { useOrderSelection } from '@/hooks/useOrderSelection';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +23,7 @@ import { useAtOnly } from '@/hooks/useAtOnly';
 const DEFER_STATUS = 'zurückgestellt';
 
 export default function OrdersInClarification() {
+  const { selected, setSelected, toggle } = useOrderSelection();
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -35,16 +40,19 @@ export default function OrdersInClarification() {
   async function load() {
     setLoading(true);
     setError(null);
+    try {
+    const data = await loadAllPages((from, to) => {
     let qb = supabase
       .from('orders')
-      .select('*, customers(company_name, contact_name, shipping_address, billing_address)')
+      .select('*, customers(company_name, contact_name, email, shipping_address, billing_address)')
       .eq('order_status', DEFER_STATUS)
       .order('expected_shipment_date', { ascending: true, nullsFirst: false })
-      .limit(500);
+      .order('id').range(from, to);
     if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
-    const { data, error: err } = await qb;
-    if (err) setError(err.message);
+    return qb;
+    });
     setOrders(data ?? []);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Aufträge konnten nicht geladen werden'); }
     setLoading(false);
   }
 
@@ -120,6 +128,8 @@ export default function OrdersInClarification() {
         <div className="ml-auto"><ViewToggle value={viewMode} onChange={setViewMode} /></div>
       </div>
 
+      <OrderSelectionToolbar orders={filtered} selected={selected} onSelectionChange={setSelected} loading={loading} />
+
       {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm mb-4">{error}</div>}
 
       {viewMode === 'cards' ? (
@@ -135,6 +145,8 @@ export default function OrdersInClarification() {
             {filtered.map(o => (
               <OrderCard
                 key={o.id}
+                selected={selected.has(o.id)}
+                onToggleSelect={() => toggle(o.id)}
                 order={{ ...o, order_status: o.order_status || DEFER_STATUS }}
                 onClick={() => navigate(`/auftraege/${o.id}`)}
                 footer={canWrite ? (
@@ -160,6 +172,7 @@ export default function OrdersInClarification() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
+                <th className="w-10 px-3 py-3"><OrderPageCheckbox orders={filtered} selected={selected} onSelectionChange={setSelected} /></th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftrag Nr.</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Datum</th>
@@ -170,13 +183,13 @@ export default function OrdersInClarification() {
             </thead>
             {loading ? (
               <tbody>
-                <tr><td colSpan={canWrite ? 6 : 5} className="px-4 py-12 text-center">
+                <tr><td colSpan={canWrite ? 7 : 6} className="px-4 py-12 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                 </td></tr>
               </tbody>
             ) : filtered.length === 0 ? (
               <tbody>
-                <tr><td colSpan={canWrite ? 6 : 5} className="px-4 py-12 text-center">
+                <tr><td colSpan={canWrite ? 7 : 6} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine zurückgestellten Aufträge.</p>
                 </td></tr>
@@ -191,6 +204,7 @@ export default function OrdersInClarification() {
                       className="border-b border-border hover:bg-secondary/30 transition-colors cursor-pointer"
                       onClick={() => navigate(`/auftraege/${o.id}`)}
                     >
+                      <td className="w-10 px-3 py-3" onClick={e => e.stopPropagation()}><Checkbox checked={selected.has(o.id)} onCheckedChange={() => toggle(o.id)} aria-label={`Auftrag ${o.order_number} markieren`} /></td>
                       <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
                       <td className="px-4 py-3 text-foreground">
                         {o.customers?.company_name || o.customers?.contact_name || '—'}

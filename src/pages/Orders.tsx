@@ -1,3 +1,5 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
+import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,7 +47,6 @@ type SortDir = 'asc' | 'desc';
 type PageSize = 20 | 30 | 50 | 'all';
 
 const QUICK_LOAD_LIMIT = 50;
-const FULL_LOAD_LIMIT = 500;
 
 // Normalisiert Währungsangaben aus der DB (z. B. "€", "$") auf ISO-4217-Codes,
 // da Intl.NumberFormat sonst mit RangeError abbricht.
@@ -67,7 +68,7 @@ const ORDER_SELECT: string = `
     finance_payment_status, case_number, billing_address, shipping_address,
     offer_down:raw_data->payment->down,
     imported_via_reconcile_at,
-    customers(company_name, contact_name, shipping_address, billing_address, is_vip)
+    customers(company_name, contact_name, email, shipping_address, billing_address, is_vip)
   `;
 
 type ColumnId = 'order_number' | 'customer' | 'order_date' | 'total_amount' | 'status' | 'fahrzeit' | 'anzahlung' | 'anzahlung_ok' | 'bestellung';
@@ -617,12 +618,20 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
     attachOrderDetails(loaded);
 
     if (err || loaded.length < QUICK_LOAD_LIMIT) return;
-    const { data: fullData, error: fullErr } = await fetchOrders(FULL_LOAD_LIMIT);
-    if (requestId !== loadRequestRef.current) return;
-    if (fullErr) return;
-    const fullLoaded = fullData ?? [];
-    setOrders(expandOrders(fullLoaded));
-    attachOrderDetails(fullLoaded);
+    try {
+      const fullLoaded = await loadAllPages((from, to) => supabase.from('orders')
+        .select(orderSelect)
+        .order(serverSortField, { ascending: serverSortAsc, nullsFirst: false })
+        .order('id').range(from, to));
+      if (requestId !== loadRequestRef.current) return;
+      setOrders(expandOrders(fullLoaded));
+      for (let start = 0; start < fullLoaded.length; start += 500) {
+        if (requestId !== loadRequestRef.current) return;
+        await attachOrderDetails(fullLoaded.slice(start, start + 500));
+      }
+    } catch (e) {
+      if (requestId === loadRequestRef.current) setError(e instanceof Error ? e.message : 'Aufträge konnten nicht vollständig geladen werden');
+    }
   }
 
   useEffect(() => { load(); }, [sortField, sortDir]);
@@ -1078,6 +1087,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
           </div>
 
 
+          <OrderSelectionToolbar orders={sorted} selected={selectedIds} onSelectionChange={setSelectedIds} loading={loading} />
+
           {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
           {viewMode === 'cards' ? (
@@ -1154,9 +1165,10 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-secondary/50">
-                    {selectionMode && (
+                    {true && (
                       <th className="w-10 px-3 py-3">
                         <Checkbox
+                          aria-label="Seite markieren"
                           checked={paged.length > 0 && paged.every(o => selectedIds.has(o.id))}
                           onCheckedChange={(v) => {
                             const next = new Set(selectedIds);
@@ -1182,13 +1194,13 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
                 </thead>
                 {loading ? (
                   <tbody>
-                    <tr><td colSpan={visibleColumns.length + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={visibleColumns.length + 1} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                     </td></tr>
                   </tbody>
                 ) : filtered.length === 0 ? (
                   <tbody>
-                    <tr><td colSpan={visibleColumns.length + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={visibleColumns.length + 1} className="px-4 py-12 text-center">
                       <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
@@ -1208,9 +1220,10 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
                           }
                         }}
                       >
-                        {selectionMode && (
+                        {true && (
                           <td className="w-10 px-3 py-3" onClick={e => e.stopPropagation()}>
                             <Checkbox
+                              aria-label={`Auftrag ${o._displayNumber || o.order_number} markieren`}
                               checked={selectedIds.has(o.id)}
                               onCheckedChange={(v) => {
                                 const next = new Set(selectedIds);

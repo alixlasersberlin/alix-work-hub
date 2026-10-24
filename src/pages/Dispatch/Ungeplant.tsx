@@ -1,3 +1,7 @@
+import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
+import { useOrderSelection } from '@/hooks/useOrderSelection';
+import { Checkbox } from '@/components/ui/checkbox';
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +31,7 @@ function addr(o: any) {
 }
 
 export default function DispatchUngeplant() {
+  const { selected, setSelected, toggle } = useOrderSelection();
   const [search, setSearch] = useState('');
   const [region, setRegion] = useState('alle');
   const [page, setPage] = useState(0);
@@ -45,18 +50,19 @@ export default function DispatchUngeplant() {
   });
 
   const { data, isPending, refetch } = useQuery({
-    queryKey: ['dispatch', 'unplanned-orders', region, page],
+    queryKey: ['dispatch', 'unplanned-orders', region],
     queryFn: async () => {
+      return loadAllPages((from, to) => {
       let q = supabase
         .from('orders')
         .select('id, customer_id, order_number, order_status, order_date, expected_shipment_date, salesperson_name, is_vip, shipping_address, billing_address, source_system, finance_open_amount, deposit_ok, customers(company_name, contact_name, email, phone)')
         .not('order_status', 'in', `(${EXCLUDED_STATUS.join(',')})`)
         .order('order_date', { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        .order('id')
+        .range(from, to);
       if (region !== 'alle') q = q.eq('source_system', region);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
+      return q;
+      });
     },
     staleTime: 30_000,
   });
@@ -70,6 +76,8 @@ export default function DispatchUngeplant() {
       return [o.order_number, c?.company_name, c?.contact_name, addr(o).city, addr(o).zip]
         .some(v => (v ?? '').toString().toLowerCase().includes(term));
     }), [data, plannedIds, term]);
+
+  const paged = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   async function checkAll() {
     setChecking(true);
@@ -132,10 +140,13 @@ export default function DispatchUngeplant() {
         </Select>
       </Card>
 
+      <OrderSelectionToolbar orders={rows} selected={selected} onSelectionChange={setSelected} loading={isPending} />
+
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10"><OrderPageCheckbox orders={paged} selected={selected} onSelectionChange={setSelected} /></TableHead>
               <TableHead>Auftrag</TableHead>
               <TableHead>Kunde</TableHead>
               <TableHead>Lieferort</TableHead>
@@ -145,16 +156,17 @@ export default function DispatchUngeplant() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isPending && <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Lädt…</TableCell></TableRow>}
+            {isPending && <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Lädt…</TableCell></TableRow>}
             {!isPending && rows.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Keine ungeplanten Aufträge auf dieser Seite.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Keine ungeplanten Aufträge auf dieser Seite.</TableCell></TableRow>
             )}
-            {rows.map(o => {
+            {paged.map(o => {
               const a = addr(o);
               const c: any = o.customers;
               const chk = checks[o.id];
               return (
                 <TableRow key={o.id}>
+                  <TableCell><Checkbox checked={selected.has(o.id)} onCheckedChange={() => toggle(o.id)} aria-label={`Auftrag ${o.order_number} markieren`} /></TableCell>
                   <TableCell className="font-medium whitespace-nowrap">
                     {o.is_vip && <span className="mr-1">👑</span>}
                     {o.order_number ?? '—'}
@@ -189,7 +201,7 @@ export default function DispatchUngeplant() {
         <span className="text-sm text-muted-foreground">Seite {page + 1}</span>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>Zurück</Button>
-          <Button variant="outline" size="sm" disabled={(data?.length ?? 0) < PAGE_SIZE} onClick={() => setPage(p => p + 1)}>Weiter</Button>
+          <Button variant="outline" size="sm" disabled={(page + 1) * PAGE_SIZE >= rows.length} onClick={() => setPage(p => p + 1)}>Weiter</Button>
         </div>
       </div>
 
