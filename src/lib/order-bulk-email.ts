@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { withAt } from '@/lib/atSuffix';
 
 export type OrderMailRecipient = {
   orderId: string; customerId: string; orderNumber: string; name: string; email: string;
@@ -11,11 +12,11 @@ export const orderMailSchema = z.object({
 });
 
 export function orderMailRecipients(orders: Array<{
-  id: string; customer_id?: string | null; order_number?: string | null; _displayNumber?: string;
+  id: string; customer_id?: string | null; order_number?: string | null; _displayNumber?: string; source_system?: string | null;
   customers?: { company_name?: string | null; contact_name?: string | null; email?: string | null } | null;
 }>, selected: Set<string>): OrderMailRecipient[] {
   return orders.filter(o => selected.has(o.id)).map(o => ({
-    orderId: o.id, customerId: o.customer_id ?? '', orderNumber: o._displayNumber || o.order_number || '',
+    orderId: o.id, customerId: o.customer_id ?? '', orderNumber: o._displayNumber || withAt(o.order_number, o.source_system) || '',
     name: o.customers?.contact_name || o.customers?.company_name || '', email: o.customers?.email?.trim() ?? '',
   }));
 }
