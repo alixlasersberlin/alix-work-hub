@@ -19,7 +19,11 @@ import { isOrderVip, vipFirst } from '@/lib/vip';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { withAt } from '@/lib/atSuffix';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileDown, FileSpreadsheet } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Mail } from 'lucide-react';
+import OrderBulkEmailDialog from '@/components/OrderBulkEmailDialog';
+import { orderMailRecipients } from '@/lib/order-bulk-email';
+import { useMailPermissions } from '@/hooks/useMailPermissions';
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -43,6 +47,8 @@ export default function OrdersAt() {
   const [deferOrder, setDeferOrder] = useState<any>(null);
   const [itemsOrder, setItemsOrder] = useState<any>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [mailOpen, setMailOpen] = useState(false);
+  const mailPermissions = useMailPermissions();
   const toggleSel = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
@@ -54,14 +60,16 @@ export default function OrdersAt() {
   async function load() {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
+    let loaded: any[];
+    try {
+    loaded = await loadAllPages((from, to) => supabase
       .from('orders')
-      .select('*, customers(company_name, contact_name, shipping_address, billing_address, is_vip), order_items(id, item_name, description, sku, quantity, unit, rate, amount)')
+      .select('*, customers(company_name, contact_name, email, shipping_address, billing_address, is_vip), order_items(id, item_name, description, sku, quantity, unit, rate, amount)')
       .eq('source_system', 'zoho_eu_2')
       .order(sortField, { ascending: sortDir === 'asc', nullsFirst: false })
-      .limit(500);
-    if (err) setError(err.message);
-    const loaded = data ?? [];
+      .order('id')
+      .range(from, to));
+    } catch (e) { setError(e instanceof Error ? e.message : 'Aufträge konnten nicht geladen werden'); setLoading(false); return; }
 
     const orderIds = loaded.map(o => o.id);
     const approvalMap: Record<string, boolean> = {};
@@ -256,6 +264,7 @@ export default function OrdersAt() {
           <Button size="sm" variant="ghost" onClick={() => setSelected(new Set(sorted.map(o => o.id)))}>Alle {sorted.length} markieren</Button>
           {selected.size > 0 && <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Markierung aufheben</Button>}
           <div className="ml-auto flex gap-2">
+            {mailPermissions.can('emails', 'send') && <Button size="sm" disabled={!selected.size} onClick={() => setMailOpen(true)}><Mail className="w-4 h-4 mr-1" />E-Mail senden</Button>}
             <Button size="sm" variant="outline" disabled={!selected.size} onClick={exportExcel}><FileSpreadsheet className="w-4 h-4 mr-1" />Excel</Button>
             <Button size="sm" variant="outline" disabled={!selected.size} onClick={exportPdf}><FileDown className="w-4 h-4 mr-1" />PDF</Button>
           </div>
@@ -407,6 +416,7 @@ export default function OrdersAt() {
         )}
       </div>
 
+      {mailOpen && <OrderBulkEmailDialog recipients={orderMailRecipients(orders, selected)} onClose={() => setMailOpen(false)} />}
       {editOrder && (
         <OrderEditDialog order={editOrder} open onClose={() => setEditOrder(null)} onSaved={load} />
       )}
