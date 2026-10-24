@@ -7,6 +7,7 @@ import { withAt } from '@/lib/atSuffix';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
 import { TenantBadge } from '@/components/TenantBadge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 interface OrderCardProps {
@@ -71,6 +72,7 @@ export function OrderCard({
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
+        {onToggleSelect && <div onClick={e => e.stopPropagation()} className="shrink-0"><Checkbox checked={!!selected} onCheckedChange={() => onToggleSelect()} aria-label={`Auftrag ${number} markieren`} /></div>}
         <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground truncate">
           {isOrderVip(order) && <VipBadge size="sm" iconOnly />}
           <Hash className="w-3.5 h-3.5 text-primary flex-shrink-0" />
