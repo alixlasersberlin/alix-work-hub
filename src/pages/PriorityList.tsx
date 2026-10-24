@@ -1,3 +1,6 @@
+import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
+import { useOrderSelection } from '@/hooks/useOrderSelection';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +28,7 @@ type SortDir = 'asc' | 'desc';
 
 interface PrioOrder {
   id: string;
+  customer_id: string | null;
   order_number: string;
   order_status: string | null;
   order_date: string | null;
@@ -37,6 +41,7 @@ interface PrioOrder {
   customers: {
     company_name: string | null;
     contact_name: string | null;
+    email: string | null;
     shipping_address: any;
     billing_address: any;
     is_vip?: boolean | null;
@@ -88,6 +93,7 @@ function getPriorityLabel(days: number | null): string {
 }
 
 export default function PriorityList() {
+  const { selected, setSelected, toggle } = useOrderSelection();
   const [orders, setOrders] = useState<PrioOrder[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -107,7 +113,7 @@ export default function PriorityList() {
       setError(null);
       let qb = supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, is_vip, customers(company_name, contact_name, shipping_address, billing_address, is_vip), order_items(item_name, description, sku)')
+        .select('id, customer_id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, is_vip, customers(company_name, contact_name, email, shipping_address, billing_address, is_vip), order_items(item_name, description, sku)')
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order(sortField, { ascending: sortDir === 'asc' })
@@ -276,6 +282,8 @@ export default function PriorityList() {
 
       <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Prio-Liste Aufträge" />
 
+      <OrderSelectionToolbar orders={sorted} selected={selected} onSelectionChange={setSelected} loading={loading} />
+
       {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm mb-4">{error}</div>}
 
       {/* Table */}
@@ -292,6 +300,8 @@ export default function PriorityList() {
             {paged.map(o => (
               <OrderCard
                 key={o.id}
+                selected={selected.has(o.id)}
+                onToggleSelect={() => toggle(o.id)}
                 order={o}
                 onClick={() => navigate(`/auftraege/${o.id}`)}
                 footer={<DrivingTimeCell value={drivingTimes[o.id]} requested={requestedIds.has(o.id)} loading={drivingLoading} />}
@@ -305,6 +315,7 @@ export default function PriorityList() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
+                <th className="w-10 px-3 py-3"><OrderPageCheckbox orders={paged} selected={selected} onSelectionChange={setSelected} /></th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium w-12">#</th>
                 <SortHeader field="expected_shipment_date" label="Versanddatum" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Verbleibend</th>
@@ -339,6 +350,7 @@ export default function PriorityList() {
                       className={`hover:bg-secondary/30 transition-colors cursor-pointer ${isOrderVip(o) ? 'bg-gradient-to-r from-amber-500/[0.08] to-transparent' : ''}`}
                       onClick={() => navigate(`/auftraege/${o.id}`)}
                     >
+                      <td className="w-10 px-3 py-3" onClick={e => e.stopPropagation()}><Checkbox checked={selected.has(o.id)} onCheckedChange={() => toggle(o.id)} aria-label={`Auftrag ${o.order_number} markieren`} /></td>
                       <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
                         {isOrderVip(o) ? <VipBadge size="sm" iconOnly /> : idx + 1}
                       </td>

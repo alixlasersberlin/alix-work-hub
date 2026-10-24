@@ -1,3 +1,6 @@
+import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
+import { useOrderSelection } from '@/hooks/useOrderSelection';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +13,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 const CH_BRANCH_ID = '598077000000065075';
 
 export default function OrdersCh() {
+  const { selected, setSelected, toggle } = useOrderSelection();
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -22,7 +26,7 @@ export default function OrdersCh() {
     // CH-Filter serverseitig über raw_data->>branch_id (kein Volllauf über alle EU-Aufträge)
     const { data, error: err } = await supabase
       .from('orders')
-      .select('id, order_number, order_date, order_status, total_amount, currency, customers(company_name, contact_name)')
+      .select('id, customer_id, order_number, order_date, order_status, total_amount, currency, customers(company_name, contact_name, email)')
       .eq('source_system', 'zoho_eu_1')
       .eq('raw_data->>branch_id', CH_BRANCH_ID)
       .order('order_date', { ascending: false, nullsFirst: false })
@@ -71,6 +75,8 @@ export default function OrdersCh() {
         </div>
       </div>
 
+      <OrderSelectionToolbar orders={filtered} selected={selected} onSelectionChange={setSelected} loading={loading} />
+
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
       )}
@@ -79,6 +85,7 @@ export default function OrdersCh() {
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
             <tr>
+              <th className="w-10 px-3 py-2"><OrderPageCheckbox orders={filtered} selected={selected} onSelectionChange={setSelected} /></th>
               <th className="text-left px-3 py-2">Auftragsnr.</th>
               <th className="text-left px-3 py-2">Datum</th>
               <th className="text-left px-3 py-2">Kunde</th>
@@ -88,9 +95,9 @@ export default function OrdersCh() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="px-3 py-8 text-center text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline" /></td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline" /></td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={5} className="px-3 py-10 text-center text-muted-foreground">
+              <tr><td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
                 <Inbox className="w-6 h-6 mx-auto mb-2" />
                 Keine Schweiz-Aufträge gefunden. Über <strong>Operations → Import-Aktionen</strong> kann ein Voll-Import gestartet werden.
               </td></tr>
@@ -100,7 +107,8 @@ export default function OrdersCh() {
                 className="border-t border-border hover:bg-muted/30 cursor-pointer"
                 onClick={() => navigate(`/auftraege/${o.id}`)}
               >
-                <td className="px-3 py-2 font-mono">{o.order_number}</td>
+                <td className="w-10 px-3 py-2" onClick={e => e.stopPropagation()}><Checkbox checked={selected.has(o.id)} onCheckedChange={() => toggle(o.id)} aria-label={`Auftrag ${o.order_number} markieren`} /></td>
+                 <td className="px-3 py-2 font-mono">{o.order_number}</td>
                 <td className="px-3 py-2">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-CH') : '—'}</td>
                 <td className="px-3 py-2">{o.customers?.company_name ?? o.customers?.contact_name ?? '—'}</td>
                 <td className="px-3 py-2 text-right tabular-nums">

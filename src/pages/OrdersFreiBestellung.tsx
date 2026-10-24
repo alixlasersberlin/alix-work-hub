@@ -1,3 +1,4 @@
+import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
 import { useEffect, useState, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -203,7 +204,7 @@ export default function OrdersFreiBestellung() {
 
     let baseQuery = supabase
       .from('orders')
-      .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
+      .select('id, customer_id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name, email)')
       .eq('deposit_ok', true)
       .not('deposit_ok_by', 'is', null)
       .neq('deposit_ok_by', '')
@@ -217,7 +218,7 @@ export default function OrdersFreiBestellung() {
     if (pendingRestIds.size > 0) {
       let rq = supabase
         .from('orders')
-        .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
+        .select('id, customer_id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name, email)')
         .in('id', Array.from(pendingRestIds))
         .eq('order_status', 'teilgeliefert')
         .eq('deposit_ok', true)
@@ -607,6 +608,8 @@ export default function OrdersFreiBestellung() {
         </div>
         <PageSizeSelector value={pageSize} onChange={setPageSize} />
       </div>
+
+      <OrderSelectionToolbar orders={filtered} selected={selected} onSelectionChange={setSelected} loading={loading} />
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
