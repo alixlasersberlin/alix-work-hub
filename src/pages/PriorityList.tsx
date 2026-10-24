@@ -1,3 +1,4 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
 import { useOrderSelection } from '@/hooks/useOrderSelection';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -111,16 +112,18 @@ export default function PriorityList() {
     async function load() {
       setLoading(true);
       setError(null);
+      try {
+      const data = await loadAllPages((from, to) => {
       let qb = supabase
         .from('orders')
         .select('id, customer_id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, is_vip, customers(company_name, contact_name, email, shipping_address, billing_address, is_vip), order_items(item_name, description, sku)')
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order(sortField, { ascending: sortDir === 'asc' })
-        .limit(500);
+        .order('id').range(from, to);
       if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
-      const { data, error: err } = await qb;
-      if (err) setError(err.message);
+      return qb;
+      });
       let loaded = (data ?? []) as any as PrioOrder[];
 
       // Bestellte Aufträge ausblenden: Aufträge mit genehmigter & gesendeter Produktionsbestellung entfernen
@@ -154,6 +157,7 @@ export default function PriorityList() {
 
 
       setOrders(loaded);
+      } catch (e) { setError(e instanceof Error ? e.message : 'Aufträge konnten nicht geladen werden'); }
       setLoading(false);
     }
     load();

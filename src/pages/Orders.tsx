@@ -1,3 +1,4 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -46,7 +47,6 @@ type SortDir = 'asc' | 'desc';
 type PageSize = 20 | 30 | 50 | 'all';
 
 const QUICK_LOAD_LIMIT = 50;
-const FULL_LOAD_LIMIT = 500;
 
 // Normalisiert Währungsangaben aus der DB (z. B. "€", "$") auf ISO-4217-Codes,
 // da Intl.NumberFormat sonst mit RangeError abbricht.
@@ -618,12 +618,20 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
     attachOrderDetails(loaded);
 
     if (err || loaded.length < QUICK_LOAD_LIMIT) return;
-    const { data: fullData, error: fullErr } = await fetchOrders(FULL_LOAD_LIMIT);
-    if (requestId !== loadRequestRef.current) return;
-    if (fullErr) return;
-    const fullLoaded = fullData ?? [];
-    setOrders(expandOrders(fullLoaded));
-    attachOrderDetails(fullLoaded);
+    try {
+      const fullLoaded = await loadAllPages((from, to) => supabase.from('orders')
+        .select(orderSelect)
+        .order(serverSortField, { ascending: serverSortAsc, nullsFirst: false })
+        .order('id').range(from, to));
+      if (requestId !== loadRequestRef.current) return;
+      setOrders(expandOrders(fullLoaded));
+      for (let start = 0; start < fullLoaded.length; start += 500) {
+        if (requestId !== loadRequestRef.current) return;
+        await attachOrderDetails(fullLoaded.slice(start, start + 500));
+      }
+    } catch (e) {
+      if (requestId === loadRequestRef.current) setError(e instanceof Error ? e.message : 'Aufträge konnten nicht vollständig geladen werden');
+    }
   }
 
   useEffect(() => { load(); }, [sortField, sortDir]);

@@ -1,3 +1,4 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
 import { useOrderSelection } from '@/hooks/useOrderSelection';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -39,16 +40,19 @@ export default function OrdersInClarification() {
   async function load() {
     setLoading(true);
     setError(null);
+    try {
+    const data = await loadAllPages((from, to) => {
     let qb = supabase
       .from('orders')
       .select('*, customers(company_name, contact_name, email, shipping_address, billing_address)')
       .eq('order_status', DEFER_STATUS)
       .order('expected_shipment_date', { ascending: true, nullsFirst: false })
-      .limit(500);
+      .order('id').range(from, to);
     if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
-    const { data, error: err } = await qb;
-    if (err) setError(err.message);
+    return qb;
+    });
     setOrders(data ?? []);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Aufträge konnten nicht geladen werden'); }
     setLoading(false);
   }
 

@@ -1,3 +1,4 @@
+import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
 import { OrderSelectionToolbar, OrderPageCheckbox } from '@/components/OrderSelectionToolbar';
 import { useOrderSelection } from '@/hooks/useOrderSelection';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,15 +25,16 @@ export default function OrdersCh() {
     setLoading(true);
     setError(null);
     // CH-Filter serverseitig über raw_data->>branch_id (kein Volllauf über alle EU-Aufträge)
-    const { data, error: err } = await supabase
+    try {
+    const data = await loadAllPages((from, to) => supabase
       .from('orders')
       .select('id, customer_id, order_number, order_date, order_status, total_amount, currency, customers(company_name, contact_name, email)')
       .eq('source_system', 'zoho_eu_1')
       .eq('raw_data->>branch_id', CH_BRANCH_ID)
       .order('order_date', { ascending: false, nullsFirst: false })
-      .limit(2000);
-    if (err) { setError(err.message); setLoading(false); return; }
+      .order('id').range(from, to));
     setOrders(data ?? []);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Aufträge konnten nicht geladen werden'); }
     setLoading(false);
   }
 
