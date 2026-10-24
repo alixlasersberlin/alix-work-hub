@@ -143,12 +143,12 @@ serve(async (req) => {
       if (profile?.account_status !== 'active' || !profile.is_active || profile.invitation_status !== 'accepted' || profile.password_reset_required) return jsonResponse({ error: 'Benutzer nicht freigegeben' }, 403);
       // Sender permission was checked above with the existing is_admin/has_role
       // RPCs. Do not query a nonexistent user_roles.role column here.
-      const { data: authorizedOrder, error: orderError } = await authClient.from('orders').select('id,customer_id,tenant_id').eq('id', parsed.data.order_id).maybeSingle();
+      const { data: authorizedOrder, error: orderError } = await authClient.from('orders').select('id,customer_id').eq('id', parsed.data.order_id).maybeSingle();
       if (orderError || !authorizedOrder || authorizedOrder.customer_id !== parsed.data.customer_id) return jsonResponse({ error: 'Auftrag oder Kundenzuordnung nicht zugänglich' }, 403);
       const { data: authorizedCustomer } = await authClient.from('customers').select('email').eq('id', parsed.data.customer_id).maybeSingle();
       if (authorizedCustomer?.email?.trim().toLowerCase() !== parsed.data.to_email.toLowerCase()) return jsonResponse({ error: 'Kundenadresse wurde geändert. Bitte Aufträge neu laden.' }, 409);
       const { data: draft, error: draftError } = await supabase.from('mail_messages').insert({
-        customer_id, order_id, tenant_id: authorizedOrder.tenant_id, to_email, to_name, from_email,
+        customer_id, order_id, tenant_id: null, to_email, to_name, from_email,
         subject: parsed.data.subject, body_text: parsed.data.body_text,
         status: 'draft', direction: 'outbound', created_by: userData.user.id,
       }).select('id').single();
