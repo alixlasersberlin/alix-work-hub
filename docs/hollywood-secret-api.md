@@ -1,6 +1,6 @@
 # ALIXWORK API – HOLLYWOOD SECRET
 
-Version 1 · Alix Deutschland · Produktivbetrieb gesperrt
+Version 1 · Alix Deutschland · Echter Artikelimport freigegeben; Bestellungen gesperrt
 
 Basisadresse: https://xmrmkgfgpoundfwhnxfs.supabase.co/functions/v1/hollywood-secret-api
 
@@ -21,7 +21,7 @@ Produktivpfade ersetzen sandbox durch production; derzeit gesperrt.
 
 ## Artikelimport
 POST /v1/sandbox/articles/import – isolierter Testimport, keine echten Katalogartikel.
-POST /v1/production/articles/import – weiterhin gesperrt, solange der Produktivbetrieb nicht separat freigegeben ist.
+POST /v1/production/articles/import – echter Artikelimport als Entwurf freigegeben (25.10.2026); keine Freigabe für Bestellungen.
 Zugang und Anfragegrenzen wie oben; kein zusätzlicher Idempotency-Key nötig.
 
 {"shop_id":"hollywood-secret","articles":[{"external_article_id":"test-article-001","sku":"HS-IMPORT-001","name":"Isolierter Testartikel","brand":"Hollywood Secret"}]}
@@ -31,7 +31,7 @@ Maximal 100 Artikel je Anfrage, eindeutige Kennungen/SKUs; größere Listen in P
 Antwort: created, replayed, skipped und articles mit external_article_id, sku, article_id, status, replayed.
 Sandbox-IDs sind nur Testkennungen, keine echten Katalog-IDs und keine freigegebenen Bestellartikel.
 Identische Artikel wiederholen sich ohne Duplikate, geänderte Daten unter derselben Kennung führen zu 409 ARTICLE_CONFLICT; die gesamte Anfrage wird dann zurückgerollt.
-Produktiv würden neue Artikel ausschließlich als Entwurf im bestehenden Katalog angelegt. Vorhandene SKUs werden als skipped_existing gemeldet, ohne interne IDs fremder Artikel preiszugeben.
+Produktiv werden neue Artikel ausschließlich als Entwurf im bestehenden Katalog angelegt. Vorhandene SKUs werden als skipped_existing gemeldet, ohne interne IDs fremder Artikel preiszugeben.
 Keine Preise, Steuern, Bestände, Beschreibungen oder Freigaben importieren; solche Angaben werden abgewiesen. Preisfreigabe und Shop-SKU-Zuordnung bleiben separate Mitarbeiteraktionen.
 Ein Artikel-Testimport beweist noch keinen Anschluss des Shop-Projekts; dessen Adapter muss diesen Endpunkt aufrufen und das Ergebnis speichern.
 

@@ -14,7 +14,7 @@ import { hollywoodSecretDocumentation } from '@/lib/hollywood-secret-docs';
 
 type Price = {id:string;name:string;sku:string;standard_gross:number;tax_rate:number};
 type Log = {id:string;created_at:string;source:string;event:string;external_id:string;status:string;message:string};
-type Overview = {connection:{status:string;last_success_at:string|null;shop_config:{production_enabled:boolean;test_enabled:boolean;mappings:Record<string,string>;shipping_confirmed:boolean;free_shipping:boolean;shipping_price_id:string|null}};orders:number;sandbox_orders:number;failures:number};
+type Overview = {connection:{status:string;last_success_at:string|null;shop_config:{production_enabled:boolean;article_import_enabled?:boolean;test_enabled:boolean;mappings:Record<string,string>;shipping_confirmed:boolean;free_shipping:boolean;shipping_price_id:string|null}};orders:number;sandbox_orders:number;failures:number};
 type Keys = {sandbox:boolean;production:boolean};
 
 async function request(action:string,payload:Record<string,unknown>={}) {
@@ -50,7 +50,7 @@ export default function Onlineshops() {
     <PageHeader title="Onlineshops" icon={Store} breadcrumbs={[{label:'Einstellungen'},{label:'Schnittstellen'},{label:'Onlineshops'}]} actions={<><Button variant="outline" onClick={download}><Download className="h-4 w-4 mr-2"/>API-Dokumentation</Button><Button variant="outline" size="icon" title="Aktualisieren" aria-label="Aktualisieren" disabled={busy} onClick={()=>run(load)}><RefreshCw className={`h-4 w-4 ${busy?'animate-spin':''}`}/></Button></>}/>
     {error&&<div role="alert" className="border border-destructive rounded-md p-3 text-destructive">{error}</div>}
     <section className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
-      <div><h2 className="text-xl font-semibold">Hollywood Secret</h2><p className="text-sm text-muted-foreground mt-1">Alix Deutschland</p><div className="flex gap-2 flex-wrap mt-3"><Badge variant="outline">{overview?.connection.status??'Nicht geprüft'}</Badge><Badge variant="secondary"><Lock className="h-3 w-3 mr-1"/>{config?.production_enabled?'Produktiv freigegeben':'Produktiv gesperrt'}</Badge></div></div>
+      <div><h2 className="text-xl font-semibold">Hollywood Secret</h2><p className="text-sm text-muted-foreground mt-1">Alix Deutschland</p><div className="flex gap-2 flex-wrap mt-3"><Badge variant="outline">{overview?.connection.status??'Nicht geprüft'}</Badge><Badge variant="secondary"><Lock className="h-3 w-3 mr-1"/>{config?.production_enabled?'Bestellungen freigegeben':'Bestellungen gesperrt'}</Badge><Badge variant="outline">{config?.article_import_enabled?'Echter Artikelimport freigegeben':'Echter Artikelimport gesperrt'}</Badge></div></div>
       <Button disabled={busy||!keys.sandbox} onClick={()=>run(async()=>{setTestResult(await request('self_test'));await load();})}><FlaskConical className="h-4 w-4 mr-2"/>API-VERBINDUNG TESTEN</Button>
     </section>
     <dl className="grid grid-cols-2 lg:grid-cols-4 gap-5">
