@@ -390,6 +390,7 @@ const AlixCopilotKonfiguration = lazy(() => import("./pages/Operation/AlixCopilo
 const AlixCopilotConfig = lazy(() => import("./pages/Operation/AlixCopilotConfig"));
 const KundenportalKonfiguration = lazy(() => import("./pages/Operation/KundenportalKonfiguration"));
 const Datensicherung = lazy(() => import("./pages/operation/Datensicherung"));
+const Onlineshops = lazy(() => import("./pages/operation/Onlineshops"));
 const FortKnox = lazy(() => import("./pages/operation/FortKnox"));
 const AuftragsImport = lazy(() => import("./pages/operation/AuftragsImport"));
 const AuftragsAbgleich = lazy(() => import("./pages/operation/AuftragsAbgleich"));
@@ -1594,6 +1595,7 @@ function AppRoutes() {
           <Route path="/operation/kundenportal" element={<ProtectedRoute requiredRoles={['Super Admin']}><KundenportalKonfiguration /></ProtectedRoute>} />
           <Route path="/operation/security-center" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><SecurityCenter /></ProtectedRoute>} />
           <Route path="/operation/datensicherung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Datensicherung /></ProtectedRoute>} />
+          <Route path="/einstellungen/schnittstellen/onlineshops" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><Onlineshops /></ProtectedRoute>} />
           <Route path="/operation/fort-knox" element={<ProtectedRoute requiredRoles={['Super Admin']}><FortKnox /></ProtectedRoute>} />
           <Route path="/operation/auftrags-import" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsImport /></ProtectedRoute>} />
           <Route path="/operation/auftrags-abgleich" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsAbgleich /></ProtectedRoute>} />

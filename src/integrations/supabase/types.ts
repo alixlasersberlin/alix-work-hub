@@ -58492,6 +58492,10 @@ export type Database = {
         Args: { p_action: string; p_payload?: Json }
         Returns: Json
       }
+      hs_admin_rate_limit: {
+        Args: { p_action: string; p_user_id: string }
+        Returns: boolean
+      }
       hs_api: {
         Args: {
           p_action: string
