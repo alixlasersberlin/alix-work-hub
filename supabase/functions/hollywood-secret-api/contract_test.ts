@@ -29,3 +29,17 @@ Deno.test('Hollywood Secret: deployed sandbox roundtrip, concurrency, scope and 
   assertEquals((await call('orders/read',{shop_id:'other-shop',external_order_id:id})).status,400);
   assertEquals((await call('orders',order,key,'production')).status>=400,true);
 });
+
+Deno.test('Hollywood Secret: deployed authenticated requests stop at rate limit',async()=>{
+  const key=Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY');
+  const url=Deno.env.get('SUPABASE_URL')??Deno.env.get('VITE_SUPABASE_URL');
+  assert(key&&url,'Configured sandbox access required');
+  let limited=false;
+  for(let i=0;i<61;i++) {
+    const r=await fetch(`${url}/functions/v1/hollywood-secret-api/v1/sandbox/health`,{method:'POST',headers:{'Content-Type':'application/json','X-Shop-Key':key},body:JSON.stringify({shop_id:'hollywood-secret'})});
+    await r.text();
+    if(r.status===429){limited=true;break;}
+    assertEquals(r.status,200);
+  }
+  assertEquals(limited,true,'Sixty requests per minute must be enforced by the server');
+});
