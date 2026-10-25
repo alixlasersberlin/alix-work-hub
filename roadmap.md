@@ -29,3 +29,4 @@
 - [ ] Hollywood Secret: Produktivfreigabe — wartet auf bestätigte Artikel-/Steuer-/Versandzuordnungen, separaten Produktivzugang, Shop-Ende-zu-Ende-Nachweis und ausdrückliche Zustimmung.
 - [x] Hollywood Secret: gesicherten Artikelimport über den Shopzugang ergänzt; 13 Tests inklusive HTTP-Import, paralleler Wiederholung und atomarer Konfliktsperre bestanden. Keine echten Katalogartikel erstellt; bestehende Artikel, Preise und Freigaben unverändert.
 - [ ] Hollywood Secret: Artikelimport im separaten Shop-Adapter anschließen — anderes Projekt hier nur lesbar; aktualisierte Anleitung unter Onlineshops verfügbar, Produktivbetrieb bleibt gesperrt.
+- [ ] Hollywood Secret: ausdrückliche Freigabe vom 25.10.2026 umsetzen — echte Artikel als Entwürfe separat freischalten; Bestellungen erst nach geprüften Preisen/Versand. Echte Artikeldaten bzw. Shop-Übertragung fehlen noch.
