@@ -39,6 +39,19 @@ Deno.test('Hollywood Secret articles: deployed import, replay, concurrency and a
   assertEquals((await call([{...article,price:100}])).status,400);
 });
 Deno.test('Hollywood Secret: production disabled maps to forbidden',()=>{assertEquals(safeDatabaseError('HS_PRODUCTION_DISABLED').status,403);assertEquals(safeDatabaseError('HS_IDEMPOTENCY_CONFLICT').status,409);assertEquals(safeDatabaseError('raw private provider information').code,'INTERNAL_ERROR');});
+Deno.test('Hollywood Secret: live key cannot release orders or import prices',async()=>{
+  const key=Deno.env.get('HOLLYWOOD_SECRET_LIVE_KEY');
+  const url=Deno.env.get('SUPABASE_URL')??Deno.env.get('VITE_SUPABASE_URL');
+  assert(key&&url,'Configured live access required');
+  const order=testOrder('blocked-live-check');
+  const send=async(endpoint:string,payload:unknown)=>{
+    const response=await fetch(`${url}/functions/v1/hollywood-secret-api/v1/production/${endpoint}`,{method:'POST',headers:{'Content-Type':'application/json','X-Shop-Key':key,'Idempotency-Key':'hollywood-secret:blocked-live-check'},body:JSON.stringify(payload)});
+    const body=await response.json();return {status:response.status,body};
+  };
+  const orders=await send('orders',order);assertEquals(orders.status,403);assertEquals(orders.body.error.code,'PRODUCTION_DISABLED');
+  const invalid=await send('articles/import',{shop_id:'hollywood-secret',articles:[{external_article_id:'blocked-live-check',sku:'blocked-live-check',name:'Must not create',price:1}]});
+  assertEquals(invalid.status,400);assertEquals(invalid.body.error.code,'INVALID_INPUT');
+});
 
 Deno.test('Hollywood Secret: deployed sandbox roundtrip, concurrency, scope and rollback',async()=>{
   const key=Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY');
