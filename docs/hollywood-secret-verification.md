@@ -1,6 +1,7 @@
 # Hollywood Secret – Prüfstand
 
 ## Nachgewiesen
+- 25.10.2026: ausdrückliche Zustimmung aufgenommen, echte Artikelimporte separat über article_import_enabled freigegeben. Bestellungen bleiben wegen fehlender Artikelpreis-/Versandfreigaben gesperrt. Produktivschlüssel über echten HTTP-Aufruf geprüft: Bestellungen 403 PRODUCTION_DISABLED, Artikel mit Preisfeld 400 INVALID_INPUT, keine echten Datensätze erzeugt. 14 Tests bestanden (13 bestehende plus gezielter Produktivzugangstest).
 - Artikelimport unter /v1/sandbox/articles/import und /v1/production/articles/import bereitgestellt; Produktionssperre bleibt unverändert. 13 Deno-Tests bestanden einschließlich echter HTTP-Artikelübertragung, paralleler Wiederholung und atomarer Rückabwicklung bei Konflikt.
 - Artikelimport-RPC ausschließlich für service_role ausführbar; anon und authenticated ohne Ausführungsrecht. Nach dem Test keine Hollywood-Secret-Artikel im echten Katalog; Testartikel ausschließlich in integration_logs. Preise und geschützte Texte bleiben unverändert.
 - Versionierte Edge-Schnittstelle bereitgestellt, Produktivmodus deaktiviert.
@@ -25,4 +26,4 @@
 - Bestehende Datenbank-Prüfung meldete 497 bereits vorher vorhandene Hinweise, keine neu eingeführten Hinweise durch die letzte Absicherung; nicht im Rahmen dieser Shop-Anbindung geändert.
 
 ## Nächster Schritt
-Anleitung über Einstellungen → Schnittstellen → Onlineshops herunterladen und den serverseitigen Adapter im separaten Shop-Projekt umstellen. Gemeinsamen Testschlüssel dort sicher hinterlegen. Erst nach Shop-Test und bestätigten Preisen, Steuern und Versandregeln eine gesonderte Produktivfreigabe durchführen.
+Echte Artikel im Shop-Projekt an den freigegebenen /v1/production/articles/import-Endpunkt senden und nur bestätigte draft_created-IDs übernehmen; alternativ dort CSV mit external_article_id, sku, name und optional manufacturer, brand, model exportieren und hier hochladen. Dieses Projekt kann weder die private Shop-Datenbank auslesen noch den Shop-Adapter starten. Vor echten Bestellungen Artikelpreise, Steuern und Versand sowie den Shop-Ende-zu-Ende-Nachweis prüfen.
