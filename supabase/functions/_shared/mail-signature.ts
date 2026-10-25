@@ -59,6 +59,13 @@ Important note:
 This message (including any attachments) is confidential and may be privileged. If you are not the intended recipient of this e-mail please contact the sender and delete this message. Any unauthorized use or dissemination of this message in whole or in part is strictly prohibited. Please note that any views or opinions presented in this email are solely those of the author and do not necessarily represent those of the company.`;
 }
 
+function textToHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;white-space:pre-wrap">${escaped}</div>`;
+}
+
 export function appendSignature(
   html: string,
   text: string,
@@ -67,7 +74,10 @@ export function appendSignature(
   const marker = "alix-signature-v1";
   const sigHtml = `<div data-sig="${marker}">${buildSignatureHtml(loginName)}</div>`;
   const sigText = buildSignatureText(loginName);
-  const outHtml = html && html.includes(marker) ? html : (html || "") + sigHtml;
+  // Plain-text-only mails must keep their message in the HTML part; otherwise
+  // mail clients show the HTML part containing only the signature.
+  const baseHtml = html || (text ? textToHtml(text) : "");
+  const outHtml = baseHtml && baseHtml.includes(marker) ? baseHtml : baseHtml + sigHtml;
   const outText = text && text.includes("Alix Lasers ®") ? text : (text || "") + sigText;
   return { html: outHtml, text: outText };
 }
