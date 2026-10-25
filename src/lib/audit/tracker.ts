@@ -79,7 +79,7 @@ class AuditTracker {
     this.started = true;
     try {
       const info = collectDeviceInfo();
-      const { data, error } = await supabase.functions.invoke("audit-session-start", { body: info });
+      const { data, error } = await this.postAudit(info, "audit-session-start");
       if (error) throw error;
       if ((data as any)?.skipped === "unauthorized") {
         this.started = false;
@@ -120,9 +120,7 @@ class AuditTracker {
     await this.sendHeartbeat();
     if (this.sessionId) {
       try {
-        await supabase.functions.invoke("audit-track", {
-          body: { session_id: this.sessionId, actions: [], end_session: true },
-        });
+        await this.postAudit({ session_id: this.sessionId, actions: [], end_session: true });
       } catch {}
     }
     this.sessionId = null;
@@ -173,9 +171,7 @@ class AuditTracker {
     try {
       // Heartbeats share the stable audit batch endpoint. This avoids a second
       // high-frequency worker whose metadata load could intermittently fail.
-      const { data, error } = await supabase.functions.invoke("audit-track", {
-        body: { session_id: this.sessionId, actions: [], heartbeat: payload },
-      });
+      const { data, error } = await this.postAudit({ session_id: this.sessionId, actions: [], heartbeat: payload });
       if ((data as any)?.skipped === "unauthorized") { await this.handleUnauthorized(); return; }
       if (error) {
         const msg = String((error as any)?.message ?? "");
@@ -211,7 +207,8 @@ class AuditTracker {
 
     const batch = this.queue.splice(0, 100);
     try {
-      const { error } = await supabase.functions.invoke("audit-track", { body: { session_id: this.sessionId, actions: batch } });
+      const { error } = await this.postAudit({ session_id: this.sessionId, actions: batch });
+      if (error && !String(error.message).includes("401")) throw error;
       if (error) {
         const msg = String((error as any)?.message ?? "");
         if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
@@ -222,6 +219,28 @@ class AuditTracker {
     } catch {
       // Requeue on failure (bounded)
       this.queue.unshift(...batch.slice(0, 50));
+    }
+  }
+
+  /** Quiet POST to audit-track: never surfaces as an app error, never throws. */
+  private async postAudit(body: unknown, fn = "audit-track"): Promise<{ data: any; error: { message: string; status?: number } | null }> {
+    try {
+      const token = this.accessToken ?? (await this.ensureToken());
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fn}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token ?? ""}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      let data: any = null;
+      try { data = await res.json(); } catch { /* ignore */ }
+      if (!res.ok) return { data, error: { message: `${res.status} ${data?.code ?? ""}`, status: res.status } };
+      return { data, error: null };
+    } catch (e: any) {
+      return { data: null, error: { message: String(e?.message ?? "network"), status: 0 } };
     }
   }
 
