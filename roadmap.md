@@ -23,4 +23,7 @@
 - [x] Auftrags-Sammelversand: Abfrage der nicht vorhandenen user_roles.role-Spalte entfernt; bestehende is_admin/has_role-Prüfung bleibt maßgeblich. 19 Tests bestanden, send-mail bereitgestellt; keine Kunden-E-Mail versendet.
 - [ ] Korrigierten Auftragsversand angemeldet prüfen — externe Anmeldung steht automatisiert nicht zur Verfügung; direkter Prü Aufruf wurde mit 401 abgewiesen.
 - [x] Hollywood Secret: bestehende Auftragsprozesse und Shop-Vertrag geprüft; Plan für Alix Deutschland freigegeben, isolierte Testablage ohne neue Tabellen eingerichtet.
-- [ ] Hollywood Secret: authentifizierte shopbezogene Schnittstelle, Administrationsansicht, automatisierte Tests und Dokumentation nach Planfreigabe umsetzen; Produktivbetrieb bleibt gesperrt.
+- [x] Hollywood Secret: shopbezogene Schnittstelle bereitgestellt, Onlineshop-Verwaltung und Dokumentationsdownload ergänzt; zehn Tests einschließlich echter isolierter Auftragserstellung, Parallelität, Duplikatsperre, Kundenkennung, Rückabwicklung und Anfragebegrenzung bestanden. Produktiv gesperrt, keine echten Shop-Aufträge angelegt.
+- [ ] Hollywood Secret: externen Shop-Adapter und gemeinsamen Testzugang im separaten Shop-Projekt anschließen — das andere Projekt ist hier nur lesbar; Anleitung unter Einstellungen → Schnittstellen → Onlineshops verfügbar.
+- [ ] Hollywood Secret: Administrationsansicht angemeldet prüfen — externe Anmeldung verhindert automatisierten Mitarbeiterzugriff; unangemeldeter Zugriff wird gesperrt.
+- [ ] Hollywood Secret: Produktivfreigabe — wartet auf bestätigte Artikel-/Steuer-/Versandzuordnungen, separaten Produktivzugang, Shop-Ende-zu-Ende-Nachweis und ausdrückliche Zustimmung.
