@@ -1,6 +1,8 @@
 # Hollywood Secret – Prüfstand
 
 ## Nachgewiesen
+- Artikelimport unter /v1/sandbox/articles/import und /v1/production/articles/import bereitgestellt; Produktionssperre bleibt unverändert. 13 Deno-Tests bestanden einschließlich echter HTTP-Artikelübertragung, paralleler Wiederholung und atomarer Rückabwicklung bei Konflikt.
+- Artikelimport-RPC ausschließlich für service_role ausführbar; anon und authenticated ohne Ausführungsrecht. Nach dem Test keine Hollywood-Secret-Artikel im echten Katalog; Testartikel ausschließlich in integration_logs. Preise und geschützte Texte bleiben unverändert.
 - Versionierte Edge-Schnittstelle bereitgestellt, Produktivmodus deaktiviert.
 - Zehn Deno-Tests bestanden nach letztem Deployment, darunter echte HTTP-Aufrufe für isolierte Auftragserstellung, parallele Wiederholung, erneuten Abruf, Konfliktsperre, zurückgerollte Kundenanlage bei ungültigen Artikeln, Kundensuche mit passender externer Kennung und serverseitiges 60-Anfragen-Limit.
 - Ungültiger Verwaltungszugang mit HTTP 401 abgelehnt; unangemeldete Browsernavigation endet bei der Anmeldung.
@@ -8,6 +10,7 @@
 - Vorschau meldet build OK. Keine Kunden-E-Mails versendet, keine Rechnungen erstellt, kein Shop-Produktivbetrieb aktiviert.
 
 ## Noch nicht nachgewiesen
+- Artikelübertragung aus dem separaten Shop-Projekt und echte Produktiv-Artikelanlage; Anleitung enthält den neuen Vertrag, der Shop-Adapter muss ihn noch verwenden.
 - Angemeldete Administrationsansicht und Verwaltungsaktionen: externe Anmeldung verhindert automatisierten Mitarbeiterzugriff.
 - Verbindung aus dem separaten Hollywood-Secret-Shop: vorhandener Adapter ist dort noch eine Simulation; nur lesbarer Projektzugriff verfügbar.
 - Produktive Artikel-, Steuer-/Versandzuordnungen, Produktionsfolgeprozesse und Rechnungszuordnung: keine echten Shop-Aufträge für Tests erzeugt.
