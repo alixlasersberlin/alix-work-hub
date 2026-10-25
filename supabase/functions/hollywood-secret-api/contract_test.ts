@@ -1,5 +1,5 @@
 import { assertEquals, assert } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { orderSchema, canonicalJson, keyMatches, safeDatabaseError, testOrder } from './contract.ts';
+import { orderSchema, articleImportSchema, canonicalJson, keyMatches, safeDatabaseError, testOrder } from './contract.ts';
 
 Deno.test('Hollywood Secret: shop scope rejects another shop',()=>{assertEquals(orderSchema.safeParse({...testOrder('one'),shop_id:'other-shop'}).success,false);});
 Deno.test('Hollywood Secret: duplicate SKUs cannot bypass line uniqueness',()=>{const x=testOrder('two');assertEquals(orderSchema.safeParse({...x,items:[...x.items,...x.items]}).success,false);});
@@ -8,6 +8,36 @@ Deno.test('Hollywood Secret: internal customer and approval fields rejected',()=
 Deno.test('Hollywood Secret: foreign tax jurisdiction is rejected',()=>{const x=testOrder('five');assertEquals(orderSchema.safeParse({...x,customer:{...x.customer,shipping_address:{...x.customer.shipping_address,country:'AT'}}}).success,false);});
 Deno.test('Hollywood Secret: canonical request survives key reordering',()=>{assertEquals(canonicalJson({b:2,a:{d:4,c:3}}),canonicalJson({a:{c:3,d:4},b:2}));assert(canonicalJson({a:1})!==canonicalJson({a:2}));});
 Deno.test('Hollywood Secret: missing and incorrect access denied',async()=>{assertEquals(await keyMatches(null,undefined),false);assertEquals(await keyMatches('invalid','fixed-unit-test-only-not-a-real-credential'),false);});
+Deno.test('Hollywood Secret articles: reject price, approval and foreign shop fields',()=>{
+  const article={external_article_id:'one',sku:'ONE',name:'One'};
+  assertEquals(articleImportSchema.safeParse({shop_id:'hollywood-secret',articles:[article]}).success,true);
+  for(const extra of [{price:100},{approved:true},{short_description:'protected'}]) assertEquals(articleImportSchema.safeParse({shop_id:'hollywood-secret',articles:[{...article,...extra}]}).success,false);
+  assertEquals(articleImportSchema.safeParse({shop_id:'other',articles:[article]}).success,false);
+});
+Deno.test('Hollywood Secret articles: reject duplicate identities and more than 100 articles',()=>{
+  const article={external_article_id:'one',sku:'ONE',name:'One'};
+  assertEquals(articleImportSchema.safeParse({shop_id:'hollywood-secret',articles:[article,{...article,sku:'TWO'}]}).success,false);
+  assertEquals(articleImportSchema.safeParse({shop_id:'hollywood-secret',articles:[article,{...article,external_article_id:'two'}]}).success,false);
+  assertEquals(articleImportSchema.safeParse({shop_id:'hollywood-secret',articles:Array.from({length:101},(_,i)=>({...article,sku:`SKU-${i}`,external_article_id:`id-${i}`}))}).success,false);
+});
+Deno.test('Hollywood Secret articles: deployed import, replay, concurrency and atomic conflict',async()=>{
+  const key=Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY');
+  const url=Deno.env.get('SUPABASE_URL')??Deno.env.get('VITE_SUPABASE_URL');
+  assert(key&&url,'Configured sandbox access required');
+  const id=`article-${crypto.randomUUID()}`;
+  const article={external_article_id:id,sku:id,name:'Isolierter Artikelimport'};
+  const call=async(articles:unknown[],access=key)=>{const r=await fetch(`${url}/functions/v1/hollywood-secret-api/v1/sandbox/articles/import`,{method:'POST',headers:{'Content-Type':'application/json','X-Shop-Key':access},body:JSON.stringify({shop_id:'hollywood-secret',articles})});return {status:r.status,data:await r.json()};};
+  assertEquals((await call([article],'invalid')).status,401);
+  const [a,b]=await Promise.all([call([article]),call([article])]);
+  assertEquals(a.status,200);assertEquals(b.status,200);
+  assertEquals(a.data.created+b.data.created,1);assertEquals(a.data.replayed+b.data.replayed,1);
+  assertEquals(a.data.articles[0].article_id,b.data.articles[0].article_id);
+  assertEquals(a.data.articles[0].status,'test_created');assertEquals(a.data.prices_imported,false);assertEquals(a.data.production_enabled,false);
+  const other={...article,external_article_id:`new-${id}`,sku:`new-${id}`};
+  assertEquals((await call([other,{...article,name:'Changed'}])).status,409);
+  const after=await call([other]);assertEquals(after.data.created,1,'Conflicting batch must roll back earlier article');
+  assertEquals((await call([{...article,price:100}])).status,400);
+});
 Deno.test('Hollywood Secret: production disabled maps to forbidden',()=>{assertEquals(safeDatabaseError('HS_PRODUCTION_DISABLED').status,403);assertEquals(safeDatabaseError('HS_IDEMPOTENCY_CONFLICT').status,409);assertEquals(safeDatabaseError('raw private provider information').code,'INTERNAL_ERROR');});
 
 Deno.test('Hollywood Secret: deployed sandbox roundtrip, concurrency, scope and rollback',async()=>{
