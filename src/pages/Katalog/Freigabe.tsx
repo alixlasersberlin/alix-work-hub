@@ -40,6 +40,8 @@ export default function KatalogFreigabe() {
   const { user, roles } = useAuth();
   const client = supabase as any;
   const canApprove = (roles ?? []).some((r: string) => ['Super Admin', 'Admin', 'Katalog Preise'].includes(r));
+  // Super Admin darf eigenständig freigeben (4-Augen-Prinzip gilt nur für andere Rollen)
+  const isSuper = (roles ?? []).includes('Super Admin');
 
   const [items, setItems] = useState<ItemPending[]>([]);
   const [prices, setPrices] = useState<PricePending[]>([]);
@@ -90,14 +92,14 @@ export default function KatalogFreigabe() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canApprove, user?.id]);
 
-  const eligibleItems = useMemo(() => items.filter((i) => i.last_edited_by !== user?.id), [items, user]);
+  const eligibleItems = useMemo(() => items.filter((i) => isSuper || i.last_edited_by !== user?.id), [items, user, isSuper]);
   const eligiblePrices = useMemo(
-    () => prices.filter((p) => p.last_edited_by !== user?.id && p.reviewed_at && p.reviewed_by !== user?.id),
-    [prices, user],
+    () => prices.filter((p) => isSuper || (p.last_edited_by !== user?.id && p.reviewed_at && p.reviewed_by !== user?.id)),
+    [prices, user, isSuper],
   );
   const reviewablePrices = useMemo(
-    () => prices.filter((p) => p.last_edited_by !== user?.id && !p.reviewed_at),
-    [prices, user],
+    () => prices.filter((p) => (isSuper || p.last_edited_by !== user?.id) && !p.reviewed_at),
+    [prices, user, isSuper],
   );
 
   const approveItems = async () => {
@@ -176,7 +178,7 @@ export default function KatalogFreigabe() {
   };
 
   const applyPendingChange = async (pc: any) => {
-    if (pc.requested_by === user?.id) { toast({ title: 'Vier-Augen-Prinzip', description: 'Eigene Änderungen können nicht freigegeben werden.', variant: 'destructive' }); return; }
+    if (pc.requested_by === user?.id && !isSuper) { toast({ title: 'Vier-Augen-Prinzip', description: 'Eigene Änderungen können nicht freigegeben werden.', variant: 'destructive' }); return; }
     setBusy(true);
     try {
       const patch = pc.new_value ?? {};
@@ -285,7 +287,7 @@ export default function KatalogFreigabe() {
               {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Lade…</TableCell></TableRow>}
               {!loading && items.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Keine Artikel zur Prüfung.</TableCell></TableRow>}
               {items.map((i) => {
-                const own = i.last_edited_by === user?.id;
+                const own = i.last_edited_by === user?.id && !isSuper;
                 return (
                   <TableRow key={i.id} className={own ? 'opacity-60' : ''}>
                     <TableCell>
@@ -346,7 +348,7 @@ export default function KatalogFreigabe() {
               {loading && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Lade…</TableCell></TableRow>}
               {!loading && prices.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Keine Preise zur Freigabe.</TableCell></TableRow>}
               {prices.map((p) => {
-                const own = p.last_edited_by === user?.id;
+                const own = p.last_edited_by === user?.id && !isSuper;
                 const reviewedByMe = p.reviewed_by === user?.id;
                 return (
                   <TableRow key={p.id} className={own ? 'opacity-60' : ''}>
@@ -403,7 +405,7 @@ export default function KatalogFreigabe() {
                 <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Keine ausstehenden Änderungen.</TableCell></TableRow>
               )}
               {pendingChanges.map((pc) => {
-                const own = pc.requested_by === user?.id;
+                const own = pc.requested_by === user?.id && !isSuper;
                 return (
                   <TableRow key={pc.id} className={own ? 'opacity-60' : ''}>
                     <TableCell className="text-xs uppercase text-muted-foreground">{pc.entity_type}</TableCell>
