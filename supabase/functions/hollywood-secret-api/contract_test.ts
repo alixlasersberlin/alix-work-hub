@@ -20,11 +20,14 @@ Deno.test('Hollywood Secret: deployed sandbox roundtrip, concurrency, scope and 
   const order=testOrder(id);
   assertEquals((await call('orders',order,'invalid-test-token')).status,401);
   const bad=await call('orders',{...order,items:[{...order.items[0],sku:'INVALID-ARTICLE'}]});assertEquals(bad.status,422);
-  const customer=await call('customers/find',{shop_id:'hollywood-secret',email:order.customer.email});assertEquals(customer.data.customer,null,'Failed order must roll back customer');
+  const customer=await call('customers/find',{shop_id:'hollywood-secret',external_customer_id:id,email:order.customer.email});assertEquals(customer.data.customer,null,'Failed order must roll back customer');
   const price=await call('orders',{...order,total_cents:1999});assertEquals(price.status,422);
   const [a,b]=await Promise.all([call('orders',order),call('orders',order)]);
   assertEquals([a.status,b.status].sort(),[200,201]);assertEquals(a.data.order_id,b.data.order_id);
   const read=await call('orders/read',{shop_id:'hollywood-secret',external_order_id:id});assertEquals(read.status,200);assertEquals(read.data.order_id,a.data.order_id);assertEquals(read.data.total_cents,2000);
+  const hidden=await call('customers/find',{shop_id:'hollywood-secret',external_customer_id:`other-${id}`,email:order.customer.email});assertEquals(hidden.status,200);assertEquals(hidden.data.customer,null);
+  assertEquals((await call('customers/find',{shop_id:'hollywood-secret',email:order.customer.email})).status,400);
+  const found=await call('customers/find',{shop_id:'hollywood-secret',external_customer_id:id,email:order.customer.email});assertEquals(found.data.customer.id,read.data.customer_id);
   assertEquals((await call('orders',{...order,total_cents:2001})).status,409);
   assertEquals((await call('orders/read',{shop_id:'other-shop',external_order_id:id})).status,400);
   assertEquals((await call('orders',order,key,'production')).status>=400,true);

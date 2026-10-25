@@ -28,6 +28,9 @@ Deno.serve(async (req: Request) => {
       if(!parsed.success) return fail('INVALID_INPUT','Ungültige Verwaltungsaktion.',400,requestId);
       const {data:overview,error:permission}=await db.rpc('hs_admin',{p_action:'overview',p_payload:{},p_user_id:auth.user.id});
       if(permission) {const e=safeDatabaseError(permission.message);return fail(e.code,e.message,e.status,requestId);}
+      const {data:adminAllowed,error:adminRateError}=await db.rpc('hs_admin_rate_limit',{p_user_id:auth.user.id,p_action:parsed.data.action});
+      if(adminRateError) return fail('INTERNAL_ERROR','Anfrageprüfung fehlgeschlagen.',500,requestId);
+      if(!adminAllowed) return fail('RATE_LIMIT','Zu viele Verwaltungsanfragen. Nach einer Minute erneut versuchen.',429,requestId);
       if(parsed.data.action==='self_test') {
         const key=Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY');
         if(!key) return fail('SETUP_REQUIRED','Testzugang muss sicher eingerichtet werden.',503,requestId);

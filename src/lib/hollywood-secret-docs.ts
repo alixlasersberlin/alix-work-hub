@@ -13,7 +13,7 @@ Shop-ID stets hollywood-secret. Test- und Produktivschlüssel sind nicht austaus
 
 ## Endpunkte (alle POST)
 /v1/sandbox/health – {"shop_id":"hollywood-secret"}
-/v1/sandbox/customers/find – {"shop_id":"hollywood-secret","email":"test@example.invalid"}
+/v1/sandbox/customers/find – {"shop_id":"hollywood-secret","external_customer_id":"test-customer-001","email":"test@example.invalid"}
 /v1/sandbox/customers – {"shop_id":"hollywood-secret","customer":{...}}
 /v1/sandbox/orders – vollständige Bestellung, Beispiel unten
 /v1/sandbox/orders/read – {"shop_id":"hollywood-secret","external_order_id":"test-001"}
@@ -50,7 +50,7 @@ Die Bestellung kann über orders/read erneut gelesen werden. invoices enthält n
 
 ## Duplikatsperre und Rechte
 Die Kombination aus Shop und externer Bestell-ID ist eindeutig. Identische Wiederholungen und parallele Übertragungen liefern denselben Auftrag. Geänderter Inhalt unter derselben ID führt zu 409. Bei unklarem Ergebnis stets dieselbe ID und denselben Inhalt erneut verwenden, niemals eine neue ID erzeugen.
-Kundensuche findet ausschließlich bereits diesem Shop zugeordnete Kunden. Kein globaler Abgleich, keine Änderung fremder Kunden und keine vom Shop frei gewählte interne Kunden-ID.
+Kundensuche benötigt die externe Shop-Kundenkennung und die dazu passende E-Mail und findet ausschließlich bereits diesem Shop zugeordnete Kunden. Kein globaler Abgleich, keine Änderung fremder Kunden und keine vom Shop frei gewählte interne Kunden-ID.
 Neue Kunden werden anhand der externen Shop-Kunden-ID zugeordnet. Widersprüchliche E-Mail führt zu 409; vorhandene Stammdaten werden nicht ungeprüft überschrieben.
 
 ## Preise, Steuern und Grenzen
