@@ -58483,8 +58483,15 @@ export type Database = {
         }[]
       }
       housekeeping_purge_logs: { Args: never; Returns: Json }
-      hs_admin: { Args: { p_action: string; p_payload?: Json }; Returns: Json }
+      hs_admin: {
+        Args: { p_action: string; p_payload: Json; p_user_id: string }
+        Returns: Json
+      }
       hs_admin_allowed: { Args: never; Returns: boolean }
+      hs_admin_internal: {
+        Args: { p_action: string; p_payload?: Json }
+        Returns: Json
+      }
       hs_api: {
         Args: {
           p_action: string
