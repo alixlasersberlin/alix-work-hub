@@ -363,6 +363,14 @@ serve(async (req) => {
       };
       if (bulkDraftId) await supabase.from('mail_messages').update(failedPayload).eq('id', bulkDraftId);
       else await supabase.from('mail_messages').insert(failedPayload);
+      // Bulk order mail: a 4xx provider refusal means nothing was sent. Report it
+      // as a handled result so the dialog shows it without a runtime error.
+      if (bulkDraftId && resendResponse.status >= 400 && resendResponse.status < 500) {
+        const msg = String(resendData?.message ?? '');
+        return jsonResponse({ success: false, not_sent: true, error: msg.includes('domain is not verified')
+          ? 'Absender-Domain ist beim E-Mail-Anbieter noch nicht bestätigt. Keine E-Mail versendet. Bitte anderen Absender wählen oder Domain bestätigen lassen.'
+          : `E-Mail-Anbieter hat abgelehnt: ${msg || resendResponse.status}. Keine E-Mail versendet.` }, 200);
+      }
       return jsonResponse({ error: "Provider request failed", status: resendResponse.status, details: resendData }, resendResponse.status);
     }
 

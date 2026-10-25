@@ -68,6 +68,8 @@ export default function OrderBulkEmailDialog({ recipients, onClose }: { recipien
             if (status === 401 || status === 403) {
               outcome = { status: 'failed', detail: status === 401
                 ? 'Anmeldung abgelaufen. Keine E-Mail versendet. Bitte erneut anmelden und den Versanddialog neu öffnen.'
+                : details.includes('domain is not verified')
+                  ? 'Absender-Domain ist beim E-Mail-Anbieter noch nicht bestätigt. Keine E-Mail versendet. Bitte anderen Absender wählen oder Domain bestätigen lassen.'
                 : details.includes('Auftrag oder Kundenzuordnung')
                   ? 'Auftrag oder Kunde nicht zugänglich. Keine E-Mail versendet. Bitte Seite neu laden und erneut versuchen.'
                   : 'Keine Versandberechtigung für diesen Absender. Keine E-Mail versendet. Bitte Berechtigung prüfen und den Versanddialog neu öffnen.' };
@@ -76,6 +78,8 @@ export default function OrderBulkEmailDialog({ recipients, onClose }: { recipien
               try { const parsed = JSON.parse(details); if (typeof parsed.error === 'string') message = parsed.error; } catch { /* non-JSON error */ }
               outcome = { status: 'uncertain', detail: `${message} — vor erneutem Versand Kundenakte prüfen.` };
             }
+          } else if (data?.not_sent) {
+            outcome = { status: 'failed', detail: String(data.error) };
           } else if (!data?.success) {
             outcome = { status: 'uncertain', detail: `${data?.error || 'Versandstatus unbekannt'} — vor erneutem Versand Kundenakte prüfen.` };
           } else {
