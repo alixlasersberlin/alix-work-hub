@@ -58505,6 +58505,10 @@ export type Database = {
         }
         Returns: Json
       }
+      hs_import_articles: {
+        Args: { p_mode: string; p_payload: Json }
+        Returns: Json
+      }
       hs_rate_limit: { Args: { p_mode: string }; Returns: boolean }
       is_ac_meeting_member: {
         Args: { _meeting_id: string; _user: string }

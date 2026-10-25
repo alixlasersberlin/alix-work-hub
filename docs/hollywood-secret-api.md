@@ -19,6 +19,22 @@ Shop-ID stets hollywood-secret. Test- und Produktivschlüssel sind nicht austaus
 /v1/sandbox/orders/read – {"shop_id":"hollywood-secret","external_order_id":"test-001"}
 Produktivpfade ersetzen sandbox durch production; derzeit gesperrt.
 
+## Artikelimport
+POST /v1/sandbox/articles/import – isolierter Testimport, keine echten Katalogartikel.
+POST /v1/production/articles/import – weiterhin gesperrt, solange der Produktivbetrieb nicht separat freigegeben ist.
+Zugang und Anfragegrenzen wie oben; kein zusätzlicher Idempotency-Key nötig.
+
+{"shop_id":"hollywood-secret","articles":[{"external_article_id":"test-article-001","sku":"HS-IMPORT-001","name":"Isolierter Testartikel","brand":"Hollywood Secret"}]}
+
+Pflichtfelder je Artikel: external_article_id, sku, name. Optional: manufacturer, brand, model (je höchstens 200 Zeichen).
+Maximal 100 Artikel je Anfrage, eindeutige Kennungen/SKUs; größere Listen in Pakete aufteilen (weiterhin maximal 64 KiB je Anfrage).
+Antwort: created, replayed, skipped und articles mit external_article_id, sku, article_id, status, replayed.
+Sandbox-IDs sind nur Testkennungen, keine echten Katalog-IDs und keine freigegebenen Bestellartikel.
+Identische Artikel wiederholen sich ohne Duplikate, geänderte Daten unter derselben Kennung führen zu 409 ARTICLE_CONFLICT; die gesamte Anfrage wird dann zurückgerollt.
+Produktiv würden neue Artikel ausschließlich als Entwurf im bestehenden Katalog angelegt. Vorhandene SKUs werden als skipped_existing gemeldet, ohne interne IDs fremder Artikel preiszugeben.
+Keine Preise, Steuern, Bestände, Beschreibungen oder Freigaben importieren; solche Angaben werden abgewiesen. Preisfreigabe und Shop-SKU-Zuordnung bleiben separate Mitarbeiteraktionen.
+Ein Artikel-Testimport beweist noch keinen Anschluss des Shop-Projekts; dessen Adapter muss diesen Endpunkt aufrufen und das Ergebnis speichern.
+
 ## Bestellung
 Zusätzlicher Header: Idempotency-Key: hollywood-secret:test-001
 

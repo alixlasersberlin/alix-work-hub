@@ -7,6 +7,19 @@ export const orderSchema = z.object({ shop_id: z.literal('hollywood-secret'), ex
 export const createCustomerSchema = z.object({ shop_id: z.literal('hollywood-secret'), customer: customerSchema }).strict();
 export const findCustomerSchema = z.object({ shop_id: z.literal('hollywood-secret'), external_customer_id: externalId, email: z.string().email().max(254).transform(s => s.toLowerCase()) }).strict();
 export const getOrderSchema = z.object({ shop_id: z.literal('hollywood-secret'), external_order_id: externalId }).strict();
+export const articleImportSchema = z.object({
+  shop_id: z.literal('hollywood-secret'),
+  articles: z.array(z.object({
+    external_article_id: externalId,
+    sku: z.string().min(1).max(100).regex(/^[A-Za-z0-9_.-]+$/),
+    name: z.string().trim().min(1).max(200),
+    manufacturer: z.string().max(200).optional(),
+    brand: z.string().max(200).optional(),
+    model: z.string().max(200).optional(),
+  }).strict()).min(1).max(100),
+}).strict().superRefine((v, ctx) => {
+  if (new Set(v.articles.map(a => a.external_article_id)).size !== v.articles.length || new Set(v.articles.map(a => a.sku)).size !== v.articles.length) ctx.addIssue({code:'custom',message:'Duplicate article identity'});
+});
 export const adminSchema = z.object({ action: z.enum(['overview','logs','prices','mapping','remove_mapping','shipping','test_enabled','disable_production','self_test']), payload: z.record(z.unknown()).default({}) }).strict();
 
 export function canonicalJson(value: unknown): string {
@@ -31,6 +44,7 @@ export function testOrder(id: string) {
 }
 
 const messages: Record<string,string> = {
+  ARTICLE_CONFLICT:'Artikelkennung wurde bereits mit anderem Inhalt übertragen. Bestehende Artikel bleiben unverändert.',
   FORBIDDEN:'Zugriff nicht erlaubt.', INVALID_INPUT:'Ungültige Angaben.', SETUP_REQUIRED:'Zugang noch nicht eingerichtet.',
   PRODUCTION_DISABLED:'Produktive Übertragungen sind gesperrt.', TEST_DISABLED:'Testzugang ist gesperrt.', NOT_FOUND:'Shop-Vorgang nicht gefunden.',
   IDEMPOTENCY_CONFLICT:'Bestell-ID wurde bereits mit anderem Inhalt übertragen.', CUSTOMER_CONFLICT:'Kundenzuordnung widerspricht dem vorhandenen Shop-Kunden.',
@@ -38,6 +52,6 @@ const messages: Record<string,string> = {
 };
 export function safeDatabaseError(message: string) {
   const code = message.match(/HS_([A-Z_]+)/)?.[1] ?? 'INTERNAL_ERROR';
-  const status = code === 'FORBIDDEN' ? 403 : code === 'NOT_FOUND' ? 404 : ['IDEMPOTENCY_CONFLICT','CUSTOMER_CONFLICT'].includes(code) ? 409 : ['PRODUCTION_DISABLED','TEST_DISABLED'].includes(code) ? 403 : code === 'INTERNAL_ERROR' ? 500 : code === 'SETUP_REQUIRED' ? 503 : 422;
+  const status = code === 'FORBIDDEN' ? 403 : code === 'NOT_FOUND' ? 404 : ['IDEMPOTENCY_CONFLICT','CUSTOMER_CONFLICT','ARTICLE_CONFLICT'].includes(code) ? 409 : ['PRODUCTION_DISABLED','TEST_DISABLED'].includes(code) ? 403 : code === 'INTERNAL_ERROR' ? 500 : code === 'SETUP_REQUIRED' ? 503 : 422;
   return { code, message: messages[code] ?? 'Verarbeitung fehlgeschlagen. Keine erneute Übertragung mit neuer Bestell-ID starten.', status };
 }

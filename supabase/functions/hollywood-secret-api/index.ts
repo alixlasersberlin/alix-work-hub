@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createAuditServiceClient, requireAuditUser } from '../_shared/audit-auth.ts';
-import { orderSchema, createCustomerSchema, findCustomerSchema, getOrderSchema, adminSchema, canonicalJson, sha256, keyMatches, testOrder, safeDatabaseError } from './contract.ts';
+import { orderSchema, createCustomerSchema, findCustomerSchema, getOrderSchema, articleImportSchema, adminSchema, canonicalJson, sha256, keyMatches, testOrder, safeDatabaseError } from './contract.ts';
 
 const headers = { ...corsHeaders, 'Access-Control-Allow-Headers': `${corsHeaders['Access-Control-Allow-Headers']}, x-shop-key, idempotency-key`, 'Content-Type':'application/json','Cache-Control':'no-store' };
 const json = (data: unknown, status=200) => new Response(JSON.stringify(data),{status,headers});
@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
       if(error){const e=safeDatabaseError(error.message);return fail(e.code,e.message,e.status,requestId);}
       return json({data,key_status:{sandbox:Boolean(Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY')),production:Boolean(Deno.env.get('HOLLYWOOD_SECRET_LIVE_KEY'))},request_id:requestId});
     }
-    const match=path.match(/^\/v1\/(sandbox|production)\/(health|customers\/find|customers|orders\/read|orders)$/);
+    const match=path.match(/^\/v1\/(sandbox|production)\/(health|customers\/find|customers|orders\/read|orders|articles\/import)$/);
     if(!match) return fail('NOT_FOUND','Endpunkt nicht gefunden.',404,requestId);
     const [,mode,endpoint]=match;
     const expected=Deno.env.get(mode==='sandbox'?'HOLLYWOOD_SECRET_TEST_KEY':'HOLLYWOOD_SECRET_LIVE_KEY');
@@ -67,18 +67,20 @@ Deno.serve(async (req: Request) => {
       const {data:h,error}=await db.from('integration_health').select('shop_config').eq('integration','hollywood-secret').single();
       if(error) return fail('SETUP_REQUIRED','Verbindung nicht eingerichtet.',503,requestId);
       if(!(mode==='sandbox'?h.shop_config?.test_enabled:h.shop_config?.production_enabled)) return fail(mode==='sandbox'?'TEST_DISABLED':'PRODUCTION_DISABLED','Zugang gesperrt.',403,requestId);
-      return json({ok:true,shop_id:'hollywood-secret',mode,version:'1',request_id:requestId});
+      return json({ok:true,shop_id:'hollywood-secret',mode,version:'1',capabilities:{article_import:true,article_import_path:`/v1/${mode}/articles/import`},request_id:requestId});
     }
-    const schema=endpoint==='orders'?orderSchema:endpoint==='orders/read'?getOrderSchema:endpoint==='customers'?createCustomerSchema:findCustomerSchema;
+    const schema=endpoint==='articles/import'?articleImportSchema:endpoint==='orders'?orderSchema:endpoint==='orders/read'?getOrderSchema:endpoint==='customers'?createCustomerSchema:findCustomerSchema;
     const parsed=schema.safeParse(body);
     if(!parsed.success) return fail('INVALID_INPUT','Ungültige oder nicht erlaubte Angaben.',400,requestId);
-    const action=endpoint==='orders'?'create_order':endpoint==='orders/read'?'get_order':endpoint==='customers'?'create_customer':'find_customer';
+    const action=endpoint==='articles/import'?'import_articles':endpoint==='orders'?'create_order':endpoint==='orders/read'?'get_order':endpoint==='customers'?'create_customer':'find_customer';
     if(action==='create_order') {
       const order=orderSchema.parse(body);
       if(req.headers.get('Idempotency-Key')!==`hollywood-secret:${order.external_order_id}`) return fail('INVALID_IDEMPOTENCY_KEY','Idempotency-Key muss Shop und Bestell-ID entsprechen.',400,requestId);
     }
     const hash=action==='create_order'?await sha256(canonicalJson(parsed.data)):null;
-    const {data,error}=await db.rpc('hs_api',{p_mode:mode,p_action:action,p_payload:parsed.data,p_hash:hash});
+    const {data,error}=action==='import_articles'
+      ? await db.rpc('hs_import_articles',{p_mode:mode,p_payload:parsed.data})
+      : await db.rpc('hs_api',{p_mode:mode,p_action:action,p_payload:parsed.data,p_hash:hash});
     if(error) {
       const e=safeDatabaseError(error.message);
       await db.from('integration_logs').insert({source:'hollywood-secret:api',event:action,status:'error',message:e.code,external_id:requestId});

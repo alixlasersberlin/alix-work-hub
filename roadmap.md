@@ -27,3 +27,5 @@
 - [ ] Hollywood Secret: externen Shop-Adapter und gemeinsamen Testzugang im separaten Shop-Projekt anschließen — das andere Projekt ist hier nur lesbar; Anleitung unter Einstellungen → Schnittstellen → Onlineshops verfügbar.
 - [ ] Hollywood Secret: Administrationsansicht angemeldet prüfen — externe Anmeldung verhindert automatisierten Mitarbeiterzugriff; unangemeldeter Zugriff wird gesperrt.
 - [ ] Hollywood Secret: Produktivfreigabe — wartet auf bestätigte Artikel-/Steuer-/Versandzuordnungen, separaten Produktivzugang, Shop-Ende-zu-Ende-Nachweis und ausdrückliche Zustimmung.
+- [x] Hollywood Secret: gesicherten Artikelimport über den Shopzugang ergänzt; 13 Tests inklusive HTTP-Import, paralleler Wiederholung und atomarer Konfliktsperre bestanden. Keine echten Katalogartikel erstellt; bestehende Artikel, Preise und Freigaben unverändert.
+- [ ] Hollywood Secret: Artikelimport im separaten Shop-Adapter anschließen — anderes Projekt hier nur lesbar; aktualisierte Anleitung unter Onlineshops verfügbar, Produktivbetrieb bleibt gesperrt.
