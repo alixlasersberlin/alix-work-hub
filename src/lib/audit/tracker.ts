@@ -79,7 +79,7 @@ class AuditTracker {
     this.started = true;
     try {
       const info = collectDeviceInfo();
-      const { data, error } = await supabase.functions.invoke("audit-session-start", { body: info });
+      const { data, error } = await this.postAudit(info, "audit-session-start");
       if (error) throw error;
       if ((data as any)?.skipped === "unauthorized") {
         this.started = false;
@@ -223,10 +223,10 @@ class AuditTracker {
   }
 
   /** Quiet POST to audit-track: never surfaces as an app error, never throws. */
-  private async postAudit(body: unknown): Promise<{ data: any; error: { message: string; status?: number } | null }> {
+  private async postAudit(body: unknown, fn = "audit-track"): Promise<{ data: any; error: { message: string; status?: number } | null }> {
     try {
       const token = this.accessToken ?? (await this.ensureToken());
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audit-track`, {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fn}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token ?? ""}`,
