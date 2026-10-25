@@ -742,6 +742,9 @@ export const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
+      { path: '#einstellungen-schnittstellen', label: 'Einstellungen · Schnittstellen', icon: Settings, roles: ['Admin', 'Super Admin'], children: [
+        { path: '/einstellungen/schnittstellen/onlineshops', label: 'Onlineshops', icon: ShoppingCart, roles: ['Admin', 'Super Admin'] },
+      ] },
       { path: '/mediapaket', label: 'Mediapaket', icon: PackageIcon, roles: ['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG'] },
       // 1) Freigaben & Genehmigungen
       {
