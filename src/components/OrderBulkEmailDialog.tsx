@@ -78,6 +78,8 @@ export default function OrderBulkEmailDialog({ recipients, onClose }: { recipien
               try { const parsed = JSON.parse(details); if (typeof parsed.error === 'string') message = parsed.error; } catch { /* non-JSON error */ }
               outcome = { status: 'uncertain', detail: `${message} — vor erneutem Versand Kundenakte prüfen.` };
             }
+          } else if (data?.not_sent) {
+            outcome = { status: 'failed', detail: String(data.error) };
           } else if (!data?.success) {
             outcome = { status: 'uncertain', detail: `${data?.error || 'Versandstatus unbekannt'} — vor erneutem Versand Kundenakte prüfen.` };
           } else {
