@@ -29546,7 +29546,9 @@ export type Database = {
           last_error_summary: string | null
           last_failure_at: string | null
           last_success_at: string | null
+          shop_config: Json | null
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -29556,7 +29558,9 @@ export type Database = {
           last_error_summary?: string | null
           last_failure_at?: string | null
           last_success_at?: string | null
+          shop_config?: Json | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -29566,10 +29570,20 @@ export type Database = {
           last_error_summary?: string | null
           last_failure_at?: string | null
           last_success_at?: string | null
+          shop_config?: Json | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integration_health_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       integration_logs: {
         Row: {
@@ -29581,6 +29595,7 @@ export type Database = {
           payload: Json | null
           source: string
           status: string
+          tenant_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -29592,6 +29607,7 @@ export type Database = {
           payload?: Json | null
           source: string
           status?: string
+          tenant_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -29603,9 +29619,18 @@ export type Database = {
           payload?: Json | null
           source?: string
           status?: string
+          tenant_id?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integration_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       intercompany_invoices: {
         Row: {
@@ -58458,6 +58483,25 @@ export type Database = {
         }[]
       }
       housekeeping_purge_logs: { Args: never; Returns: Json }
+      hs_admin: {
+        Args: { p_action: string; p_payload: Json; p_user_id: string }
+        Returns: Json
+      }
+      hs_admin_allowed: { Args: never; Returns: boolean }
+      hs_admin_internal: {
+        Args: { p_action: string; p_payload?: Json }
+        Returns: Json
+      }
+      hs_api: {
+        Args: {
+          p_action: string
+          p_hash?: string
+          p_mode: string
+          p_payload: Json
+        }
+        Returns: Json
+      }
+      hs_rate_limit: { Args: { p_mode: string }; Returns: boolean }
       is_ac_meeting_member: {
         Args: { _meeting_id: string; _user: string }
         Returns: boolean

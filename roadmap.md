@@ -22,5 +22,5 @@
 - [ ] Versand der vorhandenen Anzahlungsrechnung AB-2026-04568 prüfen — korrekte Kundenadresse muss bestätigt werden; externe Anmeldung verhindert angemeldeten End-to-End-Test.
 - [x] Auftrags-Sammelversand: Abfrage der nicht vorhandenen user_roles.role-Spalte entfernt; bestehende is_admin/has_role-Prüfung bleibt maßgeblich. 19 Tests bestanden, send-mail bereitgestellt; keine Kunden-E-Mail versendet.
 - [ ] Korrigierten Auftragsversand angemeldet prüfen — externe Anmeldung steht automatisiert nicht zur Verfügung; direkter Prü Aufruf wurde mit 401 abgewiesen.
-- [ ] Hollywood Secret: bestehende Auftragsprozesse und sichere Testisolation prüfen, anschließend Umsetzungsplan vorlegen.
+- [x] Hollywood Secret: bestehende Auftragsprozesse und Shop-Vertrag geprüft; Plan für Alix Deutschland freigegeben, isolierte Testablage ohne neue Tabellen eingerichtet.
 - [ ] Hollywood Secret: authentifizierte shopbezogene Schnittstelle, Administrationsansicht, automatisierte Tests und Dokumentation nach Planfreigabe umsetzen; Produktivbetrieb bleibt gesperrt.
