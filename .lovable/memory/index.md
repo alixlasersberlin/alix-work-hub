@@ -21,6 +21,7 @@
 - [Access Control](mem://auth/access-control) — Internal login system without public registration, strict status checks
 - [Role Permissions](mem://auth/role-permissions) — RBAC definitions for Admins and specialized roles
 - [Rolle Order](mem://auth/order-role) — Breite operative Rolle: Kunden, Artikel, Verkäufe, Prio-Listen, Bestellungen, Production (ohne Factory Invoice), Lager, Tourenplanung, Versand, Finanzierungen. Kein Löschen.
+- [Katalog-Freigabe Super Admin](mem://auth/katalog-freigabe-super-admin.md) — Super Admin gibt Katalog eigenständig frei, andere 4-Augen
 - [Delete-Beschränkung Super Admin](mem://auth/delete-restriction) — Nur Super Admin darf Datensätze löschen
 - [Database Constraints](mem://tech/database-constraints) — Use existing Supabase tables (user_profiles, orders, etc.). Do not create new tables.
 - [Zoho Order Number](mem://constraints/zoho-order-number) — Original Zoho order_number must never be mutated
