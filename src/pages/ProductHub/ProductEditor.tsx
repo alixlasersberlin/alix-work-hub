@@ -419,6 +419,9 @@ export default function ProductHubEditor() {
                       if (e2 || (r as any)?.error) results.push({ label: ch.label, ok: false, note: msg || 'Übertragung fehlgeschlagen' });
                       else if ((r as any)?.mismatches?.length) results.push({ label: ch.label, ok: false, note: `Gesendet, Kontrolle abweichend: ${(r as any).mismatches.join(', ')}` });
                       else results.push({ label: ch.label, ok: true, note: 'Texte übertragen und angenommen' });
+                      const m = (r as any)?.master;
+                      if (m && !e2 && !(r as any)?.error) results.push({ label: `${ch.label} · Technik & Bilder`, ok: !!m.ok,
+                        note: m.ok ? (m.fields?.length ? `Angenommen: ${m.fields.join(', ')}` : 'Nichts zu senden') : (m.error || 'Fehlgeschlagen') });
                     } else results.push({ label: ch.label, ok: true, note: 'Freigegeben und veröffentlicht' });
                   } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
                 }
