@@ -18,7 +18,6 @@ const FIELD_MAP: Record<string, string> = {
   long_description: "long_description",
   seo_title: "seo_title",
   seo_description: "meta_description",
-  applications: "applications",
   features: "features",
 };
 
