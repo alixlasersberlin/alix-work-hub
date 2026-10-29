@@ -278,7 +278,7 @@ export default function OffeneAnzahlungen() {
       // Neueste Anzahlungsrechnung-PDF holen und Download-Token sicherstellen
       const { data: docs } = await supabase
         .from('order_documents')
-        .select('id, file_name, download_token')
+        .select('id, file_name, file_path, download_token')
         .eq('order_id', d.order_id)
         .eq('document_type', 'Anzahlungsrechnung')
         .order('created_at', { ascending: false })
@@ -294,6 +294,10 @@ export default function OffeneAnzahlungen() {
         if (uErr) throw uErr;
       }
       const downloadUrl = `https://alixwork.de/d/${token}`;
+      // PDF immer als echten Anhang mitsenden (Links öffnen nicht in jeder Mail-App)
+      const fileRes = await supabase.storage.from('order-invoices').download((doc as any).file_path);
+      if (fileRes.error || !fileRes.data) throw new Error('Anzahlungsrechnungs-PDF konnte nicht geladen werden.');
+      const pdfBase64 = await blobToBase64Pdf(fileRes.data);
 
       const orderNo = order.order_number ?? '';
       const invoiceNumber = d.invoice_number || d.deposit_number || '';
@@ -331,6 +335,7 @@ export default function OffeneAnzahlungen() {
             downloadUrl,
             downloadLabel: 'Anzahlungsrechnung herunterladen',
           },
+          attachments: [{ filename: (doc as any).file_name || `Anzahlungsrechnung_${invoiceNumber}.pdf`, content: pdfBase64, contentType: 'application/pdf' }],
         },
       });
       if (error) throw error;
@@ -1100,3 +1105,10 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
   );
 }
 
+
+async function blobToBase64Pdf(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
