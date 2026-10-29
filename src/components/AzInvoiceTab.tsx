@@ -942,6 +942,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             downloadUrl,
             downloadLabel: 'Anzahlungsrechnung herunterladen',
           },
+          ...(blob ? { attachments: [{ filename: fileName, content: await azBlobToBase64(blob), contentType: 'application/pdf' }] } : {}),
         },
       });
       if (error) throw error;
@@ -1599,4 +1600,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       </div>
     </div>
   );
+}
+
+async function azBlobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
 }
