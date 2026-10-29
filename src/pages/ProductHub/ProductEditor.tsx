@@ -395,7 +395,7 @@ export default function ProductHubEditor() {
             {id && <WebPreviewButton productId={id} product={form} />}
             {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
             {canWrite && id && <DuplicateProductButton productId={id} product={form} />}
-            {canWrite && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
+            {canWrite && id && <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" disabled={saving || publishingAll} onClick={async () => {
               const targets = siteList;
               if (!targets.length) { toast.error('Keine Webseiten gelistet'); return; }
               if (!confirm(`Sofort für ALLE Webseiten freigeben und veröffentlichen: ${targets.map(t => t.label).join(', ')}?`)) return;
@@ -430,7 +430,7 @@ export default function ProductHubEditor() {
               } catch (e: any) { toast.error(e?.message || 'Freigabe fehlgeschlagen'); }
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
-            {canWrite && id && <Button size="sm" variant="outline" disabled={saving || publishingAll} onClick={async () => {
+            {canWrite && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
               if (!confirm('Gerät auf ALLEN Webseiten offline stellen?')) return;
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
