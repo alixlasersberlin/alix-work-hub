@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Cpu, Save, Loader2, ShieldAlert, ArrowLeft, Copy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import {
   PH_APPLICATIONS, PH_CHANNELS, PH_CRITICAL_FIELDS, PH_STATUS, phLabel, PH_ACTIVE_FIELD, PH_DOC_TYPES, PH_DOC_VISIBILITY,
@@ -291,6 +292,7 @@ export default function ProductHubEditor() {
   const [channels, setChannels] = useState<any[]>([]);
   const { channels: siteList } = usePhChannels(false);
   const [publishingAll, setPublishingAll] = useState(false);
+  const [publishResult, setPublishResult] = useState<{ label: string; ok: boolean; note: string }[] | null>(null);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [mainKeyword, setMainKeyword] = useState('');
   const [kwInput, setKwInput] = useState('');
@@ -394,33 +396,53 @@ export default function ProductHubEditor() {
             {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
             {canWrite && id && <DuplicateProductButton productId={id} product={form} />}
             {canWrite && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
-              const targets = siteList.filter(ch => {
-                const row = channels.find(c => c.channel_code === ch.code);
-                const af = PH_ACTIVE_FIELD[ch.code];
-                return af ? !!form[af] : phIsActiveOn(form, ch.code, row);
-              });
-              if (!targets.length) { toast.error('Keine aktiven Webseiten für dieses Gerät gelistet'); return; }
-              if (!confirm(`Sofort freigeben und veröffentlichen auf: ${targets.map(t => t.label).join(', ')}?`)) return;
+              const targets = siteList;
+              if (!targets.length) { toast.error('Keine Webseiten gelistet'); return; }
+              if (!confirm(`Sofort für ALLE Webseiten freigeben und veröffentlichen: ${targets.map(t => t.label).join(', ')}?`)) return;
               setPublishingAll(true);
+              const results: { label: string; ok: boolean; note: string }[] = [];
               try {
                 await save();
+                const activePatch: Record<string, boolean> = {};
+                targets.forEach(ch => { const af = PH_ACTIVE_FIELD[ch.code]; if (af) activePatch[af] = true; });
+                if (Object.keys(activePatch).length) await phUpdateProduct(id, activePatch);
                 const now = new Date().toISOString();
-                await Promise.all(targets.map(ch => phUpsertChannel(id, ch.code, {
-                  hold: false, status: 'published', publish_state: 'published', has_pending_changes: false,
-                  last_sync_at: now, last_sync_status: 'ok',
-                })));
-                toast.success(`Freigegeben für ${targets.length} Webseite(n)`);
-                if (targets.some(t => t.code === 'com')) {
-                  const { data: r, error: e2 } = await supabase.functions.invoke('ph-com-publish-device', { body: { product_id: id } });
-                  const msg = (r as any)?.error || (e2 as any)?.context?.error || e2?.message;
-                  if (e2 || (r as any)?.error) toast.error(`alix-lasers.com: ${msg || 'Übertragung fehlgeschlagen'}`);
-                  else if ((r as any)?.mismatches?.length) toast.warning(`alix-lasers.com: gesendet, Kontrolle abweichend bei ${(r as any).mismatches.join(', ')}`);
-                  else toast.success('Texte an alix-lasers.com übertragen und geprüft');
+                for (const ch of targets) {
+                  try {
+                    await phUpsertChannel(id, ch.code, {
+                      hold: false, status: 'published', publish_state: 'published', has_pending_changes: false,
+                      last_sync_at: now, last_sync_status: 'ok',
+                    });
+                    if (ch.code === 'com') {
+                      const { data: r, error: e2 } = await supabase.functions.invoke('ph-com-publish-device', { body: { product_id: id } });
+                      const msg = (r as any)?.error || (e2 as any)?.context?.error || e2?.message;
+                      if (e2 || (r as any)?.error) results.push({ label: ch.label, ok: false, note: msg || 'Übertragung fehlgeschlagen' });
+                      else if ((r as any)?.mismatches?.length) results.push({ label: ch.label, ok: false, note: `Gesendet, Kontrolle abweichend: ${(r as any).mismatches.join(', ')}` });
+                      else results.push({ label: ch.label, ok: true, note: 'Texte übertragen und angenommen' });
+                    } else results.push({ label: ch.label, ok: true, note: 'Freigegeben und veröffentlicht' });
+                  } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
                 }
+                setPublishResult(results);
                 load();
               } catch (e: any) { toast.error(e?.message || 'Freigabe fehlgeschlagen'); }
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
+            <Dialog open={!!publishResult} onOpenChange={o => !o && setPublishResult(null)}>
+              <DialogContent>
+                <DialogHeader><DialogTitle>
+                  {publishResult?.every(r => r.ok) ? 'Alle Änderungen wurden angenommen' : 'Freigabe mit Hinweisen'}
+                </DialogTitle></DialogHeader>
+                <ul className="space-y-2 text-sm">
+                  {publishResult?.map(r => (
+                    <li key={r.label} className="flex gap-2">
+                      <span className={r.ok ? 'text-primary' : 'text-destructive'}>{r.ok ? '✓' : '✗'}</span>
+                      <span><b>{r.label}</b> – {r.note}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button onClick={() => setPublishResult(null)}>OK</Button>
+              </DialogContent>
+            </Dialog>
             {canWrite && <Button size="sm" onClick={save} disabled={saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />} Speichern</Button>}
           </div>
         } />
