@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 import { ImportFromArtikelButton } from '@/components/producthub/ImportFromArtikelButton';
+import { BulkPublishButton } from '@/components/producthub/BulkPublishButton';
 
 const db = supabase as any;
 
@@ -111,7 +112,8 @@ export default function ProductHubGeraete() {
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Geräte" subtitle="Zentraler Gerätestamm (Master)" icon={Cpu}
         actions={canWrite ? (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <BulkPublishButton onDone={load} />
             <Button size="sm" variant="outline" onClick={() => { setEnrichRes(null); setEnrichOpen(true); }}>
               <Sparkles className="w-4 h-4 mr-1" /> Daten anreichern
             </Button>
