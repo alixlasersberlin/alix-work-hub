@@ -1,4 +1,5 @@
-- [ ] Product Hub: „Abgleich All“ für alle Geräte und aktive Webseiten ergänzen, bestätigte COM-Zuordnungen beachten und Ergebnisse prüfen.
+- [x] Product Hub: „Abgleich All“ mit Bestätigung, vollständigem Laden aller Geräte, aktiven Webseiten, bestätigten COM-Zuordnungen, Fortschritt und ehrlichen Einzelergebnissen ergänzt; drei Tests bestanden.
+- [ ] Product Hub: Sammelfreigabe angemeldet mit echten Geräten prüfen — externe Anmeldung verhindert automatisierten Mitarbeiterzugriff; kein echter Sammelversand ausgeführt. Andere Webseiten bestätigen ihren Abruf bisher nicht zurück.
 - [x] Auswahlkästchen, Gesamtauswahl und bestehenden Einzel-E-Mail-Sammelversand in Haupt-/Geliefert-Liste, Schweiz, Prio, Klärung, Bestellung möglich, ungeplanten Auslieferungen, mobiler Auftragsliste und beiden Kundenakten-Auftragsansichten ergänzt; 11 Tests bestanden, Anzeige fehlerfrei.
 - [x] Aufträge AT: markierte Aufträge einzeln per frei formulierter E-Mail mit Anhängen, Vorschau und Versandstatus anschreiben; Nachrichten und Anhänge vor Versand in bestehender Kundenakte speichern; 13 Tests bestanden.
 - [ ] Auftrags-Sammelversand mit echten Kundendaten prüfen — externe Anmeldung verhindert automatisierten End-to-End-Test; keine Kunden-E-Mails zur Prüfung versendet.
