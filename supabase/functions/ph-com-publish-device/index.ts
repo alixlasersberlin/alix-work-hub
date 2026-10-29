@@ -88,6 +88,11 @@ Deno.serve(async (req) => {
       if (list) fields.push({ field: remote, value: list, status: "approved" });
       else if (typeof v === "string" && v.trim()) fields.push({ field: remote, value: v.trim(), status: "approved" });
     }
+    // Anwendungsbereiche: nur die offiziellen Bezeichnungen, keine internen Kuerzel.
+    const APP_LABELS = ["Haarentfernung", "Haut & Anti Aging", "Körper & Abnehmen", "Tattoo & Pigment", "Alexandrit", "Kombisysteme"];
+    const apps = (Array.isArray(p.applications) ? p.applications : []).map((a: unknown) => String(a).trim())
+      .filter((a: string) => APP_LABELS.includes(a) || /^[A-ZÄÖÜ]/.test(a));
+    if (apps.length) fields.push({ field: "applications", value: apps, status: "approved" });
     if (!fields.length) return json(409, { error: "Keine Texte zum Senden vorhanden" });
     const ph = fields.filter((f) => PLACEHOLDER.test(norm(f.value))).map((f) => f.field);
     if (ph.length) return json(409, { error: `Platzhaltertext gefunden in: ${ph.join(", ")}` });
