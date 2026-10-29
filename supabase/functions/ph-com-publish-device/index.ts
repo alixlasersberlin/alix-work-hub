@@ -9,6 +9,11 @@ const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 const ENDPOINT = "https://www.alix-lasers.com/api/public/product-hub/translations";
+const MASTER_ENDPOINT = "https://www.alix-lasers.com/api/public/product-hub/master-data";
+const TECH_MAP: Record<string, string> = {
+  model: "model", wavelengths: "wavelength", power: "power", cooling: "cooling", fluence: "fluence",
+  pulse_duration: "pulse_duration", frequency: "frequency", spot_sizes: "spot_size", laser_class: "laser_class",
+};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PLACEHOLDER = /(lorem ipsum|placeholder|platzhalter|dummy|testdaten|\btbd\b|xxxx+)/i;
 
@@ -29,8 +34,8 @@ const toList = (v: unknown): string[] | null => {
 };
 const norm = (v: unknown) => (Array.isArray(v) ? v.map((x) => String(x).trim()).join("\n") : v == null ? "" : String(v).trim());
 
-async function comCall(key: string, payload: unknown) {
-  const r = await fetch(ENDPOINT, {
+async function comCall(key: string, payload: unknown, endpoint = ENDPOINT) {
+  const r = await fetch(endpoint, {
     method: "PATCH",
     headers: { "content-type": "application/json", "x-api-key": key },
     body: JSON.stringify(payload),
@@ -117,7 +122,40 @@ Deno.serve(async (req) => {
     } as any);
 
     if (!writeOk) return json(502, { error: "alix-lasers.com hat das Schreiben abgelehnt", status: write.status, response: write.body });
-    return json(200, { ok, sent: fields.map((f) => f.field), mismatches });
+
+    // Stammdaten: technische Werte + Hauptbild/Galerie (keine Preise). Probelauf, dann Speichern.
+    const technical: Record<string, string> = {};
+    for (const [hub, remote] of Object.entries(TECH_MAP)) {
+      const v = (p as any)[hub];
+      const t = Array.isArray(v) ? v.join(" / ") : v == null ? "" : String(v).trim();
+      if (t) technical[remote] = t;
+    }
+    const main = typeof p.hero_image_url === "string" && p.hero_image_url.startsWith("https://") ? p.hero_image_url : null;
+    const { data: media } = await admin.from("ph_media").select("url,kind,media_type,sort_order")
+      .eq("product_id", product_id).order("sort_order");
+    const gallery = (media ?? []).filter((m: any) => (m.media_type ?? m.kind) === "image" && typeof m.url === "string"
+      && m.url.startsWith("https://") && m.url !== main).map((m: any) => m.url);
+    const md: Record<string, unknown> = { hub_id: hubId, publish_id: crypto.randomUUID() };
+    if (Object.keys(technical).length) md.technical = technical;
+    if (main) { md.main_image = main; md.gallery = gallery; }
+    let master: { ok: boolean; error?: string; fields?: string[] } = { ok: true, fields: [] };
+    if (md.technical || md.main_image) {
+      const mdDry = await comCall(key, { ...md, dry_run: true }, MASTER_ENDPOINT);
+      if (mdDry.status >= 400 || mdDry.body?.error) {
+        master = { ok: false, error: `Probelauf abgelehnt: ${mdDry.body?.error ?? mdDry.status}` };
+      } else {
+        const mdWrite = await comCall(key, { ...md, dry_run: false }, MASTER_ENDPOINT);
+        master = mdWrite.status < 300 && !mdWrite.body?.error
+          ? { ok: true, fields: [...Object.keys(technical), ...(main ? ["Bilder"] : [])] }
+          : { ok: false, error: `Speichern abgelehnt: ${mdWrite.body?.error ?? mdWrite.status}` };
+      }
+      await admin.from("ph_sync_log").insert({
+        channel_code: "com", action: "device_publish_master", status: master.ok ? "ok" : "error",
+        payload: { product_id, publish_id: md.publish_id, technical: Object.keys(technical), images: main ? 1 + gallery.length : 0, user_id: u.user.id },
+        response: master,
+      } as any);
+    }
+    return json(200, { ok: ok && master.ok, sent: fields.map((f) => f.field), mismatches, master });
   } catch (e) {
     return json(500, { error: String((e as Error).message ?? e) });
   }
