@@ -540,11 +540,25 @@ export default function ProductHubEditor() {
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              {PH_APPLICATIONS.map(a => (
+              {[...PH_APPLICATIONS, ...((form.applications || []) as string[]).filter(a => !(PH_APPLICATIONS as readonly string[]).includes(a))].map(a => (
                 <Badge key={a} variant={(form.applications || []).includes(a) ? 'default' : 'outline'}
                   className="cursor-pointer" onClick={() => canWrite && toggleApp(a)}>{a}</Badge>
               ))}
             </div>
+            {canWrite && (
+              <form className="flex gap-2 max-w-md" onSubmit={e => {
+                e.preventDefault();
+                const inp = (e.currentTarget.elements.namedItem('newapp') as HTMLInputElement);
+                const v = inp.value.trim().slice(0, 80);
+                if (v && !(form.applications || []).includes(v)) set('applications', [...(form.applications || []), v]);
+                inp.value = '';
+              }}>
+                <input name="newapp" placeholder="Eigene Anwendung hinzufügen …"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+                <button type="submit" className="h-9 px-3 rounded-md border border-input text-sm hover:bg-muted">Hinzufügen</button>
+              </form>
+            )}
+            <p className="text-xs text-muted-foreground">Anklicken wählt aus bzw. ab. Eigene Einträge verschwinden nach Abwählen und Speichern.</p>
           </CardContent></Card>
         </TabsContent>
 
