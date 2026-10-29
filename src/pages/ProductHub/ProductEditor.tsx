@@ -290,6 +290,7 @@ export default function ProductHubEditor() {
   const [docs, setDocs] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
   const { channels: siteList } = usePhChannels(false);
+  const [publishingAll, setPublishingAll] = useState(false);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [mainKeyword, setMainKeyword] = useState('');
   const [kwInput, setKwInput] = useState('');
@@ -392,6 +393,27 @@ export default function ProductHubEditor() {
             {id && <WebPreviewButton productId={id} product={form} />}
             {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
             {canWrite && id && <DuplicateProductButton productId={id} product={form} />}
+            {canWrite && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
+              const targets = siteList.filter(ch => {
+                const row = channels.find(c => c.channel_code === ch.code);
+                const af = PH_ACTIVE_FIELD[ch.code];
+                return af ? !!form[af] : phIsActiveOn(form, ch.code, row);
+              });
+              if (!targets.length) { toast.error('Keine aktiven Webseiten für dieses Gerät gelistet'); return; }
+              if (!confirm(`Sofort freigeben und veröffentlichen auf: ${targets.map(t => t.label).join(', ')}?`)) return;
+              setPublishingAll(true);
+              try {
+                await save();
+                const now = new Date().toISOString();
+                await Promise.all(targets.map(ch => phUpsertChannel(id, ch.code, {
+                  hold: false, status: 'published', publish_state: 'published', has_pending_changes: false,
+                  last_sync_at: now, last_sync_status: 'ok',
+                })));
+                toast.success(`Freigegeben für ${targets.length} Webseite(n)`);
+                load();
+              } catch (e: any) { toast.error(e?.message || 'Freigabe fehlgeschlagen'); }
+              finally { setPublishingAll(false); }
+            }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
             {canWrite && <Button size="sm" onClick={save} disabled={saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />} Speichern</Button>}
           </div>
         } />
