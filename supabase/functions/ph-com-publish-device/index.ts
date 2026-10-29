@@ -157,6 +157,8 @@ Deno.serve(async (req) => {
     }
     return json(200, { ok: ok && master.ok, sent: fields.map((f) => f.field), mismatches, master });
   } catch (e) {
-    return json(500, { error: String((e as Error).message ?? e) });
+    const msg = e instanceof Error ? e.message : (e as any)?.message ?? (() => { try { return JSON.stringify(e); } catch { return String(e); } })();
+    console.error("ph-com-publish-device failed:", msg);
+    return json(500, { error: msg || "Unbekannter Fehler" });
   }
 });
