@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     // Anwendungsbereiche: nur die offiziellen Bezeichnungen, keine internen Kuerzel.
     const APP_LABELS = ["Haarentfernung", "Haut & Anti Aging", "Körper & Abnehmen", "Tattoo & Pigment", "Alexandrit", "Kombisysteme"];
     const apps = (Array.isArray(p.applications) ? p.applications : []).map((a: unknown) => String(a).trim())
-      .filter((a: string) => APP_LABELS.includes(a) || (a.length > 3 && /[A-ZÄÖÜ]/.test(a[0]) && a.includes(" ")));
+      .filter((a: string) => APP_LABELS.includes(a) || /^[A-ZÄÖÜ]/.test(a));
     if (apps.length) fields.push({ field: "applications", value: apps, status: "approved" });
     if (!fields.length) return json(409, { error: "Keine Texte zum Senden vorhanden" });
     const ph = fields.filter((f) => PLACEHOLDER.test(norm(f.value))).map((f) => f.field);
