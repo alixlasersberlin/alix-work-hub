@@ -430,10 +430,31 @@ export default function ProductHubEditor() {
               } catch (e: any) { toast.error(e?.message || 'Freigabe fehlgeschlagen'); }
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
+            {canWrite && id && <Button size="sm" variant="outline" disabled={saving || publishingAll} onClick={async () => {
+              if (!confirm('Gerät auf ALLEN Webseiten offline stellen?')) return;
+              setPublishingAll(true);
+              const results: { label: string; ok: boolean; note: string }[] = [];
+              try {
+                const off: Record<string, boolean> = {};
+                Object.values(PH_ACTIVE_FIELD).forEach(f => { off[f] = false; });
+                await phUpdateProduct(id, off);
+                for (const ch of siteList) {
+                  try {
+                    await phUpsertChannel(id, ch.code, { hold: true, status: 'inactive', has_pending_changes: false, last_sync_at: new Date().toISOString() });
+                    results.push({ label: ch.label, ok: true, note: ch.code === 'com'
+                      ? 'In AlixWork offline – alix-lasers.com hat noch keine Offline-Schnittstelle, dort bleibt die Seite sichtbar'
+                      : 'Offline gestellt' });
+                  } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
+                }
+                setPublishResult(results);
+                load();
+              } catch (e: any) { toast.error(e?.message || 'Offline stellen fehlgeschlagen'); }
+              finally { setPublishingAll(false); }
+            }}>Offline</Button>}
             <Dialog open={!!publishResult} onOpenChange={o => !o && setPublishResult(null)}>
               <DialogContent>
                 <DialogHeader><DialogTitle>
-                  {publishResult?.every(r => r.ok) ? 'Alle Änderungen wurden angenommen' : 'Freigabe mit Hinweisen'}
+                  {publishResult?.every(r => r.ok) ? 'Alle Änderungen wurden angenommen' : 'Ergebnis mit Hinweisen'}
                 </DialogTitle></DialogHeader>
                 <ul className="space-y-2 text-sm">
                   {publishResult?.map(r => (
