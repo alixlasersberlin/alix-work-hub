@@ -410,6 +410,13 @@ export default function ProductHubEditor() {
                   last_sync_at: now, last_sync_status: 'ok',
                 })));
                 toast.success(`Freigegeben für ${targets.length} Webseite(n)`);
+                if (targets.some(t => t.code === 'com')) {
+                  const { data: r, error: e2 } = await supabase.functions.invoke('ph-com-publish-device', { body: { product_id: id } });
+                  const msg = (r as any)?.error || (e2 as any)?.context?.error || e2?.message;
+                  if (e2 || (r as any)?.error) toast.error(`alix-lasers.com: ${msg || 'Übertragung fehlgeschlagen'}`);
+                  else if ((r as any)?.mismatches?.length) toast.warning(`alix-lasers.com: gesendet, Kontrolle abweichend bei ${(r as any).mismatches.join(', ')}`);
+                  else toast.success('Texte an alix-lasers.com übertragen und geprüft');
+                }
                 load();
               } catch (e: any) { toast.error(e?.message || 'Freigabe fehlgeschlagen'); }
               finally { setPublishingAll(false); }
