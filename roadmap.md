@@ -1,4 +1,4 @@
-- [x] Product Hub: Spalte „Deaktiviert auf“ direkt nach Kategorie mit vorhandenen Webseitenkennungen und Geräte-Aktivstatus ergänzt; keine Webseitenfreigaben geändert.
+- [x] Product Hub: Spalten „Deaktiviert auf“ (rot) und daneben „Aktiviert auf“ (grün) direkt nach Kategorie mit vorhandenen Webseitenkennungen und Geräte-Aktivstatus ergänzt; keine Webseitenfreigaben geändert.
 - [x] Product Hub: „Abgleich All“ mit Bestätigung, vollständigem Laden aller Geräte, aktiven Webseiten, bestätigten COM-Zuordnungen, Fortschritt und ehrlichen Einzelergebnissen ergänzt; drei Tests bestanden.
 - [ ] Product Hub: Sammelfreigabe angemeldet mit echten Geräten prüfen — externe Anmeldung verhindert automatisierten Mitarbeiterzugriff; kein echter Sammelversand ausgeführt. Andere Webseiten bestätigen ihren Abruf bisher nicht zurück.
 - [x] Auswahlkästchen, Gesamtauswahl und bestehenden Einzel-E-Mail-Sammelversand in Haupt-/Geliefert-Liste, Schweiz, Prio, Klärung, Bestellung möglich, ungeplanten Auslieferungen, mobiler Auftragsliste und beiden Kundenakten-Auftragsansichten ergänzt; 11 Tests bestanden, Anzeige fehlerfrei.

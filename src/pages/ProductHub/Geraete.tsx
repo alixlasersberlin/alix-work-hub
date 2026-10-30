@@ -167,6 +167,7 @@ export default function ProductHubGeraete() {
               <TableRow>
                 <TableHead>Gerät</TableHead><TableHead>Modell</TableHead><TableHead>Kategorie</TableHead>
                 <TableHead className="min-w-[200px]">Deaktiviert auf</TableHead>
+                <TableHead className="min-w-[200px]">Aktiviert auf</TableHead>
                 <TableHead className="text-center">COM</TableHead><TableHead className="text-center">DE</TableHead>
                 <TableHead>Status</TableHead><TableHead>MDR</TableHead>
                 <TableHead className="text-center">Bilder</TableHead><TableHead className="text-center">Dok.</TableHead>
@@ -175,11 +176,13 @@ export default function ProductHubGeraete() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && <TableRow><TableCell colSpan={canWrite ? 13 : 12} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
-              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={canWrite ? 13 : 12} className="text-center py-8 text-muted-foreground">Keine Geräte. Bitte manuell über „Neues Gerät“ anlegen.</TableCell></TableRow>}
+              {loading && <TableRow><TableCell colSpan={canWrite ? 14 : 13} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
+              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={canWrite ? 14 : 13} className="text-center py-8 text-muted-foreground">Keine Geräte. Bitte manuell über „Neues Gerät“ anlegen.</TableCell></TableRow>}
               {filtered.map(p => {
                 const t = phTone(p, { conflicts: conf[p.id], media: media[p.id], documents: docs[p.id], pending: pendingFor(p.id) });
                 const disabledSites = sites.filter(site => !phIsActiveOn(p, site.code,
+                  chans.find(c => c.product_id === p.id && c.channel_code === site.code)));
+                const activeSites = sites.filter(site => phIsActiveOn(p, site.code,
                   chans.find(c => c.product_id === p.id && c.channel_code === site.code)));
                 return (
                   <TableRow key={p.id} className="cursor-pointer" onClick={() => nav(`/product-hub/geraete/${p.id}`)}>
@@ -199,6 +202,18 @@ export default function ProductHubGeraete() {
                           {disabledSites.map(site => (
                             <li key={site.code} className="flex items-start gap-1.5 text-destructive" title="Im Product Hub deaktiviert; tatsächlicher Webseitenstand nicht bestätigt">
                               <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
+                              <span className="break-words">{site.label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {activeSites.length ? (
+                        <ul className="space-y-1" aria-label={`Aktivierte Webseiten für ${p.name}`}>
+                          {activeSites.map(site => (
+                            <li key={site.code} className="flex items-start gap-1.5 text-success" title="Im Product Hub aktiviert; tatsächlicher Webseitenstand nicht bestätigt">
+                              <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
                               <span className="break-words">{site.label}</span>
                             </li>
                           ))}
