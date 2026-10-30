@@ -624,7 +624,7 @@ export default function ProductHubEditor() {
             <div className="flex flex-wrap gap-2">
               {[...PH_APPLICATIONS, ...((form.applications || []) as string[]).filter(a => !(PH_APPLICATIONS as readonly string[]).includes(a))].map(a => (
                 <Badge key={a} variant={(form.applications || []).includes(a) ? 'default' : 'outline'}
-                  className="cursor-pointer" onClick={() => canWrite && toggleApp(a)}>{a}</Badge>
+                  className="cursor-pointer" onClick={() => canWrite && toggleApp(a)}>{a === 'haarentfernung' ? 'Haarentfernung' : a === 'haut' ? 'Haut' : a}</Badge>
               ))}
             </div>
             {canWrite && (
