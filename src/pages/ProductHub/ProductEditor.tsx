@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Cpu, Save, Loader2, ShieldAlert, ArrowLeft, Copy, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,6 +31,7 @@ import { PH_DEFAULT_COLORS, PH_DEFAULT_POWERS } from '@/lib/producthub/deviceCon
 import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
 import { TranslationsTab } from '@/components/producthub/TranslationsTab';
 import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
+import { isSiteSelected, siteSelectionPatch } from '@/lib/producthub/siteSelection';
 
 import { catalogsForProduct } from '@/lib/producthub/catalog';
 import {
@@ -291,6 +293,7 @@ export default function ProductHubEditor() {
   const [docs, setDocs] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
   const { channels: siteList } = usePhChannels(false);
+  const [customSites, setCustomSites] = useState<Record<string, boolean>>({});
   const [publishingAll, setPublishingAll] = useState(false);
   const [publishResult, setPublishResult] = useState<{ label: string; ok: boolean; note: string }[] | null>(null);
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -318,6 +321,7 @@ export default function ProductHubEditor() {
       db.from('ph_seo').select('*').eq('product_id', id).maybeSingle(),
     ]);
     setHistory(h.data || []); setMedia(m.data || []); setDocs(d.data || []); setChannels(c);
+    setCustomSites(Object.fromEntries(c.map((row: any) => [row.channel_code, phIsActiveOn(p, row.channel_code, row)])));
     setMainKeyword(seo?.data?.main_keyword || '');
     setKeywords(seo?.data?.secondary_keywords || []);
     setProductCatalogs(await catalogsForProduct(id));
@@ -325,6 +329,11 @@ export default function ProductHubEditor() {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const setSite = (code: string, active: boolean) => {
+    const field = PH_ACTIVE_FIELD[code];
+    if (field) set(field, active);
+    else setCustomSites(prev => ({ ...prev, [code]: active }));
+  };
 
   const TEXT_LABELS: Record<string, string> = {
     short_description: 'Kurzbeschreibung',
@@ -338,11 +347,18 @@ export default function ProductHubEditor() {
   };
 
   const doSave = async () => {
-    if (!id || !form) return;
+    if (!id || !form || !canWrite) return false;
     setSaving(true);
     try {
       const { id: _i, created_at, updated_at, ...patch } = form;
       await phUpdateProduct(id, patch);
+      for (const site of siteList) {
+        const row = channels.find(c => c.channel_code === site.code);
+        const active = isSiteSelected(form, site.code, customSites);
+        if (active !== phIsActiveOn(original, site.code, row)) {
+          await phUpsertChannel(id, site.code, siteSelectionPatch(active, row?.status));
+        }
+      }
       const { error: seoErr } = await db.from('ph_seo').upsert({
         product_id: id,
         seo_title: form.seo_title ?? null,
@@ -355,12 +371,13 @@ export default function ProductHubEditor() {
       if (seoErr) throw seoErr;
       toast.success('Gespeichert – Änderungen wurden protokolliert');
       await load();
-    } catch (e: any) { toast.error(e.message); }
-    setSaving(false);
+      return true;
+    } catch (e: any) { toast.error(e.message); return false; }
+    finally { setSaving(false); }
   };
 
   const save = async () => {
-    if (!id || !form) return;
+    if (!id || !form || !canWrite) return false;
     const changed = changedProtectedTexts();
     if (changed.length) {
       if (!isSuperAdmin) {
@@ -370,12 +387,12 @@ export default function ProductHubEditor() {
           short_description: original?.short_description ?? '',
           long_description: original?.long_description ?? '',
         }));
-        return;
+        return false;
       }
       setConfirmTexts(changed);
-      return;
+      return false;
     }
-    await doSave();
+    return doSave();
   };
 
 
@@ -396,16 +413,13 @@ export default function ProductHubEditor() {
             {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
             {canWrite && id && <DuplicateProductButton productId={id} product={form} />}
             {canWrite && id && <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" disabled={saving || publishingAll} onClick={async () => {
-              const targets = siteList;
-              if (!targets.length) { toast.error('Keine Webseiten gelistet'); return; }
-              if (!confirm(`Sofort für ALLE Webseiten freigeben und veröffentlichen: ${targets.map(t => t.label).join(', ')}?`)) return;
+              const targets = siteList.filter(site => isSiteSelected(form, site.code, customSites));
+              if (!targets.length) { toast.error('Bitte mindestens eine Webseite auswählen und speichern.'); return; }
+              if (!confirm(`Für ausgewählte Webseiten freigeben: ${targets.map(t => t.label).join(', ')}?`)) return;
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
               try {
-                await save();
-                const activePatch: Record<string, boolean> = {};
-                targets.forEach(ch => { const af = PH_ACTIVE_FIELD[ch.code]; if (af) activePatch[af] = true; });
-                if (Object.keys(activePatch).length) await phUpdateProduct(id, activePatch);
+                if (!await save()) return;
                 const now = new Date().toISOString();
                 for (const ch of targets) {
                   try {
@@ -422,7 +436,7 @@ export default function ProductHubEditor() {
                       const m = (r as any)?.master;
                       if (m && !e2 && !(r as any)?.error) results.push({ label: `${ch.label} · Technik & Bilder`, ok: !!m.ok,
                         note: m.ok ? (m.fields?.length ? `Angenommen: ${m.fields.join(', ')}` : 'Nichts zu senden') : (m.error || 'Fehlgeschlagen') });
-                    } else results.push({ label: ch.label, ok: true, note: 'Freigegeben und veröffentlicht' });
+                    } else results.push({ label: ch.label, ok: true, note: 'Für Webseitenabruf freigegeben – Annahme noch nicht bestätigt' });
                   } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
                 }
                 setPublishResult(results);
@@ -454,7 +468,7 @@ export default function ProductHubEditor() {
             <Dialog open={!!publishResult} onOpenChange={o => !o && setPublishResult(null)}>
               <DialogContent>
                 <DialogHeader><DialogTitle>
-                  {publishResult?.every(r => r.ok) ? 'Alle Änderungen wurden angenommen' : 'Ergebnis mit Hinweisen'}
+                  Ergebnis der Webseitenfreigabe
                 </DialogTitle></DialogHeader>
                 <ul className="space-y-2 text-sm">
                   {publishResult?.map(r => (
@@ -478,6 +492,22 @@ export default function ProductHubEditor() {
           ))}
 
         </TabsList>
+
+        <section className="mt-4 border-b border-border pb-4 space-y-3" aria-label="Webseitenauswahl">
+          <h2 className="text-sm font-medium">Webseiten</h2>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            {siteList.map(site => (
+              <div key={site.code} className="flex items-center gap-2">
+                <Checkbox id={`site-${site.code}`} checked={isSiteSelected(form, site.code, customSites)}
+                  disabled={!canWrite || saving || publishingAll} onCheckedChange={value => setSite(site.code, value === true)} />
+                <Label htmlFor={`site-${site.code}`} className="text-sm cursor-pointer">{site.label}</Label>
+              </div>
+            ))}
+          </div>
+          {canWrite && <Button size="sm" onClick={save} disabled={saving || publishingAll}>
+            {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />} Speichern
+          </Button>}
+        </section>
 
         <TabsContent value="preise">
           <CountryPricingTab
@@ -790,12 +820,8 @@ export default function ProductHubEditor() {
                 <div key={ch.code} className="border border-border rounded-lg p-3 flex flex-wrap items-center gap-4">
                   <div className="font-medium w-44">{ch.label}</div>
                   <div className="flex items-center gap-2">
-                    <Switch checked={activeField ? !!form[activeField] : phIsActiveOn(form, ch.code, row)} disabled={!canWrite}
-                      onCheckedChange={async v => {
-                        if (activeField) { set(activeField, v); return; }
-                        await phUpsertChannel(id!, ch.code, { status: v ? (row?.status && row.status !== 'inactive' ? row.status : 'draft') : 'inactive' });
-                        load();
-                      }} />
+                    <Switch checked={isSiteSelected(form, ch.code, customSites)} disabled={!canWrite || saving || publishingAll}
+                      onCheckedChange={v => setSite(ch.code, v)} />
                     <span className="text-xs text-muted-foreground">aktiv</span>
                   </div>
                   <Badge variant="outline">{row?.status || 'not_published'}</Badge>
