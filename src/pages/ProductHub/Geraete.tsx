@@ -19,12 +19,14 @@ import { EnrichProductButton } from '@/components/producthub/EnrichProductButton
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 import { ImportFromArtikelButton } from '@/components/producthub/ImportFromArtikelButton';
 import { BulkPublishButton } from '@/components/producthub/BulkPublishButton';
+import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 
 const db = supabase as any;
 
 export default function ProductHubGeraete() {
   const nav = useNavigate();
   const { roles } = useAuth();
+  const { channels: sites } = usePhChannels();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
   const [rows, setRows] = useState<any[]>([]);
   const [media, setMedia] = useState<Record<string, number>>({});
@@ -164,6 +166,7 @@ export default function ProductHubGeraete() {
             <TableHeader>
               <TableRow>
                 <TableHead>Gerät</TableHead><TableHead>Modell</TableHead><TableHead>Kategorie</TableHead>
+                <TableHead className="min-w-[200px]">Deaktiviert auf</TableHead>
                 <TableHead className="text-center">COM</TableHead><TableHead className="text-center">DE</TableHead>
                 <TableHead>Status</TableHead><TableHead>MDR</TableHead>
                 <TableHead className="text-center">Bilder</TableHead><TableHead className="text-center">Dok.</TableHead>
@@ -172,10 +175,12 @@ export default function ProductHubGeraete() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && <TableRow><TableCell colSpan={12} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
-              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">Keine Geräte. Bitte manuell über „Neues Gerät“ anlegen.</TableCell></TableRow>}
+              {loading && <TableRow><TableCell colSpan={canWrite ? 13 : 12} className="text-center py-8"><Loader2 className="w-4 h-4 animate-spin inline" /></TableCell></TableRow>}
+              {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={canWrite ? 13 : 12} className="text-center py-8 text-muted-foreground">Keine Geräte. Bitte manuell über „Neues Gerät“ anlegen.</TableCell></TableRow>}
               {filtered.map(p => {
                 const t = phTone(p, { conflicts: conf[p.id], media: media[p.id], documents: docs[p.id], pending: pendingFor(p.id) });
+                const disabledSites = sites.filter(site => !phIsActiveOn(p, site.code,
+                  chans.find(c => c.product_id === p.id && c.channel_code === site.code)));
                 return (
                   <TableRow key={p.id} className="cursor-pointer" onClick={() => nav(`/product-hub/geraete/${p.id}`)}>
                     <TableCell className="font-medium">
@@ -188,6 +193,18 @@ export default function ProductHubGeraete() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{p.model || '—'}</TableCell>
                     <TableCell className="text-xs">{(p.categories || []).concat(p.applications || []).slice(0, 2).join(', ') || '—'}</TableCell>
+                    <TableCell className="text-xs">
+                      {disabledSites.length ? (
+                        <ul className="space-y-1" aria-label={`Deaktivierte Webseiten für ${p.name}`}>
+                          {disabledSites.map(site => (
+                            <li key={site.code} className="flex items-start gap-1.5 text-destructive" title="Im Product Hub deaktiviert; tatsächlicher Webseitenstand nicht bestätigt">
+                              <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
+                              <span className="break-words">{site.label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
                     <TableCell className="text-center">{p.active_com ? '🟢' : '—'}</TableCell>
                     <TableCell className="text-center">{p.active_de ? '🟢' : '—'}</TableCell>
                     <TableCell><Badge variant="outline">{p.status}</Badge></TableCell>
