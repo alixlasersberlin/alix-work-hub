@@ -103,7 +103,12 @@ Deno.serve(async (req) => {
     const dry = await comCall(key, { ...base, dry_run: true, fields });
     const skipped = (dry.body?.skipped ?? []) as any[];
     if (dry.status >= 400 || skipped.length) {
-      return json(502, { error: "alix-lasers.com hat den Probelauf abgelehnt", status: dry.status, skipped, response: dry.body });
+      // Fachliche Ablehnung der Website: als Ergebnis (200, ok:false) melden, damit der Sammelabgleich weiterläuft.
+      const code = dry.body?.error;
+      const error = code === "HUB_ID_NOT_MAPPED"
+        ? `Auf alix-lasers.com ist für „${hubId}" keine Product-Hub-ID eingetragen – Gerät dort zuerst zuordnen`
+        : `alix-lasers.com hat den Probelauf abgelehnt${code ? ` (${code})` : ""}`;
+      return json(200, { ok: false, error, status: dry.status, skipped, response: dry.body });
     }
     if (dry_run) return json(200, { ok: true, dry_run: true, fields: fields.map((f) => f.field) });
 
