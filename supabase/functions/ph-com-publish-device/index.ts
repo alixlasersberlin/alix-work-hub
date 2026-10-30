@@ -72,14 +72,14 @@ Deno.serve(async (req) => {
 
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: p } = await admin.from("ph_products").select("*").eq("id", product_id).maybeSingle();
-    if (!p) return json(404, { error: "Gerät nicht gefunden" });
+    if (!p) return json(200, { ok: false, error: "Gerät nicht gefunden" });
     const hubId = String(p.alix_product_id ?? "").trim();
-    if (!hubId) return json(409, { error: "Gerät hat keine Alix-Produkt-ID" });
+    if (!hubId) return json(200, { ok: false, error: "Gerät hat keine Alix-Produkt-ID" });
     const { data: map } = await admin.from("ph_lang_sync_map")
       .select("remote_product_id,verified_at").eq("product_id", product_id).eq("site_code", "com").maybeSingle();
     const target = String(map?.remote_product_id ?? "").trim();
-    if (!target) return json(409, { error: "Für dieses Gerät ist keine Seite auf alix-lasers.com zugeordnet" });
-    if (!map?.verified_at) return json(409, { error: "Zuordnung zu alix-lasers.com ist nicht bestätigt" });
+    if (!target) return json(200, { ok: false, error: "Für dieses Gerät ist keine Seite auf alix-lasers.com zugeordnet" });
+    if (!map?.verified_at) return json(200, { ok: false, error: "Zuordnung zu alix-lasers.com ist nicht bestätigt" });
 
     const fields: { field: string; value: unknown; status: string }[] = [];
     for (const [hub, remote] of Object.entries(FIELD_MAP)) {
@@ -93,9 +93,9 @@ Deno.serve(async (req) => {
     const apps = (Array.isArray(p.applications) ? p.applications : []).map((a: unknown) => String(a).trim())
       .filter((a: string) => APP_LABELS.includes(a) || /^[A-ZÄÖÜ]/.test(a));
     if (apps.length) fields.push({ field: "applications", value: apps, status: "approved" });
-    if (!fields.length) return json(409, { error: "Keine Texte zum Senden vorhanden" });
+    if (!fields.length) return json(200, { ok: false, error: "Keine Texte zum Senden vorhanden" });
     const ph = fields.filter((f) => PLACEHOLDER.test(norm(f.value))).map((f) => f.field);
-    if (ph.length) return json(409, { error: `Platzhaltertext gefunden in: ${ph.join(", ")}` });
+    if (ph.length) return json(200, { ok: false, error: `Platzhaltertext gefunden in: ${ph.join(", ")}` });
 
     const base: Record<string, unknown> = { hub_id: hubId, locale: "de", render: true, publish: true };
     if (UUID.test(target)) base.publish_id = target; else base.product_slug = target;
