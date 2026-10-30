@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       response: { write_status: write.status, mismatches, body: write.body },
     } as any);
 
-    if (!writeOk) return json(502, { error: "alix-lasers.com hat das Schreiben abgelehnt", status: write.status, response: write.body });
+    if (!writeOk) return json(200, { ok: false, error: `alix-lasers.com hat das Schreiben abgelehnt${write.body?.error ? ` (${write.body.error})` : ""}`, status: write.status, response: write.body });
 
     // Stammdaten: technische Werte + Hauptbild/Galerie (keine Preise). Probelauf, dann Speichern.
     const technical: Record<string, string> = {};
