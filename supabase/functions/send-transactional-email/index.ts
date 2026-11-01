@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
 
           text: plainTextWithFooter,
           reply_to: REPLY_TO,
-          ...(isDunning || isOffer ? {} : { bcc: ['service@alix-lasers.com'] }),
+          // service@alix-lasers.com ist beim Anbieter gesperrt und würde die ganze Mail unterdrücken – keine Service-Kopie.
           headers: {
             ...(isOffer ? { 'X-Alix-No-System-Copies': '1' } : {}),
             'List-Unsubscribe': `<mailto:${REPLY_TO}?subject=unsubscribe>, <${UNSUBSCRIBE_URL}>`,
@@ -378,7 +378,7 @@ Deno.serve(async (req) => {
             {
               to: r.email,
               from: sender.from,
-              bcc: isDunning || isOffer ? [] : ["service@alix-lasers.com"],
+              bcc: [],
               sender_domain: sender.domain,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
               html: htmlFor(r),
