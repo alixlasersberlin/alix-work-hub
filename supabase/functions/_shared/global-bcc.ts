@@ -1,13 +1,52 @@
-// Systemweiter BCC-Archiv-Empfänger für ALLE ausgehenden E-Mails.
+// Systemweite Kopie-Regeln für ALLE ausgehenden E-Mails.
 // Side-Effect-Import: patcht globalThis.fetch und ergänzt bei jedem
 // Resend-Aufruf (connector-gateway .../resend/emails oder api.resend.com/emails)
 // automatisch die Archiv-Adresse im BCC-Feld.
+//
+// WICHTIG (01.11.2026): service@alix-lasers.com und buchhaltung@alix-lasers.com
+// stehen beim E-Mail-Anbieter auf der Sperrliste ("suppressed"). Steht eine
+// gesperrte Adresse in CC/BCC, unterdrückt der Anbieter die GESAMTE E-Mail –
+// auch für den Kunden. Diese Adressen werden deshalb aus CC/BCC entfernt,
+// bis sie beim Anbieter wieder freigegeben sind.
 
 export const GLOBAL_BCC = "rde@alix-lasers.com";
-// Systemweiter CC-Empfänger für ALLE ausgehenden E-Mails
-export const GLOBAL_CC = "buchhaltung@alix-lasers.com";
-// Systemweiter BCC an den Service – gilt für ausnahmslos ALLE E-Mails (auch Mahnungen)
-export const SERVICE_BCC = "service@alix-lasers.com";
+
+/** Beim Anbieter gesperrte Adressen – dürfen nie als Kopie mitlaufen. */
+export const BLOCKED_COPY_ADDRESSES = [
+  "service@alix-lasers.com",
+  "buchhaltung@alix-lasers.com",
+];
+
+const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+const asList = (v: unknown): unknown[] => (Array.isArray(v) ? [...v] : v ? [v] : []);
+const isBlocked = (v: unknown) => BLOCKED_COPY_ADDRESSES.some((b) => norm(v).includes(b));
+
+/** Wendet die systemweiten Kopie-Regeln auf eine Resend-Payload an (mutiert obj). */
+export function applySystemCopies(obj: any): void {
+  if (!obj || typeof obj !== "object") return;
+
+  const noSystemCopies = !!(obj.headers && obj.headers["X-Alix-No-System-Copies"]);
+  if (noSystemCopies) delete obj.headers["X-Alix-No-System-Copies"];
+
+  const subj = String(obj.subject ?? "");
+  const isDunning = /mahn|zahlungserinnerung|dunning/i.test(subj);
+  const to = asList(obj.to);
+
+  // Archiv-BCC (nicht bei Mahnungen, nicht wenn Absender Kopien selbst festlegt)
+  if (!noSystemCopies && !isDunning && !to.some((t) => norm(t).includes(GLOBAL_BCC))) {
+    const list = asList(obj.bcc);
+    if (!list.some((b) => norm(b).includes(GLOBAL_BCC))) list.push(GLOBAL_BCC);
+    obj.bcc = list;
+  }
+
+  // Gesperrte Adressen immer aus CC/BCC entfernen – sonst wird die ganze Mail unterdrückt
+  for (const key of ["cc", "bcc"] as const) {
+    if (obj[key] === undefined || obj[key] === null) continue;
+    const cleaned = asList(obj[key]).filter((a) => !isBlocked(a));
+    if (cleaned.length) obj[key] = cleaned;
+    else delete obj[key];
+  }
+}
 
 const g = globalThis as any;
 
@@ -17,9 +56,7 @@ if (!g.__alixGlobalBccInstalled) {
   const originalFetch = globalThis.fetch.bind(globalThis);
 
   const isEmailEndpoint = (url: string) =>
-    /\/resend\/emails(\?|$)/.test(url) || /api\.resend\.com\/emails(\?|$)/.test(url);
-
-  const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+    /\/resend\/emails(\/batch)?(\?|$)/.test(url) || /api\.resend\.com\/emails(\/batch)?(\?|$)/.test(url);
 
   globalThis.fetch = (async (input: any, init?: RequestInit) => {
     try {
@@ -36,43 +73,8 @@ if (!g.__alixGlobalBccInstalled) {
 
       if (isEmailEndpoint(url) && method === "POST" && init?.body && typeof init.body === "string") {
         const payload = JSON.parse(init.body);
-        const apply = (obj: any) => {
-          if (!obj || typeof obj !== "object") return;
-          // Ausnahme: Absender hat Kopien bereits selbst festgelegt (z. B. Angebote)
-          if (obj.headers && obj.headers["X-Alix-No-System-Copies"]) {
-            delete obj.headers["X-Alix-No-System-Copies"];
-            return;
-          }
-          {
-            const to0 = Array.isArray(obj.to) ? obj.to : obj.to ? [obj.to] : [];
-            const cc0 = Array.isArray(obj.cc) ? obj.cc : obj.cc ? [obj.cc] : [];
-            if (![...to0, ...cc0].some((t: unknown) => norm(t).includes(SERVICE_BCC))) {
-              const b0 = Array.isArray(obj.bcc) ? [...obj.bcc] : obj.bcc ? [obj.bcc] : [];
-              if (!b0.some((b: unknown) => norm(b).includes(SERVICE_BCC))) b0.push(SERVICE_BCC);
-              obj.bcc = b0;
-            }
-          }
-          // Mahnungen: keine System-Kopien (service@/buchhaltung@/Archiv)
-          const subj = String(obj.subject ?? "");
-          if (/mahn|zahlungserinnerung|dunning/i.test(subj)) return;
-          const to = Array.isArray(obj.to) ? obj.to : obj.to ? [obj.to] : [];
-          // Nicht doppelt an denselben Empfänger senden
-          if (to.some((t: unknown) => norm(t).includes(GLOBAL_BCC))) return;
-          const list = Array.isArray(obj.bcc) ? [...obj.bcc] : obj.bcc ? [obj.bcc] : [];
-          if (!list.some((b: unknown) => norm(b).includes(GLOBAL_BCC))) list.push(GLOBAL_BCC);
-          obj.bcc = list;
-
-          // Systemweites CC an die Buchhaltung
-          if (!to.some((t: unknown) => norm(t).includes(GLOBAL_CC))) {
-            const ccList = Array.isArray(obj.cc) ? [...obj.cc] : obj.cc ? [obj.cc] : [];
-            if (!ccList.some((c: unknown) => norm(c).includes(GLOBAL_CC))) ccList.push(GLOBAL_CC);
-            obj.cc = ccList;
-          }
-        };
-
-        if (Array.isArray(payload)) payload.forEach(apply);
-        else apply(payload);
-
+        if (Array.isArray(payload)) payload.forEach(applySystemCopies);
+        else applySystemCopies(payload);
         init = { ...init, body: JSON.stringify(payload) };
       }
     } catch (_e) {
