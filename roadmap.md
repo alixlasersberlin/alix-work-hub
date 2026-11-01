@@ -1,3 +1,4 @@
+- [ ] Phase 9A: ausschließlich lesender Backup-/Hetzner-Audit, Abdeckung aller 31 Buckets und vier Berichte; keine Jobs, Wiederherstellung, Originaldownloads, Migration oder Veröffentlichung. ALIX-GLOBAL-Importsperre bleibt bestehen.
 - [x] Geräteeditor: Webseiten-Kästchen unter dem Menü, Speichern ohne Versand, Freigabe nur an ausgewählte Webseiten; eigene Webseiten nutzen dieselbe vorgemerkte Auswahl.
 - [x] Product Hub: Spalten „Deaktiviert auf“ (rot) und daneben „Aktiviert auf“ (grün) direkt nach Kategorie mit vorhandenen Webseitenkennungen und Geräte-Aktivstatus ergänzt; keine Webseitenfreigaben geändert.
 - [x] Product Hub: „Abgleich All“ mit Bestätigung, vollständigem Laden aller Geräte, aktiven Webseiten, bestätigten COM-Zuordnungen, Fortschritt und ehrlichen Einzelergebnissen ergänzt; drei Tests bestanden.
