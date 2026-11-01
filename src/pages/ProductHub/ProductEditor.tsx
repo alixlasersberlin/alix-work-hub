@@ -562,7 +562,7 @@ export default function ProductHubEditor() {
               <Label className="text-xs">Ausstattungsliste (ein Punkt pro Zeile)</Label>
               <Textarea rows={8} disabled={!canWrite}
                 value={(Array.isArray(form.features) ? form.features : []).map((x: any) => typeof x === 'string' ? x : x?.label ?? x?.title ?? x?.name ?? '').join('\n')}
-                onChange={e => set('features', e.target.value.split('\n').map(s => s.trimStart()).filter((s, i, a) => s !== '' || i === a.length - 1))} />
+                onChange={e => set('features', e.target.value.split('\n'))} />
             </div>
           </CardContent></Card>
         </TabsContent>
