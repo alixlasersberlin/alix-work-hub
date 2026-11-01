@@ -1,10 +1,9 @@
-// @vitest-environment node
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 // Exercise the actual editor handler without loading its authenticated data dependencies.
-const source = readFileSync(new URL('./ProductEditor.tsx', import.meta.url), 'utf8');
-const handler = source.match(/onChange=\{e => (set\('features', [^\n]+))\} \/>/)?.[1];
+const source = readFileSync(`${process.cwd()}/src/pages/ProductHub/ProductEditor.tsx`, 'utf8');
+const handler = source.match(/onChange=\{e => (set\('features', [^\n]+)\} \/>/)?.[1];
 if (!handler) throw new Error('Equipment list change handler not found');
 const changeFeatures = new Function('e', 'set', handler) as (
   event: { target: { value: string } },
