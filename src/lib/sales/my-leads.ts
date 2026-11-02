@@ -33,7 +33,7 @@ export async function loadMyLeads(): Promise<MyLead[]> {
   }
 }
 export const loadLeadDetail = (id: string) => rpc<LeadDetail>('ml_detail', { _lead_id: id });
-export const loadLeadStats = () => rpc<{ open_offers: number; order_value: number; orders: number }>('ml_stats');
+export const loadLeadStats = (all = false, tenant: string | null = null) => rpc<{ open_offers: number; order_value: number; orders: number }>('ml_scoped_stats', { _all: all, _tenant: tenant });
 export const leadAction = (id: string, action: string, data: Record<string, unknown>) => rpc<LeadDetail>('ml_action', { _lead_id: id, _action: action, _data: data });
 export async function uploadLeadDocument(id: string, file: File): Promise<LeadDetail> {
   if (file.size > 20 * 1024 * 1024) throw new Error('Datei darf höchstens 20 MB groß sein.');

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
 import { canAccessSalesLeads, isSalesLeadPath } from "@/lib/sales/lead-access";
+import { useEffect, useState } from 'react';
 
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -1271,6 +1272,28 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
   const { user, profile, roles, loading, blockReason, mfaState } = useAuth();
   const compliance = useComplianceProfile();
   const location = useLocation();
+  const [personalOfferAccess, setPersonalOfferAccess] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setPersonalOfferAccess(false);
+    if (!user || location.pathname !== '/verkauf/angebot/neu') return;
+    const params = new URLSearchParams(location.search);
+    const lead = params.get('lead');
+    const edit = params.get('edit');
+    const check = async () => {
+      let id = lead;
+      if (!id && edit) {
+        const { data } = await supabase.from('offers').select('payload').eq('offer_number', edit).maybeSingle();
+        const payload = data?.payload as Record<string, unknown> | undefined;
+        if (typeof payload?.lead_id === 'string') id = payload.lead_id;
+      }
+      if (!id) return;
+      const { data, error } = await supabase.rpc('ml_can_access', { _lead_id: id });
+      if (active && !error) setPersonalOfferAccess(data === true);
+    };
+    void check();
+    return () => { active = false; };
+  }, [user?.id, location.pathname, location.search]);
 
   if (loading) return <FullscreenLoader />;
 
@@ -1302,7 +1325,7 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
   }
 
   if (isSalesLeadPath(location.pathname) && !canAccessSalesLeads(roles)) return <AccessDenied />;
-  if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed) return <AccessDenied />;
+  if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed && !personalOfferAccess) return <AccessDenied />;
 
   return <>{children}</>;
 }

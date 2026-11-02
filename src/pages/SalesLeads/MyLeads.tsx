@@ -24,10 +24,10 @@ export default function MyLeads() {
   const [to, setTo] = useState('');
   const [all, setAll] = useState(false);
   const reload = useCallback(async () => {
-    try { const [rows, metrics] = await Promise.all([loadMyLeads(), loadLeadStats()]); setLeads(rows); setStats(metrics); setError(''); }
+    try { const [rows, metrics] = await Promise.all([loadMyLeads(), loadLeadStats(all && isAdmin, current?.id || null)]); setLeads(rows); setStats(metrics); setError(''); }
     catch (e) { setError(e instanceof Error ? e.message : 'Leads konnten nicht geladen werden.'); setLeads([]); }
     finally { setLoading(false); }
-  }, []);
+  }, [all, isAdmin, current?.id]);
   useEffect(() => { void reload(); }, [reload]);
   useRealtimeRefresh(['sales_leads', 'sales_followups', 'sales_lead_history', 'offers', 'orders'], reload, { debounceMs: 1000 });
   useEffect(() => { const id = setInterval(() => { if (!document.hidden) void reload(); }, 30000); return () => clearInterval(id); }, [reload]);
