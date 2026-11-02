@@ -11,12 +11,13 @@ import { ArrowLeft, Save, FilePlus, MessageCircle, Download, Upload, Check } fro
 import { toast } from 'sonner';
 import { loadLeadDetail, loadMyLeads, leadAction, leadTitle, followupState, uploadLeadDocument, downloadLeadDocument, prepareLeadCustomer, MY_LEAD_STATUSES, type LeadDetail, type MyLead } from '@/lib/sales/my-leads';
 
+const CONTACT_RESULTS = ['Erreicht', 'Nicht erreicht', 'Rückruf vereinbart', 'Angebot angefordert', 'Beratung durchgeführt', 'Kein Interesse'];
 const money = (value: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value || 0);
 export default function MyLeadDetail() {
   const { id } = useParams(); const navigate = useNavigate(); const { isAdmin } = useAuth(); const { allowedTenants } = useTenant();
   const [detail, setDetail] = useState<LeadDetail | null>(null); const [siblings, setSiblings] = useState<MyLead[]>([]); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const [channel, setChannel] = useState('Telefon'); const [result, setResult] = useState('Erreicht'); const [note, setNote] = useState(''); const [interest, setInterest] = useState(''); const [nextAction, setNextAction] = useState(''); const [due, setDue] = useState(''); const [title, setTitle] = useState(''); const [followupNote, setFollowupNote] = useState('');
-  const [priority, setPriority] = useState('Normal'); const [information, setInformation] = useState<Record<string, string>>({}); const [tenant, setTenant] = useState('');
+  const [priority, setPriority] = useState('Normal'); const [information, setInformation] = useState<Record<string, string>>({}); const [tenant, setTenant] = useState(''); const [contactDue, setContactDue] = useState('');
   const reload = useCallback(async () => { if (!id) return; try { const data = await loadLeadDetail(id); setDetail(data); setError(''); } catch (e) { setDetail(null); setError(e instanceof Error ? e.message : 'Lead nicht zugänglich.'); } }, [id]);
   useEffect(() => { setDetail(null); void reload(); void loadMyLeads().then(setSiblings).catch(() => setSiblings([])); }, [reload]);
   useEffect(() => { if (detail) { setPriority(detail.workspace.priority || 'Normal'); setInformation(detail.workspace.offer_information || {}); setNextAction(detail.workspace.next_action || ''); } }, [id, detail?.lead.id]);
