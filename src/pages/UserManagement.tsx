@@ -22,6 +22,8 @@ import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { displayRoleName } from '@/lib/role-labels';
 import { useReauthGate } from '@/hooks/useReauthGate';
 import ReauthDialog from '@/components/ReauthDialog';
+import { FunctionsHttpError } from '@supabase/supabase-js';
+import { normalizeUserEmail } from '../../supabase/functions/_shared/user-email';
 
 /* ─── Types ─── */
 interface EnrichedUser {
@@ -201,16 +203,21 @@ export default function UserManagement() {
 
   /* ─── Create user ─── */
   const handleCreate = async () => {
-    if (!createForm.full_name || !createForm.email) {
+    if (!createForm.full_name.trim() || !createForm.email.trim()) {
       toast.error('Name und E-Mail sind Pflichtfelder');
+      return;
+    }
+    const email = normalizeUserEmail(createForm.email);
+    if (!email) {
+      toast.error('Bitte eine gültige E-Mail-Adresse eingeben.');
       return;
     }
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
-          full_name: createForm.full_name,
-          email: createForm.email,
+          full_name: createForm.full_name.trim(),
+          email,
           password: createForm.password || undefined,
           phone_number: createForm.phone_number || undefined,
           department_id: createForm.department_id || undefined,
@@ -218,15 +225,26 @@ export default function UserManagement() {
           role_ids: createForm.role_ids,
         },
       });
-      if (error || data?.error) throw new Error(data?.error || error?.message);
+      if (error || data?.error || data?.success !== true) {
+        let message = data?.error || error?.message || 'Benutzer konnte nicht angelegt werden.';
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const details = await error.context.json();
+            message = details?.error || message;
+          } catch { /* Keep the available error message. */ }
+        }
+        toast.error(message);
+        return;
+      }
       toast.success(`Benutzer "${createForm.full_name}" erfolgreich erstellt`);
       setShowCreate(false);
       setCreateForm({ full_name: '', email: '', password: '', phone_number: '', department_id: '', otp_channel: 'sms', role_ids: [] });
       loadData();
     } catch (e: any) {
       toast.error(`Fehler: ${e.message}`);
+    } finally {
+      setCreating(false);
     }
-    setCreating(false);
   };
 
   /* ─── Send invitation ─── */
