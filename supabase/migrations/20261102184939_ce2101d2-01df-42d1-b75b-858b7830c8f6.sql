@@ -1,0 +1,14 @@
+CREATE SCHEMA IF NOT EXISTS lead_private;
+REVOKE ALL ON SCHEMA lead_private FROM PUBLIC,anon; GRANT USAGE ON SCHEMA lead_private TO authenticated,service_role;
+ALTER FUNCTION public.ml_can_access(uuid) SET SCHEMA lead_private;
+ALTER FUNCTION public.ml_list(integer,integer) SET SCHEMA lead_private;
+ALTER FUNCTION public.ml_detail(uuid) SET SCHEMA lead_private;
+ALTER FUNCTION public.ml_action(uuid,text,jsonb) SET SCHEMA lead_private;
+ALTER FUNCTION public.ml_storage_access(text) SET SCHEMA lead_private;
+CREATE FUNCTION public.ml_can_access(_lead_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public AS $$ SELECT lead_private.ml_can_access(_lead_id) $$;
+CREATE FUNCTION public.ml_list(_offset integer DEFAULT 0,_limit integer DEFAULT 200) RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public AS $$ SELECT lead_private.ml_list(_offset,_limit) $$;
+CREATE FUNCTION public.ml_detail(_lead_id uuid) RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public AS $$ SELECT lead_private.ml_detail(_lead_id) $$;
+CREATE FUNCTION public.ml_action(_lead_id uuid,_action text,_data jsonb DEFAULT '{}'::jsonb) RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path=public AS $$ SELECT lead_private.ml_action(_lead_id,_action,_data) $$;
+CREATE FUNCTION public.ml_storage_access(_name text) RETURNS boolean LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public AS $$ SELECT lead_private.ml_storage_access(_name) $$;
+REVOKE ALL ON FUNCTION public.ml_can_access(uuid),public.ml_list(integer,integer),public.ml_detail(uuid),public.ml_action(uuid,text,jsonb),public.ml_storage_access(text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.ml_can_access(uuid),public.ml_list(integer,integer),public.ml_detail(uuid),public.ml_action(uuid,text,jsonb),public.ml_storage_access(text) TO authenticated,service_role;

@@ -125,6 +125,7 @@ export default function AngebotErstellen() {
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
   const [leadSource, setLeadSource] = useState('');
+  const [linkedLeadId, setLinkedLeadId] = useState<string | null>(null);
   const [deliveryWeek, setDeliveryWeek] = useState(() => {
     // Default: aktuelle KW + 4 Wochen im ISO-Format YYYY-Www
     const d = new Date();
@@ -169,7 +170,7 @@ export default function AngebotErstellen() {
   const [loading, setLoading] = useState(true);
 
   // ── Automatische Zwischenspeicherung (Entwurf im Browser) ──────────────
-  const draftKey = `alix_offer_draft_v1:${searchParams.get('edit') || (sofortMode ? 'new-sofort' : 'new')}`;
+  const draftKey = `alix_offer_draft_v1:${searchParams.get('edit') || searchParams.get('lead') || (sofortMode ? 'new-sofort' : 'new')}`;
   const draftRestoreOffered = useRef(false);
   const draftReady = useRef(false);
   useEffect(() => {
@@ -189,6 +190,7 @@ export default function AngebotErstellen() {
         toast.info(`Ungespeicherter Entwurf vom ${when} gefunden.`, {
           duration: 30000,
           action: { label: 'Wiederherstellen', onClick: () => {
+            if (typeof d.linkedLeadId === 'string') setLinkedLeadId(d.linkedLeadId);
             if (d.customerId) setCustomerId(d.customerId);
             if (Array.isArray(d.lines) && d.lines.length) setLines(d.lines);
             if (d.offerDate) setOfferDate(d.offerDate);
@@ -216,14 +218,14 @@ export default function AngebotErstellen() {
     const t = window.setTimeout(() => {
       try {
         localStorage.setItem(draftKey, JSON.stringify({
-          savedAt: Date.now(), customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, deliveryWeek,
+          savedAt: Date.now(), customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, linkedLeadId, deliveryWeek,
           specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode,
           priceMode, payTerm, payRate, step,
         }));
       } catch { /* Speicher voll – ignorieren */ }
     }, 800);
     return () => window.clearTimeout(t);
-  }, [customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, deliveryWeek, specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode, priceMode, payTerm, payRate, step]);
+  }, [customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, linkedLeadId, deliveryWeek, specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode, priceMode, payTerm, payRate, step]);
 
   const [leadsOpen, setLeadsOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
@@ -367,6 +369,20 @@ export default function AngebotErstellen() {
 
       const params = new URLSearchParams(window.location.search);
       const editKey = params.get('edit');
+      const personalLead = params.get('lead');
+      if (personalLead) {
+        const { data: leadDetail, error: leadError } = await supabase.rpc('ml_detail', { _lead_id: personalLead });
+        if (leadError) { toast.error('Lead nicht zugänglich.'); return; }
+        const leadData = leadDetail as any;
+        setLinkedLeadId(personalLead);
+        const source = leadData?.lead;
+        if (source?.converted_customer_id) { setCustomerId(source.converted_customer_id); await ensureCustomer(source.converted_customer_id); }
+        const info = leadData?.workspace?.offer_information || {};
+        if (info.Verkaufspreis) setPayPrice(info.Verkaufspreis);
+        if (info.Anzahlung) setPayDown(info.Anzahlung);
+        if (info.Rabatt) setPayDiscount(info.Rabatt);
+        if (info.Laufzeit && Number(info.Laufzeit)) setPayTerm(Number(info.Laufzeit));
+      }
 
       // Zentraler Nummernkreis: wenn aktiv & Neuanlage, übernehme nächste Vorschau-Nummer
       if (!editKey) {
@@ -387,6 +403,7 @@ export default function AngebotErstellen() {
             snap = list.find((o: any) => o.offerNumber === editKey);
           }
           if (snap) {
+            if (typeof snap.lead_id === 'string') setLinkedLeadId(snap.lead_id);
             setOfferNumber(snap.offerNumber);
             if (snap.caseNumber) setCaseNumber(snap.caseNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
@@ -448,6 +465,7 @@ export default function AngebotErstellen() {
         if (raw) {
           const h = JSON.parse(raw);
           sessionStorage.removeItem('sales_lead_handoff_v1');
+          if (typeof h.lead_id === 'string') setLinkedLeadId(h.lead_id);
           if (h.customer_id) { setCustomerId(h.customer_id); ensureCustomer(h.customer_id).catch(() => {}); }
           else if (h.customer_email || h.customer_company) {
             const match = await findInAll((cu: any) =>
@@ -1711,6 +1729,7 @@ export default function AngebotErstellen() {
 
 
   const buildOfferSnapshot = () => ({
+    ...(linkedLeadId ? { lead_id: linkedLeadId } : {}),
     offerNumber,
     caseNumber,
     offerDate,
@@ -1928,7 +1947,7 @@ export default function AngebotErstellen() {
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
     const doc = await buildPDF();
     if (!doc) return;
-    await saveOffer(true);
+    if (!(await saveOffer(true))) return;
     const pdfBase64 = doc.output('datauristring').split(',')[1];
     const contactName = selectedCustomer.contact_name || selectedCustomer.company_name || 'Damen und Herren';
     const textBody = `Sehr geehrte/r ${contactName},\n\nanbei unser Angebot ${offerNumber} vom ${new Date(offerDate).toLocaleDateString('de-DE')}.\n\nGesamtbetrag: ${fmtMoney(totals.gross)}${validUntil ? `\nGültig bis: ${new Date(validUntil).toLocaleDateString('de-DE')}` : ''}\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nIhr Alix-Team`;

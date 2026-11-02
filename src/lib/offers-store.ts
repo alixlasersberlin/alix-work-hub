@@ -4,6 +4,7 @@ export type OfferStatus = 'draft' | 'order' | 'signed';
 export type OfferApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export type OfferSnapshot = {
+  lead_id?: string;
   offerNumber: string;
   caseNumber?: string | null;
   offerDate?: string;
@@ -187,6 +188,7 @@ export async function duplicateOffer(offerNumber: string): Promise<string> {
 
   const copy: OfferSnapshot = {
     ...src,
+    lead_id: undefined,
     offerNumber: newNumber,
     caseNumber: caseNumber || null,
     offerDate: new Date().toISOString().slice(0, 10),
