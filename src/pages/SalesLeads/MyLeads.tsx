@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
@@ -23,6 +23,8 @@ export default function MyLeads() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [all, setAll] = useState(false);
+  const [params] = useSearchParams();
+  const view = params.get('ansicht');
   const reload = useCallback(async () => {
     try { const [rows, metrics] = await Promise.all([loadMyLeads(), loadLeadStats(all && isAdmin, current?.id || null)]); setLeads(rows); setStats(metrics); setError(''); }
     catch (e) { setError(e instanceof Error ? e.message : 'Leads konnten nicht geladen werden.'); setLeads([]); }
@@ -32,7 +34,7 @@ export default function MyLeads() {
   useRealtimeRefresh(['sales_leads', 'sales_followups', 'sales_lead_history', 'offers', 'orders'], reload, { debounceMs: 1000 });
   useEffect(() => { const id = setInterval(() => { if (!document.hidden) void reload(); }, 30000); return () => clearInterval(id); }, [reload]);
   const scoped = useMemo(() => leads.filter(l => (all && isAdmin || l.assigned_user === user?.id) && (!current || l.tenant_id === current.id || isAdmin && !l.tenant_id)), [leads, all, isAdmin, user?.id, current]);
-  const visible = scoped.filter(l => (!status || l.lead_status === status) && (!priority || (l.workspace?.priority || 'Normal') === priority) && (!product || (l.requested_products || '').toLowerCase().includes(product.toLowerCase())) && (!from || l.created_at.slice(0, 10) >= from) && (!to || l.created_at.slice(0, 10) <= to) && [leadTitle(l), l.email, l.phone, l.lead_number].join(' ').toLowerCase().includes(query.toLowerCase()));
+  const visible = scoped.filter(l => (view !== 'neu' || (!l.workspace?.last_activity_at && !['Gewonnen', 'Verloren', 'Archiviert'].includes(l.lead_status))) && (view !== 'wiedervorlagen' || (l.followups || []).some(f => followupState(f) !== 'done')) && (!status || l.lead_status === status) && (!priority || (l.workspace?.priority || 'Normal') === priority) && (!product || (l.requested_products || '').toLowerCase().includes(product.toLowerCase())) && (!from || l.created_at.slice(0, 10) >= from) && (!to || l.created_at.slice(0, 10) <= to) && [leadTitle(l), l.email, l.phone, l.lead_number].join(' ').toLowerCase().includes(query.toLowerCase()));
   const tasks = scoped.flatMap(l => l.followups || []);
   const metrics = [
     ['Meine Leads', scoped.length], ['Neu / unbearbeitet', scoped.filter(l => !l.workspace?.last_activity_at && !['Gewonnen', 'Verloren', 'Archiviert'].includes(l.lead_status)).length],
