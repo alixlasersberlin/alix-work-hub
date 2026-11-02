@@ -58582,6 +58582,7 @@ export type Database = {
         Returns: Json
       }
       ml_can_access: { Args: { _lead_id: string }; Returns: boolean }
+      ml_customer_access: { Args: { _customer_id: string }; Returns: boolean }
       ml_detail: { Args: { _lead_id: string }; Returns: Json }
       ml_list: { Args: { _limit?: number; _offset?: number }; Returns: Json }
       ml_scoped_stats: {
