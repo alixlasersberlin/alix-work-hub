@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { canAccessSalesLeads } from '@/lib/sales/lead-access';
 import { useAtOnly } from '@/hooks/useAtOnly';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -533,7 +534,7 @@ export default function AppLayout() {
   }, [location.pathname, isOrdersRoute]);
 
   const labelWithCount = (path: string, label: string) => {
-    if (path === '/verkauf') {
+    if (path === '/verkauf' && canAccessSalesLeads(roles)) {
       const anfragen = lagerCounts['/verkauf/anfragen'];
       if (anfragen === undefined) return label;
       return (
