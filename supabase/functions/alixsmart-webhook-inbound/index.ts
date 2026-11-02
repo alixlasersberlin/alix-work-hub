@@ -5,6 +5,7 @@
 //           x-alixsmart-event: <event name>  (must match body.event when both present)
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { WhatsAppLeadEvent, recommendedPriority, detectProduct, verifyTimestampedSignature } from './whatsapp-lead.ts';
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -225,6 +226,29 @@ Deno.serve(async (req) => {
   const event: string = env.event ?? evtHeader ?? "unknown";
   const eventId: string | null = env.event_id ?? null;
   const data = env.data ?? {};
+
+  // Dedicated transactional path. Legacy event handlers remain unchanged.
+  if (event === 'sales.whatsapp.inbound') {
+    if (raw.length > 65536) return json(413, { ok: false, error: 'payload_too_large' });
+    if (evtHeader && evtHeader !== event) return json(400, { ok: false, error: 'event_mismatch' });
+    if (!(await verifyTimestampedSignature(raw, sig, ts, SECRET))) return json(401, { ok: false, error: 'invalid_timestamped_signature' });
+    const parsed = WhatsAppLeadEvent.safeParse(env);
+    if (!parsed.success) return json(400, { ok: false, error: 'invalid_sales_event', fields: parsed.error.flatten() });
+    const catalog: { id: string; name: string | null; model: string | null; sku: string | null }[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data: rows, error } = await supabase.from('catalog_items').select('id,name,model,sku').order('id').range(offset, offset + 499);
+      if (error) return json(503, { ok: false, error: 'catalog_unavailable' });
+      catalog.push(...(rows || []));
+      if (!rows || rows.length < 500) break;
+    }
+    const enriched = { ...parsed.data, data: { ...parsed.data.data, product_interest: detectProduct(parsed.data.data.text, catalog), priority: recommendedPriority(parsed.data.data.text) } };
+    const { data: result, error } = await supabase.rpc('ml_wa_ingest', { _event: enriched });
+    if (error) {
+      console.error('WhatsApp lead ingestion failed', { code: error.code });
+      return json(error.code === 'P0001' ? 409 : 503, { ok: false, error: 'lead_ingestion_failed', detail: error.message });
+    }
+    return json(200, result);
+  }
 
   // Idempotency: same event_id already processed?
   if (valid && eventId) {

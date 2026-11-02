@@ -324,6 +324,7 @@ const AngebotErstellen = lazy(() => import("./pages/AngebotErstellen"));
 const AngebotImport = lazy(() => import("./pages/AngebotImport"));
 const SalesLeadsList = lazy(() => import("./pages/SalesLeads/List"));
 const MyLeads = lazy(() => import("./pages/SalesLeads/MyLeads"));
+const WhatsAppInbox = lazy(() => import("./pages/SalesLeads/WhatsAppInbox"));
 const MyLeadDetail = lazy(() => import("./pages/SalesLeads/MyLeadDetail"));
 const Verkaufsfuehrer = lazy(() => import("./pages/Verkaufsfuehrer"));
 const SalesLeadDetail = lazy(() => import("./pages/SalesLeads/Detail"));
@@ -1586,6 +1587,7 @@ function AppRoutes() {
           <Route path="/verkauf/artikel-uebersicht" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><ArtikelUebersicht /></ProtectedRoute>} />
           <Route path="/verkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VerkaufUebersicht /></ProtectedRoute>} />
           <Route path="/vertrieb/meine-leads" element={<ProtectedRoute><MyLeads /></ProtectedRoute>} />
+          <Route path="/vertrieb/whatsapp-eingang" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><WhatsAppInbox /></ProtectedRoute>} />
           <Route path="/vertrieb/meine-leads/:id" element={<ProtectedRoute><MyLeadDetail /></ProtectedRoute>} />
           <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order']}><AngebotErstellen /></ProtectedRoute>} />
           <Route path="/verkauf/angebot/import" element={<ProtectedRoute requiredRoles={['Super Admin']}><AngebotImport /></ProtectedRoute>} />
