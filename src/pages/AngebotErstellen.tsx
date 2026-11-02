@@ -125,6 +125,7 @@ export default function AngebotErstellen() {
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
   const [leadSource, setLeadSource] = useState('');
+  const [linkedLeadId, setLinkedLeadId] = useState<string | null>(null);
   const [deliveryWeek, setDeliveryWeek] = useState(() => {
     // Default: aktuelle KW + 4 Wochen im ISO-Format YYYY-Www
     const d = new Date();
@@ -387,6 +388,7 @@ export default function AngebotErstellen() {
             snap = list.find((o: any) => o.offerNumber === editKey);
           }
           if (snap) {
+            if (typeof snap.lead_id === 'string') setLinkedLeadId(snap.lead_id);
             setOfferNumber(snap.offerNumber);
             if (snap.caseNumber) setCaseNumber(snap.caseNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
@@ -448,6 +450,7 @@ export default function AngebotErstellen() {
         if (raw) {
           const h = JSON.parse(raw);
           sessionStorage.removeItem('sales_lead_handoff_v1');
+          if (typeof h.lead_id === 'string') setLinkedLeadId(h.lead_id);
           if (h.customer_id) { setCustomerId(h.customer_id); ensureCustomer(h.customer_id).catch(() => {}); }
           else if (h.customer_email || h.customer_company) {
             const match = await findInAll((cu: any) =>
@@ -1711,6 +1714,7 @@ export default function AngebotErstellen() {
 
 
   const buildOfferSnapshot = () => ({
+    ...(linkedLeadId ? { lead_id: linkedLeadId } : {}),
     offerNumber,
     caseNumber,
     offerDate,
@@ -1928,7 +1932,7 @@ export default function AngebotErstellen() {
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
     const doc = await buildPDF();
     if (!doc) return;
-    await saveOffer(true);
+    if (!(await saveOffer(true))) return;
     const pdfBase64 = doc.output('datauristring').split(',')[1];
     const contactName = selectedCustomer.contact_name || selectedCustomer.company_name || 'Damen und Herren';
     const textBody = `Sehr geehrte/r ${contactName},\n\nanbei unser Angebot ${offerNumber} vom ${new Date(offerDate).toLocaleDateString('de-DE')}.\n\nGesamtbetrag: ${fmtMoney(totals.gross)}${validUntil ? `\nGültig bis: ${new Date(validUntil).toLocaleDateString('de-DE')}` : ''}\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nIhr Alix-Team`;

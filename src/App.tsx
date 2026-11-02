@@ -321,6 +321,8 @@ const ArtikelUebersicht = lazy(() => import("./pages/ArtikelUebersicht"));
 const AngebotErstellen = lazy(() => import("./pages/AngebotErstellen"));
 const AngebotImport = lazy(() => import("./pages/AngebotImport"));
 const SalesLeadsList = lazy(() => import("./pages/SalesLeads/List"));
+const MyLeads = lazy(() => import("./pages/SalesLeads/MyLeads"));
+const MyLeadDetail = lazy(() => import("./pages/SalesLeads/MyLeadDetail"));
 const Verkaufsfuehrer = lazy(() => import("./pages/Verkaufsfuehrer"));
 const SalesLeadDetail = lazy(() => import("./pages/SalesLeads/Detail"));
 const SalesFollowups = lazy(() => import("./pages/SalesLeads/Followups"));
@@ -1559,6 +1561,8 @@ function AppRoutes() {
           <Route path="/verkauf/artikel/wareneingang" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Wareneingang /></ProtectedRoute>} />
           <Route path="/verkauf/artikel-uebersicht" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><ArtikelUebersicht /></ProtectedRoute>} />
           <Route path="/verkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VerkaufUebersicht /></ProtectedRoute>} />
+          <Route path="/vertrieb/meine-leads" element={<ProtectedRoute><MyLeads /></ProtectedRoute>} />
+          <Route path="/vertrieb/meine-leads/:id" element={<ProtectedRoute><MyLeadDetail /></ProtectedRoute>} />
           <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order']}><AngebotErstellen /></ProtectedRoute>} />
           <Route path="/verkauf/angebot/import" element={<ProtectedRoute requiredRoles={['Super Admin']}><AngebotImport /></ProtectedRoute>} />
           <Route path="/verkauf/anfragen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsList /></ProtectedRoute>} />

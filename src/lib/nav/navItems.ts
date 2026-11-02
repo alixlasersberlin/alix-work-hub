@@ -13,6 +13,9 @@ export type NavChild = { path: string; label: string; icon: typeof LayoutDashboa
 export type NavItem = NavChild & { children?: NavChild[] };
 
 export const navItems: NavItem[] = [
+  { path: '/vertrieb/meine-leads', label: 'VERTRIEB', icon: Users, roles: null, children: [
+    { path: '/vertrieb/meine-leads', label: 'Meine Leads', icon: Inbox, roles: null },
+  ] },
   {
     path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock,
     roles: null,

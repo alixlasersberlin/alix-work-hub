@@ -1,5 +1,5 @@
 - [x] Meine Leads + bestehendes ALIXSMART WhatsApp Sales: beide Quellprojekte lesend geprüft, Rollen geklärt (nur Admin/Super Admin fremde Leads), Integrationsplan erstellt; keine Produktivänderung.
-- [ ] Meine Leads schrittweise umsetzen — wartet auf Planfreigabe; mandantenlose Leads dürfen ohne eindeutige Zuordnung nicht pauschal freigegeben werden.
+- [ ] Meine Leads schrittweise umsetzen — Plan freigegeben, persönliche Übersicht/Detailseite und geschützte Bearbeitungsaufrufe erstellt; Verknüpfungen und Sicherheitstests abschließen. Mandantenlose Leads bleiben für Mitarbeiter gesperrt.
 - [ ] ALIXSMART WhatsApp Sales live einbetten — autorisierter Lese-/Versand-/Ereignisvertrag im separaten Projekt und geschützter Zwei-Mitarbeiter-Test noch erforderlich; keine zweite WhatsApp-Anbindung.
 - [x] Anfragen ausschließlich für Admin/Super Admin: Menü und Schnellsuche, direkte Seitenzugriffe, Zuweisungsfenster und bestehende Daten-Leserechte beschränkt; 26 Rollen-/Zugriffstests bestanden. Angebote/Aufträge unverändert.
 - [ ] Anfragen-Rollensperre mit echten angemeldeten Konten prüfen — externe Anmeldung verhindert automatisierten Mitarbeiterzugriff; keine Benutzerrollen zu Testzwecken geändert.
