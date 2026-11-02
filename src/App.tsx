@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-route
 import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
 import { canAccessSalesLeads, isSalesLeadPath } from "@/lib/sales/lead-access";
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
