@@ -1,3 +1,4 @@
+- [ ] Meine Leads + bestehendes ALIXSMART WhatsApp Sales: Architektur und sichere Integration prüfen, Plan vor Umsetzung vorlegen; administrative Anfragenübersicht bleibt geschützt.
 - [x] Anfragen ausschließlich für Admin/Super Admin: Menü und Schnellsuche, direkte Seitenzugriffe, Zuweisungsfenster und bestehende Daten-Leserechte beschränkt; 26 Rollen-/Zugriffstests bestanden. Angebote/Aufträge unverändert.
 - [ ] Anfragen-Rollensperre mit echten angemeldeten Konten prüfen — externe Anmeldung verhindert automatisierten Mitarbeiterzugriff; keine Benutzerrollen zu Testzwecken geändert.
 - [x] Elf weiterhin fällige, nachweisbar blockierte Mahnungen vom 30.10. erneut als Zahlungserinnerungen ohne Inkassodrohung gesendet, CC k.trinh@alix-operation.de; alle elf beim Anbieter delivered, Mailcenter und Versandprotokoll geprüft. Zwei nicht überfällige Forderungen (01.11.2026 / 16.06.2028) ausgeschlossen, Forderungen/Mahnstufen unverändert.
