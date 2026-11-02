@@ -5,6 +5,7 @@ import {
 } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { LEAD_ACCESS_ROLES } from '@/lib/sales/lead-access';
 import {
   BarChart3, Boxes, Building2, ClipboardList, Crown, FileText, Gauge, Home, Package,
   Receipt, Settings, ShieldCheck, Sparkles, Ticket, Truck, User, Users, Wrench,
@@ -20,7 +21,7 @@ type Hit =
 const NAV: { label: string; to: string; icon: any; roles?: string[]; group: string }[] = [
   { label: "Magic Status · Suchen. Ändern. Ausführen.", to: "/magic", icon: Sparkles, group: "Navigation" },
   { label: "Dashboard", to: "/dashboard", icon: Home, group: "Navigation" },
-  { label: "Verkauf · Anfragen", to: "/verkauf/anfragen", icon: ClipboardList, group: "Navigation" },
+  { label: "Verkauf · Anfragen", to: "/verkauf/anfragen", icon: ClipboardList, roles: LEAD_ACCESS_ROLES, group: "Navigation" },
   { label: "Kunden", to: "/kunden", icon: Users, group: "Navigation" },
   { label: "Aufträge", to: "/auftraege", icon: Package, group: "Navigation" },
   { label: "Tickets", to: "/tickets", icon: Ticket, group: "Navigation" },

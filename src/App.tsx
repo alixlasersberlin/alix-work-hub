@@ -4,6 +4,7 @@ import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
+import { canAccessSalesLeads, isSalesLeadPath } from "@/lib/sales/lead-access";
 
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -1298,6 +1299,7 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
     }
   }
 
+  if (isSalesLeadPath(location.pathname) && !canAccessSalesLeads(roles)) return <AccessDenied />;
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed) return <AccessDenied />;
 
   return <>{children}</>;

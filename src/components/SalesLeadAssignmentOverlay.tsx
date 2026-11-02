@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { canAccessSalesLeads } from '@/lib/sales/lead-access';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Inbox, FilePlus, Mail, Phone, Building2, User as UserIcon, MapPin, MessageSquare, X } from 'lucide-react';
@@ -43,22 +44,24 @@ function ack(id: string) {
 }
 
 export default function SalesLeadAssignmentOverlay() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
+  const allowed = canAccessSalesLeads(roles);
   const nav = useNavigate();
   const [queue, setQueue] = useState<Lead[]>([]);
 
   const fetchLead = useCallback(async (id: string) => {
+    if (!allowed) return;
     const { data } = await supabase.from('sales_leads').select('*').eq('id', id).maybeSingle();
     if (!data) return;
     const acked = loadAcked();
     if (acked.has(data.id)) return;
     if (data.assigned_user !== user?.id) return;
     setQueue((q) => q.find(l => l.id === data.id) ? q : [...q, data as Lead]);
-  }, [user?.id]);
+  }, [user?.id, allowed]);
 
   // Initial: lade alle aktuell zugewiesenen, noch nicht bestätigten Anfragen
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !allowed) { setQueue([]); return; }
     let cancelled = false;
     (async () => {
       const { data } = await supabase
@@ -73,11 +76,11 @@ export default function SalesLeadAssignmentOverlay() {
       setQueue(data.filter((d: any) => !acked.has(d.id)) as Lead[]);
     })();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, allowed]);
 
   // Realtime: neue Zuweisungen
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !allowed) return;
     const channel = supabase
       .channel('sales_lead_assignment_overlay')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sales_leads' }, (payload: any) => {
@@ -92,7 +95,7 @@ export default function SalesLeadAssignmentOverlay() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user?.id, fetchLead]);
+  }, [user?.id, fetchLead, allowed]);
   // Esc schließt das Fenster
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -107,7 +110,7 @@ export default function SalesLeadAssignmentOverlay() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  if (queue.length === 0) return null;
+  if (!allowed || queue.length === 0) return null;
   const lead = queue[0];
 
 
