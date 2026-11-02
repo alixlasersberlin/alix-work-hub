@@ -170,7 +170,7 @@ export default function AngebotErstellen() {
   const [loading, setLoading] = useState(true);
 
   // ── Automatische Zwischenspeicherung (Entwurf im Browser) ──────────────
-  const draftKey = `alix_offer_draft_v1:${searchParams.get('edit') || (sofortMode ? 'new-sofort' : 'new')}`;
+  const draftKey = `alix_offer_draft_v1:${searchParams.get('edit') || searchParams.get('lead') || (sofortMode ? 'new-sofort' : 'new')}`;
   const draftRestoreOffered = useRef(false);
   const draftReady = useRef(false);
   useEffect(() => {
@@ -190,6 +190,7 @@ export default function AngebotErstellen() {
         toast.info(`Ungespeicherter Entwurf vom ${when} gefunden.`, {
           duration: 30000,
           action: { label: 'Wiederherstellen', onClick: () => {
+            if (typeof d.linkedLeadId === 'string') setLinkedLeadId(d.linkedLeadId);
             if (d.customerId) setCustomerId(d.customerId);
             if (Array.isArray(d.lines) && d.lines.length) setLines(d.lines);
             if (d.offerDate) setOfferDate(d.offerDate);
@@ -217,14 +218,14 @@ export default function AngebotErstellen() {
     const t = window.setTimeout(() => {
       try {
         localStorage.setItem(draftKey, JSON.stringify({
-          savedAt: Date.now(), customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, deliveryWeek,
+          savedAt: Date.now(), customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, linkedLeadId, deliveryWeek,
           specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode,
           priceMode, payTerm, payRate, step,
         }));
       } catch { /* Speicher voll – ignorieren */ }
     }, 800);
     return () => window.clearTimeout(t);
-  }, [customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, deliveryWeek, specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode, priceMode, payTerm, payRate, step]);
+  }, [customerId, lines, offerDate, validUntil, salesAdvisor, leadSource, linkedLeadId, deliveryWeek, specialOffer, notes, includeAppendix, payType, payPrice, payDown, payDiscount, payDiscountMode, priceMode, payTerm, payRate, step]);
 
   const [leadsOpen, setLeadsOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
@@ -368,6 +369,20 @@ export default function AngebotErstellen() {
 
       const params = new URLSearchParams(window.location.search);
       const editKey = params.get('edit');
+      const personalLead = params.get('lead');
+      if (personalLead) {
+        const { data: leadDetail, error: leadError } = await supabase.rpc('ml_detail', { _lead_id: personalLead });
+        if (leadError) { toast.error('Lead nicht zugänglich.'); return; }
+        const leadData = leadDetail as any;
+        setLinkedLeadId(personalLead);
+        const source = leadData?.lead;
+        if (source?.converted_customer_id) { setCustomerId(source.converted_customer_id); await ensureCustomer(source.converted_customer_id); }
+        const info = leadData?.workspace?.offer_information || {};
+        if (info.Verkaufspreis) setPayPrice(info.Verkaufspreis);
+        if (info.Anzahlung) setPayDown(info.Anzahlung);
+        if (info.Rabatt) setPayDiscount(info.Rabatt);
+        if (info.Laufzeit && Number(info.Laufzeit)) setPayTerm(Number(info.Laufzeit));
+      }
 
       // Zentraler Nummernkreis: wenn aktiv & Neuanlage, übernehme nächste Vorschau-Nummer
       if (!editKey) {
