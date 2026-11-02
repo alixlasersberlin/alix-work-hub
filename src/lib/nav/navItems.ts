@@ -15,6 +15,8 @@ export type NavItem = NavChild & { children?: NavChild[] };
 export const navItems: NavItem[] = [
   { path: '/vertrieb/meine-leads', label: 'VERTRIEB', icon: Users, roles: null, children: [
     { path: '/vertrieb/meine-leads', label: 'Meine Leads', icon: Inbox, roles: null },
+    { path: '/vertrieb/meine-leads?ansicht=neu', label: 'Neue Leads', icon: Inbox, roles: null },
+    { path: '/vertrieb/meine-leads?ansicht=wiedervorlagen', label: 'Wiedervorlagen', icon: Inbox, roles: null },
     { path: '/vertrieb/whatsapp-eingang', label: 'WhatsApp-Leads – Eingang', icon: MessageCircle, roles: LEAD_ACCESS_ROLES },
   ] },
   {
