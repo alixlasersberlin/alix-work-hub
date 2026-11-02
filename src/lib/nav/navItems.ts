@@ -269,6 +269,7 @@ export const navItems: NavItem[] = [
         children: [
           { path: '/verkauf/neue-anfrage', label: 'Neue Anfrage', icon: Sparkles, roles: LEAD_ACCESS_ROLES },
           { path: '/verkauf/anfragen', label: 'Anfragen', icon: Inbox, roles: LEAD_ACCESS_ROLES },
+          { path: '/vertrieb/meine-leads', label: 'Meine Leads', icon: Users, roles: null },
           { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/angebotsanalyse', label: 'Angebotsanalyse', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
