@@ -58577,6 +58577,14 @@ export type Database = {
           webauthn_count: number
         }[]
       }
+      ml_action: {
+        Args: { _action: string; _data?: Json; _lead_id: string }
+        Returns: Json
+      }
+      ml_can_access: { Args: { _lead_id: string }; Returns: boolean }
+      ml_detail: { Args: { _lead_id: string }; Returns: Json }
+      ml_list: { Args: { _limit?: number; _offset?: number }; Returns: Json }
+      ml_storage_access: { Args: { _name: string }; Returns: boolean }
       mobile_access_state: {
         Args: { p_app_version?: string; p_environment?: string }
         Returns: Json
