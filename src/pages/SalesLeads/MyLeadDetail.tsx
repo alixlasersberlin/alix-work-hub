@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, FilePlus, MessageCircle, Download, Upload, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { loadLeadDetail, loadMyLeads, leadAction, leadTitle, followupState, uploadLeadDocument, downloadLeadDocument, MY_LEAD_STATUSES, type LeadDetail, type MyLead } from '@/lib/sales/my-leads';
+import { loadLeadDetail, loadMyLeads, leadAction, leadTitle, followupState, uploadLeadDocument, downloadLeadDocument, prepareLeadCustomer, MY_LEAD_STATUSES, type LeadDetail, type MyLead } from '@/lib/sales/my-leads';
 
 const money = (value: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value || 0);
 export default function MyLeadDetail() {
@@ -23,14 +23,33 @@ export default function MyLeadDetail() {
   useRealtimeRefresh(['sales_leads', 'sales_lead_history', 'sales_followups', 'offers', 'orders'], reload, { debounceMs: 1000 });
   useEffect(() => { const timer = setInterval(() => { if (!document.hidden) void reload(); }, 30000); return () => clearInterval(timer); }, [reload]);
   async function act(action: string, data: Record<string, unknown>) { if (!id) return false; setBusy(true); try { setDetail(await leadAction(id, action, data)); toast.success('Gespeichert'); return true; } catch (e) { toast.error(e instanceof Error ? e.message : 'Speichern fehlgeschlagen'); return false; } finally { setBusy(false); } }
-  const createOffer = () => { if (!detail) return; const l = detail.lead; sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify({ lead_id: l.id, customer_id: l.converted_customer_id, customer_email: l.email, customer_company: l.company, notes: [l.requested_products, l.message, ...Object.entries(information).map(([k, v]) => `${k}: ${v}`)].filter(Boolean).join('\n'), source: 'sales_lead' })); navigate(`/verkauf/angebot/neu?lead=${l.id}`); };
+  const createOffer = async () => {
+    if (!detail || busy) return;
+    const l = detail.lead; setBusy(true);
+    try {
+      if (!(await act('preferences', { priority, next_action: nextAction, offer_information: information }))) return;
+      let customer = l.converted_customer_id;
+      if (!customer) {
+        try { customer = await prepareLeadCustomer(l.id); }
+        catch (e) {
+          const message = e instanceof Error ? e.message : '';
+          if (!message.includes('Neue Kundenanlage')) throw e;
+          if (!confirm('Für diesen Lead wurde kein eindeutiger Kunde gefunden. Einen neuen Kunden aus der Originalanfrage anlegen?')) return;
+          customer = await prepareLeadCustomer(l.id, true);
+        }
+      }
+      sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify({ lead_id: l.id, customer_id: customer, customer_email: l.email, customer_company: l.company, notes: [l.requested_products, l.message, ...Object.entries(information).map(([k, v]) => `${k}: ${v}`)].filter(Boolean).join('\n'), source: 'sales_lead' }));
+      navigate(`/verkauf/angebot/neu?lead=${l.id}`);
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Angebot konnte nicht vorbereitet werden.'); }
+    finally { setBusy(false); }
+  };
   if (error) return <div className="p-6 space-y-4"><Button asChild variant="outline"><Link to="/vertrieb/meine-leads"><ArrowLeft className="h-4 w-4 mr-2" />Meine Leads</Link></Button><p role="alert" className="text-destructive">{error}</p><Button onClick={() => void reload()}>Erneut laden</Button></div>;
   if (!detail) return <div className="p-6 text-muted-foreground">Lead wird geladen …</div>;
   const l = detail.lead;
   const followups = detail.followups.filter(f => followupState(f) !== 'done').sort((a, b) => (a.due_at || '').localeCompare(b.due_at || ''));
   const selectClass = 'h-10 rounded-md border border-input bg-background px-3 w-full';
   return <div className="p-4 md:p-6 space-y-6">
-    <header className="flex items-center justify-between gap-3 flex-wrap"><div><Button asChild size="sm" variant="ghost"><Link to="/vertrieb/meine-leads"><ArrowLeft className="h-4 w-4 mr-2" />Meine Leads</Link></Button><h1 className="text-2xl font-semibold mt-3 break-words">{leadTitle(l)}</h1><p className="text-sm text-muted-foreground mt-1">{l.lead_number} · {new Date(l.created_at).toLocaleString('de-DE')}</p></div><Button onClick={createOffer}><FilePlus className="h-4 w-4 mr-2" />Angebot erstellen</Button></header>
+    <header className="flex items-center justify-between gap-3 flex-wrap"><div><Button asChild size="sm" variant="ghost"><Link to="/vertrieb/meine-leads"><ArrowLeft className="h-4 w-4 mr-2" />Meine Leads</Link></Button><h1 className="text-2xl font-semibold mt-3 break-words">{leadTitle(l)}</h1><p className="text-sm text-muted-foreground mt-1">{l.lead_number} · {new Date(l.created_at).toLocaleString('de-DE')}</p></div><Button disabled={busy} onClick={() => void createOffer()}><FilePlus className="h-4 w-4 mr-2" />Angebot erstellen</Button></header>
     <div className="grid lg:grid-cols-[180px_minmax(0,1fr)_280px] gap-6">
       <aside className="hidden lg:block border-r border-border pr-4"><h2 className="font-medium mb-4">Meine Leads</h2><div className="space-y-1 max-h-[70vh] overflow-y-auto">{siblings.map(s => <Button asChild variant={s.id === id ? 'secondary' : 'ghost'} className="w-full h-auto min-h-10 justify-start text-left whitespace-normal" key={s.id}><Link to={`/vertrieb/meine-leads/${s.id}`}>{leadTitle(s)}</Link></Button>)}</div></aside>
       <main className="min-w-0 space-y-8">
