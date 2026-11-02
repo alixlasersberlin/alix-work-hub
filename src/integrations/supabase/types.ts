@@ -58595,6 +58595,10 @@ export type Database = {
       }
       ml_stats: { Args: never; Returns: Json }
       ml_storage_access: { Args: { _name: string }; Returns: boolean }
+      ml_wa_assign: { Args: { _lead: string; _user: string }; Returns: Json }
+      ml_wa_assignees: { Args: { _tenant: string }; Returns: Json }
+      ml_wa_inbox: { Args: { _offset?: number }; Returns: Json }
+      ml_wa_ingest: { Args: { _event: Json }; Returns: Json }
       mobile_access_state: {
         Args: { p_app_version?: string; p_environment?: string }
         Returns: Json
