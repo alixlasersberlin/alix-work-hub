@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendUserInvitationEmail } from "../_shared/send-user-invitation.ts";
+import { normalizeUserEmail, userCreationAuthError } from "../_shared/user-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,10 +33,11 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await callerClient.rpc("is_admin");
     if (!isAdmin) return json({ error: "Forbidden: Admin only" }, 403);
 
-    const { full_name, email, password, phone_number, department_id, otp_channel, role_ids } = await req.json();
+    const { full_name, email: rawEmail, password, phone_number, department_id, otp_channel, role_ids } = await req.json();
 
-    if (!email || !full_name) {
-      return json({ error: "email and full_name are required" }, 400);
+    const email = normalizeUserEmail(rawEmail);
+    if (!email || typeof full_name !== 'string' || !full_name.trim()) {
+      return json({ success: false, error: !email ? "Bitte eine gültige E-Mail-Adresse eingeben." : "Name ist ein Pflichtfeld." });
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
@@ -53,7 +55,7 @@ Deno.serve(async (req) => {
       const msg = authError.message || "";
       const isDuplicate = /already been registered|already registered|User already registered|duplicate/i.test(msg);
       if (!isDuplicate) {
-        return json({ error: `Auth error: ${msg}` }, 400);
+        return json({ success: false, error: userCreationAuthError(msg) });
       }
       // Look up existing auth user by email so we can attach profile/roles
       let foundId: string | null = null;
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
         if (list.users.length < 200) break;
       }
       if (!foundId) {
-        return json({ error: `Auth error: ${msg}` }, 400);
+        return json({ success: false, error: userCreationAuthError(msg) });
       }
       userId = foundId;
     } else {

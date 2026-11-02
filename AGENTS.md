@@ -21,3 +21,4 @@
 - Backup 2.0 Phase 9B prototypes stay detached from application routes, deployed functions and production adapters; local synthetic fixtures and downloadable specifications provide evidence without changing live backup behavior.
 - Outgoing Resend mail passes through `_shared/global-bcc.ts`, which strips provider-suppressed copy addresses (`BLOCKED_COPY_ADDRESSES`) from CC/BCC: one suppressed copy recipient makes the provider suppress the entire email, including the customer's.
 - One-off suppressed-mail recovery uses the authorized connector, provider idempotency and existing mail archives; current amounts, due dates and holds must be checked before financial reminders, and uncertain or expired messages remain excluded.
+- User creation shares email normalization between the dialog and server; expected validation rejections return explicit unsuccessful results without non-2xx runtime overlays, while authorization checks remain unchanged.
