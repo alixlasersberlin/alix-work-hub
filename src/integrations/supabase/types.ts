@@ -58599,6 +58599,7 @@ export type Database = {
       ml_wa_assignees: { Args: { _tenant: string }; Returns: Json }
       ml_wa_inbox: { Args: { _offset?: number }; Returns: Json }
       ml_wa_ingest: { Args: { _event: Json }; Returns: Json }
+      ml_wa_review: { Args: never; Returns: Json }
       mobile_access_state: {
         Args: { p_app_version?: string; p_environment?: string }
         Returns: Json
