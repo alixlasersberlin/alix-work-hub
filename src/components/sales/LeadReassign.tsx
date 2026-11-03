@@ -4,21 +4,26 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { loadWhatsAppAssignees, type LeadAssignee } from '@/lib/sales/whatsapp-inbox';
-import { canReassignLeads, reassignLead } from '@/lib/sales/lead-admin';
+import { loadWhatsAppAssignees } from '@/lib/sales/whatsapp-inbox';
+import { canReassignLeads, reassignLead, loadLeadUsers, leadAssignmentOptions } from '@/lib/sales/lead-admin';
 import type { MyLead } from '@/lib/sales/my-leads';
 
 export default function LeadReassign({ lead, onAssigned }: { lead: MyLead; onAssigned: () => void | Promise<void> }) {
   const { roles } = useAuth();
   const allowed = canReassignLeads(roles);
-  const [people, setPeople] = useState<LeadAssignee[]>([]);
+  const [people, setPeople] = useState<ReturnType<typeof leadAssignmentOptions>>([]);
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     setTarget(''); setPeople([]); setError('');
     let active = true;
-    if (allowed && lead.tenant_id) void loadWhatsAppAssignees(lead.tenant_id).then(rows => { if (active) setPeople(rows); }).catch(e => { if (active) setError(e instanceof Error ? e.message : 'Mitarbeiter konnten nicht geladen werden.'); });
+    setLoading(false);
+    if (allowed && lead.tenant_id) {
+      setLoading(true);
+      void Promise.all([loadLeadUsers(), loadWhatsAppAssignees(lead.tenant_id)]).then(([users, eligible]) => { if (active) setPeople(leadAssignmentOptions(users, eligible)); }).catch(e => { if (active) setError(e instanceof Error ? e.message : 'Mitarbeiter konnten nicht geladen werden.'); }).finally(() => { if (active) setLoading(false); });
+    }
     return () => { active = false; };
   }, [allowed, lead.id, lead.tenant_id]);
   if (!allowed) return null;
@@ -26,8 +31,10 @@ export default function LeadReassign({ lead, onAssigned }: { lead: MyLead; onAss
     <h2 className="font-semibold">Mitarbeiterzuweisung</h2>
     <p className="text-sm text-muted-foreground">{people.find(p => p.id === lead.assigned_user)?.name || (lead.assigned_user ? 'Bereits zugewiesen' : 'Nicht zugewiesen')}</p>
     {!lead.tenant_id ? <p className="text-sm text-destructive">Zuerst Mandant zuordnen.</p> : <>
-      <Select value={target} onValueChange={setTarget} disabled={busy}><SelectTrigger aria-label="Lead an Mitarbeiter verschieben"><SelectValue placeholder="Mitarbeiter auswählen" /></SelectTrigger><SelectContent>{people.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select>
-      <Button variant="outline" disabled={busy || !target || target === lead.assigned_user} onClick={async () => {
+      <Select value={target} onValueChange={setTarget} disabled={busy || loading || !!error}><SelectTrigger aria-label="Lead an Mitarbeiter verschieben"><SelectValue placeholder={loading ? 'Benutzer werden geladen …' : 'Mitarbeiter auswählen'} /></SelectTrigger><SelectContent>{people.map(p => <SelectItem key={p.id} value={p.id} disabled={p.disabled}><span className="whitespace-normal break-words">{p.name}{p.reason ? ` · ${p.reason}` : ''}</span></SelectItem>)}</SelectContent></Select>
+      {!loading && !error && <p className="text-xs text-muted-foreground">{people.length} Benutzer · {people.filter(p => !p.disabled).length} für die Zuweisung freigegeben</p>}
+      <Button variant="outline" disabled={busy || !target || target === lead.assigned_user || !people.some(p => p.id === target && !p.disabled)} onClick={async () => {
+        if (!people.some(p => p.id === target && !p.disabled)) return;
         if (!confirm(`Lead mit allen verknüpften Angeboten und offenen Wiedervorlagen an ${people.find(p => p.id === target)?.name || 'diesen Mitarbeiter'} verschieben?`)) return;
         setBusy(true);
         try { await reassignLead(lead.id, target); toast.success('Lead und verknüpfte Angebote neu zugewiesen'); await onAssigned(); setTarget(''); }
