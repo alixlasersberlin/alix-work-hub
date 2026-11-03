@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
 import { canAccessSalesLeads, isSalesLeadPath } from "@/lib/sales/lead-access";
+import { isSalesPortalPath, rememberSalesReturn } from '@/lib/sales/portal-navigation';
+import SalesPortalLayout from '@/components/sales/SalesPortalLayout';
+import SalesPortalDocuments from '@/pages/SalesLeads/SalesPortalDocuments';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -1276,9 +1279,12 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
   const location = useLocation();
   const [personalOfferAccess, setPersonalOfferAccess] = useState(false);
   useEffect(() => {
+    if (isSalesPortalPath(location.pathname) && (!user || mfaState !== 'verified')) rememberSalesReturn(`${location.pathname}${location.search}`);
+  }, [user?.id, mfaState, location.pathname, location.search]);
+  useEffect(() => {
     let active = true;
     setPersonalOfferAccess(false);
-    if (!user || location.pathname !== '/verkauf/angebot/neu') return;
+    if (!user || !['/verkauf/angebot/neu', '/meine-leads/angebot'].includes(location.pathname)) return;
     const params = new URLSearchParams(location.search);
     const lead = params.get('lead');
     const edit = params.get('edit');
@@ -1445,6 +1451,14 @@ function AppRoutes() {
         <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
         <Route path="/m/kalender" element={<ProtectedRoute><EscMobileCalendar /></ProtectedRoute>} />
         <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
+        <Route path="/meine-leads" element={<ProtectedRoute><SalesPortalLayout /></ProtectedRoute>}>
+          <Route index element={<MyLeads />} />
+          <Route path="akte/:id" element={<MyLeadDetail />} />
+          <Route path="angebote" element={<SalesPortalDocuments kind="offers" />} />
+          <Route path="auftraege" element={<SalesPortalDocuments kind="orders" />} />
+          <Route path="angebot" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order']}><AngebotErstellen /></ProtectedRoute>} />
+          <Route path="whatsapp-eingang" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><WhatsAppInbox /></ProtectedRoute>} />
+        </Route>
 
         {/* Öffentliche Kundenportale – KEIN Login, KEIN AppLayout */}
         <Route path="/liefertermin/:token" element={<LieferterminBestaetigung />} />
@@ -2794,6 +2808,12 @@ function AppRoutes() {
   );
 }
 
+function InternalWorkspaceTools() {
+  const location = useLocation();
+  if (isSalesPortalPath(location.pathname)) return null;
+  return <><AuroraSpotlight /><CursorSpotlight /><GlobalCommandBar /><CopilotBar /><ShortcutsOverlay />{!isPhone() && <><LeihgeraetReminder /><BackupWarningGate /></>}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -2811,18 +2831,8 @@ const App = () => (
                     <AIBackground />
                     <AppRoutes />
                     <AuditMount />
-                    <AuroraSpotlight />
-                    <CursorSpotlight />
-                    <GlobalCommandBar />
-                    <CopilotBar />
-                    <ShortcutsOverlay />
+                    <InternalWorkspaceTools />
                     <TopProgressBar />
-                    {!isPhone() && (
-                      <>
-                        <LeihgeraetReminder />
-                        <BackupWarningGate />
-                      </>
-                    )}
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
                   </AccountingRegionProvider>

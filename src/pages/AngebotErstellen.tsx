@@ -10,7 +10,8 @@ import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { isSalesPortalPath } from '@/lib/sales/portal-navigation';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { createPDF } from '@/lib/pdf-utils';
@@ -88,6 +89,10 @@ const LEAD_SOURCES = ['ChatGPT', 'Google', 'Instagram', 'Facebook', 'Empfehlung'
 export default function AngebotErstellen() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const portal = isSalesPortalPath(location.pathname);
+  const returnLead = searchParams.get('lead') || searchParams.get('returnLead');
+  const offersReturn = portal ? (returnLead ? `/meine-leads/akte/${encodeURIComponent(returnLead)}` : '/meine-leads/angebote') : '/verkauf/angebote';
   const sofortMode = searchParams.get('mode') === 'sofort';
   const { roles, user } = useAuth();
   // Admin + Super Admin dürfen Angebote selbst bestätigen/signieren und in einen Auftrag wandeln
@@ -1930,7 +1935,7 @@ export default function AngebotErstellen() {
       await updateOfferStatus(offerNumber, 'order', new Date().toISOString());
 
       toast.success(sofortMode ? `Sofortauftrag angelegt – Auftrag ${orderNr}.` : `Angebot bestätigt – Auftrag ${orderNr} wurde angelegt.`);
-      navigate(sofortMode ? '/auftraege' : '/verkauf/angebote');
+      navigate(portal ? offersReturn : sofortMode ? '/auftraege' : '/verkauf/angebote');
 
     } catch (e: any) {
       toast.error('Bestätigung fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
@@ -2132,7 +2137,7 @@ export default function AngebotErstellen() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/verkauf/angebote')}
+          onClick={() => navigate(offersReturn)}
           className="mb-3 -ml-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4 mr-1.5" />
@@ -3065,7 +3070,7 @@ export default function AngebotErstellen() {
             <Button
               variant="outline"
               className="gap-2 border-border"
-              onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
+              onClick={async () => { if (await saveOffer()) navigate(offersReturn); }}
               disabled={isLockedForEdit}
               title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
             >
