@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { isSalesPortalPath } from '@/lib/sales/portal-navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,8 @@ import { loadWhatsAppInbox, loadWhatsAppAssignees, assignWhatsAppLead, loadWhats
 
 export default function WhatsAppInbox() {
   const { roles } = useAuth();
+  const location = useLocation();
+  const leadBase = isSalesPortalPath(location.pathname) ? '/meine-leads/akte' : '/vertrieb/meine-leads';
   const allowed = canAccessSalesLeads(roles);
   const [rows, setRows] = useState<WhatsAppInboxLead[]>([]);
   const [review, setReview] = useState<WhatsAppReview[]>([]);
