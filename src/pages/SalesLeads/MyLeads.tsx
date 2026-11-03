@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { canReassignLeads, leadInWorkspace, isWhatsAppLead, matchesSessionStatus, sessionStatusLabel, WHATSAPP_SESSION_STATUSES, loadLeadUsers, matchesLeadUser, type LeadUser } from '@/lib/sales/lead-admin';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Users, ArrowRight, RefreshCw, AlertTriangle, Archive, Trash2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { loadMyLeads, loadLeadStats, leadTitle, followupState, isUnworked48h, MY_LEAD_STATUSES, type MyLead } from '@/lib/sales/my-leads';
 import { LiveSalesSessions } from '@/components/sales/LiveSalesSessions';
 
@@ -48,10 +50,18 @@ export default function MyLeads() {
     catch (e) { setError(e instanceof Error ? e.message : 'Leads konnten nicht geladen werden.'); setLeads([]); }
     finally { setLoading(false); }
   }, [all, isAdmin, current?.id]);
+  const [showArchived, setShowArchived] = useState(false);
+  const adminLead = async (id: string, action: 'archive' | 'restore' | 'delete') => {
+    if (action === 'delete' && !confirm('Lead endgültig löschen? Verlauf und Wiedervorlagen werden mitgelöscht.')) return;
+    const { error: e } = action === 'delete' ? await supabase.rpc('ml_admin_delete_lead' as any, { _lead_id: id }) : await supabase.rpc('ml_admin_archive_lead' as any, { _lead_id: id, _archived: action === 'archive' });
+    if (e) { toast.error(e.message); return; }
+    toast.success(action === 'delete' ? 'Lead gelöscht' : action === 'archive' ? 'Lead archiviert' : 'Lead wiederhergestellt');
+    void reload();
+  };
   useEffect(() => { if (view !== 'whatsapp') void reload(); }, [reload, view]);
   useRealtimeRefresh(['sales_leads', 'sales_followups', 'sales_lead_history', 'offers', 'orders'], reload, { debounceMs: 1000 });
   useEffect(() => { if (view === 'whatsapp') return; const id = setInterval(() => { if (!document.hidden) void reload(); }, 30000); return () => clearInterval(id); }, [reload, view]);
-  const scoped = useMemo(() => leads.filter(l => leadInWorkspace(l, user?.id, isAdmin, all, current?.id) && (!superAdmin || matchesLeadUser(l, selectedUser))), [leads, all, isAdmin, user?.id, current, superAdmin, selectedUser]);
+  const scoped = useMemo(() => leads.filter(l => (showArchived ? !!(l as any).archived : !(l as any).archived) && leadInWorkspace(l, user?.id, isAdmin, all, current?.id) && (!superAdmin || matchesLeadUser(l, selectedUser))), [leads, all, isAdmin, user?.id, current, superAdmin, selectedUser, showArchived]);
   const visible = scoped.filter(l => (view !== 'whatsapp' || isWhatsAppLead(l)) && (!showSessions || matchesSessionStatus(l, sessionStatus)) && (view !== 'kontakt' || ['Neu', 'Kontaktaufnahme läuft'].includes(l.lead_status)) && (view !== 'neu' || (!l.workspace?.last_activity_at && !['Gewonnen', 'Verloren', 'Archiviert'].includes(l.lead_status))) && (view !== 'wiedervorlagen' || (l.followups || []).some(f => followupState(f) !== 'done')) && (!status || l.lead_status === status) && (!priority || (l.workspace?.priority || 'Normal') === priority) && (!product || (l.requested_products || '').toLowerCase().includes(product.toLowerCase())) && (!from || l.created_at.slice(0, 10) >= from) && (!to || l.created_at.slice(0, 10) <= to) && [leadTitle(l), l.email, l.phone, l.lead_number].join(' ').toLowerCase().includes(query.toLowerCase()));
   const tasks = scoped.flatMap(l => l.followups || []);
   const metrics = [
