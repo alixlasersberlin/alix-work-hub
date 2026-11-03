@@ -1,0 +1,6 @@
+import { z } from 'npm:zod@3';
+const media = z.object({ id: z.string().min(1).max(200), name: z.string().max(250), mime: z.string().max(100) }).strict();
+export const ChatEvent = z.object({ event: z.enum(['sales.whatsapp.message', 'sales.whatsapp.status']), event_id: z.string().min(1).max(200), source: z.literal('alixsmart'), version: z.literal(1), occurred_at: z.string().datetime({ offset: true }), data: z.object({ tenant_id: z.string().uuid(), contact_id: z.string().min(1).max(200), conversation_id: z.string().min(1).max(200), message_id: z.string().min(1).max(200), area: z.literal('sales'), direction: z.enum(['inbound','outbound']).optional(), text: z.string().max(10000).optional(), status: z.enum(['received','queued','sent','delivered','read','failed','undelivered']).optional(), error: z.string().max(500).optional(), media: z.array(media).max(10).optional() }).strict() }).strict().superRefine((v, ctx) => {
+  if (v.event === 'sales.whatsapp.message' && (!v.data.direction || !v.data.text?.trim() && !v.data.media?.length)) ctx.addIssue({ code: 'custom', message: 'Message required' });
+  if (v.event === 'sales.whatsapp.status' && (!v.data.status || v.data.status === 'received')) ctx.addIssue({ code: 'custom', message: 'Delivery status required' });
+});
