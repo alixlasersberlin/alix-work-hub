@@ -58589,6 +58589,7 @@ export type Database = {
         Args: { _create?: boolean; _lead_id: string }
         Returns: string
       }
+      ml_reassign: { Args: { _lead: string; _user: string }; Returns: Json }
       ml_scoped_stats: {
         Args: { _all?: boolean; _tenant?: string }
         Returns: Json
