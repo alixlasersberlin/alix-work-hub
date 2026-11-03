@@ -68,6 +68,7 @@
 - [x] WhatsApp Sales als Gesprächsliste mit Kontaktkennzeichnung, Statusreitern, Zeit und Zuweisung statt UUID-Tabelle gestaltet; bestehende API und Rechte unverändert. Namen/Vorschauen fehlen im strikten Quellvertrag, daher ausdrücklich als nicht übermittelt gekennzeichnet.
 - [ ] Gewünschte Kundennamen und Nachrichtenvorschauen anzeigen — ALIXSMART muss diese im autorisierten Listenvertrag bereitstellen; kein Import, keine erfundenen Vorschautexte. Angemeldete Ansichtsprüfung wegen externer Anmeldung offen.
 
+- [x] Zeitüberschreitung in Meine Leads: Kennzahlenabfrage mit unveränderten Zugriffskontrollen materialisiert und Auftragsverknüpfungen indexiert; gemessene Abfrage von 8,84 Sekunden auf 37 Millisekunden reduziert. Liste lädt unabhängig von Kennzahlenfehlern; angemeldete Abnahme wegen externer Anmeldung nicht verfügbar.
 - [x] Mitarbeiterzuweisung in der Leadakte: alle 17 geschützten Benutzer anzeigen, acht vorhandene Mandantenfreigaben auswählbar; inaktive/nicht freigegebene Benutzer sichtbar deaktiviert. Keine Benutzer-/Mandantenrechte verändert.
 
 - [x] Auf ausdrücklichen Auftrag alle 17 bestehenden Mitarbeiter für alle sieben bestehenden Mandanten freigegeben; fehlende Mitgliedschaften idempotent ergänzt, bestehende Rollen/Kontosperren unverändert. Vollständigkeit serverseitig geprüft.

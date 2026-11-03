@@ -25,6 +25,7 @@ export default function MyLeads() {
   const [stats, setStats] = useState({ open_offers: 0, order_value: 0, orders: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [statsError, setStatsError] = useState('');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
   const [sessionStatus, setSessionStatus] = useState('');
@@ -46,9 +47,14 @@ export default function MyLeads() {
   const showSessions = superAdmin && view === 'whatsapp';
   useEffect(() => { setAll(isAdmin && (superAdmin || view === 'gesamt')); }, [view, isAdmin, superAdmin]);
   const reload = useCallback(async () => {
-    try { const [rows, metrics] = await Promise.all([loadMyLeads(), loadLeadStats(all && isAdmin, all && isAdmin ? null : current?.id || null)]); setLeads(rows); setStats(metrics); setError(''); }
-    catch (e) { setError(e instanceof Error ? e.message : 'Leads konnten nicht geladen werden.'); setLeads([]); }
-    finally { setLoading(false); }
+    await Promise.all([
+      loadMyLeads().then(rows => { setLeads(rows); setError(''); })
+        .catch(e => { setError(e instanceof Error ? e.message : 'Leads konnten nicht geladen werden.'); })
+        .finally(() => setLoading(false)),
+      loadLeadStats(all && isAdmin, all && isAdmin ? null : current?.id || null)
+        .then(metrics => { setStats(metrics); setStatsError(''); })
+        .catch(() => { setStatsError('Angebots- und Auftragskennzahlen konnten nicht aktualisiert werden.'); }),
+    ]);
   }, [all, isAdmin, current?.id]);
   const [showArchived, setShowArchived] = useState(false);
   const adminLead = async (id: string, action: 'archive' | 'restore' | 'delete') => {
@@ -73,7 +79,8 @@ export default function MyLeads() {
   return <div className="p-4 md:p-6 space-y-6">
     <header className="flex justify-between items-center gap-3 flex-wrap"><div><div className="flex items-center gap-2 text-primary"><Users className="h-5 w-5" /><span className="text-sm">Vertrieb</span></div><h1 className="text-2xl font-semibold mt-2">Meine Leads</h1></div><div className="flex gap-2">{superAdmin && <Button variant={showArchived ? 'default' : 'outline'} onClick={() => setShowArchived(v => !v)}><Archive className="h-4 w-4 mr-1.5" />{showArchived ? 'Archiv' : 'Archiv anzeigen'}</Button>}{isAdmin && <Button variant={all ? 'default' : 'outline'} onClick={() => setAll(!all)}>{all ? 'Alle Leads' : 'Meine Leads'}</Button>}<Button variant="outline" size="icon" aria-label="Aktualisieren" onClick={() => void reload()}><RefreshCw className="h-4 w-4" /></Button></div></header>
     {error && <div role="alert" className="border border-destructive bg-destructive/10 p-4 text-destructive">{error}<Button variant="outline" className="ml-3" onClick={() => void reload()}>Erneut laden</Button></div>}
-    <section className="grid grid-cols-2 lg:grid-cols-4 border-y border-border">{metrics.map(([label, value]) => <div key={label} className="p-4 border-b border-border"><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold mt-2">{loading ? '—' : value}</p></div>)}</section>
+    {statsError && <p role="status" className="text-sm text-destructive">{statsError}</p>}
+    <section className="grid grid-cols-2 lg:grid-cols-4 border-y border-border">{metrics.map(([label, value]) => <div key={label} className="p-4 border-b border-border"><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold mt-2">{loading || (statsError && ['Offene Angebote', 'Auftragswert'].includes(String(label))) ? '—' : value}</p></div>)}</section>
     {superAdmin && <div className="space-y-2"><Select value={selectedUser || 'all'} onValueChange={value => { setSelectedUser(value === 'all' ? '' : value); setAll(true); }}><SelectTrigger className="w-full sm:w-80" aria-label="Benutzer auswählen"><SelectValue placeholder="Alle Benutzer" /></SelectTrigger><SelectContent><SelectItem value="all">Alle Benutzer</SelectItem><SelectItem value="unassigned">Nicht zugewiesen</SelectItem>{people.map(person => <SelectItem key={person.id} value={person.id}>{person.full_name || person.id}{person.is_active === false ? ' · Inaktiv' : ''}</SelectItem>)}</SelectContent></Select>{userError && <p role="alert" className="text-sm text-destructive">{userError}</p>}</div>}
     {showSessions && <div className="flex items-center gap-3 flex-wrap"><Select value={sessionStatus || 'all'} onValueChange={value => setSessionStatus(value === 'all' ? '' : value)}><SelectTrigger className="w-full sm:w-72" aria-label="Gesprächsstatus"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Alle Sessions · alle Status</SelectItem>{WHATSAPP_SESSION_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}{[...new Set(scoped.map(l => l.whatsapp_session?.status).filter((s): s is string => !!s && !WHATSAPP_SESSION_STATUSES.some(known => known.value === s)))].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}<SelectItem value="unknown">Status nicht übermittelt</SelectItem></SelectContent></Select><Badge variant="outline">{visible.length} Sessions</Badge></div>}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Input aria-label="Leads durchsuchen" placeholder="Name, E-Mail, Telefonnummer …" value={query} onChange={e => setQuery(e.target.value)} /><select aria-label="Leadstatus" className="h-10 rounded-md border border-input bg-background px-3" value={status} onChange={e => setStatus(e.target.value)}><option value="">Alle Status</option>{[...new Set([...MY_LEAD_STATUSES, ...leads.map(l => l.lead_status)])].map(s => <option key={s}>{s}</option>)}</select><select aria-label="Priorität" className="h-10 rounded-md border border-input bg-background px-3" value={priority} onChange={e => setPriority(e.target.value)}><option value="">Alle Prioritäten</option>{['Niedrig', 'Normal', 'Hoch', 'Dringend'].map(s => <option key={s}>{s}</option>)}</select><Input aria-label="Produktfilter" placeholder="Produkt" value={product} onChange={e => setProduct(e.target.value)} /><label className="text-xs text-muted-foreground">Eingang ab<Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label className="text-xs text-muted-foreground">Eingang bis<Input type="date" value={to} onChange={e => setTo(e.target.value)} /></label></div>
