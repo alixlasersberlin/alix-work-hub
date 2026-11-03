@@ -72,3 +72,4 @@
 - [x] Mitarbeiterzuweisung in der Leadakte: alle 17 geschützten Benutzer anzeigen, acht vorhandene Mandantenfreigaben auswählbar; inaktive/nicht freigegebene Benutzer sichtbar deaktiviert. Keine Benutzer-/Mandantenrechte verändert.
 
 - [x] Auf ausdrücklichen Auftrag alle 17 bestehenden Mitarbeiter für alle sieben bestehenden Mandanten freigegeben; fehlende Mitgliedschaften idempotent ergänzt, bestehende Rollen/Kontosperren unverändert. Vollständigkeit serverseitig geprüft.
+- [ ] Auftragsliste: Zeitüberschreitung reproduzieren, Laden beschleunigen und prüfen; bestehende Zugriffsrechte und vollständige Filter beibehalten.
