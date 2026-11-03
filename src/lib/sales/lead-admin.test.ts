@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { canReassignLeads, leadInWorkspace, isWhatsAppLead, matchesSessionStatus } from './lead-admin';
+import { canReassignLeads, leadInWorkspace, isWhatsAppLead, matchesSessionStatus, matchesLeadUser } from './lead-admin';
 const lead = { id: 'lead', created_at: '2026-11-03', lead_status: 'Neu', assigned_user: 'other', tenant_id: 'at' };
 describe('Super Admin lead workspace', () => {
+  it('filters by any selected user or unassigned without hiding users with no matching leads', () => {
+    expect(matchesLeadUser(lead, '')).toBe(true);
+    expect(matchesLeadUser(lead, 'other')).toBe(true);
+    expect(matchesLeadUser(lead, 'another')).toBe(false);
+    expect(matchesLeadUser(lead, 'unassigned')).toBe(false);
+    expect(matchesLeadUser({ ...lead, assigned_user: undefined }, 'unassigned')).toBe(true);
+  });
   it('allows reassignment only for the explicit Super Admin role', () => {
     expect(canReassignLeads(['Super Admin'])).toBe(true);
     for (const role of ['Admin', 'Vertrieb', 'Vertriebsleitung', 'Geschäftsführung']) expect(canReassignLeads([role])).toBe(false);
