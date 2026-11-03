@@ -58581,6 +58581,11 @@ export type Database = {
         Args: { _action: string; _data?: Json; _lead_id: string }
         Returns: Json
       }
+      ml_admin_archive_lead: {
+        Args: { _archived?: boolean; _lead_id: string }
+        Returns: undefined
+      }
+      ml_admin_delete_lead: { Args: { _lead_id: string }; Returns: undefined }
       ml_can_access: { Args: { _lead_id: string }; Returns: boolean }
       ml_customer_access: { Args: { _customer_id: string }; Returns: boolean }
       ml_detail: { Args: { _lead_id: string }; Returns: Json }
