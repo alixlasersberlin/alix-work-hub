@@ -1,4 +1,4 @@
-import { loadAllPages } from '@/lib/mediapaket/load-all-pages';
+import { loadOrdersProgressively } from '@/lib/orders-progressive-load';
 import { OrderSelectionToolbar } from '@/components/OrderSelectionToolbar';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -46,8 +46,6 @@ type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at' |
 type SortDir = 'asc' | 'desc';
 type PageSize = 20 | 30 | 50 | 'all';
 
-const QUICK_LOAD_LIMIT = 50;
-
 // Normalisiert Währungsangaben aus der DB (z. B. "€", "$") auf ISO-4217-Codes,
 // da Intl.NumberFormat sonst mit RangeError abbricht.
 const CURRENCY_SYMBOL_MAP: Record<string, string> = { '€': 'EUR', '$': 'USD', '£': 'GBP', 'CHF': 'CHF' };
@@ -60,7 +58,7 @@ const cur = (c?: string | null): string => {
 
 const ORDER_SELECT: string = `
     id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
-    currency, total_amount, order_date, expected_shipment_date, salesperson_name,
+    currency, total_amount, order_date, created_at, expected_shipment_date, salesperson_name,
     internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
     deposit_amount, deposit_additional, deposit_booking_date, is_vip,
     finance_total_amount, finance_deposit_amount, finance_remaining_amount,
@@ -453,14 +451,12 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
     setLoading(true);
     setError(null);
     const orderSelect = ORDER_SELECT;
-    const isClientSortField = sortField === 'deposit_status';
-    const serverSortField = isClientSortField ? 'order_date' : sortField;
-    const serverSortAsc = isClientSortField ? false : sortDir === 'asc';
-    const fetchOrders = (limit: number) => supabase
+    const fetchOrders = (from: number, to: number) => supabase
       .from('orders')
       .select(orderSelect)
-      .order(serverSortField, { ascending: serverSortAsc, nullsFirst: false })
-      .limit(limit);
+      .order('order_date', { ascending: false, nullsFirst: false })
+      .order('id')
+      .range(from, to);
 
     const expandOrders = (loaded: any[]) => loaded.map(o => ({
         ...o,
@@ -524,6 +520,13 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
           : Promise.resolve({ data: [] as any[] }),
       ]);
       if (requestId !== loadRequestRef.current) return;
+      const detailError = [itemsRes, posRes, depRes, depByNumberRes, zohoInvRes, zohoAzRes, addDepRes]
+        .find(result => 'error' in result && result.error);
+      if (detailError && 'error' in detailError && detailError.error) {
+        const reason = detailError.error;
+        throw new Error(typeof reason === 'object' && 'message' in reason
+          ? String(reason.message) : 'Auftragsdetails konnten nicht geladen werden');
+      }
 
       const itemsByOrder: Record<string, any[]> = {};
       (itemsRes.data || []).forEach((item: any) => {
@@ -608,33 +611,34 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
       }) : o));
     };
 
-    const { data, error: err } = await fetchOrders(QUICK_LOAD_LIMIT);
-    if (requestId !== loadRequestRef.current) return;
-    if (err) setError(err.message);
-    const loaded = data ?? [];
-
-    setOrders(expandOrders(loaded));
-    setLoading(false);
-    attachOrderDetails(loaded);
-
-    if (err || loaded.length < QUICK_LOAD_LIMIT) return;
+    let firstPage = true;
     try {
-      const fullLoaded = await loadAllPages((from, to) => supabase.from('orders')
-        .select(orderSelect)
-        .order(serverSortField, { ascending: serverSortAsc, nullsFirst: false })
-        .order('id').range(from, to));
-      if (requestId !== loadRequestRef.current) return;
-      setOrders(expandOrders(fullLoaded));
-      for (let start = 0; start < fullLoaded.length; start += 500) {
-        if (requestId !== loadRequestRef.current) return;
-        await attachOrderDetails(fullLoaded.slice(start, start + 500));
-      }
+      await loadOrdersProgressively(fetchOrders, async loaded => {
+        const expanded = expandOrders(loaded);
+        if (firstPage) {
+          setOrders(expanded);
+          firstPage = false;
+          setLoading(false);
+        } else {
+          setOrders(prev => {
+            const known = new Set(prev.map(o => o.id));
+            return [...prev, ...expanded.filter(o => !known.has(o.id))];
+          });
+        }
+        await attachOrderDetails(loaded);
+      }, () => requestId === loadRequestRef.current);
+      if (firstPage && requestId === loadRequestRef.current) setOrders([]);
     } catch (e) {
       if (requestId === loadRequestRef.current) setError(e instanceof Error ? e.message : 'Aufträge konnten nicht vollständig geladen werden');
+    } finally {
+      if (requestId === loadRequestRef.current) setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, [sortField, sortDir]);
+  useEffect(() => {
+    load();
+    return () => { loadRequestRef.current++; };
+  }, []);
 
   // Serverseitige Suche: bei Eingabe im Suchfeld direkt in DB nachladen,
   // damit auch Aufträge außerhalb der 500 zuletzt geladenen gefunden werden.
@@ -778,7 +782,16 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
         const diff = depositRank(a) - depositRank(b);
         return sortDir === 'asc' ? diff : -diff;
       })
-    : filtered;
+    : [...filtered].sort((a, b) => {
+        const left = a[sortField];
+        const right = b[sortField];
+        if (left == null) return right == null ? 0 : 1;
+        if (right == null) return -1;
+        const diff = sortField === 'total_amount'
+          ? Number(left) - Number(right)
+          : String(left).localeCompare(String(right));
+        return sortDir === 'asc' ? diff : -diff;
+      });
 
   // VIP-Kunden und VIP-Aufträge immer an Position 1
   const sorted = vipFirst(filteredSorted, isOrderVip);
