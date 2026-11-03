@@ -1,0 +1,13 @@
+{
+  "id": "/meine-leads",
+  "name": "ALIX LASERS Sales",
+  "short_name": "ALIX Sales",
+  "description": "Persönlicher Vertrieb – ALIX LASERS",
+  "start_url": "/meine-leads",
+  "scope": "/meine-leads",
+  "display": "standalone",
+  "icons": [
+    { "src": "/sales-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/sales-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

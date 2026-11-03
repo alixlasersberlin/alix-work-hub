@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { isSalesPortalPath } from '@/lib/sales/portal-navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
@@ -15,6 +16,9 @@ const CONTACT_RESULTS = ['Erreicht', 'Nicht erreicht', 'Rückruf vereinbart', 'A
 const money = (value: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value || 0);
 export default function MyLeadDetail() {
   const { id } = useParams(); const navigate = useNavigate(); const { isAdmin } = useAuth(); const { allowedTenants } = useTenant();
+  const location = useLocation(); const portal = isSalesPortalPath(location.pathname);
+  const listPath = portal ? '/meine-leads' : '/vertrieb/meine-leads';
+  const leadBase = portal ? '/meine-leads/akte' : '/vertrieb/meine-leads';
   const [detail, setDetail] = useState<LeadDetail | null>(null); const [siblings, setSiblings] = useState<MyLead[]>([]); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const [channel, setChannel] = useState('Telefon'); const [result, setResult] = useState('Erreicht'); const [note, setNote] = useState(''); const [interest, setInterest] = useState(''); const [nextAction, setNextAction] = useState(''); const [due, setDue] = useState(''); const [title, setTitle] = useState(''); const [followupNote, setFollowupNote] = useState('');
   const [priority, setPriority] = useState('Normal'); const [information, setInformation] = useState<Record<string, string>>({}); const [tenant, setTenant] = useState(''); const [contactDue, setContactDue] = useState('');
@@ -40,7 +44,7 @@ export default function MyLeadDetail() {
         }
       }
       sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify({ lead_id: l.id, customer_id: customer, customer_email: l.email, customer_company: l.company, notes: [l.requested_products, l.message, ...Object.entries(information).map(([k, v]) => `${k}: ${v}`)].filter(Boolean).join('\n'), source: 'sales_lead' }));
-      navigate(`/verkauf/angebot/neu?lead=${l.id}`);
+      navigate(`${portal ? '/meine-leads/angebot' : '/verkauf/angebot/neu'}?lead=${l.id}`);
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Angebot konnte nicht vorbereitet werden.'); }
     finally { setBusy(false); }
   };

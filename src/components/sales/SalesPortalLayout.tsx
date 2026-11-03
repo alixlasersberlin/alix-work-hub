@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { clearPendingWelcome } from '@/lib/postLogin';
 import { clearSalesReturn } from '@/lib/sales/portal-navigation';
 import logo from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
+import SalesPortalPwa from './SalesPortalPwa';
 
 const items = [
   ['Meine Leads', '', Users], ['Neue Anfragen', '?ansicht=neu', Inbox],
@@ -23,6 +24,7 @@ export default function SalesPortalLayout() {
     return () => { document.title = oldTitle; };
   }, []);
   return <div className="h-dvh flex flex-col bg-background text-foreground overflow-hidden">
+    <SalesPortalPwa />
     <header className="shrink-0 border-b border-border bg-card px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
       <Link to="/meine-leads" aria-label="ALIX LASERS – Meine Leads" className="flex items-center gap-3"><img src={logo.url} alt="ALIX LASERS" className="w-32 sm:w-40 h-10 object-contain" /><span className="hidden sm:block text-xs border-l border-border pl-3 text-muted-foreground">Sales</span></Link>
       <div className="flex items-center gap-2 sm:gap-4"><TenantSwitcher /><span className="hidden md:flex items-center gap-2 text-sm"><UserCircle className="w-4 h-4" />{profile?.full_name || 'Mein Profil'}</span><Button variant="ghost" size="icon" aria-label="Abmelden" title="Abmelden" onClick={async () => { await signOut(); clearSalesReturn(); navigate('/meine-leads', { replace: true }); }}><LogOut className="w-4 h-4" /></Button></div>
