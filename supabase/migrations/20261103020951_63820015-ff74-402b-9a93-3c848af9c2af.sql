@@ -1,0 +1,7 @@
+CREATE OR REPLACE FUNCTION lead_private.ml_list(_offset integer DEFAULT 0, _limit integer DEFAULT 200)
+ RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $function$ BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Anmeldung erforderlich' USING ERRCODE='42501'; END IF;
+ IF _offset<0 OR _limit<1 OR _limit>200 THEN RAISE EXCEPTION 'Ungültige Seitengröße'; END IF;
+ RETURN coalesce((SELECT jsonb_agg(x.row) FROM(SELECT to_jsonb(l)-'metadata' || jsonb_build_object('whatsapp_session',jsonb_build_object('linked',coalesce(l.metadata->'whatsapp_sales'->>'contact_id','')<>'' AND coalesce(l.metadata->'whatsapp_sales'->>'conversation_id','')<>'','status',l.metadata->'whatsapp_sales'->>'conversation_status'),'workspace',coalesce(l.metadata->'lead_workspace','{}'::jsonb)||jsonb_strip_nulls(jsonb_build_object('last_activity_at',coalesce(l.metadata->'lead_workspace'->>'last_activity_at',(SELECT max(h.created_at)::text FROM public.sales_lead_history h WHERE h.lead_id=l.id AND h.action IN ('contact_activity','call','email_sent','whatsapp_sent','meeting'))))), 'followups',coalesce((SELECT jsonb_agg(to_jsonb(f)) FROM public.sales_followups f WHERE f.lead_id=l.id),'[]'::jsonb)) AS row FROM public.sales_leads l WHERE public.ml_can_access(l.id) ORDER BY l.created_at DESC,l.id OFFSET _offset LIMIT _limit)x),'[]'::jsonb);
+ END $function$;

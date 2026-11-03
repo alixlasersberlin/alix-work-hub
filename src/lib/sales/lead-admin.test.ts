@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canReassignLeads, leadInWorkspace } from './lead-admin';
+import { canReassignLeads, leadInWorkspace, isWhatsAppLead, matchesSessionStatus } from './lead-admin';
 const lead = { id: 'lead', created_at: '2026-11-03', lead_status: 'Neu', assigned_user: 'other', tenant_id: 'at' };
 describe('Super Admin lead workspace', () => {
   it('allows reassignment only for the explicit Super Admin role', () => {
@@ -13,5 +13,24 @@ describe('Super Admin lead workspace', () => {
   it('does not let staff enable a foreign lead overview', () => {
     expect(leadInWorkspace(lead, 'employee', false, true, 'de')).toBe(false);
     expect(leadInWorkspace(lead, 'other', false, true, 'at')).toBe(true);
+  });
+  it('includes closed WhatsApp sessions in the unfiltered overview', () => {
+    const closed = { ...lead, source: 'form', lead_status: 'Archiviert', whatsapp_session: { linked: true, status: 'closed' } };
+    expect(isWhatsAppLead(closed)).toBe(true);
+    expect(matchesSessionStatus(closed, '')).toBe(true);
+    expect(matchesSessionStatus(closed, 'closed')).toBe(true);
+    expect(matchesSessionStatus(closed, 'open')).toBe(false);
+    expect(leadInWorkspace(closed, 'super', true, true, 'de')).toBe(true);
+    expect(leadInWorkspace(closed, 'employee', false, true, 'de')).toBe(false);
+  });
+  it('filters every conversation status without equating lead outcomes with closed sessions', () => {
+    for (const status of ['open', 'pending', 'resolved', 'closed', 'snoozed', 'custom']) {
+      const session = { ...lead, whatsapp_session: { linked: true, status } };
+      expect(matchesSessionStatus(session, '')).toBe(true);
+      expect(matchesSessionStatus(session, status)).toBe(true);
+      expect(matchesSessionStatus(session, 'unknown')).toBe(false);
+    }
+    expect(matchesSessionStatus({ ...lead, lead_status: 'Gewonnen' }, 'closed')).toBe(false);
+    expect(matchesSessionStatus(lead, 'unknown')).toBe(true);
   });
 });
