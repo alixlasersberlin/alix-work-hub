@@ -1433,6 +1433,12 @@ export default function AppLayout() {
 
 
 
+            {roles?.includes('Super Admin') && (
+              <Button variant="ghost" className="h-8 justify-start text-[13px] px-2 text-muted-foreground hover:text-primary flex-shrink-0" onClick={() => navigate('/meine-leads')} title="Zu Meine Leads wechseln">
+                <Users className="w-4 h-4" />
+                <span className="ml-1.5">Leads</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               className="h-8 ml-auto justify-start text-[13px] px-2 text-muted-foreground hover:text-destructive flex-shrink-0"

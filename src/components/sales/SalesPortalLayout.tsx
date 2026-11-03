@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Users, Inbox, Phone, CalendarClock, FileText, Package, MessageCircle, LogOut, ShieldCheck, UserCircle } from 'lucide-react';
+import { Users, Inbox, Phone, CalendarClock, FileText, Package, MessageCircle, LogOut, ShieldCheck, UserCircle, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +16,8 @@ const items = [
 ] as const;
 
 export default function SalesPortalLayout() {
-  const { profile, isAdmin, signOut } = useAuth();
+  const { profile, isAdmin, signOut, roles } = useAuth();
+  const superAdmin = (roles || []).includes('Super Admin');
   const location = useLocation(); const navigate = useNavigate();
   useEffect(() => { clearSalesReturn(); clearPendingWelcome(); }, []);
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function SalesPortalLayout() {
     <SalesPortalPwa />
     <header className="shrink-0 border-b border-border bg-card px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
       <Link to="/meine-leads" aria-label="ALIX LASERS – Meine Leads" className="flex items-center gap-3"><img src={logo.url} alt="ALIX LASERS" className="w-32 sm:w-40 h-10 object-contain" /><span className="hidden sm:block text-xs border-l border-border pl-3 text-muted-foreground">Sales</span></Link>
-      <div className="flex items-center gap-2 sm:gap-4"><TenantSwitcher /><span className="hidden md:flex items-center gap-2 text-sm"><UserCircle className="w-4 h-4" />{profile?.full_name || 'Mein Profil'}</span><Button variant="ghost" size="icon" aria-label="Abmelden" title="Abmelden" onClick={async () => { await signOut(); clearSalesReturn(); navigate('/meine-leads', { replace: true }); }}><LogOut className="w-4 h-4" /></Button></div>
+      <div className="flex items-center gap-2 sm:gap-4"><TenantSwitcher />{superAdmin && <Button asChild variant="outline" size="sm"><Link to="/" title="Zu AlixWork wechseln"><LayoutDashboard className="w-4 h-4 mr-1.5" />AlixWork</Link></Button>}<span className="hidden md:flex items-center gap-2 text-sm"><UserCircle className="w-4 h-4" />{profile?.full_name || 'Mein Profil'}</span><Button variant="ghost" size="icon" aria-label="Abmelden" title="Abmelden" onClick={async () => { await signOut(); clearSalesReturn(); navigate('/meine-leads', { replace: true }); }}><LogOut className="w-4 h-4" /></Button></div>
     </header>
     <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
       <nav aria-label="Sales-Portal" className="shrink-0 lg:w-56 border-b lg:border-b-0 lg:border-r border-border bg-card flex lg:flex-col gap-1 p-2 lg:p-4 overflow-x-auto lg:overflow-y-auto">
