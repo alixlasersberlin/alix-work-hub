@@ -7,11 +7,13 @@ import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { canReassignLeads, leadInWorkspace } from '@/lib/sales/lead-admin';
 import { Users, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { loadMyLeads, loadLeadStats, leadTitle, followupState, isUnworked48h, MY_LEAD_STATUSES, type MyLead } from '@/lib/sales/my-leads';
 
 export default function MyLeads() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, roles } = useAuth();
+  const superAdmin = canReassignLeads(roles);
   const { current } = useTenant();
   const location = useLocation();
   const leadBase = isSalesPortalPath(location.pathname) ? '/meine-leads/akte' : '/vertrieb/meine-leads';
@@ -25,19 +27,19 @@ export default function MyLeads() {
   const [product, setProduct] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [all, setAll] = useState(false);
+  const [all, setAll] = useState(superAdmin);
   const [params] = useSearchParams();
   const view = params.get('ansicht');
-  useEffect(() => { setAll(view === 'gesamt' && isAdmin); }, [view, isAdmin]);
+  useEffect(() => { setAll(isAdmin && (superAdmin || view === 'gesamt')); }, [view, isAdmin, superAdmin]);
   const reload = useCallback(async () => {
-    try { const [rows, metrics] = await Promise.all([loadMyLeads(), loadLeadStats(all && isAdmin, current?.id || null)]); setLeads(rows); setStats(metrics); setError(''); }
+    try { const [rows, metrics] = await Promise.all([loadMyLeads(), loadLeadStats(all && isAdmin, all && isAdmin ? null : current?.id || null)]); setLeads(rows); setStats(metrics); setError(''); }
     catch (e) { setError(e instanceof Error ? e.message : 'Leads konnten nicht geladen werden.'); setLeads([]); }
     finally { setLoading(false); }
   }, [all, isAdmin, current?.id]);
   useEffect(() => { void reload(); }, [reload]);
   useRealtimeRefresh(['sales_leads', 'sales_followups', 'sales_lead_history', 'offers', 'orders'], reload, { debounceMs: 1000 });
   useEffect(() => { const id = setInterval(() => { if (!document.hidden) void reload(); }, 30000); return () => clearInterval(id); }, [reload]);
-  const scoped = useMemo(() => leads.filter(l => (all && isAdmin || l.assigned_user === user?.id) && (!current || l.tenant_id === current.id || isAdmin && !l.tenant_id)), [leads, all, isAdmin, user?.id, current]);
+  const scoped = useMemo(() => leads.filter(l => leadInWorkspace(l, user?.id, isAdmin, all, current?.id)), [leads, all, isAdmin, user?.id, current]);
   const visible = scoped.filter(l => (view !== 'whatsapp' || l.source === 'whatsapp_sales') && (view !== 'kontakt' || ['Neu', 'Kontaktaufnahme läuft'].includes(l.lead_status)) && (view !== 'neu' || (!l.workspace?.last_activity_at && !['Gewonnen', 'Verloren', 'Archiviert'].includes(l.lead_status))) && (view !== 'wiedervorlagen' || (l.followups || []).some(f => followupState(f) !== 'done')) && (!status || l.lead_status === status) && (!priority || (l.workspace?.priority || 'Normal') === priority) && (!product || (l.requested_products || '').toLowerCase().includes(product.toLowerCase())) && (!from || l.created_at.slice(0, 10) >= from) && (!to || l.created_at.slice(0, 10) <= to) && [leadTitle(l), l.email, l.phone, l.lead_number].join(' ').toLowerCase().includes(query.toLowerCase()));
   const tasks = scoped.flatMap(l => l.followups || []);
   const metrics = [
