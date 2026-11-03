@@ -1,6 +1,6 @@
 # Auftrag im ALIXSMART-Projekt: geschützte Sales-Verbindung zu ALIXWORK
 
-Die ALIXWORK-Seite ist ergänzt, die ALIXSMART-Seite fehlt im geprüften Stand. Dieses Dokument ist eine Implementierungsanweisung, keine Bestätigung einer aktiven Verbindung. Keine neue WhatsApp-Nummer, kein Providerwechsel. Bestehender Twilio-Sales-Chat bleibt führend. App erst nach Abnahme und ausdrücklicher Freigabe veröffentlichen.
+Die ALIXWORK-Seite ist ergänzt. Im am 03.11.2026 geprüften ALIXSMART-Quellstand (Commit `5911a688`) sind `alixwork-sales-bridge` und `alixwork-sales-dispatch` bereits vorhanden. Ihre produktive Bereitstellung, notwendige Datenbankfunktionen/-felder, bestätigte Zuordnungen und erfolgreiche Übertragung sind hier nicht nachgewiesen. Dieses Dokument ist eine Implementierungs- und Aktivierungsanweisung, keine Bestätigung einer aktiven Verbindung. Keine neue WhatsApp-Nummer, kein Providerwechsel. Bestehender Twilio-Sales-Chat bleibt führend. App erst nach Abnahme und ausdrücklicher Freigabe veröffentlichen.
 
 ## 1. Ereignisse zuverlässig aus bestehendem Chat senden
 
@@ -65,6 +65,12 @@ ALIXSMART kann aus dem ALIXWORK-Chat nur lesend untersucht werden. Implementieru
 ## 4. Bestehende Gespräche übernehmen (Auftrag vom 03.11.2026)
 
 Die Gegenstelle und die Übernahme müssen im ALIXSMART-Projekt vorbereitet werden. Dieser Projektcheckout enthält keine privaten Gesprächsdaten und erlaubt keine Änderungen an ALIXSMART. Kein Abruf privater Datensätze mit Zugangsdaten aus einem Checkout.
+
+### Konkreter Folgeauftrag im ALIXSMART-Chat
+
+Bestehende `alixwork-sales-bridge` und `alixwork-sales-dispatch` vervollständigen und deren Bereitstellung prüfen, nicht nochmals neu anlegen. Die referenzierten `alixwork_sales_config`, `alixwork_sales_users`, `alixwork_sales_bindings` und `provider_webhook_events.bridge_attempts`/`bridge_next_attempt_at`/`bridge_error` gegen die echte Datenbank prüfen: die zugehörigen vollständigen Migrationen wurden im Snapshot nicht nachgewiesen. Fehlende Grundlagen nur nach den ALIXSMART-Projektregeln ergänzen. Mandant und Mitarbeiter-IDs beider Projekte ausdrücklich bestätigen; auch Super-Admin-Zugriff und Neuzuweisung prüfen, ohne Rollen aus dem Anfragetext zu übernehmen. Das gemeinsame Secret nur über sichere Secret-Verwaltung vergleichen/hinterlegen, niemals ausgeben. ALIXWORK erwartet `ALIXSMART_API_BASE_URL` als bestätigte HTTPS-Functions-Basisadresse ohne abschließendes `/alixwork-sales-bridge`.
+
+Quellverlauf aus `whatsapp_conversations` (`area='sales'`, `channel='whatsapp'`) mit `whatsapp_contacts` und `whatsapp_messages` exportieren. Quelle: Kontakt `id`, `phone_e164`, `profile_name`; Gespräch `id`, `contact_id`, `status`, `assigned_user_id`, `last_customer_message_at`; Nachricht `id`, `conversation_id`, `direction`, `body`, `created_at`, `status`, `error_message`, `media_content_type`. `triage_state` ist ein separater Eingangszustand, kein Gesprächsstatus. `message_type='internal_note'` ausschließen. `twilio_message_sid` darf die verwendete stabile ALIXSMART-Nachrichten-ID nicht ersetzen. Der vorhandene `alixsmart-export-readonly`-Exporter gibt JSON aus und enthält diese WhatsApp-Tabellen nicht in seiner Allowlist; dafür einen gezielten geschützten CSV-Export ergänzen, keine allgemeine Exportfreigabe. Vollständig und stabil paginieren, CSV-Werte korrekt maskieren und Tabellenformeln sicher behandeln, ohne Originaltexte unbemerkt zu verändern.
 
 Vor der Übernahme alle vorhandenen Sales-Gespräche paginiert inventarisieren, einschließlich geschlossener Sessions und aller tatsächlichen Quellstatus. Keine Einschränkung auf offene Sessions, keine Ableitung des Gesprächsstatus aus Zustellstatus oder Leadstatus. Technik-, Ticket-, Spam- und interne Kommunikation ausschließen beziehungsweise zur manuellen Prüfung vorlegen. Mandanten- und Mitarbeiterzuordnungen administrativ bestätigen; fehlende Zuordnungen nicht raten. Bestehende Leads nur über bestätigte externe Identitäten verknüpfen, Telefonnummern allein reichen nicht.
 
