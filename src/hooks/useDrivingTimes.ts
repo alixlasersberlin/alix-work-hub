@@ -116,6 +116,8 @@ export function useDrivingTimes() {
         const results = data.results as DrivingTimeMap;
         // Cache schreiben (mit jeweiliger aktueller Adresse als Key)
         for (const item of toFetch) {
+          // Nicht bearbeitete Adressen (Zeitlimit) nicht als Fehler cachen
+          if (!(item.id in results)) continue;
           const result = results[item.id] ?? null;
           writeCache(item.id, {
             addressKey: addressKey(item.address),

@@ -26,6 +26,9 @@ function formatDistance(meters: number): string {
 }
 
 // In-memory geocode cache (per function instance)
+// Overall deadline so the request never hits the 150s idle limit
+let deadline = Date.now() + 100_000;
+
 const geoCache = new Map<string, [number, number] | null>();
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -35,6 +38,7 @@ async function geocodeOnce(address: string): Promise<[number, number] | null | "
   try {
     const r = await fetch(url, {
       headers: { "User-Agent": "AlixWork/1.0 route-planning" },
+      signal: AbortSignal.timeout(8000),
     });
     if (!r.ok) {
       // 5xx → retry, 4xx → permanent fail
@@ -59,7 +63,8 @@ async function geocode(_apiKey: string, address: string): Promise<[number, numbe
   if (geoCache.has(key)) return geoCache.get(key)!;
 
   // Up to 3 attempts with backoff for transient errors
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (Date.now() > deadline) return null;
     const res = await geocodeOnce(address);
     if (res !== "retry") {
       geoCache.set(key, res);
@@ -127,6 +132,7 @@ serve(async (req) => {
     });
   }
 
+  deadline = Date.now() + 100_000;
   try {
     const { destinations } = await req.json();
     if (!Array.isArray(destinations) || destinations.length === 0) {
@@ -142,7 +148,9 @@ serve(async (req) => {
     // We use 1 origin + up to 49 destinations per batch
     const batchSize = 49;
 
+    let partial = false;
     for (let i = 0; i < destinations.length; i += batchSize) {
+      if (Date.now() > deadline) { partial = true; break; }
       const batch = destinations.slice(i, i + batchSize);
 
       // 1) Geocode addresses with limited concurrency (Photon drops connections under load)
@@ -171,7 +179,8 @@ serve(async (req) => {
 
       let matrixResp: Response | null = null;
       let lastErr: unknown = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (Date.now() > deadline) break;
         try {
           matrixResp = await fetch(matrixUrl, {
             method: "POST",
@@ -181,6 +190,7 @@ serve(async (req) => {
               "Accept": "application/json",
             },
             body,
+            signal: AbortSignal.timeout(20000),
           });
           break;
         } catch (e) {
@@ -222,7 +232,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ results }), {
+    return new Response(JSON.stringify({ results, partial }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
