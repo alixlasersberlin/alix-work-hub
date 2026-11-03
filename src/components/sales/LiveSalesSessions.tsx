@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
-import { loadLiveSessions, filterLiveSessions, type LiveSession } from '@/lib/sales/live-sessions';
+import { loadLiveSessions, filterLiveSessions, defaultWhatsAppTenant, type LiveSession } from '@/lib/sales/live-sessions';
 import { WHATSAPP_SESSION_STATUSES, sessionStatusLabel } from '@/lib/sales/lead-admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,8 @@ import { MessageCircle, RefreshCw } from 'lucide-react';
 export function LiveSalesSessions() {
   const { allowedTenants, current } = useTenant();
   const { user } = useAuth();
-  const [tenant, setTenant] = useState(current?.id || '');
+  const [tenant, setTenant] = useState('');
+  const initializedFor = useRef<string | null>(null);
   const [rows, setRows] = useState<LiveSession[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,12 @@ export function LiveSalesSessions() {
   const [query, setQuery] = useState('');
   const generation = useRef(0);
   const busy = useRef(false);
-  useEffect(() => { setTenant(current?.id || ''); }, [current?.id]);
+  useEffect(() => {
+    if (!user) { initializedFor.current = null; setTenant(''); return; }
+    if (!allowedTenants.length || initializedFor.current === user.id) return;
+    initializedFor.current = user.id;
+    setTenant(defaultWhatsAppTenant(allowedTenants, current?.id));
+  }, [allowedTenants, current?.id, user?.id]);
   useEffect(() => { generation.current++; setRows([]); setCursor(null); setError(''); busy.current = false; }, [tenant, user?.id]);
   const reload = useCallback(async (before?: string) => {
     if (!tenant || !user || busy.current) return;
