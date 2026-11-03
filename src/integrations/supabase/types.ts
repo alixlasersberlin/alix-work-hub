@@ -58602,6 +58602,10 @@ export type Database = {
         Returns: Json
       }
       ml_wa_chat_event: { Args: { _event: Json }; Returns: Json }
+      ml_wa_chat_page: {
+        Args: { _lead_id: string; _limit?: number; _offset?: number }
+        Returns: Json
+      }
       ml_wa_inbox: { Args: { _offset?: number }; Returns: Json }
       ml_wa_ingest: { Args: { _event: Json }; Returns: Json }
       ml_wa_review: { Args: never; Returns: Json }
