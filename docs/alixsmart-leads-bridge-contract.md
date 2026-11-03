@@ -20,7 +20,7 @@ ALIXSMART ist ein separates Projekt. Sein bestehender Twilio-Sales-Chat bleibt f
 
 Zwei kontrollierte Mitarbeiter mit getrennten Leads und Chats testen. Fremde Konversations-ID, geänderte Leadzuweisung, falscher Mandant, abgelaufene Signatur und doppelte Nachricht müssen sicher abgefangen werden. Echten Kundenversand erst nach gesonderter Freigabe.
 
-Die Verbindung ist in ALIXWORK noch nicht aktiv. Bis der Vertrag und die Erreichbarkeit bestätigt sind, zeigt Meine Leads „Nicht verbunden“. Änderungen am ALIXSMART-Projekt sind aus diesem Projekt nicht möglich; dessen Chat muss für diese Ergänzung separat geöffnet werden.
+ALIXWORK hat einen geschützten lokalen Chatabruf und den serverseitigen Adapter `alixsmart-sales-chat` ergänzt. Die Live-Verbindung ist noch nicht aktiv: ALIXSMART hat im geprüften Stand weder `alixwork-sales-bridge` noch die nötigen Sales-Ereignisse bereitgestellt. Bis zur Bestätigung zeigt Meine Leads „Nicht verbunden“. Änderungen am ALIXSMART-Projekt sind aus diesem Projekt nicht möglich; dessen Chat muss separat geöffnet werden. Konkreter Folgeauftrag: `docs/alixsmart-sales-bridge-implementation.md`.
 
 ## Automatischer Lead-Eingang: ALIXWORK-Empfänger
 
