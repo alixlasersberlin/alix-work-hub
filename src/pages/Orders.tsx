@@ -523,7 +523,9 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
       const detailError = [itemsRes, posRes, depRes, depByNumberRes, zohoInvRes, zohoAzRes, addDepRes]
         .find(result => 'error' in result && result.error);
       if (detailError && 'error' in detailError && detailError.error) {
-        throw new Error(detailError.error.message);
+        const reason = detailError.error;
+        throw new Error(typeof reason === 'object' && 'message' in reason
+          ? String(reason.message) : 'Auftragsdetails konnten nicht geladen werden');
       }
 
       const itemsByOrder: Record<string, any[]> = {};
