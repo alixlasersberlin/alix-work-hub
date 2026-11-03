@@ -11,6 +11,7 @@ import { canReassignLeads, leadInWorkspace, isWhatsAppLead, matchesSessionStatus
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { loadMyLeads, loadLeadStats, leadTitle, followupState, isUnworked48h, MY_LEAD_STATUSES, type MyLead } from '@/lib/sales/my-leads';
+import { LiveSalesSessions } from '@/components/sales/LiveSalesSessions';
 
 export default function MyLeads() {
   const { user, isAdmin, roles } = useAuth();
@@ -47,9 +48,9 @@ export default function MyLeads() {
     catch (e) { setError(e instanceof Error ? e.message : 'Leads konnten nicht geladen werden.'); setLeads([]); }
     finally { setLoading(false); }
   }, [all, isAdmin, current?.id]);
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => { if (view !== 'whatsapp') void reload(); }, [reload, view]);
   useRealtimeRefresh(['sales_leads', 'sales_followups', 'sales_lead_history', 'offers', 'orders'], reload, { debounceMs: 1000 });
-  useEffect(() => { const id = setInterval(() => { if (!document.hidden) void reload(); }, 30000); return () => clearInterval(id); }, [reload]);
+  useEffect(() => { if (view === 'whatsapp') return; const id = setInterval(() => { if (!document.hidden) void reload(); }, 30000); return () => clearInterval(id); }, [reload, view]);
   const scoped = useMemo(() => leads.filter(l => leadInWorkspace(l, user?.id, isAdmin, all, current?.id) && (!superAdmin || matchesLeadUser(l, selectedUser))), [leads, all, isAdmin, user?.id, current, superAdmin, selectedUser]);
   const visible = scoped.filter(l => (view !== 'whatsapp' || isWhatsAppLead(l)) && (!showSessions || matchesSessionStatus(l, sessionStatus)) && (view !== 'kontakt' || ['Neu', 'Kontaktaufnahme läuft'].includes(l.lead_status)) && (view !== 'neu' || (!l.workspace?.last_activity_at && !['Gewonnen', 'Verloren', 'Archiviert'].includes(l.lead_status))) && (view !== 'wiedervorlagen' || (l.followups || []).some(f => followupState(f) !== 'done')) && (!status || l.lead_status === status) && (!priority || (l.workspace?.priority || 'Normal') === priority) && (!product || (l.requested_products || '').toLowerCase().includes(product.toLowerCase())) && (!from || l.created_at.slice(0, 10) >= from) && (!to || l.created_at.slice(0, 10) <= to) && [leadTitle(l), l.email, l.phone, l.lead_number].join(' ').toLowerCase().includes(query.toLowerCase()));
   const tasks = scoped.flatMap(l => l.followups || []);
@@ -58,6 +59,7 @@ export default function MyLeads() {
     ['Heute kontaktieren', tasks.filter(f => f.due_at && new Date(f.due_at).toDateString() === new Date().toDateString() && followupState(f) !== 'done').length], ['Überfällige Wiedervorlagen', tasks.filter(f => followupState(f) === 'overdue').length],
     ['Offene Angebote', stats.open_offers], ['Gewonnen', scoped.filter(l => l.lead_status === 'Gewonnen').length], ['Verloren', scoped.filter(l => l.lead_status === 'Verloren').length], ['Auftragswert', new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(stats.order_value)],
   ];
+  if (view === 'whatsapp') return <LiveSalesSessions />;
   return <div className="p-4 md:p-6 space-y-6">
     <header className="flex justify-between items-center gap-3 flex-wrap"><div><div className="flex items-center gap-2 text-primary"><Users className="h-5 w-5" /><span className="text-sm">Vertrieb</span></div><h1 className="text-2xl font-semibold mt-2">Meine Leads</h1></div><div className="flex gap-2">{isAdmin && <Button variant={all ? 'default' : 'outline'} onClick={() => setAll(!all)}>{all ? 'Alle Leads' : 'Meine Leads'}</Button>}<Button variant="outline" size="icon" aria-label="Aktualisieren" onClick={() => void reload()}><RefreshCw className="h-4 w-4" /></Button></div></header>
     {error && <div role="alert" className="border border-destructive bg-destructive/10 p-4 text-destructive">{error}<Button variant="outline" className="ml-3" onClick={() => void reload()}>Erneut laden</Button></div>}
