@@ -3,9 +3,12 @@
  * Willkommens-Seite (/willkommen) erzwungen – unabhängig davon, über
  * welchen Login-Alias oder MFA-Schritt der Nutzer hereinkommt.
  */
+import { pendingSalesReturn } from '@/lib/sales/portal-navigation';
 const KEY = 'alix_force_welcome';
 
 export function postLoginTarget(): string {
+  const salesTarget = pendingSalesReturn();
+  if (salesTarget) return salesTarget;
   if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de') {
     return '/esc/kalender';
   }

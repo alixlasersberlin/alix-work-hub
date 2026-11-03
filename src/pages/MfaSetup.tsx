@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, ShieldCheck, Copy, Check, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import { pendingSalesReturn } from '@/lib/sales/portal-navigation';
 
 type Step = 'enroll' | 'verify' | 'recovery';
 
@@ -79,7 +80,7 @@ export default function MfaSetup() {
   const finish = async () => {
     await markMfaVerifiedThisTab();
     await refreshMfaState();
-    navigate('/dashboard', { replace: true });
+    navigate(pendingSalesReturn() || '/dashboard', { replace: true });
   };
 
   const copyCodes = async () => {

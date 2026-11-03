@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, ShieldCheck, MessageSquare } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import { pendingSalesReturn } from '@/lib/sales/portal-navigation';
 
 export default function MfaChallenge() {
   const { signOut } = useAuth();
@@ -27,7 +28,7 @@ export default function MfaChallenge() {
       : '/dashboard';
     // Harte Navigation wie nach Login: verhindert den gemeldeten
     // Maus-/Pointer-Freeze durch stale Auth-/Overlay-State nach MFA.
-    window.location.replace(postMfaTarget);
+    window.location.replace(pendingSalesReturn() || postMfaTarget);
   };
 
 
