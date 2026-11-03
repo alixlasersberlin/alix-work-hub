@@ -6,6 +6,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { WhatsAppLeadEvent, recommendedPriority, detectProduct, verifyTimestampedSignature } from './whatsapp-lead.ts';
+import { ChatEvent } from './chat-event.ts';
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -228,6 +229,17 @@ Deno.serve(async (req) => {
   const data = env.data ?? {};
 
   // Dedicated transactional path. Legacy event handlers remain unchanged.
+  if (event === 'sales.whatsapp.message' || event === 'sales.whatsapp.status') {
+    if (new TextEncoder().encode(raw).length > 65536) return json(413, { ok: false, error: 'payload_too_large' });
+    if (evtHeader && evtHeader !== event) return json(400, { ok: false, error: 'event_mismatch' });
+    if (!(await verifyTimestampedSignature(raw, sig, ts, SECRET))) return json(401, { ok: false, error: 'invalid_timestamped_signature' });
+    const parsed = ChatEvent.safeParse(env);
+    if (!parsed.success) return json(400, { ok: false, error: 'invalid_chat_event' });
+    const { data: result, error } = await supabase.rpc('ml_wa_chat_event', { _event: parsed.data });
+    if (error) return json(error.code === 'P0001' ? 409 : 503, { ok: false, error: 'chat_ingestion_failed' });
+    if (!result?.ok) return json(409, result);
+    return json(200, result);
+  }
   if (event === 'sales.whatsapp.inbound') {
     if (raw.length > 65536) return json(413, { ok: false, error: 'payload_too_large' });
     if (evtHeader && evtHeader !== event) return json(400, { ok: false, error: 'event_mismatch' });
