@@ -25,20 +25,31 @@ Deno.serve(async req => {
       const input = DiscoveryRequest.safeParse(bodyInput);
       if (!input.success) return json({ ok: false, error: 'Ungültige Chatübersicht-Anfrage.' });
       const authorize = async () => {
-        const [profile, roles, tenant, membership, leads] = await Promise.all([
+        const [profile, roles, tenant, membership] = await Promise.all([
           caller.from('user_profiles').select('is_active,account_status,invitation_status,password_reset_required').eq('id', identity.user.id).maybeSingle(),
           caller.rpc('get_current_user_role_names'),
           caller.from('tenants').select('id').eq('id', input.data.tenant_id).eq('is_active', true).maybeSingle(),
           caller.from('user_tenant_access').select('id').eq('user_id', identity.user.id).eq('tenant_id', input.data.tenant_id).limit(1),
-          caller.rpc('ml_list'),
         ]);
-        if (profile.error || roles.error || tenant.error || membership.error || leads.error || !activeDiscoveryProfile(profile.data) || !tenant.data) return null;
+        if (profile.error || roles.error || tenant.error || membership.error || !activeDiscoveryProfile(profile.data) || !tenant.data) return null;
         const roleNames = Array.isArray(roles.data) ? roles.data : [];
         const admin = roleNames.includes('Super Admin') || roleNames.includes('Admin');
         if (!admin && !membership.data?.length) return null;
-        const rows = Array.isArray(leads.data) ? leads.data : [];
-        const ids = rows.filter((row: any) => row.assigned_user === identity.user.id && row.tenant_id === input.data.tenant_id).map((row: any) => row.metadata?.whatsapp_sales?.conversation_id).filter((id: unknown): id is string => typeof id === 'string');
-        // ml_list may expose only its minimal summary; never broaden staff access when an ID is absent.
+        const ids: string[] = [];
+        if (!admin) {
+          for (let offset = 0; ; offset += 200) {
+            const page = await caller.rpc('ml_list', { _offset: offset, _limit: 200 });
+            if (page.error || !Array.isArray(page.data)) return null;
+            for (const row of page.data) {
+              if (row.assigned_user !== identity.user.id || row.tenant_id !== input.data.tenant_id || !row.whatsapp_session?.linked) continue;
+              const linked = await caller.rpc('ml_wa_chat', { _lead_id: row.id, _limit: 1 });
+              if (linked.error) return null;
+              if (linked.data?.linked && linked.data.tenant_id === input.data.tenant_id && typeof linked.data.conversation_id === 'string') ids.push(linked.data.conversation_id);
+            }
+            if (page.data.length < 200) break;
+          }
+        }
+        // Independent caller-scoped checks prevent a broader remote role from widening employee access.
         return { admin, ids };
       };
       const permitted = await authorize();
