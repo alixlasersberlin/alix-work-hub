@@ -61,3 +61,19 @@ Zwei eigene Mitarbeiter mit getrennten Testleads/Chats, fremde Kontakt-/Konversa
 ## Offene Grenzen
 
 ALIXSMART kann aus dem ALIXWORK-Chat nur lesend untersucht werden. Implementierung und Bereitstellung dieses Endpunkts sowie der Ereignis-Outbox müssen im ALIXSMART-Projekt erfolgen. Danach ALIXWORK-Verbindung mit echten angemeldeten Mitarbeitern prüfen. Vollständige Medien-/Vorlagen-/Lesemarkierungsoberfläche folgt dem bestätigten Quellvertrag; aktuell nicht als funktionsfähig melden.
+
+## 4. Bestehende Gespräche übernehmen (Auftrag vom 03.11.2026)
+
+Die Gegenstelle und die Übernahme müssen im ALIXSMART-Projekt vorbereitet werden. Dieser Projektcheckout enthält keine privaten Gesprächsdaten und erlaubt keine Änderungen an ALIXSMART. Kein Abruf privater Datensätze mit Zugangsdaten aus einem Checkout.
+
+Vor der Übernahme alle vorhandenen Sales-Gespräche paginiert inventarisieren, einschließlich geschlossener Sessions und aller tatsächlichen Quellstatus. Keine Einschränkung auf offene Sessions, keine Ableitung des Gesprächsstatus aus Zustellstatus oder Leadstatus. Technik-, Ticket-, Spam- und interne Kommunikation ausschließen beziehungsweise zur manuellen Prüfung vorlegen. Mandanten- und Mitarbeiterzuordnungen administrativ bestätigen; fehlende Zuordnungen nicht raten. Bestehende Leads nur über bestätigte externe Identitäten verknüpfen, Telefonnummern allein reichen nicht.
+
+Für eine dateibasierte Übernahme im ALIXSMART-Chat drei vollständige UTF-8-CSV-Dateien exportieren und hier hochladen:
+
+- `conversations.csv`: `conversation_id`, `contact_id`, bestätigte `alixwork_tenant_id`, optional bestätigte `alixwork_lead_id` und `alixwork_user_id`, `phone` (E.164), `name`, `area`, `relevance`, `session_status` (Originalwert), `created_at`, `updated_at`, `last_inbound_at`.
+- `messages.csv`: `message_id`, `conversation_id`, `contact_id`, `direction`, `text`, `occurred_at` (ISO mit Zeitzone), `delivery_status`, optional `error`. Stabile tatsächliche Nachrichten-IDs verwenden; keine neuen IDs bei Wiederholung. Kein Nachrichtentext darf gekürzt werden.
+- `media.csv`: `media_id`, `message_id`, `name`, `mime`. Keine öffentlichen Medien-URLs, Zugangsdaten oder Provider-Tokens exportieren. Dateien erst nach bestätigtem geschütztem Downloadvertrag übertragen.
+
+Vor dem Import hier eine Vorschau mit Gesprächs-/Nachrichtenanzahl, Statusverteilung, Zeitraum, fehlenden Zuordnungen und Konflikten zeigen. Den Import über die bestehenden geschützten ALIXWORK-RPCs ausführen, nicht mit direkten Tabellenwrites oder künstlichen aktuellen Nachrichten. Historische Nachrichten behalten ihre Originalzeitpunkte; historischer Import darf keine automatischen Kundenantworten auslösen. Historische Benachrichtigungen und 24h-/Wiedervorlagenhinweise dürfen nicht ungeprüft durch Backfill ausgelöst werden. Dafür ist vor der ersten Übernahme ein explizit getesteter historischer Importmodus nötig; die vorhandenen Live-Ereignisfunktionen nicht blind als Backfill verwenden.
+
+Nach der Übernahme dieselben Konversations- und Nachrichten-IDs für die Live-Ereignisse verwenden. Überlappung von Export und Live-Eingang muss dedupliziert werden; Status nur mit nachweisbarer Quellreihenfolge übernehmen. Zähler und Originaltexte in ALIXSMART und ALIXWORK abgleichen. Erst nach angemeldeter Prüfung eines offenen und eines geschlossenen Gesprächs sowie der Mitarbeitertrennung als aktive Verbindung melden; keine Kundennachricht zu Testzwecken senden.
