@@ -42,8 +42,8 @@ Deno.serve(async req => {
     if (body.length > 1500000) return unavailable('ALIXSMART-Antwort ist zu groß.');
     const remote = RemoteReply.safeParse(JSON.parse(body));
     if (!remote.success || remote.data.lead_id !== input.lead_id || !matchesChatScope(linked, remote.data)) return unavailable('ALIXSMART hat die sichere Chatzuordnung nicht bestätigt.');
-    const { data: stillAllowed, error: permissionError } = await caller.rpc('ml_can_access', { _lead_id: input.lead_id });
-    if (permissionError || stillAllowed !== true) return json({ ok: false, error: 'Die Leadzuweisung hat sich geändert.' });
+    const { data: freshScope, error: permissionError } = await caller.rpc('ml_wa_chat', { _lead_id: input.lead_id, _limit: 1 });
+    if (permissionError || !freshScope || !matchesChatScope(linked, freshScope as unknown as typeof linked)) return json({ ok: false, error: 'Die Leadzuweisung hat sich geändert.' });
     // External URLs are never passed straight to the browser; media download remains disabled until source contract is verified.
     if (input.action === 'media') return unavailable('Medienabruf wartet auf die bestätigte ALIXSMART-Dateischnittstelle.');
     return json({ ...remote.data, media_url: undefined, connected: true });

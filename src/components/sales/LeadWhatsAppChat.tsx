@@ -26,7 +26,7 @@ export default function LeadWhatsAppChat({ leadId }: { leadId: string }) {
       setConnected(remote.ok && remote.connected); setCanSend(remote.ok && remote.can_send === true && !uncertainSend.current);
       if (remote.ok) { setMessages(prev => mergeChatMessages([...prev, ...(remote.messages || [])])); setRemoteCursor(remote.next_cursor || null); setError(''); }
       else setError(remote.error || 'ALIXSMART-Verbindung nicht bestätigt.');
-    } catch (e) { if (activeLead.current === current) { setError(e instanceof Error ? e.message : 'Chat konnte nicht geladen werden.'); setConnected(false); setCanSend(false); } }
+    } catch (e) { if (activeLead.current === current) { setMessages([]); setError(e instanceof Error ? e.message : 'Chat konnte nicht geladen werden.'); setConnected(false); setCanSend(false); } }
     finally { if (activeLead.current === current) setLoading(false); }
   }, [leadId]);
   useEffect(() => { setMessages([]); setText(''); setError(''); setConnected(false); setCanSend(false); setLoading(true); count.current = 50; uncertainSend.current = false; setRemoteCursor(null); void refresh(); }, [refresh]);

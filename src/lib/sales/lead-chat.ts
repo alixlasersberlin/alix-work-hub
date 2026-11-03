@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 export type LeadChatMessage = { id: string; direction: 'inbound' | 'outbound'; text: string; at: string; status: string; media: { id: string; name: string; mime: string }[] };
 export type LeadChatPage = { linked: boolean; messages: LeadChatMessage[]; has_more: boolean };
 export async function readLeadChat(lead: string, offset = 0): Promise<LeadChatPage> {
-  const { data, error } = await supabase.rpc('ml_wa_chat_page' as never, { _lead_id: lead, _offset: offset, _limit: 50 } as never);
+  const { data, error } = await supabase.rpc('ml_wa_chat_page', { _lead_id: lead, _offset: offset, _limit: 50 });
   if (error) throw new Error(error.message);
   return data as unknown as LeadChatPage;
 }
