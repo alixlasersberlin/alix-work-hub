@@ -67,3 +67,5 @@
 - [ ] Hollywood Secret: echte Artikel übertragen — benötigt Aufruf aus Shop-Projekt oder CSV-Export mit external_article_id, sku, name; private Shop-Datenbank hier nicht zugänglich. Bestellungen warten weiterhin auf Preise/Steuern/Versand und Shop-Ende-zu-Ende-Nachweis.
 - [x] WhatsApp Sales als Gesprächsliste mit Kontaktkennzeichnung, Statusreitern, Zeit und Zuweisung statt UUID-Tabelle gestaltet; bestehende API und Rechte unverändert. Namen/Vorschauen fehlen im strikten Quellvertrag, daher ausdrücklich als nicht übermittelt gekennzeichnet.
 - [ ] Gewünschte Kundennamen und Nachrichtenvorschauen anzeigen — ALIXSMART muss diese im autorisierten Listenvertrag bereitstellen; kein Import, keine erfundenen Vorschautexte. Angemeldete Ansichtsprüfung wegen externer Anmeldung offen.
+
+- [x] Mitarbeiterzuweisung in der Leadakte: alle 17 geschützten Benutzer anzeigen, acht vorhandene Mandantenfreigaben auswählbar; inaktive/nicht freigegebene Benutzer sichtbar deaktiviert. Keine Benutzer-/Mandantenrechte verändert.

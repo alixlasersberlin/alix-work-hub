@@ -3,6 +3,15 @@ import type { MyLead } from './my-leads';
 
 export const canReassignLeads = (roles: string[]) => roles.includes('Super Admin');
 export type LeadUser = { id: string; full_name: string | null; is_active: boolean | null };
+export function leadAssignmentOptions(users: LeadUser[], eligible: { id: string; name: string }[]) {
+  const approved = new Map(eligible.map(person => [person.id, person.name]));
+  return users.map(user => ({
+    id: user.id,
+    name: user.full_name || approved.get(user.id) || user.id,
+    disabled: user.is_active !== true || !approved.has(user.id),
+    reason: user.is_active !== true ? 'Inaktiv' : !approved.has(user.id) ? 'Nicht für diesen Mandanten freigegeben' : '',
+  })).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
 export async function loadLeadUsers(): Promise<LeadUser[]> {
   const users: LeadUser[] = [];
   for (let offset = 0; ; offset += 200) {

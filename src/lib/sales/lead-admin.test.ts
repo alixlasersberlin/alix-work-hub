@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { canReassignLeads, leadInWorkspace, isWhatsAppLead, matchesSessionStatus, matchesLeadUser } from './lead-admin';
+import { canReassignLeads, leadInWorkspace, isWhatsAppLead, matchesSessionStatus, matchesLeadUser, leadAssignmentOptions } from './lead-admin';
 const lead = { id: 'lead', created_at: '2026-11-03', lead_status: 'Neu', assigned_user: 'other', tenant_id: 'at' };
 describe('Super Admin lead workspace', () => {
+  it('lists all users while preserving the server-approved assignment boundary', () => {
+    const options = leadAssignmentOptions([
+      { id: 'approved', full_name: 'Jerry', is_active: true },
+      { id: 'foreign', full_name: 'Huong', is_active: true },
+      { id: 'inactive', full_name: 'Natalia', is_active: false },
+    ], [{ id: 'approved', name: 'Jerry' }, { id: 'inactive', name: 'Natalia' }]);
+    expect(options.map(p => p.id)).toEqual(['foreign', 'approved', 'inactive']);
+    expect(options.find(p => p.id === 'approved')?.disabled).toBe(false);
+    expect(options.find(p => p.id === 'foreign')?.disabled).toBe(true);
+    expect(options.find(p => p.id === 'inactive')?.disabled).toBe(true);
+  });
   it('filters by any selected user or unassigned without hiding users with no matching leads', () => {
     expect(matchesLeadUser(lead, '')).toBe(true);
     expect(matchesLeadUser(lead, 'other')).toBe(true);
