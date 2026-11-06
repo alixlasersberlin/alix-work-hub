@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2, CalendarIcon, Zap, ArrowLeft } from 'lucide-react';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2, CalendarIcon, Zap, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -29,6 +29,7 @@ import { deviceConfigLines, deviceConfigComplete, type DeviceConfig } from '@/li
 import { PH_PRICE_COUNTRIES, readCountryPrice, uvpForPower, type PhCountryPrice } from '@/lib/producthub/countryPricing';
 import { buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
 import { deviceColorPhoto } from '@/lib/producthub/colorImages';
+import { moveLine } from '@/lib/sales/reorder-lines';
 
 
 
@@ -1054,6 +1055,11 @@ export default function AngebotErstellen() {
 
   const removeLine = (id: string) => {
     setLines(prev => (prev.length === 1 ? [newLine()] : prev.filter(l => l.id !== id)));
+  };
+
+  const reorderLine = (id: string, direction: -1 | 1) => {
+    if (isLockedForEdit) return;
+    setLines(prev => moveLine(prev, id, direction));
   };
 
   // Preisbasis wählbar: Einzelpreise sind entweder Brutto (inkl. MwSt) oder Netto.
@@ -2723,7 +2729,7 @@ export default function AngebotErstellen() {
               </tr>
             </thead>
             <tbody>
-              {lines.map(l => (
+              {lines.map((l, index) => (
                 <Fragment key={l.id}>
                   <tr className="align-top">
                     <td className="p-2">
@@ -2773,9 +2779,25 @@ export default function AngebotErstellen() {
                       })()}
                     </td>
                     <td className="p-2" rowSpan={2}>
+                      <div className="flex flex-col items-center gap-1">
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
+                        aria-label={`Position ${index + 1} nach oben verschieben`}
+                        title="Position nach oben verschieben"
+                        disabled={index === 0 || isLockedForEdit}
+                        onClick={() => reorderLine(l.id, -1)}>
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
+                        aria-label={`Position ${index + 1} nach unten verschieben`}
+                        title="Position nach unten verschieben"
+                        disabled={index === lines.length - 1 || isLockedForEdit}
+                        onClick={() => reorderLine(l.id, 1)}>
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(l.id)}>
                         <Trash2 className="w-3.5 h-3.5 text-destructive" />
                       </Button>
+                      </div>
                     </td>
                   </tr>
                   <tr className="border-b border-border">
