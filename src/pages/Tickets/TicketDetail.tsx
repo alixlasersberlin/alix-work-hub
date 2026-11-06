@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { canCreateNote } from '@/lib/note-access';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -105,17 +106,18 @@ const DEPARTMENT = ['service', 'technik', 'finance', 'tourenplanung', 'lieferung
 export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAdmin, hasAnyRole } = useAuth();
+  const { user, profile, isAdmin, hasAnyRole } = useAuth();
   const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order', 'SACHBEARBEITUNG', 'Auftragsverwaltung', 'Tourenplanung', 'Serviceleitung']);
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const canAddNote = canCreateNote(user?.id, profile, !!ticket);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [attachments, setAttachments] = useState<Att[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [creatingOffer, setCreatingOffer] = useState(false);
   const [newMsg, setNewMsg] = useState('');
-  const [msgInternal, setMsgInternal] = useState(false);
+  const [msgInternal, setMsgInternal] = useState(!canEdit);
   const [myProfile, setMyProfile] = useState<{ full_name: string | null; job_title: string | null; avatar_url: string | null } | null>(null);
   const [outboundLogs, setOutboundLogs] = useState<OutboundLog[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -318,7 +320,7 @@ export default function TicketDetail() {
   }
 
   async function addMessage() {
-    if (!ticket || !newMsg.trim()) return;
+    if (!ticket || !newMsg.trim() || (msgInternal ? !canAddNote : !canEdit)) return;
     const messageText = newMsg.trim();
     // Absender-Identität: bei zugewiesenem Ticket = persönlich (Name), sonst = Abteilung
     const hasAssignee = !!ticket.assigned_to;
@@ -340,7 +342,7 @@ export default function TicketDetail() {
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
     // Antwortender Mitarbeiter wird Bearbeiter, falls noch keiner gesetzt ist
-    if (!ticket.assigned_to && user?.id) {
+    if (!msgInternal && !ticket.assigned_to && user?.id && canEdit) {
       const { error: aErr } = await supabase.from('tickets').update({ assigned_to: user.id }).eq('id', ticket.id);
       if (!aErr) setTicket(t => (t ? { ...t, assigned_to: user.id } : t));
     }
@@ -835,24 +837,26 @@ export default function TicketDetail() {
                   <p className="text-sm whitespace-pre-wrap">{m.message}</p>
                 </div>
               ))}
-              {canEdit && ticket && (
+              {(canEdit || canAddNote) && ticket && (
                 <div className={`rounded-lg border p-3 space-y-2 ${msgInternal ? 'border-amber-500/40 bg-amber-500/5' : 'border-emerald-500/40 bg-emerald-500/5'}`}>
-                  <TicketAiAssist ticketId={ticket.id} onUseDraft={(t) => { setMsgInternal(false); setNewMsg(t); }} />
+                  {canEdit && <TicketAiAssist ticketId={ticket.id} onUseDraft={(t) => { setMsgInternal(false); setNewMsg(t); }} />}
                   <div className="flex gap-1">
-                    <button
+                    <Button
                       type="button"
+                      disabled={!canEdit}
                       onClick={() => setMsgInternal(false)}
                       className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${!msgInternal ? 'border-emerald-500 bg-emerald-500 text-white font-medium' : 'border-border bg-background text-muted-foreground hover:bg-muted'}`}
                     >
                       <Send className="w-3.5 h-3.5 inline mr-1" /> An Kunden senden
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      disabled={!canAddNote}
                       onClick={() => setMsgInternal(true)}
                       className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${msgInternal ? 'border-amber-500 bg-amber-500 text-white font-medium' : 'border-border bg-background text-muted-foreground hover:bg-muted'}`}
                     >
                       <Lock className="w-3.5 h-3.5 inline mr-1" /> Interne Notiz
-                    </button>
+                    </Button>
                   </div>
                   <Textarea
                     id="ticket-new-message"
@@ -879,7 +883,7 @@ export default function TicketDetail() {
                     <Button
                       size="sm"
                       onClick={addMessage}
-                      disabled={!newMsg.trim()}
+                      disabled={!newMsg.trim() || (msgInternal ? !canAddNote : !canEdit)}
                       className={msgInternal ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
                     >
                       <Send className="w-4 h-4 mr-1" /> {msgInternal ? 'Notiz speichern' : 'An Kunden senden'}

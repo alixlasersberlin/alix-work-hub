@@ -1,0 +1,1 @@
+ALTER FUNCTION public.can_create_internal_note() SECURITY INVOKER;

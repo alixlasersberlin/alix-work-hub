@@ -57517,6 +57517,7 @@ export type Database = {
         Returns: boolean
       }
       can_approve_warranty: { Args: never; Returns: boolean }
+      can_create_internal_note: { Args: never; Returns: boolean }
       can_manage_backups: { Args: never; Returns: boolean }
       can_manage_copilot_config: { Args: never; Returns: boolean }
       can_manage_esc_master: { Args: never; Returns: boolean }

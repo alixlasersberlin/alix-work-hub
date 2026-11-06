@@ -1,3 +1,4 @@
+- Note creation uses a separate active-account gate and parent-record RLS, independent of edit permissions; Read Only roles may append notes without gaining record updates or wider visibility.
 - Wiederkehrende Zahler V1 lebt in rp_*-Tabellen; Läufe/Positionen nur über Security-Definer-RPCs (rp_prepare_run/rp_approve_run …) änderbar — Freigabe, Duplikatsperre und Beträge müssen serverseitig erzwungen werden.
 - Ticket-Art (neue Kundenanfrage / bestehender Vorgang / automatische Meldung) wird clientseitig in src/lib/ticketKind.ts abgeleitet — keine Schemaänderung nötig, Regeln zentral testbar.
 - Ticket lists must not compare intake-channel source_system values with the global Zoho tenant source; existing RLS defines access and the explicit ticket source filter narrows results, so booking_portal and email_inbound remain discoverable.
