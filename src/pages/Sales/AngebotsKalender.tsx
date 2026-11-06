@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { useAuth } from '@/hooks/useAuth';
+import { offerSalesAdvisor } from '@/lib/sales/offer-advisor';
 
 type Task = {
   id: string;
@@ -40,7 +41,7 @@ type OfferLite = {
   customer_name: string | null;
   customer_email: string | null;
   total_gross: number | null;
-  created_by_name: string | null;
+  sales_advisor: string | null;
   status: string;
 };
 
@@ -83,7 +84,7 @@ export default function AngebotsKalender() {
       supabase.from('offer_followup_tasks').select('*').eq('status', 'offen')
         .order('due_at', { ascending: true }).limit(2000),
       supabase.from('offer_outcomes').select('offer_number, outcome').limit(5000),
-      supabase.from('offers').select('offer_number, customer_name, customer_email, total_gross, created_by_name, status').limit(2000),
+      supabase.from('offers').select('offer_number, customer_name, customer_email, total_gross, sales_advisor:payload->>salesAdvisor, status' as string).limit(2000),
     ]);
     setTasks((t.data ?? []) as Task[]);
     setOutcomes(new Map((oc.data ?? []).map((x: any) => [x.offer_number, x.outcome])));
@@ -109,7 +110,7 @@ export default function AngebotsKalender() {
       if (!q) return true;
       const o = offers.get(t.offer_number);
       return [
-        t.offer_number, t.title, o?.customer_name, o?.customer_email, o?.created_by_name,
+        t.offer_number, t.title, o?.customer_name, o?.customer_email, o ? offerSalesAdvisor(o) : '',
       ].filter(Boolean).some((v) => String(v).toLowerCase().includes(q));
     });
   }, [tasks, outcomes, offers, filter]);
@@ -260,7 +261,7 @@ export default function AngebotsKalender() {
               </div>
               <div className="text-sm text-muted-foreground">
                 {t.title}
-                {o?.created_by_name ? ` · Vertrieb: ${o.created_by_name}` : ''}
+                {` · Verkaufsberater: ${o ? offerSalesAdvisor(o) || 'Nicht angegeben' : 'Nicht angegeben'}`}
                 {typeof o?.total_gross === 'number' ? ` · ${fmtMoney(o.total_gross)}` : ''}
               </div>
             </div>

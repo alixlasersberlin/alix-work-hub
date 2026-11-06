@@ -14,6 +14,7 @@ import {
 import { FollowupSection, ForecastSection, AiSection, ExecutiveSection } from '@/components/sales/analyse/FollowupSections';
 import { TrendSection } from '@/components/sales/analyse/TrendSection';
 import { OfferTableSection } from '@/components/sales/analyse/OfferTableSection';
+import { offerSalesAdvisor } from '@/lib/sales/offer-advisor';
 import {
   computeReps, eur, isLost, isOpen, isWon, offerValue, productOf, stageOf, STAGES, type OfferRow,
 } from '@/lib/sales/offer-analytics';
@@ -104,13 +105,13 @@ export default function Angebotsanalyse() {
   const offers = useMemo(() => {
     const term = q.trim().toLowerCase();
     return rows.filter((o) => {
-      if (rep && (o.created_by_name || 'Unbekannt') !== rep) return false;
+      if (rep && (offerSalesAdvisor(o) || 'Nicht angegeben') !== rep) return false;
       if (stage && stageOf(o) !== stage) return false;
       if (outcome === 'open' && !isOpen(o)) return false;
       if (outcome === 'won' && !isWon(o)) return false;
       if (outcome === 'lost' && !isLost(o)) return false;
       if (!term) return true;
-      return [o.offer_number, o.customer_name, o.competitor, o.lead_source, productOf(o)]
+      return [o.offer_number, o.customer_name, offerSalesAdvisor(o), o.competitor, o.lead_source, productOf(o)]
         .some((v) => String(v ?? '').toLowerCase().includes(term));
     });
   }, [rows, rep, stage, outcome, q]);
@@ -121,9 +122,9 @@ export default function Angebotsanalyse() {
 
 
   const exportCsv = () => {
-    const head = ['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Telefon', 'E-Mail', 'Wert', 'Status', 'Lead', 'Finanzierung', 'Wettbewerber', 'Verlustgrund'];
+    const head = ['Angebot', 'Datum', 'Kunde', 'Verkaufsberater', 'Telefon', 'E-Mail', 'Wert', 'Status', 'Lead', 'Finanzierung', 'Wettbewerber', 'Verlustgrund'];
     const lines = offers.map((o) => [
-      o.offer_number, o.offer_date, o.customer_name, o.created_by_name, o.customer_phone, o.customer_email,
+      o.offer_number, o.offer_date, o.customer_name, offerSalesAdvisor(o) || 'Nicht angegeben', o.customer_phone, o.customer_email,
       offerValue(o).toFixed(2), o.status, o.lead_source, o.financing_type, o.competitor, o.loss_reason,
     ].map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';'));
     const blob = new Blob(['\ufeff' + [head.join(';'), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -154,9 +155,9 @@ export default function Angebotsanalyse() {
 
     autoTable(doc, {
       startY: 28,
-      head: [['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Telefon', 'E-Mail', 'Wert', 'Status', 'Lead', 'Wettbewerber']],
+      head: [['Angebot', 'Datum', 'Kunde', 'Verkaufsberater', 'Telefon', 'E-Mail', 'Wert', 'Status', 'Lead', 'Wettbewerber']],
       body: offers.slice(0, 800).map((o) => [
-        o.offer_number ?? '', o.offer_date ?? '', o.customer_name ?? '', o.created_by_name ?? '',
+        o.offer_number ?? '', o.offer_date ?? '', o.customer_name ?? '', offerSalesAdvisor(o) || 'Nicht angegeben',
         o.customer_phone ?? '', o.customer_email ?? '', eur(offerValue(o)),
         isWon(o) ? 'Gewonnen' : isLost(o) ? 'Verloren' : 'Offen',
         o.lead_source ?? '', o.competitor ?? '',
@@ -190,7 +191,7 @@ export default function Angebotsanalyse() {
             {RANGES.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
           </select>
           <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={rep} onChange={(e) => setRep(e.target.value)}>
-            <option value="">Alle Verkäufer</option>
+            <option value="">Alle Verkaufsberater</option>
             {reps.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
           <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={stage} onChange={(e) => setStage(e.target.value)}>
