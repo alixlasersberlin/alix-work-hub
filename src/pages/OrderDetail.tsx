@@ -19,6 +19,7 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { canCreateNote } from '@/lib/note-access';
 import { withAt } from '@/lib/atSuffix';
 import { sourceLabel, sourceFlag } from '@/lib/source-system';
 import { Button } from '@/components/ui/button';
@@ -78,12 +79,13 @@ export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, isAdmin, hasRole } = useAuth();
+  const { user, profile, isAdmin, hasRole } = useAuth();
 
   // Nach Auftragserstellung dürfen nur Admin/Super Admin den Auftrag ändern.
   const canWrite = isAdmin;
 
   const [order, setOrder] = useState<any>(null);
+  const canAddNote = canCreateNote(user?.id, profile, !!order);
   // Österreich darf Anzahlungen nur bei -AT-Aufträgen (zoho_eu_2) erfassen
   const canWriteDeposit = canWrite || (order?.source_system === 'zoho_eu_2' && hasRole('Österreich'));
   const [customer, setCustomer] = useState<any>(null);
@@ -289,19 +291,30 @@ export default function OrderDetail() {
   const primaryDisplayNumber = withAt(order?.order_number, order?.source_system) || '';
 
   async function submitNote() {
-    if (!newNote.trim() || !id || !user) return;
+    if (!newNote.trim() || !id || !user || !canAddNote || submitting) return;
     setSubmitting(true);
-    await supabase.from('order_notes').insert({
-      order_id: id,
-      note_text: newNote.trim(),
-      note_type: newNoteType,
-      created_by: user.id,
-    });
-    setNewNote('');
-    setNewNoteType('general');
-    const { data } = await supabase.from('order_notes').select('*').eq('order_id', id).order('created_at', { ascending: false });
-    setNotes(data ?? []);
-    setSubmitting(false);
+    try {
+      const { error } = await supabase.from('order_notes').insert({
+        order_id: id,
+        note_text: newNote.trim(),
+        note_type: newNoteType,
+        created_by: user.id,
+      });
+      if (error) throw error;
+      setNewNote('');
+      setNewNoteType('general');
+      const { data, error: readError } = await supabase.from('order_notes').select('*').eq('order_id', id).order('created_at', { ascending: false });
+      if (readError) {
+        toast.warning('Notiz gespeichert, Liste konnte nicht aktualisiert werden. Bitte neu laden.');
+      } else {
+        setNotes(data ?? []);
+        toast.success('Notiz gespeichert');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Notiz konnte nicht gespeichert werden. Ihre Eingabe bleibt erhalten.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function saveEditNote() {
@@ -1566,7 +1579,7 @@ export default function OrderDetail() {
 
       {activeTab === 'notes' && (
         <div className="space-y-4">
-          {canWrite && (
+          {canAddNote && (
             <div className="rounded-xl border border-border bg-card p-4 card-glow">
               <h3 className="text-sm font-medium text-foreground mb-3">Neue Notiz</h3>
               <div className="flex gap-3 mb-3">
