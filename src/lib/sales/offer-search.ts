@@ -1,6 +1,9 @@
+import { offerSalesAdvisor } from './offer-advisor';
+
 interface SearchableOffer {
   offerNumber?: string | null;
   createdByName?: string | null;
+  salesAdvisor?: string | null;
   customer?: {
     company_name?: string | null;
     contact_name?: string | null;
@@ -12,7 +15,7 @@ export function matchesOfferSearch(offer: SearchableOffer, search: string): bool
   const query = search.trim().toLocaleLowerCase('de-DE');
   return !query || [
     offer.offerNumber,
-    offer.createdByName,
+    offerSalesAdvisor(offer),
     offer.customer?.company_name,
     offer.customer?.contact_name,
     offer.customer?.email,

@@ -2,6 +2,7 @@
 - Ticket-Art (neue Kundenanfrage / bestehender Vorgang / automatische Meldung) wird clientseitig in src/lib/ticketKind.ts abgeleitet — keine Schemaänderung nötig, Regeln zentral testbar.
 - Ticket lists must not compare intake-channel source_system values with the global Zoho tenant source; existing RLS defines access and the explicit ticket source filter narrows results, so booking_portal and email_inbound remain discoverable.
 - Offer list text search is centralized in the pure sales/offer-search helper so customer, offer number and advisor matching stay testable without database changes.
+- Offer advisor display, filters and analytics share offer-advisor using payload.salesAdvisor (projected alone for lightweight lists); author fields remain audit-only so attribution never substitutes authorship for sales responsibility.
 - Deposit invoice creation resolves existing invoice drafts or equal-amount unissued order placeholders through deposit-invoice-target; update the same row and preserve payments and releases to avoid duplicate receivables.
 - Automatic Alix Sign deposit invoices use service-only auto_az RPCs and an order-scoped one-shot timer after completed conversion; stop timers on completion and bound retries so no permanent sweeper or duplicate receivable is introduced.
 - Commission custom schedules create one uniquely hashed entry per stage; payment evidence is read through an invoker RPC and rechecked before approval and payout so stages cannot bypass deposit, delivery, or installment requirements.

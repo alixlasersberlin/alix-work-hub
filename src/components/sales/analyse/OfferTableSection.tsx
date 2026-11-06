@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpDown, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OfferEditDialog } from './FollowupSections';
+import { offerSalesAdvisor } from '@/lib/sales/offer-advisor';
 import {
   bandLabel, daysSince, eur, isLost, isWon, offerDate, offerScore, offerValue,
   productOf, probabilityOf, stageOf, STAGES, type OfferRow,
@@ -72,7 +73,7 @@ export function OfferTableSection({ offers, onRefresh }: { offers: OfferRow[]; o
               <Th label="Angebot" />
               <Th label="Datum" k="date" />
               <Th label="Kunde" k="customer" />
-              <Th label="Verkäufer" />
+              <Th label="Verkaufsberater" />
               <Th label="Telefon" />
               <Th label="E-Mail" />
               <Th label="Wert" k="value" align="right" />
@@ -100,7 +101,7 @@ export function OfferTableSection({ offers, onRefresh }: { offers: OfferRow[]; o
                     {isWon(o) && <Badge variant="outline" className="ml-1 text-[10px] border-emerald-500/40 text-emerald-500">gewonnen</Badge>}
                     {isLost(o) && <Badge variant="outline" className="ml-1 text-[10px] border-destructive/40 text-destructive">verloren</Badge>}
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground">{o.created_by_name ?? 'Unbekannt'}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{offerSalesAdvisor(o) || 'Nicht angegeben'}</td>
                   <td className="px-3 py-2 tabular-nums text-muted-foreground whitespace-nowrap">
                     {o.customer_phone ? <a href={`tel:${o.customer_phone}`} className="hover:underline">{o.customer_phone}</a> : '—'}
                   </td>

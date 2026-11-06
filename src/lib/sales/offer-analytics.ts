@@ -1,5 +1,6 @@
 // Vertriebs-Cockpit — Auswertungslogik für Angebote (Angebotsanalyse).
 // Reine Berechnungs-/Ableitungsschicht, keine UI, keine Mutationen.
+import { offerSalesAdvisor } from './offer-advisor';
 
 export interface OfferRow {
   id: string;
@@ -274,7 +275,7 @@ export interface RepRow {
 export function computeReps(offers: OfferRow[], commissionRate = 0.03): RepRow[] {
   const map = new Map<string, OfferRow[]>();
   offers.forEach((o) => {
-    const key = o.created_by_name?.trim() || 'Unbekannt';
+    const key = offerSalesAdvisor(o) || 'Nicht angegeben';
     map.set(key, [...(map.get(key) ?? []), o]);
   });
   return Array.from(map.entries())

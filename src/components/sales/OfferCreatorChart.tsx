@@ -6,6 +6,7 @@ import {
   Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import type { OfferSnapshot } from '@/lib/offers-store';
+import { offerSalesAdvisor } from '@/lib/sales/offer-advisor';
 
 const fmtMoney = (n: number) =>
   (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -23,7 +24,7 @@ export type CreatorStat = {
 export function buildCreatorStats(offers: OfferSnapshot[], isSigned: (o: OfferSnapshot) => boolean): CreatorStat[] {
   const map = new Map<string, CreatorStat>();
   for (const o of offers) {
-    const name = o.createdByName || '—';
+    const name = offerSalesAdvisor(o) || 'Nicht angegeben';
     const row = map.get(name) || { name, total: 0, offen: 0, unterzeichnet: 0, volumen: 0, schnitt: 0, quote: 0 };
     row.total += 1;
     if (isSigned(o)) row.unterzeichnet += 1; else row.offen += 1;
@@ -71,14 +72,15 @@ export function OfferCreatorChart({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setOpen((v) => !v)}
           className="flex w-full items-center justify-between gap-2 text-left"
         >
-          <CardTitle>Angebote nach Ersteller</CardTitle>
+          <CardTitle>Angebote nach Verkaufsberater</CardTitle>
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
-        </button>
+        </Button>
       </CardHeader>
       {open && (
       <CardContent className="space-y-4">
@@ -125,7 +127,7 @@ export function OfferCreatorChart({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">
-                <th className="py-1 pr-3 font-medium">Ersteller</th>
+                <th className="py-1 pr-3 font-medium">Verkaufsberater</th>
                 <th className="py-1 pr-3 font-medium text-right">Total</th>
                 <th className="py-1 pr-3 font-medium text-right">Offen</th>
                 <th className="py-1 pr-3 font-medium text-right">Unterzeichnet</th>

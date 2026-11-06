@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { matchesOfferSearch } from '@/lib/sales/offer-search';
+import { offerSalesAdvisor } from '@/lib/sales/offer-advisor';
 import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search, AlertTriangle, XCircle, Save } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -128,7 +129,7 @@ export default function Angebote() {
       dateRange === '3months' ? 90 * 86400000 :
       dateRange === 'year' ? 365 * 86400000 : null;
     return offers.filter(o => {
-      if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
+      if (creatorFilter !== 'alle' && (offerSalesAdvisor(o) || 'Nicht angegeben') !== creatorFilter) return false;
       if (rangeMs !== null) {
         const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
         if (!d || now - d > rangeMs) return false;
@@ -670,7 +671,7 @@ export default function Angebote() {
                   <CommandList>
                     <CommandEmpty>Kein Verkaufsberater gefunden.</CommandEmpty>
                     <CommandGroup>
-                      {['alle', ...Array.from(new Set(offers.map(o => o.createdByName || '—'))).sort((a, b) => a.localeCompare(b, 'de'))].map(name => (
+                      {['alle', ...Array.from(new Set(offers.map(o => offerSalesAdvisor(o) || 'Nicht angegeben'))).sort((a, b) => a.localeCompare(b, 'de'))].map(name => (
                         <CommandItem key={name} value={name === 'alle' ? 'Alle Verkaufsberater' : name} onSelect={() => { setCreatorFilter(name); setAdvisorSelectOpen(false); }}>
                           <Check className={`mr-2 h-4 w-4 shrink-0 ${creatorFilter === name ? 'opacity-100' : 'opacity-0'}`} />
                           <span className="break-words">{name === 'alle' ? 'Alle Verkaufsberater' : name}</span>
@@ -763,7 +764,7 @@ export default function Angebote() {
                       </span>
                       <span className="font-semibold tabular-nums">{fmtMoney(o.totals?.gross || 0)}</span>
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground truncate">{o.createdByName || '—'}</div>
+                    <div className="mt-1 text-xs text-muted-foreground truncate">{offerSalesAdvisor(o) || 'Nicht angegeben'}</div>
                   </button>
                 );
               })}
@@ -847,7 +848,7 @@ export default function Angebote() {
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
                     <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{o.customer?.email || '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{o.createdByName || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{offerSalesAdvisor(o) || 'Nicht angegeben'}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtMoney(o.totals?.gross || 0)}</TableCell>
                     <TableCell>
                       {approval === 'approved' ? (
