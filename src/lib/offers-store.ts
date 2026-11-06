@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { offerSalesAdvisor } from '@/lib/sales/offer-advisor';
 
 export type OfferStatus = 'draft' | 'order' | 'signed';
 export type OfferApprovalStatus = 'pending' | 'approved' | 'rejected';
@@ -49,6 +50,7 @@ function rowToSnapshot(row: any): OfferSnapshot {
     signedAt: row.signed_at || payload.signedAt,
     createdAt: row.created_at || payload.createdAt,
     createdByName: row.created_by_name || null,
+    salesAdvisor: offerSalesAdvisor(row),
     approvalStatus: (row.approval_status as OfferApprovalStatus) || 'pending',
     approvedAt: row.approved_at || null,
     approvedBy: row.approved_by || null,
@@ -87,8 +89,8 @@ export async function setOfferApproval(
  * das pro Angebot mehrere KB groß sein kann. Das reduziert die Ladezeit der
  * Angebotsübersicht drastisch.
  */
-const LIST_COLUMNS =
-  'id, offer_number, case_number, offer_date, valid_until, customer_id, customer_name, customer_email, total_net, total_tax, total_gross, status, signed_at, created_at, created_by_name, approval_status, approved_at, approved_by, approval_note, list_note';
+const LIST_COLUMNS: string =
+  'id, offer_number, case_number, offer_date, valid_until, customer_id, customer_name, customer_email, total_net, total_tax, total_gross, status, signed_at, created_at, created_by_name, sales_advisor:payload->>salesAdvisor, approval_status, approved_at, approved_by, approval_note, list_note';
 
 export async function listOffers(): Promise<OfferSnapshot[]> {
   const { data, error } = await supabase
