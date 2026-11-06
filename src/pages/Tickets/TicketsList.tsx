@@ -2,7 +2,6 @@ import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -108,7 +107,6 @@ function priorityColor(p: string) {
 const LIST_STATE_KEY = 'alixwork.tickets.listState';
 
 export default function TicketsList() {
-  const { sourceSystem } = useTenantFilter();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState<TicketRow[]>([]);
@@ -226,7 +224,8 @@ export default function TicketsList() {
         .select(TICKET_COLS)
         .order('created_at', { ascending: false })
         .limit(limit);
-      if (sourceSystem) q = q.eq('source_system', sourceSystem);
+      // Ticket source_system identifies an intake channel, not a Zoho tenant.
+      // Existing server-side policies remain responsible for access scope.
       return q;
     };
     (async () => {
@@ -243,7 +242,6 @@ export default function TicketsList() {
       for (let from = 0; ; from += 1000) {
         let q: any = supabase.from('tickets').select(TICKET_COLS)
           .order('created_at', { ascending: false }).range(from, from + 999);
-        if (sourceSystem) q = q.eq('source_system', sourceSystem);
         const { data: page, error: pageErr } = await q;
         if (cancelled) return;
         if (pageErr) { console.error(pageErr); break; }
@@ -253,7 +251,7 @@ export default function TicketsList() {
       if (all.length) setRows(all);
     })();
     return () => { cancelled = true; };
-  }, [sourceSystem]);
+  }, []);
 
 
 
