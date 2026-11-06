@@ -7,6 +7,7 @@
 - Commission custom schedules create one uniquely hashed entry per stage; payment evidence is read through an invoker RPC and rechecked before approval and payout so stages cannot bypass deposit, delivery, or installment requirements.
 - Commission customer display and search resolve missing names through existing customer/order relationships in a shared frontend helper; never mutate financial snapshots to support search.
 - Customer transaction offer actions reuse the existing offer editor and persistence flow, so edits update the original offer rather than creating a separate document.
+- Offer position reordering moves complete line objects in the existing ordered snapshot array via a pure helper; saving and PDF generation reuse this order without changing prices, configuration or permissions.
 - Order media downloads use a shared prepare-then-download control with authenticated existing storage access and uniquely numbered ZIP entries, preserving browser user activation and duplicate filenames.
 - Operation reuses the existing protected Mediapaket overview; paginated authenticated reads keep every package accessible without introducing a second data source.
 - Branding PDFs export the full already-authorized Mediapaket record through the shared prepare-then-download control; embedded fonts and flowing tables preserve complete customer text without new data access.
