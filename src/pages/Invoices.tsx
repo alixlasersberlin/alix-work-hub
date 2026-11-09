@@ -58,6 +58,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { stampExistingPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 import { createPDF } from '@/lib/pdf-utils';
+import { invoicePdfRequest } from '@/lib/finance/invoice-pdf-request';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
@@ -1711,13 +1713,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         return await generateInternalInvoicePdf(r);
       }
       const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
-        body: {
-          zoho_invoice_id: r.zoho_invoice_id,
-          source_system: r.source_system ?? 'zoho_eu_1',
-          recurring: r.source === 'recurring',
-        },
+        body: invoicePdfRequest({ ...r, zoho_invoice_id: r.zoho_invoice_id }),
       });
-      if (error) throw error;
+      if (error) {
+        if (error instanceof FunctionsHttpError) {
+          const details = await error.context.json().catch(() => null);
+          throw new Error(details?.error || error.message);
+        }
+        throw error;
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       const b64 = (data as any)?.pdf_base64;
       if (!b64) throw new Error('Kein PDF erhalten');

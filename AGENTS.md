@@ -40,3 +40,4 @@
 - Lead metrics materialize authorized leads once and resolve offer/order links through indexed equality branches with deduplication; list loading remains independent of metric failures to prevent a slow aggregate from hiding leads.
 - Orders use sequential small authenticated pages with immediate rendering and one detail-enrichment pass per page; sorting stays local and timeout retries shrink reads without altering access or truncating history.
 - Row-level policies must evaluate role and tenant-scope checks once per statement (wrapped scalar subqueries, a statement-level tenant short-circuit, set-returning lead facades) and keep per-row lookups out of RLS functions; per-row function calls caused multi-second search timeouts.
+- Generated periodic invoice PDFs use the concrete Zoho invoices resource, never recurring-profile routing; this preserves the selected invoice instead of fetching another month's document.
