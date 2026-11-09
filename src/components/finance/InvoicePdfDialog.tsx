@@ -36,7 +36,7 @@ export function InvoicePdfDialog({ invoice, open, onOpenChange }: Props) {
           body: {
             zoho_invoice_id: invoice.zoho_invoice_id,
             source_system: invoice.source_system ?? 'zoho_eu_1',
-            recurring: !!invoice.recurring,
+            resource: 'invoices',
           },
         });
         if (err) throw err;

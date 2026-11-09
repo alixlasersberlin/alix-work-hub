@@ -144,7 +144,7 @@ export default function OffenePosten() {
         body: {
           zoho_invoice_id: item.zoho_invoice_id,
           source_system: item.source_system ?? 'zoho_eu_1',
-          recurring: item.source === 'recurring',
+          resource: 'invoices',
         },
       });
       if (error) throw error;
