@@ -17,13 +17,15 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } }, auth: { persistSession: false, autoRefreshToken: false },
     });
     const [{ data: profile, error: profileError }, { data: admin, error: adminError }, { data: tenant, error: tenantError }] = await Promise.all([
-      db.from('user_profiles').select('account_status,invitation_status,password_reset_required').eq('user_id', auth.user.id).maybeSingle(),
+      db.from('user_profiles').select('account_status,invitation_status,password_reset_required').eq('id', auth.user.id).maybeSingle(),
       db.rpc('is_admin'),
-      db.rpc('has_tenant_access', { _tenant_code: 'DE' }),
+      db.from('tenants').select('id').eq('code', 'DE').maybeSingle(),
     ]);
     if (profileError || adminError || tenantError || !admin || !tenant || profile?.account_status !== 'active' || profile.invitation_status !== 'accepted' || profile.password_reset_required !== false) {
       return json({ ok: false, error: 'Aktive Administratorfreigabe für Alix Deutschland erforderlich.' }, 403);
     }
+    const { data: tenantAllowed, error: accessError } = await db.rpc('has_tenant_access', { _tenant_id: tenant.id });
+    if (accessError || !tenantAllowed) return json({ ok: false, error: 'Keine Freigabe für Alix Deutschland.' }, 403);
     let body: unknown;
     try { body = await req.json(); } catch { return json({ ok: false, error: 'Ungültige Anfrage.' }, 400); }
     if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).some(k => k !== 'action') || (body as { action?: unknown }).action !== 'check') {
