@@ -56,7 +56,7 @@ export function ShopifyConnectionCheck() {
     finally { setBusy(false); setSummary(null); }
   }
   function download() {
-    const quote = (v: string) => `"${v.replaceAll('"', '""')}"`;
+    const quote = (v: string) => `"${v.replace(/"/g, '""')}"`;
     const csv = '\uFEFF' + [['Bestell-ID','Bestellung','Status','Ergebnis'], ...entries.map(e => [e.external_id,e.name,e.status,e.message])].map(r => r.map(quote).join(';')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = 'Shopify-Bestellprotokoll.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(url),1000);

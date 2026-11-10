@@ -83,6 +83,11 @@ Deno.serve(async (req: Request) => {
       }
       const dry = action.action === 'test';
       if (dry && (Date.parse(action.cutoff) > Date.now() + 60000 || Date.parse(action.cutoff) < Date.now() - 30 * 60000)) return json({ ok: false, error: 'Testzeitpunkt abgelaufen.' });
+      if (dry) {
+        const { data: previous, error } = await service.from('integration_logs').select('payload,event').eq('source','shopify:test-progress').eq('external_id',action.run).eq('user_id',auth.user.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+        if (error) throw new Error('Testfortschritt nicht verfügbar');
+        if ((!previous && action.cursor) || (previous && (previous.event === 'complete' || previous.payload?.next !== (action.cursor ?? null) || previous.payload?.cutoff !== action.cutoff))) return json({ok:false,error:'Testlauf muss vollständig von der ersten Seite gestartet werden.'});
+      }
       const page = await shopify.graphql(`query($after:String,$query:String){orders(first:10,after:$after,sortKey:ID,query:$query){nodes{${ORDER_FIELDS}} pageInfo{hasNextPage endCursor}}}`, { after: action.cursor ?? null, query: dry ? `created_at:<=${action.cutoff}` : null });
       const results = [];
       for (const raw of page.orders.nodes) {
@@ -104,6 +109,10 @@ Deno.serve(async (req: Request) => {
         results.push({ external_id: raw.id, name: raw.name, status, message, order_id: orderId });
       }
       let summary = null;
+      if (dry) {
+        const { error } = await service.from('integration_logs').insert({source:'shopify:test-progress',event:page.orders.pageInfo.hasNextPage ? 'page' : 'complete',external_id:action.run,status:'ok',user_id:auth.user.id,tenant_id:tenant.id,payload:{cutoff:action.cutoff,next:page.orders.pageInfo.hasNextPage ? page.orders.pageInfo.endCursor : null}});
+        if (error) throw new Error('Testfortschritt nicht gespeichert');
+      }
       if (dry && !page.orders.pageInfo.hasNextPage) {
         // Count from persisted log pages, not caller-supplied counters.
         const { count, error } = await service.from('integration_logs').select('id', { count: 'exact', head: true }).eq('source','shopify:test').eq('event','order').eq('user_id',auth.user.id).eq('payload->>run',action.run);

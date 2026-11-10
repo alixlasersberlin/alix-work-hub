@@ -43,6 +43,6 @@ export async function verifyShopifySignature(raw: Uint8Array, signature: string 
   if (!signature) return false;
   try {
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
-    return await crypto.subtle.verify('HMAC', key, Uint8Array.from(atob(signature), c => c.charCodeAt(0)), raw);
+    return await crypto.subtle.verify('HMAC', key, Uint8Array.from(atob(signature), c => c.charCodeAt(0)), new Uint8Array(raw));
   } catch { return false; }
 }
