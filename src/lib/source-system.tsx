@@ -7,6 +7,7 @@
 export type SourceSystem = 'zoho_eu_1' | 'zoho_eu_2' | (string & {});
 
 export function sourceLabel(source?: string | null): string {
+  if (source?.startsWith('shopify:')) return 'SHOPIFY';
   switch (source) {
     case 'zoho_eu_1': return 'Alix Deutschland';
     case 'zoho_eu_2': return 'Alix Austria';
