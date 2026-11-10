@@ -11,6 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { hollywoodSecretDocumentation } from '@/lib/hollywood-secret-docs';
+import { ShopifyConnectionCheck } from '@/components/ShopifyConnectionCheck';
 
 type Price = {id:string;name:string;sku:string;standard_gross:number;tax_rate:number};
 type Log = {id:string;created_at:string;source:string;event:string;external_id:string;status:string;message:string};
@@ -49,6 +50,7 @@ export default function Onlineshops() {
   return <div className="p-4 md:p-6 space-y-6">
     <PageHeader title="Onlineshops" icon={Store} breadcrumbs={[{label:'Einstellungen'},{label:'Schnittstellen'},{label:'Onlineshops'}]} actions={<><Button variant="outline" onClick={download}><Download className="h-4 w-4 mr-2"/>API-Dokumentation</Button><Button variant="outline" size="icon" title="Aktualisieren" aria-label="Aktualisieren" disabled={busy} onClick={()=>run(load)}><RefreshCw className={`h-4 w-4 ${busy?'animate-spin':''}`}/></Button></>}/>
     {error&&<div role="alert" className="border border-destructive rounded-md p-3 text-destructive">{error}</div>}
+    <ShopifyConnectionCheck />
     <section className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
       <div><h2 className="text-xl font-semibold">Hollywood Secret</h2><p className="text-sm text-muted-foreground mt-1">Alix Deutschland</p><div className="flex gap-2 flex-wrap mt-3"><Badge variant="outline">{overview?.connection.status??'Nicht geprüft'}</Badge><Badge variant="secondary"><Lock className="h-3 w-3 mr-1"/>{config?.production_enabled?'Bestellungen freigegeben':'Bestellungen gesperrt'}</Badge><Badge variant="outline">{config?.article_import_enabled?'Echter Artikelimport freigegeben':'Echter Artikelimport gesperrt'}</Badge></div></div>
       <Button disabled={busy||!keys.sandbox} onClick={()=>run(async()=>{setTestResult(await request('self_test'));await load();})}><FlaskConical className="h-4 w-4 mr-2"/>API-VERBINDUNG TESTEN</Button>
