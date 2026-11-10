@@ -58962,6 +58962,14 @@ export type Database = {
         Args: { _order_id: string; _reason: string }
         Returns: undefined
       }
+      shopify_apply_order: {
+        Args: { p_dry?: boolean; p_order: Json; p_update?: boolean }
+        Returns: Json
+      }
+      shopify_approve_import: {
+        Args: { p_run: string; p_user: string }
+        Returns: Json
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       sidebar_lager_counts: { Args: never; Returns: Json }

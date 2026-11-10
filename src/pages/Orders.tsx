@@ -1254,6 +1254,7 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
                                 <ReleaseStatusDot status={releaseStatusMap[o.id]} />
 
                                 {o._displayNumber || o.order_number}
+                                {o.source_system?.startsWith('shopify:') && <span className="text-xs font-semibold text-accent-foreground border border-border rounded px-2 py-0.5">SHOPIFY</span>}
                                 {o.imported_via_reconcile_at && (
                                   <span
                                     title={`Über Zoho-Abgleich importiert am ${new Date(o.imported_via_reconcile_at).toLocaleString('de-DE')}`}
