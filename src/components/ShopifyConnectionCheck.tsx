@@ -16,6 +16,17 @@ export function ShopifyConnectionCheck() {
   const [runId, setRunId] = useState('');
   const [confirm, setConfirm] = useState(false);
   const [progress, setProgress] = useState('');
+  const [logOffset, setLogOffset] = useState(0);
+  const [showLogs, setShowLogs] = useState(false);
+  async function loadLogs(offset = 0) {
+    setBusy(true); setResult(null);
+    try {
+      const data = await request({action:'logs',offset});
+      setEntries(data.rows.map((l: {external_id:string;status:string;message:string|null;payload?:{name?:string}}) => ({external_id:l.external_id ?? '',name:l.payload?.name ?? l.external_id ?? 'Shopify',status:l.status,message:l.message ?? ''})));
+      setLogOffset(offset); setShowLogs(true);
+    } catch(e) { setResult({ok:false,error:e instanceof Error ? e.message : 'Protokoll nicht verfügbar.'}); }
+    finally { setBusy(false); }
+  }
   async function request(body: Record<string, unknown>) {
     const { data, error } = await supabase.functions.invoke('shopify-orders', { body });
     if (error) {
@@ -27,7 +38,7 @@ export function ShopifyConnectionCheck() {
     return data;
   }
   async function test() {
-    setBusy(true); setSummary(null); setEntries([]); setResult(null);
+    setBusy(true); setSummary(null); setEntries([]); setResult(null); setShowLogs(false);
     const run = crypto.randomUUID(); const cutoff = new Date().toISOString(); setRunId(run);
     let cursor: string | null = null; let count = 0;
     try {
@@ -41,17 +52,18 @@ export function ShopifyConnectionCheck() {
     finally { setBusy(false); }
   }
   async function importOrders() {
-    setConfirm(false); setBusy(true); setResult(null); setEntries([]);
+    setConfirm(false); setBusy(true); setResult(null); setEntries([]); setShowLogs(false);
     try {
       await request({ action: 'approve', run: runId, confirmed: true });
-      let cursor: string | null = null; let count = 0;
+      let cursor: string | null = null; let count = 0; let failures = 0;
       do {
         const data = await request({ action: 'import', cursor });
         setEntries(previous => [...previous, ...data.results]); count += data.results.length;
+        failures += data.results.filter((e:Entry) => e.status === 'error').length;
         setProgress(`${count} Bestellungen verarbeitet`); cursor = data.next;
       } while (cursor);
       const hooks = await request({ action: 'webhooks' });
-      setResult({ ok: hooks.ok, message: 'Import abgeschlossen; automatische Shopify-Synchronisierung eingerichtet.' });
+      setResult({ ok: failures === 0 && hooks.ok, message: 'Import abgeschlossen; automatische Shopify-Synchronisierung eingerichtet.', error: `${failures} Bestellungen konnten nicht übernommen werden; Protokoll prüfen. Automatische Synchronisierung eingerichtet.` });
     } catch (e) { setResult({ ok: false, error: e instanceof Error ? e.message : 'Import unterbrochen; Protokoll prüfen.' }); }
     finally { setBusy(false); setSummary(null); }
   }
@@ -84,6 +96,8 @@ export function ShopifyConnectionCheck() {
     {result && <div role="status" className={result.ok ? 'text-foreground' : 'text-destructive'}>{result.ok ? result.message : result.error}</div>}
     {result?.ok && <div className="flex flex-wrap gap-2"><Badge variant="outline">{result.shop?.name}</Badge><Badge variant={result.permissions?.orders ? 'secondary' : 'destructive'}>{result.permissions?.orders ? 'Bestellleserechte vorhanden' : 'Bestellleserechte fehlen'}</Badge><Badge variant={result.permissions?.all_orders ? 'secondary' : 'outline'}>{result.permissions?.all_orders ? 'Gesamte Bestellhistorie freigegeben' : 'Gesamte Bestellhistorie nicht freigegeben'}</Badge></div>}
     {progress && <p role="status" className="text-sm text-muted-foreground">{progress}</p>}
+    <Button variant="outline" disabled={busy} onClick={() => loadLogs()}>Gespeichertes Protokoll</Button>
+    {showLogs && <div className="flex gap-2"><Button variant="outline" disabled={busy || logOffset === 0} onClick={() => loadLogs(Math.max(0,logOffset-50))}>Neuere</Button><Button variant="outline" disabled={busy || entries.length < 50} onClick={() => loadLogs(logOffset+50)}>Ältere</Button></div>}
     {summary && <div className="space-y-3"><p className="font-semibold">{summary.count} zugängliche Shopify-Bestellungen · {summary.errors} Fehler</p><p className="text-sm text-muted-foreground">{summary.all_orders ? 'Gesamte Bestellhistorie zugänglich.' : 'Nur die aktuell freigegebene Bestellhistorie; ältere Bestellungen sind noch nicht zugänglich.'}</p><Button disabled={busy || summary.errors > 0 || summary.count === 0} onClick={() => setConfirm(true)}><CheckCircle2 className="h-4 w-4 mr-2"/>Produktivimport freigeben</Button></div>}
     {entries.length > 0 && <><Button variant="outline" onClick={download}><Download className="h-4 w-4 mr-2"/>Protokoll herunterladen</Button><div className="max-h-72 overflow-auto"><table className="w-full text-sm"><thead><tr className="text-left border-b"><th className="py-2">Bestellung</th><th>Status</th><th>Ergebnis</th></tr></thead><tbody>{entries.map((e,i) => <tr key={`${e.external_id}-${i}`} className="border-b"><td className="py-2 pr-3">{e.name}</td><td className="pr-3">{({ready:'Test erfolgreich',skipped:'Übersprungen',imported:'Importiert',error:'Fehler'} as Record<string,string>)[e.status] ?? e.status}</td><td className="break-words">{e.message}</td></tr>)}</tbody></table></div></>}
     <AlertDialog open={confirm} onOpenChange={setConfirm}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Shopify-Bestellimport freigeben?</AlertDialogTitle><AlertDialogDescription>{summary?.count} geprüfte Bestellungen werden übernommen. Bereits vorhandene Bestellungen werden übersprungen. Neue Bestellungen, Änderungen, Stornierungen und Rückerstattungen werden anschließend automatisch synchronisiert; andere Aufträge und die Zugangsdaten bleiben unverändert.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Abbrechen</AlertDialogCancel><AlertDialogAction onClick={importOrders}>Freigeben und importieren</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
