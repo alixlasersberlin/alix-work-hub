@@ -41,3 +41,4 @@
 - Orders use sequential small authenticated pages with immediate rendering and one detail-enrichment pass per page; sorting stays local and timeout retries shrink reads without altering access or truncating history.
 - Row-level policies must evaluate role and tenant-scope checks once per statement (wrapped scalar subqueries, a statement-level tenant short-circuit, set-returning lead facades) and keep per-row lookups out of RLS functions; per-row function calls caused multi-second search timeouts.
 - Generated periodic invoice PDFs use the concrete Zoho invoices resource, never recurring-profile routing; this preserves the selected invoice instead of fetching another month's document.
+- Shopify client-credentials authentication stays in a server-only client with in-memory expiry-aware token caching; protected checks validate active administrator and tenant access before any Shopify call, and token responses never reach logs or tables.
