@@ -4,6 +4,8 @@ import { z } from 'npm:zod@3';
 import { createAuditServiceClient } from '../_shared/audit-auth.ts';
 import { invoiceSnapshot, paymentText } from '../_shared/shopify-invoice-rules.ts';
 import { createInvoicePdf } from './pdf.ts';
+import { createShopifyClient } from '../_shared/shopify-client.ts';
+import { normalizeOrder, ORDER_FIELDS } from '../_shared/shopify-order-data.ts';
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: corsHeaders });
 const schema = z.object({ order_id: z.string().uuid(), dry_run: z.boolean().optional() }).strict();
@@ -26,7 +28,16 @@ Deno.serve(async req => {
   try {
     const { data: order, error } = await db.from('orders').select('raw_data,shopify_invoice_state,source_system').eq('id', orderId).maybeSingle();
     if (error || order?.source_system !== 'shopify:0213c2-4.myshopify.com') return json({ error: 'Shopify order unavailable' }, 404);
-    const snapshot = invoiceSnapshot(order.raw_data.shopify);
+    let source = order.raw_data.shopify;
+    // Read-only verification can inspect old orders without modifying or invoicing them.
+    if (parsed.data.dry_run && !source.invoice_tax) {
+      const id = Deno.env.get('SHOPIFY_CLIENT_ID'); const secret = Deno.env.get('SHOPIFY_CLIENT_SECRET');
+      if (!id || !secret) throw new Error('Shopify-Verbindung fehlt.');
+      const client = createShopifyClient(id, secret);
+      const latest = await client.graphql(`query($id:ID!){order(id:$id){${ORDER_FIELDS}}}`, { id: source.external_id });
+      source = normalizeOrder(latest.order);
+    }
+    const snapshot = invoiceSnapshot(source);
     if (parsed.data.dry_run) return json({ ok: true, writes: false, total: snapshot.total, tax: snapshot.tax, balance: snapshot.balance });
     const result = await db.rpc('shopify_invoice_claim', { p_order: orderId, p_snapshot: snapshot });
     if (result.error) throw new Error('Rechnungsanlage benötigt manuelle Prüfung.');
