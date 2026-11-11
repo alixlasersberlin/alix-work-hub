@@ -4,8 +4,8 @@ const order = () => ({ total: 119, paid: 119, outstanding: 0, currency: 'EUR', e
 Deno.test('New Shopify invoice uses full order amount and original tax, never a deposit', () => { const i = invoiceSnapshot(order()); assertEquals(i.total, 119); assertEquals(i.net, 100); assertEquals(i.tax, 19); });
 Deno.test('Already paid Shopify order is not charged again', () => { const i = invoiceSnapshot(order()); assertEquals(i.balance, 0); assertEquals(paymentText(i), 'Die Rechnung ist bereits bezahlt. Es ist keine weitere Zahlung erforderlich.'); });
 Deno.test('Shipping is included in full invoice amount', () => { const o = order(); o.total = 129; o.invoice_tax.shipping = 10; assertEquals(invoiceSnapshot(o).items[1].amount, 10); });
-Deno.test('Incomplete totals fail closed', () => assertThrows(() => invoiceSnapshot({ ...order(), total: 200 })));
-Deno.test('Missing email prevents customer mail', () => assertThrows(() => invoiceSnapshot({ ...order(), email: '' })));
-Deno.test('Cancelled orders require review instead of a fresh invoice', () => assertThrows(() => invoiceSnapshot({ ...order(), status: 'storniert' })));
-Deno.test('Refunded orders require review instead of rebilling', () => assertThrows(() => invoiceSnapshot({ ...order(), refunded: 10 })));
+Deno.test('Incomplete totals fail closed', () => { assertThrows(() => invoiceSnapshot({ ...order(), total: 200 })); });
+Deno.test('Missing email prevents customer mail', () => { assertThrows(() => invoiceSnapshot({ ...order(), email: '' })); });
+Deno.test('Cancelled orders require review instead of a fresh invoice', () => { assertThrows(() => invoiceSnapshot({ ...order(), status: 'storniert' })); });
+Deno.test('Refunded orders require review instead of rebilling', () => { assertThrows(() => invoiceSnapshot({ ...order(), refunded: 10 })); });
 Deno.test('Exclusive tax is not added twice', () => { const o = order(); o.invoice_tax.included = false; o.items[0].amount = 100; assertEquals(invoiceSnapshot(o).total, 119); });
