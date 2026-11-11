@@ -50,7 +50,10 @@ Deno.serve(async req => {
     }
 
     // 2) Reconcile recently changed orders since the last successful cursor.
-    const { data: last } = await db.from('integration_logs').select('payload').eq('source', 'shopify:sync').eq('status', 'ok').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    // Reuse the existing reconciliation, never add a permanent invoice sweeper.
+    const pending = await db.from('orders').select('id').eq('source_system', `shopify:${SHOP}`).eq('shopify_invoice_state->>status', 'pending').limit(10);
+    for (const order of pending.data ?? []) await db.rpc('shopify_invoice_retry', { p_order: order.id });
+    const { data: last } = await db.from('integration_logs').select('payload').eq('source', 'shopify:sync').eq('event', 'run').eq('status', 'ok').order('created_at', { ascending: false }).limit(1).maybeSingle();
     const approvedAt = Date.parse(gate.shop_config?.approved_at ?? '') || Date.now() - 86_400_000;
     const base = Date.parse(last?.payload?.cursor ?? '') || approvedAt - 3_600_000;
     const since = new Date(base - OVERLAP_MS).toISOString();

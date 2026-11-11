@@ -36734,6 +36734,7 @@ export type Database = {
           raw_data: Json | null
           salesperson_name: string | null
           shipping_address: Json | null
+          shopify_invoice_state: Json | null
           signature_document_id: string | null
           signature_signed_at: string | null
           signature_status: string | null
@@ -36784,6 +36785,7 @@ export type Database = {
           raw_data?: Json | null
           salesperson_name?: string | null
           shipping_address?: Json | null
+          shopify_invoice_state?: Json | null
           signature_document_id?: string | null
           signature_signed_at?: string | null
           signature_status?: string | null
@@ -36834,6 +36836,7 @@ export type Database = {
           raw_data?: Json | null
           salesperson_name?: string | null
           shipping_address?: Json | null
+          shopify_invoice_state?: Json | null
           signature_document_id?: string | null
           signature_signed_at?: string | null
           signature_status?: string | null
@@ -58969,6 +58972,24 @@ export type Database = {
       shopify_approve_import: {
         Args: { p_run: string; p_user: string }
         Returns: Json
+      }
+      shopify_invoice_claim: {
+        Args: { p_order: string; p_snapshot: Json }
+        Returns: Json
+      }
+      shopify_invoice_dispatch: {
+        Args: { p_order: string }
+        Returns: undefined
+      }
+      shopify_invoice_retry: { Args: { p_order: string }; Returns: undefined }
+      shopify_invoice_transition: {
+        Args: {
+          p_claim: string
+          p_details?: Json
+          p_order: string
+          p_status: string
+        }
+        Returns: boolean
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
