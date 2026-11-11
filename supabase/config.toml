@@ -3,6 +3,9 @@ project_id = "xmrmkgfgpoundfwhnxfs"
 [functions.shopify-order-webhook]
 verify_jwt = false
 
+[functions.shopify-order-sync]
+verify_jwt = false
+
 [functions.ratenplan-invoices]
 verify_jwt = false
 
