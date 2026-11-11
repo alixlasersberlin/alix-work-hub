@@ -7,9 +7,14 @@ export const orderSchema = z.object({
   email: z.string().nullable(), phone: z.string().nullable(), displayFinancialStatus: z.string(), displayFulfillmentStatus: z.string(),
   customer: z.object({ id: z.string(), displayName: z.string(), email: z.string().nullable(), phone: z.string().nullable() }).nullable(),
   billingAddress: address, shippingAddress: address, currentTotalPriceSet: money, totalReceivedSet: money, totalRefundedSet: money, totalOutstandingSet: money,
+  taxesIncluded: z.boolean().optional(), currentTotalTaxSet: money.optional(), currentShippingPriceSet: money.optional(),
+  taxLines: z.array(z.object({ title: z.string(), rate: z.number(), priceSet: money })).optional(),
   lineItems: z.object({ nodes: z.array(z.object({ id: z.string(), name: z.string(), sku: z.string().nullable(), quantity: z.number().int().nonnegative(), currentQuantity: z.number().int().nonnegative(), originalUnitPriceSet: money, discountedTotalSet: money })), pageInfo: z.object({ hasNextPage: z.boolean(), endCursor: z.string().nullable() }) }),
 });
-export const ORDER_FIELDS = `id name createdAt updatedAt cancelledAt email phone displayFinancialStatus displayFulfillmentStatus
+export const ORDER_FIELDS = `id name createdAt updatedAt cancelledAt email phone displayFinancialStatus displayFulfillmentStatus taxesIncluded
+currentTotalTaxSet { shopMoney { amount currencyCode } }
+currentShippingPriceSet { shopMoney { amount currencyCode } }
+taxLines { title rate priceSet { shopMoney { amount currencyCode } } }
 customer { id displayName email phone }
 billingAddress { name company address1 address2 city zip countryCodeV2 phone }
 shippingAddress { name company address1 address2 city zip countryCodeV2 phone }
@@ -32,6 +37,10 @@ export function normalizeOrder(input: unknown) {
     shipping: addr(o.shippingAddress), billing: addr(o.billingAddress), currency: o.currentTotalPriceSet.shopMoney.currencyCode,
     total: amount(o.currentTotalPriceSet), paid: Math.max(0, amount(o.totalReceivedSet) - amount(o.totalRefundedSet)), outstanding: amount(o.totalOutstandingSet), refunded: amount(o.totalRefundedSet),
     payment_status: o.displayFinancialStatus, fulfillment_status: o.displayFulfillmentStatus,
+    invoice_tax: o.currentTotalTaxSet && o.currentShippingPriceSet && o.taxesIncluded !== undefined ? {
+      included: o.taxesIncluded, total: amount(o.currentTotalTaxSet), shipping: amount(o.currentShippingPriceSet),
+      lines: (o.taxLines ?? []).map(t => ({ title: t.title, rate: t.rate, amount: amount(t.priceSet) })),
+    } : null,
     status: o.cancelledAt ? 'storniert' : o.displayFulfillmentStatus === 'FULFILLED' ? 'geliefert' : 'offen',
     items: o.lineItems.nodes.map((l, position) => ({ id: l.id, name: l.name, sku: l.sku, quantity: l.currentQuantity, original_quantity: l.quantity,
       rate: amount(l.originalUnitPriceSet), amount: l.quantity ? Math.round(amount(l.discountedTotalSet) / l.quantity * l.currentQuantity * 100) / 100 : 0,
