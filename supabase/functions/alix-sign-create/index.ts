@@ -99,6 +99,19 @@ Deno.serve(async (req) => {
     })
   }
 
+  // Vollständiges Angebots-PDF (identisch zum Angebotseditor) privat ablegen,
+  // damit die Signaturseite exakt dieses Dokument anzeigt.
+  if (pdfBase64) {
+    try {
+      const bin = atob(pdfBase64)
+      const bytes = new Uint8Array(bin.length)
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+      const { error: upErr } = await admin.storage.from('sig-documents')
+        .upload(`alix-sign/${ins.id}/angebot.pdf`, bytes, { contentType: 'application/pdf', upsert: true })
+      if (upErr) console.error('alix-sign-create pdf upload', upErr.message)
+    } catch (e: any) { console.error('alix-sign-create pdf upload exception', e?.message) }
+  }
+
   await admin.from('alix_sign_audit_log').insert({
     sign_request_id: ins.id,
     action: 'link_created',

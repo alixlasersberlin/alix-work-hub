@@ -89,8 +89,16 @@ Deno.serve(async (req) => {
     }
   }
 
+  let offer_pdf_url: string | null = null
+  if (status !== 'abgelaufen') {
+    const { data: signed } = await admin.storage.from('sig-documents')
+      .createSignedUrl(`alix-sign/${r.id}/angebot.pdf`, 3600)
+    offer_pdf_url = signed?.signedUrl ?? null
+  }
+
   return new Response(JSON.stringify({
     id: r.id,
+    offer_pdf_url,
     offer_number: r.offer_number,
     offer_payload: payload,
 
