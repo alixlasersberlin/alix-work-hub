@@ -147,6 +147,7 @@ export default function AlixSignPublic() {
   const requiresCredit = ['Ratenzahlung', 'Leasing', 'Mietkauf', 'Alix Flex'].includes(payType);
 
   const openOfferPdf = () => {
+    if (data.offer_pdf_url) { window.open(data.offer_pdf_url, '_blank', 'noopener'); return; }
     try {
       const b64 = buildOfferPdfBase64(snap);
       const bin = atob(b64);
