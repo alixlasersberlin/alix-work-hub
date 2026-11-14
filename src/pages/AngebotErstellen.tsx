@@ -30,6 +30,9 @@ import { PH_PRICE_COUNTRIES, readCountryPrice, uvpForPower, type PhCountryPrice 
 import { buildOfferPdfBase64 } from '@/lib/alix-sign-pdf';
 import { deviceColorPhoto } from '@/lib/producthub/colorImages';
 import { moveLine } from '@/lib/sales/reorder-lines';
+import { offerFinancePreview } from '@/lib/sales/offer-finance-preview';
+import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
+import MietkaufDialog from '@/components/MietkaufDialog';
 
 
 
@@ -1091,6 +1094,17 @@ export default function AngebotErstellen() {
   }, [lines, priceMode]);
 
   const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+  const financePreview = offerFinancePreview(payPrice === '' ? totals.gross : Number(payPrice), activeDiscount, Number(payDown || 0), payTerm);
+  const demoOrder = useMemo(() => financePreview ? {
+    order_number: offerNumber,
+    customers: selectedCustomer,
+    billing_address: selectedCustomer?.billing_address,
+    shipping_address: selectedCustomer?.shipping_address,
+    total_amount: financePreview.total,
+    deposit_amount: financePreview.downPayment,
+    preview_term: financePreview.term,
+    items: lines.map(line => ({ item_name: line.name, sku: line.sku, quantity: line.quantity, rate: line.rate })),
+  } : null, [offerNumber, selectedCustomer, lines, financePreview?.total, financePreview?.downPayment, financePreview?.term]);
 
   const loadTemplateDataUrl = async (): Promise<string> => {
     if ((loadTemplateDataUrl as any)._cache) return (loadTemplateDataUrl as any)._cache;
@@ -3019,6 +3033,16 @@ export default function AngebotErstellen() {
       </div>
 
 
+
+        <div className="flex flex-wrap items-center gap-3 py-3 border-y border-border">
+          {demoOrder && selectedCustomer ? <>
+            <InstallmentPlanDialog key={`raten-${JSON.stringify(demoOrder)}`} order={demoOrder} demo />
+            <MietkaufDialog key={`mietkauf-${JSON.stringify(demoOrder)}`} order={demoOrder} demo />
+          </> : <>
+            <Button type="button" variant="outline" disabled><FileDown className="mr-2 h-4 w-4" />Ratenplan-Vorschau</Button>
+            <Button type="button" variant="outline" disabled><FileDown className="mr-2 h-4 w-4" />Mietkauf-Vorschau</Button>
+          </>}
+        </div>
 
         <div className="rounded-xl border border-border bg-card card-glow p-4 flex flex-col items-end gap-1 text-sm">
           {activeDiscount > 0 && (
