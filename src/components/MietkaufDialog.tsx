@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, useMemo, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { OfferDemoPdf, markOfferDemo } from '@/components/OfferDemoPdf';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ export type MietkaufDialogHandle = { open: () => void };
 interface Props {
   order: any;
   hideTrigger?: boolean;
+  demo?: boolean;
 }
 
 const TERMS = [12, 24, 36, 48, 60] as const;
@@ -78,12 +80,12 @@ async function loadImageAsBase64(src: string): Promise<string> {
   });
 }
 
-const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function MietkaufDialog({ order, hideTrigger }, ref) {
+const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function MietkaufDialog({ order, hideTrigger, demo = false }, ref) {
   const [open, setOpen] = useState(false);
   useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
   const [kaufpreis, setKaufpreis] = useState('');
   const [anzahlung, setAnzahlung] = useState('');
-  const [term, setTerm] = useState<number>(12);
+  const [term, setTerm] = useState<number>(demo ? order.preview_term : 12);
   const [geraetModell, setGeraetModell] = useState('');
   const [zusatzService, setZusatzService] = useState('');
   const [kaufpreisEnde, setKaufpreisEnde] = useState('');
@@ -144,7 +146,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
 
   // Laufzeit (Monate) aus dem verknüpften Angebot übernehmen (payload.payment.term)
   useEffect(() => {
-    if (!open || !order) return;
+    if (demo || !open || !order) return;
     const customerId = order.customer_id || order.customers?.id || order.customer?.id;
     if (!customerId) return;
     (async () => {
@@ -167,7 +169,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
       console.log('[MietkaufDialog] term from offer →', { offer: ranked[0]?.offer_number, months });
       if (months > 0) setTerm(months);
     })();
-  }, [open, order?.id]);
+  }, [open, order?.id, demo]);
 
   const isDE = region === 'DE';
   const flag = isDE ? '🇩🇪' : '🇪🇺';
@@ -236,7 +238,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     doc.setFont('Inter', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(0);
-    doc.text('Vertrag', ml, y);
+    doc.text(demo ? 'Mietkauf · Demo' : 'Vertrag', ml, y);
     y += 12;
 
     // "zwischen"
@@ -318,7 +320,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     // Auftragsnummer
     drawRow(y, 8);
     doc.setFont('Inter', 'bold');
-    doc.text('Auftragsnummer:', ml + 3, y + 5.5);
+    doc.text(demo ? 'Angebotsnummer:' : 'Auftragsnummer:', ml + 3, y + 5.5);
     doc.setFont('Inter', 'normal');
     doc.text(order.order_number || '', ml + cw * 0.35, y + 5.5);
     doc.line(ml + cw * 0.33, y, ml + cw * 0.33, y + 8);
@@ -361,6 +363,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
       doc.text(opt.label, cx + 5, y);
       cx += 28;
     }
+    if (!termOptions.some(option => option.months === term)) doc.text(`${term} Monate`, ml + 22, y + 6);
     
     y += 12;
 
@@ -473,9 +476,15 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
       { align: 'center' }
     );
 
+    if (demo) {
+      markOfferDemo(doc);
+      return doc.output('blob');
+    }
     capturePdf('mietkauf', () => doc.output('blob'), `Mietkauf_${order.order_number}.pdf`);
     await downloadStampedPdf(doc, 'lease_purchase', `Mietkauf_${order.order_number}.pdf`, order.order_number, { order_id: (order as any).id ?? null, customer_id: (order as any).customer_id ?? null, title: `Mietkauf ${order.order_number}` });
   }
+
+  const buildDemo = useCallback(() => generatePDF(), [order, kaufpreis, anzahlung, term, geraetModell, zusatzService, kaufpreisEnde, region, demo]);
 
   return (
     <>
@@ -487,7 +496,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
         className="border-primary/30 text-primary hover:bg-primary/10"
         onClick={() => { console.log('[MietkaufDialog] open click'); setOpen(true); }}
       >
-        <FileText className="w-4 h-4 mr-2" /> Mietkauf
+        <FileText className="w-4 h-4 mr-2" /> {demo ? 'Mietkauf-Vorschau' : 'Mietkauf'}
       </Button>
     )}
     {open && (
@@ -504,7 +513,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-lg font-semibold leading-none tracking-tight flex items-center gap-2">
               <span className="text-xl leading-none" title={isDE ? 'Deutschland' : 'EU'}>{flag}</span>
-              Mietkaufvertrag erstellen
+              {demo ? 'Mietkaufvertrag · Demo' : 'Mietkaufvertrag erstellen'}
             </h2>
             <div className="flex items-center gap-1 rounded-md border border-border bg-secondary/50 p-1 text-xs">
               <button
@@ -567,7 +576,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
               <Input value={zusatzService} onChange={e => setZusatzService(e.target.value)} placeholder="Optional" className="bg-secondary border-border" />
             </div>
 
-            <Button
+            {demo ? <OfferDemoPdf build={buildDemo} filename={`Demo_Mietkauf_${order.order_number}.pdf`} disabled={!isValid} /> : <Button
               onClick={async () => {
                 await generatePDF();
                 toast({ title: 'PDF exportiert', description: 'Mietkaufvertrag wurde als PDF heruntergeladen.' });
@@ -576,7 +585,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
               className="w-full gold-gradient text-primary-foreground"
             >
               <Download className="w-4 h-4 mr-2" /> PDF erstellen
-            </Button>
+            </Button>}
             </div>
 
             {/* RIGHT: Zahlungsberechnung + Artikelliste, gleiche Höhe wie links */}
@@ -632,7 +641,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
                     {selectedItems.length} von {orderItems.length} ausgewählt · Summe:{' '}
                     <span className="text-foreground font-medium">{fmtCurrency(selectedSum)}</span>
                   </p>
-                  <Button type="button" size="sm" variant="outline" className="w-full" onClick={applySelection} disabled={selectedItems.length === 0}>
+                  <Button type="button" size="sm" variant="outline" className="w-full" onClick={applySelection} disabled={demo || selectedItems.length === 0}>
                     Auswahl in Vertrag übernehmen
                   </Button>
                 </div>

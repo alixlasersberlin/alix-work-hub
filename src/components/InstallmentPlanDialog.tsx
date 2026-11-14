@@ -1,4 +1,5 @@
-import { useState, useMemo, forwardRef, useImperativeHandle } from 'react';
+import { useState, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { OfferDemoPdf, markOfferDemo } from '@/components/OfferDemoPdf';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ export type InstallmentPlanDialogHandle = { open: () => void };
 interface Props {
   order: any;
   hideTrigger?: boolean;
+  demo?: boolean;
 }
 
 const TERMS = [12, 24, 36, 48, 60] as const;
@@ -68,7 +70,9 @@ function loadImageAsBase64(src: string): Promise<string> {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
-      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      const context = canvas.getContext('2d');
+      if (!context) { reject(new Error('Bild konnte nicht geladen werden.')); return; }
+      context.drawImage(img, 0, 0);
       resolve(canvas.toDataURL('image/png'));
     };
     img.onerror = reject;
@@ -76,13 +80,13 @@ function loadImageAsBase64(src: string): Promise<string> {
   });
 }
 
-const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(function InstallmentPlanDialog({ order, hideTrigger }, ref) {
+const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(function InstallmentPlanDialog({ order, hideTrigger, demo = false }, ref) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
-  const [price, setPrice] = useState('');
-  const [downPayment, setDownPayment] = useState('');
-  const [term, setTerm] = useState<number>(12);
+  const [price, setPrice] = useState(demo ? String(order.total_amount) : '');
+  const [downPayment, setDownPayment] = useState(demo ? String(order.deposit_amount) : '');
+  const [term, setTerm] = useState<number>(demo ? order.preview_term : 12);
   const [saving, setSaving] = useState(false);
 
   const deliveryDate = order.expected_shipment_date ? new Date(order.expected_shipment_date) : new Date();
@@ -167,7 +171,7 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
     }
 
     doc.setTextColor(100, 100, 100);
-    doc.text(`Auftrag: ${order.order_number}`, LX, addrY);
+    doc.text(`${demo ? 'Angebot' : 'Auftrag'}: ${order.order_number}`, LX, addrY);
     doc.text(`Erstellt am: ${fmtDate(new Date())}`, LX, addrY + 6);
     doc.text(`Kaufpreis: ${fmtCurrency(parseFloat(price) || 0)}`, LX, addrY + 14);
     doc.text(`Anzahlung: ${fmtCurrency(parseFloat(downPayment) || 0)}`, LX, addrY + 20);
@@ -229,12 +233,16 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
     doc.text('Gesamtbetrag:', LX, y + 2);
     doc.text(fmtCurrency(baseAmount), pw - 18, y + 2, { align: 'right' });
 
+    if (demo) {
+      markOfferDemo(doc);
+      return doc.output('blob');
+    }
     capturePdf('ratenplan', () => doc.output('blob'), `Ratenplan_${order.order_number}.pdf`);
     doc.save(`Ratenplan_${order.order_number}.pdf`);
   }
 
   async function createAndExport() {
-    if (schedule.length === 0) return;
+    if (demo || schedule.length === 0) return;
     setSaving(true);
     try {
       const records = schedule.map(row => ({
@@ -262,6 +270,8 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
     }
   }
 
+  const buildDemo = useCallback(() => generatePDF(), [price, downPayment, term, startDate, order, demo]);
+
   return (
     <>
       {!hideTrigger && (
@@ -272,7 +282,7 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
           className="border-primary/30 text-primary hover:bg-primary/10"
           onClick={() => { console.log('[InstallmentPlanDialog] open click'); setOpen(true); }}
         >
-          <FileText className="w-4 h-4 mr-2" /> Ratenplan
+          <FileText className="w-4 h-4 mr-2" /> {demo ? 'Ratenplan-Vorschau' : 'Ratenplan'}
         </Button>
       )}
       {open && (
@@ -286,7 +296,7 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
             >
               <X className="h-4 w-4" />
             </button>
-            <h2 className="font-display text-lg font-semibold leading-none tracking-tight">Ratenplan erstellen</h2>
+            <h2 className="font-display text-lg font-semibold leading-none tracking-tight">{demo ? 'Ratenplan · Demo' : 'Ratenplan erstellen'}</h2>
 
             <div className="space-y-4 mt-4">
               <div>
@@ -304,7 +314,7 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TERMS.map(t => (
+                    {Array.from(new Set([...TERMS, term])).sort((a, b) => a - b).map(t => (
                       <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
                     ))}
                   </SelectContent>
@@ -338,7 +348,7 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
                 </div>
               )}
 
-              <div className="flex gap-3">
+              {demo ? <OfferDemoPdf build={buildDemo} filename={`Demo_Ratenplan_${order.order_number}.pdf`} disabled={schedule.length === 0 || Number(downPayment) < 0} /> : <div className="flex gap-3">
                 <Button onClick={async () => { await generatePDF(); toast({ title: 'PDF exportiert', description: 'Ratenplan wurde als PDF heruntergeladen.' }); }} disabled={schedule.length === 0} variant="outline" className="flex-1 border-primary/30 text-primary hover:bg-primary/10">
                   <Download className="w-4 h-4 mr-2" /> Nur PDF
                 </Button>
@@ -346,7 +356,7 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
                   {saving ? 'Erstelle...' : 'PDF & Finance'}
                 </Button>
-              </div>
+              </div>}
             </div>
           </div>
         </div>
