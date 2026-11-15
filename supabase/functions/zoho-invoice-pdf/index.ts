@@ -36,7 +36,27 @@ function getZohoConfig(source: string) {
   };
 }
 
+class ZohoRateLimitError extends Error {}
+
+// Zoho begrenzt Token-Abrufe stark; Token pro Konto im Speicher der Instanz bis kurz vor Ablauf wiederverwenden.
+const tokenCache = new Map<string, { token: string; expiresAt: number }>();
+const tokenInflight = new Map<string, Promise<string>>();
+
 async function getAccessToken(cfg: NonNullable<ReturnType<typeof getZohoConfig>>) {
+  const key = `${cfg.accountsBaseUrl}|${cfg.clientId}|${cfg.organizationId}`;
+  const cached = tokenCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.token;
+  const pending = tokenInflight.get(key);
+  if (pending) return pending;
+  const p = fetchAccessToken(cfg).then(({ token, expiresIn }) => {
+    tokenCache.set(key, { token, expiresAt: Date.now() + Math.max(60, expiresIn - 300) * 1000 });
+    return token;
+  }).finally(() => tokenInflight.delete(key));
+  tokenInflight.set(key, p);
+  return p;
+}
+
+async function fetchAccessToken(cfg: NonNullable<ReturnType<typeof getZohoConfig>>) {
   const res = await fetch(`${cfg.accountsBaseUrl}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -47,9 +67,15 @@ async function getAccessToken(cfg: NonNullable<ReturnType<typeof getZohoConfig>>
       grant_type: "refresh_token",
     }),
   });
-  const data = await res.json();
-  if (!data?.access_token) throw new Error(`Zoho token error: ${JSON.stringify(data)}`);
-  return data.access_token as string;
+  const data = await res.json().catch(() => null);
+  if (!data?.access_token) {
+    const text = JSON.stringify(data);
+    if (/too many requests/i.test(text) || res.status === 429) {
+      throw new ZohoRateLimitError('Zoho hat zu viele Anmeldungen in kurzer Zeit gemeldet. Bitte einige Minuten warten und dann erneut versuchen.');
+    }
+    throw new Error(`Zoho token error: ${text}`);
+  }
+  return { token: data.access_token as string, expiresIn: Number(data.expires_in) || 3600 };
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -82,8 +108,10 @@ function resolveResource(input: {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  let softErrors = false;
   try {
     const body = await req.json();
+    softErrors = body?.soft_errors === true;
     const {
       zoho_invoice_id,
       zoho_id,
@@ -199,6 +227,9 @@ Deno.serve(async (req) => {
 
     return json({ pdf_base64: pdfB64, size: buf.length, facsimile_applied: stamped, doc_type: finalDocType, resource: res, resolved_zoho_invoice_id: resolvedId });
   } catch (e) {
-    return json({ error: (e as Error).message }, 500);
+    if (e instanceof ZohoRateLimitError) {
+      return json({ error: e.message, code: 'ZOHO_RATE_LIMIT' }, softErrors ? 200 : 429);
+    }
+    return json({ error: (e as Error).message, code: 'ZOHO_ERROR' }, softErrors ? 200 : 500);
   }
 });
