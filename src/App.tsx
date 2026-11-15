@@ -1,3 +1,4 @@
+import { isOfferCreatorOnly, OFFER_CREATOR_PATHS } from "@/lib/offer-creator-access";
 import { Suspense } from "react";
 import { RouteErrorBoundary, RouteFallback } from "@/components/RouteBoundary";
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
@@ -1376,6 +1377,15 @@ function ForceWelcomeGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function OfferCreatorGuard() {
+  const { roles, user } = useAuth();
+  const location = useLocation();
+  if (!user || !isOfferCreatorOnly(roles)) return null;
+  const p = location.pathname;
+  if (p === '/' || p === '/login' || OFFER_CREATOR_PATHS.some((a) => p === a || p.startsWith(a + '/'))) return null;
+  return <Navigate to="/verkauf/angebote" replace />;
+}
+
 function HomeRoute() {
   const { roles } = useAuth();
   if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
@@ -1401,6 +1411,7 @@ function AppRoutes() {
   return (
     <RouteErrorBoundary>
     <MobileAutoRedirect />
+    <OfferCreatorGuard />
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Öffentliche Landing-Page: / und /login zeigen IMMER nur Landing, niemals Redirect */}
@@ -1603,7 +1614,7 @@ function AppRoutes() {
           <Route path="/vertrieb/meine-leads" element={<ProtectedRoute><MyLeads /></ProtectedRoute>} />
           <Route path="/vertrieb/whatsapp-eingang" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><WhatsAppInbox /></ProtectedRoute>} />
           <Route path="/vertrieb/meine-leads/:id" element={<ProtectedRoute><MyLeadDetail /></ProtectedRoute>} />
-          <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order']}><AngebotErstellen /></ProtectedRoute>} />
+          <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Angebotsersteller']}><AngebotErstellen /></ProtectedRoute>} />
           <Route path="/verkauf/angebot/import" element={<ProtectedRoute requiredRoles={['Super Admin']}><AngebotImport /></ProtectedRoute>} />
           <Route path="/verkauf/anfragen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsList /></ProtectedRoute>} />
           <Route path="/verkauf/verkaufsfuehrer" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertriebsleitung','Finance']}><Verkaufsfuehrer /></ProtectedRoute>} />
@@ -1614,7 +1625,7 @@ function AppRoutes() {
           <Route path="/verkauf/anfragen/dashboard" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsDashboard /></ProtectedRoute>} />
           <Route path="/verkauf/anfragen/import" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsImport /></ProtectedRoute>} />
 
-          <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
+          <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Angebotsersteller']}><Angebote /></ProtectedRoute>} />
           <Route path="/verkauf/angebotsanalyse" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebotsanalyse /></ProtectedRoute>} />
           <Route path="/verkauf/angebotskalender" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><AngebotsKalender /></ProtectedRoute>} />
 
