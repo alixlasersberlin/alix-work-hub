@@ -1,3 +1,4 @@
+- Selected recurring invoice mail reuses authenticated PDF/send-mail calls; never resend uncertain sends.
 - Note creation uses a separate active-account gate and parent-record RLS, independent of edit permissions; Read Only roles may append notes without gaining record updates or wider visibility.
 - Wiederkehrende Zahler V1 lebt in rp_*-Tabellen; Läufe/Positionen nur über Security-Definer-RPCs (rp_prepare_run/rp_approve_run …) änderbar — Freigabe, Duplikatsperre und Beträge müssen serverseitig erzwungen werden.
 - Ticket-Art (neue Kundenanfrage / bestehender Vorgang / automatische Meldung) wird clientseitig in src/lib/ticketKind.ts abgeleitet — keine Schemaänderung nötig, Regeln zentral testbar.
