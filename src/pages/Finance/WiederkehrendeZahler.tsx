@@ -22,6 +22,7 @@ import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/f
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
 import { CustomerInvoicesDialog } from '@/components/finance/CustomerInvoicesDialog';
+import { RecurringInvoiceMailDialog } from '@/components/finance/RecurringInvoiceMailDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -197,6 +198,7 @@ export default function WiederkehrendeZahler() {
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
   const [deleteReason, setDeleteReason] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [invoiceMailAccounts, setInvoiceMailAccounts] = useState<{ customer_id: string; customer_name: string }[] | null>(null);
 
   // Rollen laden asynchron: sobald Admin erkannt wird, alles anzeigen (solange der Filter nicht manuell geändert wurde)
   const filterTouched = useRef(false);
@@ -943,6 +945,9 @@ export default function WiederkehrendeZahler() {
             <DropdownMenuItem onClick={exportCsv}><FileJson className="w-4 h-4 mr-2" />CSV</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        {canWrite && <Button size="sm" variant="outline" disabled={!selectedGroups.length} onClick={() => setInvoiceMailAccounts(selectedGroups.map(g => ({ customer_id: g.customer_id, customer_name: g.customer_name })))}>
+          <Mail className="w-4 h-4 mr-2" />Rechnungen per E-Mail ({selectedGroups.length})
+        </Button>}
       </div>
 
 
@@ -1247,6 +1252,7 @@ export default function WiederkehrendeZahler() {
         customerId={invoicesFor?.id}
         customerName={invoicesFor?.name}
       />
+      <RecurringInvoiceMailDialog open={!!invoiceMailAccounts} onOpenChange={value => { if (!value) setInvoiceMailAccounts(null); }} accounts={invoiceMailAccounts || []} region={region} />
       <RecurringInvoiceBookDialog
         invoice={bookInvoice}
         open={!!bookInvoice}
