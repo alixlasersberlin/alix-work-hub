@@ -19,7 +19,7 @@ async function failureMessage(error: unknown) {
 export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, region }: {
   open: boolean; onOpenChange: (open: boolean) => void; accounts: Account[]; region: string;
 }) {
-  const [date, setDate] = useState(() => new Date().toLocaleDateString('en-CA'));
+  const [date, setDate] = useState('');
   const [rows, setRows] = useState<MailItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -46,9 +46,10 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
       for (let start = 0; start < ids.length; start += 30) {
         for (const table of ['zoho_invoices', 'zoho_recurring_invoices'] as const) {
           for (let offset = 0; ; offset += 100) {
-            const { data, error: queryError } = await supabase.from(table).select(cols)
-              .in('customer_id', ids.slice(start, start + 30)).eq('accounting_region', region === 'CH' ? 'CH' : 'EU')
-              .eq('invoice_date', date).order('id').range(offset, offset + 99);
+            let query = supabase.from(table).select(cols)
+              .in('customer_id', ids.slice(start, start + 30)).eq('accounting_region', region === 'CH' ? 'CH' : 'EU');
+            if (date) query = query.eq('invoice_date', date);
+            const { data, error: queryError } = await query.order('invoice_date', { ascending: false }).order('id').range(offset, offset + 99);
             if (queryError) throw queryError;
             if (current !== generation.current) return;
             found.push(...(data || []) as InvoiceMailRow[]);
@@ -56,7 +57,7 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
           }
         }
       }
-      const selected = selectedInvoiceRows(found, ids);
+      const selected = selectedInvoiceRows(found, ids, date).sort((a, b) => (b.invoice_date || '').localeCompare(a.invoice_date || ''));
       const items: MailItem[] = [];
       for (const row of selected) {
         let recipient = invoiceRecipient(row.raw_data);
@@ -66,7 +67,7 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
           recipient = data?.email || '';
         }
         const blocked = invoiceMailBlock(row);
-        items.push({ ...row, raw_data: undefined, recipient, checked: !blocked, attempted: false, result: blocked || '' });
+        items.push({ ...row, raw_data: undefined, recipient, checked: !!date && !blocked, attempted: false, result: blocked || '' });
       }
       if (current === generation.current) { setRows(items); setLoaded(true); }
     } catch (e) { if (current === generation.current) setError(await failureMessage(e)); }
@@ -90,7 +91,8 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
         } catch (e) { update(row.id, { result: `Nicht gesendet: ${await failureMessage(e)}`, attempted: true }); continue; }
         update(row.id, { result: 'Wird gesendet …', attempted: true });
         const number = row.invoice_number || row.zoho_invoice_id;
-        const text = `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie Ihre Rechnung ${number} vom ${date.split('-').reverse().join('.')} als PDF.\n\nBereits geleistete Zahlungen bleiben berücksichtigt.\n\nMit freundlichen Grüßen\nAlix Lasers | Finance`;
+        const invoiceDate = row.invoice_date ? ` vom ${row.invoice_date.slice(0, 10).split('-').reverse().join('.')}` : '';
+        const text = `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie Ihre Rechnung ${number}${invoiceDate} als PDF.\n\nBereits geleistete Zahlungen bleiben berücksichtigt.\n\nMit freundlichen Grüßen\nAlix Lasers | Finance`;
         try {
           const { data, error: mailError } = await supabase.functions.invoke('send-mail', { body: {
             to_email: row.recipient.trim(), to_name: row.customer_name,
@@ -117,8 +119,9 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
         <DialogDescription>{accounts.length} markierte Kundenkonten · Absender finance@alixwork.de · Rechnungs-PDF als Anhang</DialogDescription>
       </DialogHeader>
       <div className="flex flex-wrap gap-3 items-end">
-        <label className="text-sm space-y-1">Rechnungsdatum<Input type="date" value={date} disabled={loading || sending || rows.some(row => row.attempted)} onChange={e => { setDate(e.target.value); setLoaded(false); setRows([]); }} /></label>
-        <Button variant="outline" disabled={!date || loading || sending || rows.some(row => row.attempted)} onClick={loadInvoices}>{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Rechnungen laden</Button>
+        <label className="text-sm space-y-1">Rechnungsdatum (optional)<Input type="date" value={date} disabled={loading || sending || rows.some(row => row.attempted)} onChange={e => { setDate(e.target.value); setLoaded(false); setRows([]); }} /></label>
+        {date && <Button variant="outline" disabled={loading || sending || rows.some(row => row.attempted)} onClick={() => { setDate(''); setLoaded(false); setRows([]); }}>Alle Daten</Button>}
+        <Button variant="outline" disabled={loading || sending || rows.some(row => row.attempted)} onClick={loadInvoices}>{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Rechnungen laden</Button>
       </div>
       {error && <p role="alert" className="text-sm text-destructive break-words">{error}</p>}
       {loaded && <p className="text-sm text-muted-foreground">{rows.length} Rechnungen · {eligible.length} versandbereit{accounts.some(account => account.customer_id.startsWith('name:')) ? ' · Kunden ohne eindeutige ID ausgeschlossen' : ''}</p>}
@@ -128,12 +131,12 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
           <th className="p-3 text-left">Kunde / Rechnung</th><th className="p-3 text-left">E-Mail</th><th className="p-3 text-right">Betrag</th><th className="p-3 text-left">Versandstatus</th>
         </tr></thead><tbody>{rows.map(row => <tr key={row.id} className="border-t border-border">
           <td className="p-3"><Checkbox aria-label={`Rechnung ${row.invoice_number} auswählen`} checked={row.checked} disabled={sending || row.attempted || !!invoiceMailBlock(row)} onCheckedChange={value => setRows(prev => prev.map(item => item.id === row.id ? { ...item, checked: value === true } : item))} /></td>
-          <td className="p-3"><div>{row.customer_name}</div><div className="text-muted-foreground">{row.invoice_number}</div></td>
+          <td className="p-3"><div>{row.customer_name}</div><div className="text-muted-foreground">{row.invoice_number}{row.invoice_date ? ` · ${row.invoice_date.slice(0, 10).split('-').reverse().join('.')}` : ''}</div></td>
           <td className="p-3 min-w-[220px]"><Input aria-label={`E-Mail für ${row.invoice_number}`} type="email" value={row.recipient} disabled={sending || row.attempted} onChange={e => setRows(prev => prev.map(item => item.id === row.id ? { ...item, recipient: e.target.value } : item))} /></td>
           <td className="p-3 text-right whitespace-nowrap">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: row.currency || 'EUR' }).format(row.total || 0)}</td>
           <td className="p-3 max-w-[260px] break-words">{row.result || (row.recipient ? 'Bereit' : 'E-Mail fehlt')}</td>
         </tr>)}</tbody></table>
-        {loaded && !rows.length && <p className="p-6 text-center text-muted-foreground">Keine Rechnungen für dieses Datum gefunden.</p>}
+        {loaded && !rows.length && <p className="p-6 text-center text-muted-foreground">{date ? 'Keine Rechnungen für dieses Datum gefunden. Wählen Sie „Alle Daten“, um ältere Rechnungen zu laden.' : 'Keine gespeicherten Rechnungen für die ausgewählten Kundenkonten gefunden.'}</p>}
       </div>
       <DialogFooter><Button variant="outline" disabled={sending || loading} onClick={() => onOpenChange(false)}>Schließen</Button>
         <Button disabled={sending || loading || !eligible.length} onClick={sendSelected}>{sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}{sending ? 'Versand läuft …' : `${eligible.length} ausgewählte Rechnungen senden`}</Button>
