@@ -93,7 +93,13 @@ Deno.serve(async (req) => {
       doc_type,
       document_ref,
       skip_facsimile = false,
+      invoice_number,
+      soft_errors = false,
     } = body || {};
+    // soft_errors: Aufrufer (Sammelversand) bekommt erwartete Zoho-Ablehnungen als 200 mit
+    // { error, code } statt non-2xx, damit eine einzelne Rechnung den Ablauf nicht als Absturz meldet.
+    const fail = (payload: Record<string, unknown>, status: number) =>
+      json(payload, soft_errors === true ? 200 : status);
 
     const id = zoho_id || zoho_invoice_id;
     if (!id) return json({ error: "zoho_id / zoho_invoice_id missing" }, 400);
@@ -133,9 +139,34 @@ Deno.serve(async (req) => {
       if (child) zohoRes = await fetchPdf('invoices', child);
     }
 
+    // Rechnung unter der gespeicherten ID nicht (mehr) vorhanden, z. B. in Zoho neu angelegt:
+    // nur im selben Zoho-Konto über die exakte, eindeutige Rechnungsnummer nachschlagen.
+    let resolvedId: string | null = null;
+    const wantedNumber = typeof invoice_number === 'string' ? invoice_number.trim() : '';
+    if (zohoRes.status === 404 && res === 'invoices' && wantedNumber && wantedNumber.length <= 64) {
+      await zohoRes.body?.cancel();
+      const lookup = await fetch(
+        `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}&invoice_number=${encodeURIComponent(wantedNumber)}`,
+        { headers: { Authorization: `Zoho-oauthtoken ${token}`, Accept: 'application/json' } },
+      );
+      const lookupJson = await lookup.json().catch(() => null);
+      const matches = (lookupJson?.invoices ?? []).filter((inv: { invoice_number?: string }) => inv?.invoice_number === wantedNumber);
+      if (matches.length === 1 && matches[0]?.invoice_id) {
+        resolvedId = String(matches[0].invoice_id);
+        zohoRes = await fetchPdf('invoices', resolvedId);
+      } else {
+        console.warn('[zoho-invoice-pdf] not found', { id, source_system, invoice_number: wantedNumber, matches: matches.length });
+        return fail({ error: `Rechnung ${wantedNumber} ist in Zoho (${source_system}) nicht auffindbar – vermutlich dort gelöscht oder in einem anderen Zoho-Konto angelegt.`, code: 'ZOHO_NOT_FOUND' }, 404);
+      }
+    }
+
     if (!zohoRes.ok) {
       const t = await zohoRes.text();
-      return json({ error: `Zoho PDF fehler [${zohoRes.status}]: ${t}` }, zohoRes.status);
+      console.warn('[zoho-invoice-pdf] zoho error', { id, source_system, status: zohoRes.status });
+      if (zohoRes.status === 404) {
+        return fail({ error: `Rechnung ist in Zoho (${source_system}) nicht auffindbar – vermutlich dort gelöscht oder in einem anderen Zoho-Konto angelegt.`, code: 'ZOHO_NOT_FOUND' }, 404);
+      }
+      return fail({ error: `Zoho PDF fehler [${zohoRes.status}]: ${t}`, code: 'ZOHO_ERROR' }, zohoRes.status);
     }
     const buf = new Uint8Array(await zohoRes.arrayBuffer());
     let pdfB64 = bytesToBase64(buf);
@@ -166,7 +197,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ pdf_base64: pdfB64, size: buf.length, facsimile_applied: stamped, doc_type: finalDocType, resource: res });
+    return json({ pdf_base64: pdfB64, size: buf.length, facsimile_applied: stamped, doc_type: finalDocType, resource: res, resolved_zoho_invoice_id: resolvedId });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
