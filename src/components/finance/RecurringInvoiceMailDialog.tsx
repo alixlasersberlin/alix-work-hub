@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { invoicePdfRequest } from '@/lib/finance/invoice-pdf-request';
-import { initialInvoiceSelection, invoiceMailAccepted, invoiceMailBlock, invoiceRecipient, selectedInvoiceRows, type InvoiceMailRow } from '@/lib/finance/recurring-invoice-mail';
+import { invoiceCustomer, initialInvoiceSelection, invoiceMailAccepted, invoiceMailBlock, invoiceRecipient, selectedInvoiceRows, type InvoiceCustomer, type InvoiceMailRow } from '@/lib/finance/recurring-invoice-mail';
 
 type MailItem = InvoiceMailRow & { recipient: string; checked: boolean; result: string; attempted: boolean };
 type Account = { customer_id: string; customer_name: string };
@@ -41,13 +41,29 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
     try {
       const ids = accounts.map(account => account.customer_id).filter(id => id && !id.startsWith('name:'));
       if (!ids.length) throw new Error('Keine eindeutigen Kunden-IDs in der Auswahl.');
+      const customers: InvoiceCustomer[] = [];
+      for (const column of ['id', 'external_customer_id'] as const) {
+        const lookupIds = ids.filter(id => column === 'id' ? /^[0-9a-f-]{36}$/i.test(id) : !/^[0-9a-f-]{36}$/i.test(id));
+        for (let start = 0; start < lookupIds.length; start += 30) {
+          for (let offset = 0; ; offset += 100) {
+            const { data, error: customerError } = await supabase.from('customers')
+              .select('id,external_customer_id,source_system,email').in(column, lookupIds.slice(start, start + 30))
+              .order('id').range(offset, offset + 99);
+            if (customerError) throw customerError;
+            if (current !== generation.current) return;
+            customers.push(...(data || []));
+            if ((data || []).length < 100) break;
+          }
+        }
+      }
+      const queryIds = [...new Set([...ids, ...customers.flatMap(customer => [customer.id, customer.external_customer_id || '']).filter(Boolean)])];
       const found: InvoiceMailRow[] = [];
       const cols = 'id,zoho_invoice_id,customer_id,customer_name,invoice_number,invoice_date,status,total,currency,source_system,raw_data';
-      for (let start = 0; start < ids.length; start += 30) {
+      for (let start = 0; start < queryIds.length; start += 30) {
         for (const table of ['zoho_invoices', 'zoho_recurring_invoices'] as const) {
           for (let offset = 0; ; offset += 100) {
             let query = supabase.from(table).select(cols)
-              .in('customer_id', ids.slice(start, start + 30)).eq('accounting_region', region === 'CH' ? 'CH' : 'EU');
+              .in('customer_id', queryIds.slice(start, start + 30)).eq('accounting_region', region === 'CH' ? 'CH' : 'EU');
             if (invoiceDate) query = query.eq('invoice_date', invoiceDate);
             const { data, error: queryError } = await query.order('invoice_date', { ascending: false }).order('id').range(offset, offset + 99);
             if (queryError) throw queryError;
@@ -57,16 +73,19 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
           }
         }
       }
-      const selected = selectedInvoiceRows(found, ids, invoiceDate).sort((a, b) => (b.invoice_date || '').localeCompare(a.invoice_date || ''));
+      const mapped = found.flatMap(row => {
+        const customer = invoiceCustomer(row, customers);
+        if (customer) return [{ ...row, customer_id: customer.id }];
+        if (customers.some(item => item.id === row.customer_id || item.external_customer_id === row.customer_id)) return [];
+        return ids.includes(row.customer_id || '') ? [row] : [];
+      });
+      const selectedIds = [...new Set([...ids, ...customers.filter(customer => ids.includes(customer.id) || ids.includes(customer.external_customer_id || '')).map(customer => customer.id)])];
+      const selected = selectedInvoiceRows(mapped, selectedIds, invoiceDate).sort((a, b) => (b.invoice_date || '').localeCompare(a.invoice_date || ''));
       const initialSelection = initialInvoiceSelection(selected, invoiceDate);
       const items: MailItem[] = [];
       for (const row of selected) {
         let recipient = invoiceRecipient(row.raw_data);
-        if (!recipient && row.customer_id && /^[0-9a-f-]{36}$/i.test(row.customer_id)) {
-          const { data, error: customerError } = await supabase.from('customers').select('email').eq('id', row.customer_id).maybeSingle();
-          if (customerError) throw customerError;
-          recipient = data?.email || '';
-        }
+        if (!recipient) recipient = invoiceCustomer(row, customers)?.email || '';
         const blocked = invoiceMailBlock(row);
         items.push({ ...row, raw_data: undefined, recipient, checked: initialSelection.has(row.id), attempted: false, result: blocked || '' });
       }
