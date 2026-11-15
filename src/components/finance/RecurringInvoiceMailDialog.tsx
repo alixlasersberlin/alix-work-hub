@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { invoicePdfRequest } from '@/lib/finance/invoice-pdf-request';
-import { invoiceMailAccepted, invoiceMailBlock, invoiceRecipient, selectedInvoiceRows, type InvoiceMailRow } from '@/lib/finance/recurring-invoice-mail';
+import { initialInvoiceSelection, invoiceMailAccepted, invoiceMailBlock, invoiceRecipient, selectedInvoiceRows, type InvoiceMailRow } from '@/lib/finance/recurring-invoice-mail';
 
 type MailItem = InvoiceMailRow & { recipient: string; checked: boolean; result: string; attempted: boolean };
 type Account = { customer_id: string; customer_name: string };
@@ -29,12 +29,12 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
   const generation = useRef(0);
   useEffect(() => {
     generation.current += 1;
-    if (open) { setRows([]); setLoaded(false); setError(''); }
+    if (open) { setDate(''); void loadInvoices(''); }
     return () => { generation.current += 1; };
   }, [open]);
 
   const eligible = rows.filter(row => row.checked && !row.attempted && !invoiceMailBlock(row) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.recipient));
-  async function loadInvoices() {
+  async function loadInvoices(invoiceDate = date) {
     if (lock.current) return;
     const current = ++generation.current;
     setLoading(true); setError(''); setLoaded(false); setRows([]);
@@ -48,7 +48,7 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
           for (let offset = 0; ; offset += 100) {
             let query = supabase.from(table).select(cols)
               .in('customer_id', ids.slice(start, start + 30)).eq('accounting_region', region === 'CH' ? 'CH' : 'EU');
-            if (date) query = query.eq('invoice_date', date);
+            if (invoiceDate) query = query.eq('invoice_date', invoiceDate);
             const { data, error: queryError } = await query.order('invoice_date', { ascending: false }).order('id').range(offset, offset + 99);
             if (queryError) throw queryError;
             if (current !== generation.current) return;
@@ -57,7 +57,8 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
           }
         }
       }
-      const selected = selectedInvoiceRows(found, ids, date).sort((a, b) => (b.invoice_date || '').localeCompare(a.invoice_date || ''));
+      const selected = selectedInvoiceRows(found, ids, invoiceDate).sort((a, b) => (b.invoice_date || '').localeCompare(a.invoice_date || ''));
+      const initialSelection = initialInvoiceSelection(selected, invoiceDate);
       const items: MailItem[] = [];
       for (const row of selected) {
         let recipient = invoiceRecipient(row.raw_data);
@@ -67,7 +68,7 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
           recipient = data?.email || '';
         }
         const blocked = invoiceMailBlock(row);
-        items.push({ ...row, raw_data: undefined, recipient, checked: !!date && !blocked, attempted: false, result: blocked || '' });
+        items.push({ ...row, raw_data: undefined, recipient, checked: initialSelection.has(row.id), attempted: false, result: blocked || '' });
       }
       if (current === generation.current) { setRows(items); setLoaded(true); }
     } catch (e) { if (current === generation.current) setError(await failureMessage(e)); }
@@ -121,10 +122,10 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
       <div className="flex flex-wrap gap-3 items-end">
         <label className="text-sm space-y-1">Rechnungsdatum (optional)<Input type="date" value={date} disabled={loading || sending || rows.some(row => row.attempted)} onChange={e => { setDate(e.target.value); setLoaded(false); setRows([]); }} /></label>
         {date && <Button variant="outline" disabled={loading || sending || rows.some(row => row.attempted)} onClick={() => { setDate(''); setLoaded(false); setRows([]); }}>Alle Daten</Button>}
-        <Button variant="outline" disabled={loading || sending || rows.some(row => row.attempted)} onClick={loadInvoices}>{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Rechnungen laden</Button>
+        <Button variant="outline" disabled={loading || sending || rows.some(row => row.attempted)} onClick={() => loadInvoices()}>{loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Rechnungen laden</Button>
       </div>
       {error && <p role="alert" className="text-sm text-destructive break-words">{error}</p>}
-      {loaded && <p className="text-sm text-muted-foreground">{rows.length} Rechnungen · {eligible.length} versandbereit{accounts.some(account => account.customer_id.startsWith('name:')) ? ' · Kunden ohne eindeutige ID ausgeschlossen' : ''}</p>}
+      {loaded && <p className="text-sm text-muted-foreground">{rows.length} Rechnungen · {rows.filter(row => row.checked).length} ausgewählt · {eligible.length} versandbereit{!date ? ' · Neueste Rechnungen je Kundenkonto vorausgewählt' : ''}{accounts.some(account => account.customer_id.startsWith('name:')) ? ' · Kunden ohne eindeutige ID ausgeschlossen' : ''}</p>}
       <div className="overflow-auto min-h-0 border border-border rounded-md">
         <table className="w-full text-sm"><thead className="bg-muted sticky top-0"><tr>
           <th className="p-3"><Checkbox aria-label="Alle Rechnungen auswählen" disabled={sending} checked={rows.some(row => !row.attempted && !invoiceMailBlock(row)) && rows.filter(row => !row.attempted && !invoiceMailBlock(row)).every(row => row.checked)} onCheckedChange={value => setRows(prev => prev.map(row => row.attempted || invoiceMailBlock(row) ? row : { ...row, checked: value === true }))} /></th>
