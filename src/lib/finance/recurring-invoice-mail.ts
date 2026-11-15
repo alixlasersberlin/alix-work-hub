@@ -6,10 +6,11 @@ export type InvoiceMailRow = {
   raw_data?: unknown;
 };
 
-export function selectedInvoiceRows(rows: InvoiceMailRow[], customerIds: readonly string[]) {
+export function selectedInvoiceRows(rows: InvoiceMailRow[], customerIds: readonly string[], invoiceDate = '') {
   const customers = new Set(customerIds);
   const seen = new Set<string>();
   return rows.filter(row => {
+    if (invoiceDate && row.invoice_date?.slice(0, 10) !== invoiceDate) return false;
     const key = `${row.source_system}:${row.zoho_invoice_id}`;
     if (!row.customer_id || !customers.has(row.customer_id) || !row.zoho_invoice_id || seen.has(key)) return false;
     seen.add(key);

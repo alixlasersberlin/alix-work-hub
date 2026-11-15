@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { selectedInvoiceRows, invoiceMailBlock, invoiceMailAccepted, invoiceRecipient, type InvoiceMailRow } from './recurring-invoice-mail';
 const row: InvoiceMailRow = { id: 'a', zoho_invoice_id: '123', source_system: 'zoho_eu_1', customer_id: 'selected', customer_name: 'Kunde', invoice_number: 'INV-1', invoice_date: '2026-11-15', status: 'paid', total: 100, currency: 'EUR' };
 describe('selected invoice email', () => {
+  it('includes older selected-customer invoices without a date filter', () => {
+    const novemberInvoice = { ...row, invoice_date: '2026-11-01' };
+    expect(selectedInvoiceRows([novemberInvoice], ['selected'])).toEqual([novemberInvoice]);
+    expect(selectedInvoiceRows([novemberInvoice], ['selected'], '2026-11-15')).toEqual([]);
+    expect(selectedInvoiceRows([novemberInvoice], ['selected'], '2026-11-01')).toEqual([novemberInvoice]);
+  });
   it('only includes selected customers and deduplicates the same Zoho invoice', () => {
     expect(selectedInvoiceRows([row, { ...row, id: 'copy' }, { ...row, customer_id: 'hidden', zoho_invoice_id: '456' }], ['selected'])).toEqual([row]);
     expect(selectedInvoiceRows([row], [])).toEqual([]);
