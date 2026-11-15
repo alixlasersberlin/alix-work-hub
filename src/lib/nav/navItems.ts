@@ -265,13 +265,13 @@ export const navItems: NavItem[] = [
         ],
       },
       {
-        path: '/verkauf/angebote', label: 'ANGEBOTE', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Vertrieb', 'Vertriebsleitung', 'SACHBEARBEITUNG'],
+        path: '/verkauf/angebote', label: 'ANGEBOTE', icon: FileText, roles: ['Angebotsersteller', 'Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Vertrieb', 'Vertriebsleitung', 'SACHBEARBEITUNG'],
         children: [
           { path: '/verkauf/neue-anfrage', label: 'Neue Anfrage', icon: Sparkles, roles: LEAD_ACCESS_ROLES },
           { path: '/verkauf/anfragen', label: 'Anfragen', icon: Inbox, roles: LEAD_ACCESS_ROLES },
           { path: '/vertrieb/meine-leads', label: 'Meine Leads', icon: Users, roles: null },
-          { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', icon: FilePlus, roles: ['Angebotsersteller', 'Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Angebotsersteller', 'Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/angebotsanalyse', label: 'Angebotsanalyse', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/nachfassen', label: 'Nachfassen', icon: CalendarClock, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/verkaufsfuehrer', label: 'Verkaufsführer', icon: LineChart, roles: ['Admin', 'Super Admin', 'Vertriebsleitung', 'Finance'] },
