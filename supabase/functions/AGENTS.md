@@ -1,0 +1,1 @@
+- Zoho calls use _shared/zoho-session (cached token, early refresh, one re-login on 401, bounded backoff) to avoid per-document logins.
