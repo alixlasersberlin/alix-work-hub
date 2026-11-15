@@ -1,4 +1,4 @@
-export const LEAD_ACCESS_ROLES = ['Admin', 'Super Admin'];
+export const LEAD_ACCESS_ROLES = ['Super Admin'];
 
 export function canAccessSalesLeads(roles: readonly string[]): boolean {
   return roles.some(role => LEAD_ACCESS_ROLES.includes(role));

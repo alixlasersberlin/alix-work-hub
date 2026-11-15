@@ -1,3 +1,4 @@
+- [ ] Anfragen ausschließlich Super Admin: Menü, Direktzugriff und serverseitige Verwaltungsrechte sperren; persönliche Leads und übrige Verkaufsrechte unverändert prüfen.
 - [x] Angebote: Ratenplan-/Mietkauf-Vorschau und lokal herunterladbare Demo-PDFs mit bestehender Vorlage ergänzt; keine Finanzbuchung, Dokumentarchivierung oder Vertragsfreigabe. Sechs Regeltests, Build und beide isolierten Browser-Downloads mit 11.000 € Kaufpreis / 2.000 € Anzahlung bestanden.
 - [ ] Angebotsvorschauen mit echtem angemeldetem Angebot prüfen — externe Anmeldung steht automatisiert nicht zur Verfügung; Direktaufruf führt fehlerfrei zur Anmeldung.
 - [ ] Gemeldeten Fehler auf /verkauf eindeutig zuordnen: aktuelle Aufrufe erfolgreich, Protokoll enthält PageHeader-Ref-Warnung; genauer sichtbarer Fehlertext/Screenshot fehlt. Shopify-Bestellzugang wurde vor Ausführung abgebrochen, kein Import.
