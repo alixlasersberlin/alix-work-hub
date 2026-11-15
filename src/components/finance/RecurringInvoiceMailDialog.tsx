@@ -76,6 +76,7 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
       const mapped = found.flatMap(row => {
         const customer = invoiceCustomer(row, customers);
         if (customer) return [{ ...row, customer_id: customer.id }];
+        if (customers.some(item => item.id === row.customer_id || item.external_customer_id === row.customer_id)) return [];
         return ids.includes(row.customer_id || '') ? [row] : [];
       });
       const selectedIds = [...new Set([...ids, ...customers.filter(customer => ids.includes(customer.id) || ids.includes(customer.external_customer_id || '')).map(customer => customer.id)])];
