@@ -1,3 +1,4 @@
+import { zohoFetch, ZohoRateLimitError } from '../_shared/zoho-session.ts';
 // Fetches invoice/salesorder PDF from Zoho Books and returns it base64-encoded.
 // Automatically routes the PDF through sig-apply-facsimile so the H. Tran
 // signature is stamped on Zoho-generated documents as well.
@@ -34,48 +35,6 @@ function getZohoConfig(source: string) {
     accountsBaseUrl: c.accountsBase,
     booksApiBaseUrl: c.apiBase,
   };
-}
-
-class ZohoRateLimitError extends Error {}
-
-// Zoho begrenzt Token-Abrufe stark; Token pro Konto im Speicher der Instanz bis kurz vor Ablauf wiederverwenden.
-const tokenCache = new Map<string, { token: string; expiresAt: number }>();
-const tokenInflight = new Map<string, Promise<string>>();
-
-async function getAccessToken(cfg: NonNullable<ReturnType<typeof getZohoConfig>>) {
-  const key = `${cfg.accountsBaseUrl}|${cfg.clientId}|${cfg.organizationId}`;
-  const cached = tokenCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.token;
-  const pending = tokenInflight.get(key);
-  if (pending) return pending;
-  const p = fetchAccessToken(cfg).then(({ token, expiresIn }) => {
-    tokenCache.set(key, { token, expiresAt: Date.now() + Math.max(60, expiresIn - 300) * 1000 });
-    return token;
-  }).finally(() => tokenInflight.delete(key));
-  tokenInflight.set(key, p);
-  return p;
-}
-
-async function fetchAccessToken(cfg: NonNullable<ReturnType<typeof getZohoConfig>>) {
-  const res = await fetch(`${cfg.accountsBaseUrl}/oauth/v2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      refresh_token: cfg.refreshToken,
-      client_id: cfg.clientId,
-      client_secret: cfg.clientSecret,
-      grant_type: "refresh_token",
-    }),
-  });
-  const data = await res.json().catch(() => null);
-  if (!data?.access_token) {
-    const text = JSON.stringify(data);
-    if (/too many requests/i.test(text) || res.status === 429) {
-      throw new ZohoRateLimitError('Zoho hat zu viele Anmeldungen in kurzer Zeit gemeldet. Bitte einige Minuten warten und dann erneut versuchen.');
-    }
-    throw new Error(`Zoho token error: ${text}`);
-  }
-  return { token: data.access_token as string, expiresIn: Number(data.expires_in) || 3600 };
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -144,23 +103,22 @@ Deno.serve(async (req) => {
     const { resource: res, docType: defaultDocType } = resolveResource({ resource, recurring });
     const finalDocType = doc_type || defaultDocType;
 
-    const token = await getAccessToken(cfg);
 
     // Zoho braucht sowohl ?accept=pdf als auch den Accept-Header.
     // Für recurringinvoices gibt es keinen PDF-Endpunkt -> auf die zuletzt
     // erzeugte reguläre Rechnung ausweichen.
     const fetchPdf = (resource: string, docId: string) =>
-      fetch(`${cfg.booksApiBaseUrl}/${resource}/${docId}?organization_id=${cfg.organizationId}&accept=pdf`, {
-        headers: { Authorization: `Zoho-oauthtoken ${token}`, Accept: 'application/pdf' },
+      zohoFetch(cfg, `${cfg.booksApiBaseUrl}/${resource}/${docId}?organization_id=${cfg.organizationId}&accept=pdf`, {
+        headers: { Accept: 'application/pdf' },
       });
 
     let zohoRes = await fetchPdf(res, id);
 
     if (!zohoRes.ok && res === 'recurringinvoices') {
       // letzte generierte Rechnung des Profils holen
-      const listRes = await fetch(
+      const listRes = await zohoFetch(cfg,
         `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}&recurring_invoice_id=${id}&sort_column=date&sort_order=D&per_page=1`,
-        { headers: { Authorization: `Zoho-oauthtoken ${token}`, Accept: 'application/json' } },
+        { headers: { Accept: 'application/json' } },
       );
       const listJson = await listRes.json().catch(() => null);
       const child = listJson?.invoices?.[0]?.invoice_id;
@@ -173,9 +131,9 @@ Deno.serve(async (req) => {
     const wantedNumber = typeof invoice_number === 'string' ? invoice_number.trim() : '';
     if (zohoRes.status === 404 && res === 'invoices' && wantedNumber && wantedNumber.length <= 64) {
       await zohoRes.body?.cancel();
-      const lookup = await fetch(
+      const lookup = await zohoFetch(cfg,
         `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}&invoice_number=${encodeURIComponent(wantedNumber)}`,
-        { headers: { Authorization: `Zoho-oauthtoken ${token}`, Accept: 'application/json' } },
+        { headers: { Accept: 'application/json' } },
       );
       const lookupJson = await lookup.json().catch(() => null);
       const matches = (lookupJson?.invoices ?? []).filter((inv: { invoice_number?: string }) => inv?.invoice_number === wantedNumber);
