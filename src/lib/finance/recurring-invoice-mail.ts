@@ -6,6 +6,15 @@ export type InvoiceMailRow = {
   raw_data?: unknown;
 };
 
+export type InvoiceCustomer = { id: string; external_customer_id: string | null; source_system: string; email: string | null };
+
+export function invoiceCustomer(row: InvoiceMailRow, customers: readonly InvoiceCustomer[]): InvoiceCustomer | undefined {
+  const matches = customers.filter(customer => customer.id === row.customer_id || (
+    !!customer.external_customer_id && customer.external_customer_id === row.customer_id && customer.source_system === row.source_system
+  ));
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 export function selectedInvoiceRows(rows: InvoiceMailRow[], customerIds: readonly string[], invoiceDate = '') {
   const customers = new Set(customerIds);
   const seen = new Set<string>();

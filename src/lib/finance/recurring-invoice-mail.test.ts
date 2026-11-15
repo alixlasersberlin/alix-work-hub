@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { initialInvoiceSelection, selectedInvoiceRows, invoiceMailBlock, invoiceMailAccepted, invoiceRecipient, type InvoiceMailRow } from './recurring-invoice-mail';
+import { invoiceCustomer, initialInvoiceSelection, selectedInvoiceRows, invoiceMailBlock, invoiceMailAccepted, invoiceRecipient, type InvoiceMailRow } from './recurring-invoice-mail';
 const row: InvoiceMailRow = { id: 'a', zoho_invoice_id: '123', source_system: 'zoho_eu_1', customer_id: 'selected', customer_name: 'Kunde', invoice_number: 'INV-1', invoice_date: '2026-11-15', status: 'paid', total: 100, currency: 'EUR' };
 describe('selected invoice email', () => {
+  it('resolves Zoho customer IDs to internal customers only in the same source and rejects ambiguity', () => {
+    const customer = { id: '0600db76-9af8-4367-b5b9-335d21212bdc', external_customer_id: '598077000006880178', source_system: 'zoho_eu_1', email: 'example@example.com' };
+    const invoice = { ...row, customer_id: '598077000006880178' };
+    expect(invoiceCustomer(invoice, [customer])).toEqual(customer);
+    expect(invoiceCustomer({ ...invoice, source_system: 'zoho_eu_2' }, [customer])).toBeUndefined();
+    expect(invoiceCustomer(invoice, [customer, { ...customer, id: 'duplicate' }])).toBeUndefined();
+    expect(invoiceCustomer({ ...row, customer_id: customer.id }, [customer])).toEqual(customer);
+  });
   it('selects latest invoices of marked accounts without selecting their historical invoices', () => {
     const older = { ...row, id: 'older', zoho_invoice_id: 'old', invoice_date: '2026-10-01' };
     const other = { ...row, id: 'other', zoho_invoice_id: 'other', customer_id: 'other-customer', invoice_date: '2026-11-01' };
