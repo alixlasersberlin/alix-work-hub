@@ -38,6 +38,19 @@ export function invoiceRecipient(raw: unknown): string {
   return '';
 }
 
+export function initialInvoiceSelection(rows: InvoiceMailRow[], invoiceDate = ''): Set<string> {
+  const latest = new Map<string, string>();
+  for (const row of rows) {
+    if (!row.customer_id || !row.invoice_date) continue;
+    const date = row.invoice_date.slice(0, 10);
+    if (date > (latest.get(row.customer_id) || '')) latest.set(row.customer_id, date);
+  }
+  return new Set(rows.filter(row => {
+    if (invoiceMailBlock(row) || !row.customer_id || !row.invoice_date) return false;
+    return row.invoice_date.slice(0, 10) === (invoiceDate || latest.get(row.customer_id));
+  }).map(row => row.id));
+}
+
 export function invoiceMailAccepted(data: unknown): boolean {
   if (!data || typeof data !== 'object') return false;
   const result = data as Record<string, unknown>;

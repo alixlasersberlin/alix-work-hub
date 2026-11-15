@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { selectedInvoiceRows, invoiceMailBlock, invoiceMailAccepted, invoiceRecipient, type InvoiceMailRow } from './recurring-invoice-mail';
+import { initialInvoiceSelection, selectedInvoiceRows, invoiceMailBlock, invoiceMailAccepted, invoiceRecipient, type InvoiceMailRow } from './recurring-invoice-mail';
 const row: InvoiceMailRow = { id: 'a', zoho_invoice_id: '123', source_system: 'zoho_eu_1', customer_id: 'selected', customer_name: 'Kunde', invoice_number: 'INV-1', invoice_date: '2026-11-15', status: 'paid', total: 100, currency: 'EUR' };
 describe('selected invoice email', () => {
+  it('selects latest invoices of marked accounts without selecting their historical invoices', () => {
+    const older = { ...row, id: 'older', zoho_invoice_id: 'old', invoice_date: '2026-10-01' };
+    const other = { ...row, id: 'other', zoho_invoice_id: 'other', customer_id: 'other-customer', invoice_date: '2026-11-01' };
+    const hidden = { ...row, id: 'hidden', customer_id: 'hidden' };
+    const rows = selectedInvoiceRows([row, older, other, hidden], ['selected', 'other-customer']);
+    expect([...initialInvoiceSelection(rows)]).toEqual(['a', 'other']);
+    expect([...initialInvoiceSelection(rows, '2026-10-01')]).toEqual(['older']);
+    expect([...initialInvoiceSelection([{ ...row, status: 'draft' }, older])]).toEqual([]);
+  });
   it('includes older selected-customer invoices without a date filter', () => {
     const novemberInvoice = { ...row, invoice_date: '2026-11-01' };
     expect(selectedInvoiceRows([novemberInvoice], ['selected'])).toEqual([novemberInvoice]);
