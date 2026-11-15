@@ -104,8 +104,13 @@ export function RecurringInvoiceMailDialog({ open, onOpenChange, accounts, regio
         update(row.id, { result: 'PDF wird geladen …' });
         let pdf: string;
         try {
-          const { data, error: pdfError } = await supabase.functions.invoke('zoho-invoice-pdf', { body: invoicePdfRequest(row) });
+          const { data, error: pdfError } = await supabase.functions.invoke('zoho-invoice-pdf', { body: { ...invoicePdfRequest(row), invoice_number: row.invoice_number || undefined, soft_errors: true } });
           if (pdfError) throw new Error(await failureMessage(pdfError));
+          if (data?.code === 'ZOHO_RATE_LIMIT') {
+            update(row.id, { result: 'Nicht gesendet: Zoho-Anmeldelimit erreicht' });
+            setError(`${data.error} Versand angehalten; bereits angenommene Rechnungen nicht erneut auswählen.`);
+            break;
+          }
           if (data?.error || !data?.pdf_base64) throw new Error(data?.error || 'Kein Rechnungs-PDF erhalten');
           pdf = data.pdf_base64;
         } catch (e) { update(row.id, { result: `Nicht gesendet: ${await failureMessage(e)}`, attempted: true }); continue; }
