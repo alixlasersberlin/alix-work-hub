@@ -5,7 +5,7 @@ import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
-import { canAccessSalesLeads, isSalesLeadPath } from "@/lib/sales/lead-access";
+import { canAccessSalesInquiryPath, isSalesLeadPath } from "@/lib/sales/lead-access";
 import { isSalesPortalPath, rememberSalesReturn } from '@/lib/sales/portal-navigation';
 import SalesPortalLayout from '@/components/sales/SalesPortalLayout';
 import SalesPortalDocuments from '@/pages/SalesLeads/SalesPortalDocuments';
@@ -1333,7 +1333,7 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
     }
   }
 
-  if (isSalesLeadPath(location.pathname) && !canAccessSalesLeads(roles)) return <AccessDenied />;
+  if (isSalesLeadPath(location.pathname) && !canAccessSalesInquiryPath(roles, location.pathname)) return <AccessDenied />;
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed && !personalOfferAccess) return <AccessDenied />;
 
   return <>{children}</>;

@@ -1,0 +1,20 @@
+INSERT INTO public.roles(name,description) SELECT 'Verkaufsanfragen lesen','Darf Verkaufsanfragen, Verlauf und Wiedervorlagen ausschließlich lesen' WHERE NOT EXISTS(SELECT 1 FROM public.roles WHERE name='Verkaufsanfragen lesen');
+INSERT INTO public.user_roles(user_id,role_id) SELECT p.id,r.id FROM public.user_profiles p CROSS JOIN public.roles r WHERE p.id='45820f2c-6d6c-4067-9816-cc6dc4500db4' AND r.name='Verkaufsanfragen lesen' AND NOT EXISTS(SELECT 1 FROM public.user_roles ur WHERE ur.user_id=p.id AND ur.role_id=r.id);
+CREATE OR REPLACE FUNCTION lead_private.ml_inquiry_reader() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT auth.uid() IS NOT NULL AND EXISTS(SELECT 1 FROM public.user_profiles p JOIN public.user_roles ur ON ur.user_id=p.id JOIN public.roles r ON r.id=ur.role_id WHERE p.id=auth.uid() AND p.is_active AND p.account_status='active' AND p.invitation_status='accepted' AND NOT p.password_reset_required AND r.name='Verkaufsanfragen lesen') $$;
+REVOKE ALL ON FUNCTION lead_private.ml_inquiry_reader() FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION lead_private.ml_inquiry_reader() TO authenticated,service_role;
+ALTER POLICY sales_leads_admin_read_gate ON public.sales_leads USING ((SELECT lead_private.ml_super_admin() OR lead_private.ml_inquiry_reader()));
+ALTER POLICY sales_lead_history_admin_read_gate ON public.sales_lead_history USING ((SELECT lead_private.ml_super_admin() OR lead_private.ml_inquiry_reader()));
+ALTER POLICY sales_followups_admin_read_gate ON public.sales_followups USING ((SELECT lead_private.ml_super_admin() OR lead_private.ml_inquiry_reader()));
+CREATE POLICY sales_leads_inquiry_reader ON public.sales_leads FOR SELECT TO authenticated USING ((SELECT lead_private.ml_inquiry_reader()));
+CREATE POLICY sales_lead_history_inquiry_reader ON public.sales_lead_history FOR SELECT TO authenticated USING ((SELECT lead_private.ml_inquiry_reader()));
+CREATE POLICY sales_followups_inquiry_reader ON public.sales_followups FOR SELECT TO authenticated USING ((SELECT lead_private.ml_inquiry_reader()));
+DO $$ DECLARE n integer; BEGIN
+PERFORM set_config('request.jwt.claim.sub','45820f2c-6d6c-4067-9816-cc6dc4500db4',true);
+IF NOT lead_private.ml_inquiry_reader() THEN RAISE EXCEPTION 'L. Scheidler read access missing'; END IF;
+IF lead_private.ml_super_admin() THEN RAISE EXCEPTION 'Read access must not grant Super Admin'; END IF;
+SELECT count(*) INTO n FROM public.user_roles ur JOIN public.roles r ON r.id=ur.role_id WHERE r.name='Verkaufsanfragen lesen';
+IF n<>1 THEN RAISE EXCEPTION 'Only the requested account may receive the read role'; END IF;
+PERFORM set_config('request.jwt.claim.sub','',true);
+IF lead_private.ml_inquiry_reader() THEN RAISE EXCEPTION 'Signed-out read access forbidden'; END IF;
+END $$;

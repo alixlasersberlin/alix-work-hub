@@ -6,7 +6,7 @@ import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck
 import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch, MessagesSquare, ExternalLink } from 'lucide-react';
 import { Smartphone as SmartphoneIcon, Contact as ContactIcon } from 'lucide-react';
 import { FileSpreadsheet } from 'lucide-react';
-import { LEAD_ACCESS_ROLES } from '@/lib/sales/lead-access';
+import { INQUIRY_READ_ROLES, LEAD_ACCESS_ROLES } from '@/lib/sales/lead-access';
 
 
 export type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
@@ -268,7 +268,7 @@ export const navItems: NavItem[] = [
         path: '/verkauf/angebote', label: 'ANGEBOTE', icon: FileText, roles: ['Angebotsersteller', 'Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Vertrieb', 'Vertriebsleitung', 'SACHBEARBEITUNG'],
         children: [
           { path: '/verkauf/neue-anfrage', label: 'Neue Anfrage', icon: Sparkles, roles: LEAD_ACCESS_ROLES },
-          { path: '/verkauf/anfragen', label: 'Anfragen', icon: Inbox, roles: LEAD_ACCESS_ROLES },
+          { path: '/verkauf/anfragen', label: 'Anfragen', icon: Inbox, roles: INQUIRY_READ_ROLES },
           { path: '/vertrieb/meine-leads', label: 'Meine Leads', icon: Users, roles: null },
           { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', icon: FilePlus, roles: ['Angebotsersteller', 'Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Angebotsersteller', 'Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },

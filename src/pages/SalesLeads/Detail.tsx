@@ -186,6 +186,7 @@ export default function SalesLeadDetail() {
           )}
         </div>
         <div className="flex gap-2 flex-wrap">
+          {canEdit && <>
           <Button onClick={createOffer}><FilePlus className="h-4 w-4 mr-1" />Angebot erstellen</Button>
           <Button variant="outline" onClick={linkExistingCustomer}><UserCheck className="h-4 w-4 mr-1" />Kunde zuordnen</Button>
           <Button variant="outline" onClick={createCustomer}><UserPlus className="h-4 w-4 mr-1" />Neuen Kunden anlegen</Button>
@@ -215,10 +216,11 @@ export default function SalesLeadDetail() {
               <DialogFooter><Button onClick={saveFollowup}>Speichern</Button></DialogFooter>
             </DialogContent>
           </Dialog>
+          </>}
           {lead.email && (
             <Button asChild variant="outline"><a href={`mailto:${lead.email}`}><Mail className="h-4 w-4 mr-1" />E-Mail</a></Button>
           )}
-          <Button
+          {canEdit && <><Button
             variant="outline"
             onClick={async () => {
               const tid = toast.loading('Sende Benachrichtigung …');
@@ -267,13 +269,13 @@ export default function SalesLeadDetail() {
             <Button variant="ghost" onClick={() => updateLead({ archived: true, lead_status: 'Archiviert' })}>
               <Archive className="h-4 w-4 mr-1" />Archivieren
             </Button>
-          )}
+          )}</>}
         </div>
       </div>
 
       <div className="flex items-center gap-3">
         <Label>Status:</Label>
-        <Select value={lead.lead_status} onValueChange={(v) => updateLead({ lead_status: v })} disabled={saving}>
+        <Select value={lead.lead_status} onValueChange={(v) => updateLead({ lead_status: v })} disabled={saving || !canEdit}>
           <SelectTrigger className="w-[260px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
