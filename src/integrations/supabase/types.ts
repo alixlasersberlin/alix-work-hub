@@ -54004,6 +54004,7 @@ export type Database = {
           comm_status_since: string
           company_name: string | null
           created_at: string
+          created_by: string | null
           customer_address: string | null
           customer_email: string | null
           customer_name: string | null
@@ -54064,6 +54065,7 @@ export type Database = {
           comm_status_since?: string
           company_name?: string | null
           created_at?: string
+          created_by?: string | null
           customer_address?: string | null
           customer_email?: string | null
           customer_name?: string | null
@@ -54124,6 +54126,7 @@ export type Database = {
           comm_status_since?: string
           company_name?: string | null
           created_at?: string
+          created_by?: string | null
           customer_address?: string | null
           customer_email?: string | null
           customer_name?: string | null
@@ -59040,6 +59043,7 @@ export type Database = {
       tenant_scope_ok_id: { Args: { _tenant_id: string }; Returns: boolean }
       tenant_scope_restricted: { Args: never; Returns: boolean }
       ticket_auto_close_stale: { Args: never; Returns: Json }
+      ticket_creator_active: { Args: never; Returns: boolean }
       ticket_merge: {
         Args: { _source_id: string; _target_id: string }
         Returns: Json
