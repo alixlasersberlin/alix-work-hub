@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { AccountStatementActions } from '@/components/finance/AccountStatementActions';
+import { depositInvoiceBody, depositInvoiceSubject } from '../../../supabase/functions/_shared/deposit-invoice-email';
 
 type Deposit = {
   id: string;
@@ -302,26 +303,9 @@ export default function OffeneAnzahlungen() {
       const orderNo = order.order_number ?? '';
       const invoiceNumber = d.invoice_number || d.deposit_number || '';
       const currency = d.currency || 'EUR';
-      const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
-      const body = [
-        `Sehr geehrte Damen und Herren${cust.contact_name ? `, ${cust.contact_name}` : ''},`,
-        '',
-        `anbei erhalten Sie die Anzahlungsrechnung ${invoiceNumber} zum Auftrag ${orderNo}.`,
-        '',
-        `Rechnungsbetrag (brutto): ${fmtMoney(d.gross_amount, currency)}`,
-        d.due_date ? `Fällig am: ${format(parseISO(d.due_date), 'dd.MM.yyyy', { locale: de })}` : '',
-        '',
-        'Bankverbindung:',
-        'Kontoinhaber: Alix Lasers GmbH',
-        'Bank: Deutsche Bank',
-        'IBAN: DE07 1007 0100 0142 6600 00',
-        'SWIFT/BIC: DEUTDEBB101',
-        '',
-        'Bitte geben Sie bei der Überweisung die Rechnungsnummer als Verwendungszweck an.',
-        '',
-        'Mit freundlichen Grüßen',
-        'Alix Lasers Deutschland',
-      ].filter(Boolean).join('\n');
+      const subject = depositInvoiceSubject(invoiceNumber);
+      const body = depositInvoiceBody(invoiceNumber, orderNo, fmtMoney(d.gross_amount, currency),
+        d.due_date ? format(parseISO(d.due_date), 'dd.MM.yyyy', { locale: de }) : undefined);
 
       const { error } = await supabase.functions.invoke('send-transactional-email', {
         body: {

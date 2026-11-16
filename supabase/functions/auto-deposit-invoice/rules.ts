@@ -1,3 +1,5 @@
+import { depositInvoiceSubject } from '../_shared/deposit-invoice-email.ts';
+
 export const ACCOUNTING_CC = 'buchhaltung@alix-operation.de';
 export const DELAY_MS = 2 * 60 * 60 * 1000;
 
@@ -10,7 +12,7 @@ export function invoiceEmail(customerEmail: string, invoiceNumber: string, order
   return {
     to: [customerEmail],
     cc: customerEmail.toLowerCase() === ACCOUNTING_CC ? [] : [ACCOUNTING_CC],
-    subject: `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNumber}`,
+    subject: depositInvoiceSubject(invoiceNumber),
   };
 }
 

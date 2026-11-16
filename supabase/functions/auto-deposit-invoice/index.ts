@@ -4,6 +4,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
 import { createDepositPdf } from './pdf.ts';
 import { bytesToBase64, invoiceEmail } from './rules.ts';
+import { depositInvoiceBody } from '../_shared/deposit-invoice-email.ts';
 
 const schema = z.object({ order_id: z.string().uuid(), dry_run: z.boolean().optional() }).strict();
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -59,7 +60,9 @@ Deno.serve(async req => {
       const stored = await admin.from('order_documents').insert({ order_id: orderId, file_name: fileName, file_path: path, file_type: 'application/pdf', document_type: 'Anzahlungsrechnung' });
       if (stored.error) throw stored.error;
     }
-    const body = `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Anzahlungsrechnung ${number} zum Auftrag ${order.order_number}.\n\nRechnungsbetrag: ${Number(deposit.gross_amount).toLocaleString('de-DE', { style: 'currency', currency: deposit.currency || 'EUR' })}\nFällig am: ${new Date(deposit.due_date).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })}\n\nBitte verwenden Sie bei der Überweisung die Rechnungsnummer ${number}.\n\nMit freundlichen Grüßen\nAlix Lasers Finance`;
+    const body = depositInvoiceBody(number, order.order_number,
+      Number(deposit.gross_amount).toLocaleString('de-DE', { style: 'currency', currency: deposit.currency || 'EUR' }),
+      new Date(deposit.due_date).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }));
     const idempotency = `auto-az-${orderId}`;
     const sent = await admin.from('email_send_log').select('id').eq('source_id', idempotency).eq('status', 'sent').eq('recipient_email', customer.email.trim()).limit(1);
     if (sent.error) throw sent.error;

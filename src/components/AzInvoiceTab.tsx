@@ -15,6 +15,7 @@ import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { downloadStampedPdf, stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 import { depositInvoiceUpdate, findDepositInvoiceTarget, type DepositInvoiceTarget } from '@/lib/finance/deposit-invoice-target';
+import { depositInvoiceBody, depositInvoiceSubject } from '../../supabase/functions/_shared/deposit-invoice-email';
 
 type BuildMode = 'download' | 'blob';
 
@@ -908,27 +909,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         }
       }
 
-      const subject = `Anzahlungsrechnung ${invNo} – Auftrag ${orderNo}`;
-      const body = [
-        `Sehr geehrte Damen und Herren${customer?.contact_name ? `, ${customer.contact_name}` : ''},`,
-        '',
-        `anbei erhalten Sie die Anzahlungsrechnung ${invNo} zum Auftrag ${orderNo}.`,
-        '',
-        `Rechnungsbetrag (brutto): ${fmtMoney(gross, currency)} (MwSt ${taxPct}%)`,
-        `Rechnungsdatum: ${fmtDate(invDate)}`,
-        `Fällig am: ${fmtDate(dDate)}`,
-        '',
-        'Bankverbindung:',
-        'Kontoinhaber: Alix Lasers GmbH',
-        'Bank: Deutsche Bank',
-        'IBAN: DE07 1007 0100 0142 6600 00',
-        'SWIFT/BIC: DEUTDEBB101',
-        '',
-        'Bitte geben Sie bei der Überweisung die Rechnungsnummer als Verwendungszweck an.',
-        '',
-        'Mit freundlichen Grüßen',
-        'Alix Lasers Deutschland',
-      ].join('\n');
+      const subject = depositInvoiceSubject(invNo);
+      const body = depositInvoiceBody(invNo, orderNo, fmtMoney(gross, currency), fmtDate(dDate));
 
       const { data, error } = await supabase.functions.invoke('send-transactional-email', {
         body: {
