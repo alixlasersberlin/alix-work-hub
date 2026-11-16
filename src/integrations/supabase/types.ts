@@ -54004,6 +54004,7 @@ export type Database = {
           comm_status_since: string
           company_name: string | null
           created_at: string
+          created_by: string | null
           customer_address: string | null
           customer_email: string | null
           customer_name: string | null
@@ -54064,6 +54065,7 @@ export type Database = {
           comm_status_since?: string
           company_name?: string | null
           created_at?: string
+          created_by?: string | null
           customer_address?: string | null
           customer_email?: string | null
           customer_name?: string | null
@@ -54124,6 +54126,7 @@ export type Database = {
           comm_status_since?: string
           company_name?: string | null
           created_at?: string
+          created_by?: string | null
           customer_address?: string | null
           customer_email?: string | null
           customer_name?: string | null
