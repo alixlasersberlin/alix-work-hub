@@ -1,4 +1,5 @@
 import { isOfferCreatorOnly, OFFER_CREATOR_PATHS } from "@/lib/offer-creator-access";
+import { TICKET_CREATION_ROLES } from '@/lib/ticket-creator-access';
 import { Suspense } from "react";
 import { RouteErrorBoundary, RouteFallback } from "@/components/RouteBoundary";
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
@@ -2292,14 +2293,14 @@ function AppRoutes() {
             <Route path="vigilance" element={<IsoVigilance />} />
           </Route>
 
-          <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
+          <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKET_CREATION_ROLES}><TicketsList /></ProtectedRoute>} />
           <Route path="/tickets/dashboard" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsDashboard /></ProtectedRoute>} />
           <Route path="/tickets/kalender" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketCalendar /></ProtectedRoute>} />
 
           <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/sync" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin']}><TicketsSyncMonitor /></ProtectedRoute>} />
           <Route path="/tickets/by-external/:externalId" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketByExternal /></ProtectedRoute>} />
-          <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
+          <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKET_CREATION_ROLES}><TicketDetail /></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><WhatsAppServiceCenter /></ProtectedRoute>} />
           <Route path="/ai-service-center" element={<ProtectedRoute requiredRoles={AI_SERVICE_ROLES}><AiServiceCenter /></ProtectedRoute>} />
 
