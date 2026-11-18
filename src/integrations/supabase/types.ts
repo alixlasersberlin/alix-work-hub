@@ -58391,11 +58391,47 @@ export type Database = {
           would_delete: number
         }[]
       }
+      gobd_retention_dry_run_impl: {
+        Args: { _log?: boolean }
+        Returns: {
+          blocked_legal_hold: number
+          blocked_not_deletable: number
+          blocked_retention: number
+          data_class: string
+          due_for_deletion: number
+          exclusion_reason: string
+          label: string
+          period_from: string
+          period_to: string
+          source_table: string
+          total_records: number
+          would_delete: number
+        }[]
+      }
       gobd_retention_due_date: {
         Args: { _data_class_code: string; _start: string }
         Returns: string
       }
       gobd_retention_overview: {
+        Args: never
+        Returns: {
+          active_holds: number
+          data_class: string
+          deletable: boolean
+          earliest_due: string
+          label: string
+          legal_basis: string
+          legal_hold_capable: boolean
+          oldest: string
+          responsible_role: string
+          retention_start_rule: string
+          retention_years: number
+          source_table: string
+          storage_location: string
+          total_records: number
+        }[]
+      }
+      gobd_retention_overview_impl: {
         Args: never
         Returns: {
           active_holds: number
