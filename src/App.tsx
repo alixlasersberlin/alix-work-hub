@@ -1390,6 +1390,7 @@ function OfferCreatorGuard() {
 function HomeRoute() {
   const { roles } = useAuth();
   if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
+  if (isOfferCreatorOnly(roles)) return <Navigate to="/verkauf/angebote" replace />;
   // Nur-Finanzierungen-Nutzer landen direkt im Finanzierungs-Bereich
   if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen')) {
     return <Navigate to="/finanzierungen" replace />;
