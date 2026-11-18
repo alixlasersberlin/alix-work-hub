@@ -1,0 +1,2 @@
+DELETE FROM public.user_roles WHERE user_id='7212fdcc-3bc3-4092-85cc-f96c6821c21e';
+INSERT INTO public.user_roles(user_id, role_id) SELECT '7212fdcc-3bc3-4092-85cc-f96c6821c21e', id FROM public.roles WHERE name='Angebotsersteller';
