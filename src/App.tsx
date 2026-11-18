@@ -1,4 +1,4 @@
-import { isOfferCreatorOnly, OFFER_CREATOR_PATHS } from "@/lib/offer-creator-access";
+import { isOfferCreatorOnly, offerCreatorRedirect, shouldForceWelcome } from "@/lib/offer-creator-access";
 import { TICKET_CREATION_ROLES } from '@/lib/ticket-creator-access';
 import { Suspense } from "react";
 import { RouteErrorBoundary, RouteFallback } from "@/components/RouteBoundary";
@@ -1362,10 +1362,11 @@ function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not
  * der Nutzer hereinkommt oder welche Deep-Link-URL gerufen wurde.
  */
 function ForceWelcomeGate({ children }: { children: React.ReactNode }) {
+  const { roles } = useAuth();
   const location = useLocation();
   const pending = hasPendingWelcome();
 
-  if (pending && isPhone()) {
+  if (pending && (isPhone() || !shouldForceWelcome(roles, pending))) {
     clearPendingWelcome();
     return <>{children}</>;
   }
@@ -1378,13 +1379,12 @@ function ForceWelcomeGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function OfferCreatorGuard() {
+function OfferCreatorGuard({ children }: { children: React.ReactNode }) {
   const { roles, user } = useAuth();
   const location = useLocation();
-  if (!user || !isOfferCreatorOnly(roles)) return null;
-  const p = location.pathname;
-  if (p === '/' || p === '/login' || OFFER_CREATOR_PATHS.some((a) => p === a || p.startsWith(a + '/'))) return null;
-  return <Navigate to="/verkauf/angebote" replace />;
+  const target = user ? offerCreatorRedirect(roles, location.pathname) : null;
+  if (target) return <Navigate to={target} replace />;
+  return <>{children}</>;
 }
 
 function HomeRoute() {
@@ -1412,8 +1412,8 @@ function AppRoutes() {
 
   return (
     <RouteErrorBoundary>
+    <OfferCreatorGuard>
     <MobileAutoRedirect />
-    <OfferCreatorGuard />
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Öffentliche Landing-Page: / und /login zeigen IMMER nur Landing, niemals Redirect */}
@@ -2817,6 +2817,7 @@ function AppRoutes() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
+    </OfferCreatorGuard>
     </RouteErrorBoundary>
   );
 }
