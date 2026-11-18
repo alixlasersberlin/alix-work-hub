@@ -307,7 +307,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(async () => {
           await fetchProfile(session.user.id);
           const realRoles = await fetchRoles(session.user.id);
-          if (impersonatedUserId) await applyImpersonation(realRoles, impersonatedUserId);
+          { let simId: string | null = null; try { simId = sessionStorage.getItem(IMPERSONATE_KEY); } catch { /* ignore */ } if (simId) await applyImpersonation(realRoles, simId); }
           setMfaState(await computeMfaState());
         }, 0);
       } else {
@@ -324,7 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (async () => {
           await fetchProfile(session.user.id);
           const realRoles = await fetchRoles(session.user.id);
-          if (impersonatedUserId) await applyImpersonation(realRoles, impersonatedUserId);
+          { let simId: string | null = null; try { simId = sessionStorage.getItem(IMPERSONATE_KEY); } catch { /* ignore */ } if (simId) await applyImpersonation(realRoles, simId); }
           setMfaState(await computeMfaState());
           setLoading(false);
         })();
@@ -339,7 +339,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
           fetchProfile(session.user.id);
-          fetchRoles(session.user.id);
+          // Simulation beibehalten: sonst überschreiben die echten Rollen die Ansicht
+          void fetchRoles(session.user.id).then((realRoles) => {
+            let simId: string | null = null;
+            try { simId = sessionStorage.getItem(IMPERSONATE_KEY); } catch { /* ignore */ }
+            if (simId) return applyImpersonation(realRoles, simId);
+          });
         }
       });
     };
