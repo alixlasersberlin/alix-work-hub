@@ -163,6 +163,7 @@ export default function OffenePostenLight() {
   const [payRef, setPayRef] = useState('');
   const [payNote, setPayNote] = useState('');
   const [payEvidence, setPayEvidence] = useState('');
+  const [payError, setPayError] = useState<string | null>(null);
   const paymentRequest = useRef('');
   const paymentInFlight = useRef(false);
   const [paying, setPaying] = useState(false);
@@ -556,6 +557,7 @@ export default function OffenePostenLight() {
     setPayRef(invNo(item));
     setPayNote('');
     setPayEvidence('');
+    setPayError(null);
     paymentRequest.current = crypto.randomUUID();
     setQuickOpen(false);
     setPayOpen(true);
@@ -565,8 +567,9 @@ export default function OffenePostenLight() {
     if (!selected || paymentInFlight.current) return;
     const amount = Number(payAmount.replace(',', '.'));
     const validation = manualPaymentError(amount, Number(selected.balance || 0), payDate, payEvidence, new Date().toISOString().slice(0, 10));
-    if (validation) { toast.error(validation); return; }
-    if (full && amount !== Number(selected.balance || 0)) { toast.error('Für eine Vollzahlung muss der Zahlbetrag dem offenen Betrag entsprechen.'); return; }
+    if (validation) { setPayError(validation); return; }
+    if (full && amount !== Number(selected.balance || 0)) { setPayError('Für eine Vollzahlung muss der Zahlbetrag dem offenen Betrag entsprechen.'); return; }
+    setPayError(null);
     paymentInFlight.current = true;
     setPaying(true);
     try {
@@ -588,7 +591,7 @@ export default function OffenePostenLight() {
       setSelected(null);
       await load();
     } catch (e: any) {
-      toast.error(`Zahlung konnte nicht gebucht werden: ${e?.message ?? e}`);
+      setPayError(`Zahlung konnte nicht gebucht werden: ${e?.message ?? e}`);
     } finally {
       paymentInFlight.current = false;
       setPaying(false);
@@ -1725,13 +1728,14 @@ export default function OffenePostenLight() {
             <div><Label>Notiz (optional)</Label><Textarea rows={2} value={payNote} onChange={(e) => setPayNote(e.target.value)} /></div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => void bookPayment(false)} disabled={paying || payEvidence.trim().length < 5}>
+            <Button variant="outline" onClick={() => void bookPayment(false)} disabled={paying}>
               {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Zahlung buchen
             </Button>
-            <Button onClick={() => void bookPayment(true)} disabled={paying || payEvidence.trim().length < 5 || Number(payAmount.replace(',', '.')) !== Number(selected?.balance || 0)}>
+            <Button onClick={() => void bookPayment(true)} disabled={paying}>
               {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Vollzahlung buchen
             </Button>
           </DialogFooter>
+          {payError && <p role="alert" className="text-sm text-destructive">{payError}</p>}
         </DialogContent>
       </Dialog>
 
