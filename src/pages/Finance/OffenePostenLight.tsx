@@ -18,6 +18,7 @@ import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { cn } from '@/lib/utils';
 import { bookingAccountKey, bookingInvoices } from '@/lib/finance/booking-selection';
+import { manualPaymentError } from '@/lib/finance/manual-payment';
 
 type OpenItem = {
   id: string;
@@ -161,6 +162,9 @@ export default function OffenePostenLight() {
   const [payMethod, setPayMethod] = useState('Bank');
   const [payRef, setPayRef] = useState('');
   const [payNote, setPayNote] = useState('');
+  const [payEvidence, setPayEvidence] = useState('');
+  const paymentRequest = useRef('');
+  const paymentInFlight = useRef(false);
   const [paying, setPaying] = useState(false);
 
   // Schnellbuchung
@@ -551,21 +555,28 @@ export default function OffenePostenLight() {
     setPayMethod('Bank');
     setPayRef(invNo(item));
     setPayNote('');
+    setPayEvidence('');
+    paymentRequest.current = crypto.randomUUID();
     setQuickOpen(false);
     setPayOpen(true);
   };
 
   const bookPayment = async (full: boolean) => {
-    if (!selected) return;
+    if (!selected || paymentInFlight.current) return;
+    const amount = Number(payAmount.replace(',', '.'));
+    const validation = manualPaymentError(amount, Number(selected.balance || 0), payDate, payEvidence, new Date().toISOString().slice(0, 10));
+    if (validation) { toast.error(validation); return; }
+    if (full && amount !== Number(selected.balance || 0)) { toast.error('Für eine Vollzahlung muss der Zahlbetrag dem offenen Betrag entsprechen.'); return; }
+    paymentInFlight.current = true;
     setPaying(true);
     try {
       const { data, error } = await rpc('fibu_light_book_payment', {
         p_invoice_id: selected.id,
-        p_amount: full ? Number(selected.balance || 0) : Number(payAmount.replace(',', '.')),
+        p_amount: amount,
         p_payment_date: payDate,
         p_method: payMethod,
         p_reference: payRef || null,
-        p_note: payNote || null,
+        p_note: JSON.stringify({ note: payNote, evidence: payEvidence.trim(), request_id: paymentRequest.current }),
         p_full: full,
       });
       if (error) throw error;
@@ -579,6 +590,7 @@ export default function OffenePostenLight() {
     } catch (e: any) {
       toast.error(`Zahlung konnte nicht gebucht werden: ${e?.message ?? e}`);
     } finally {
+      paymentInFlight.current = false;
       setPaying(false);
     }
   };
@@ -1709,14 +1721,15 @@ export default function OffenePostenLight() {
               </Select>
             </div>
             <div><Label>Referenz (optional)</Label><Input value={payRef} onChange={(e) => setPayRef(e.target.value)} /></div>
+            <div><Label>Zahlungsnachweis / Belegverweis *</Label><Textarea rows={2} placeholder="Kontoauszug, Buchungsreferenz oder Quittungsnummer" value={payEvidence} maxLength={2000} onChange={(e) => setPayEvidence(e.target.value)} /></div>
             <div><Label>Notiz (optional)</Label><Textarea rows={2} value={payNote} onChange={(e) => setPayNote(e.target.value)} /></div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => void bookPayment(false)} disabled={paying}>
-              {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Teilzahlung buchen
+            <Button variant="outline" onClick={() => void bookPayment(false)} disabled={paying || payEvidence.trim().length < 5}>
+              {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Zahlung buchen
             </Button>
-            <Button onClick={() => void bookPayment(true)} disabled={paying}>
-              {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Vollständig bezahlt
+            <Button onClick={() => void bookPayment(true)} disabled={paying || payEvidence.trim().length < 5 || Number(payAmount.replace(',', '.')) !== Number(selected?.balance || 0)}>
+              {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Vollzahlung buchen
             </Button>
           </DialogFooter>
         </DialogContent>
