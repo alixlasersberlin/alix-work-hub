@@ -44,10 +44,14 @@ export default function Revision() {
   async function save() {
     if (!selected || !validRevisionReview(reviewStatus, note)) return;
     setSaving(true);
-    const { error: failure } = await supabase.rpc('revision_review', { p_case_key: selected.case_key, p_status: reviewStatus, p_note: note });
+    const { data, error: failure } = await supabase.rpc('revision_review', { p_case_key: selected.case_key, p_status: reviewStatus, p_note: note });
     setSaving(false);
     if (failure) toast.error(failure.message);
-    else { toast.success('Prüfvermerk gespeichert'); setSelected(null); await load(); }
+    else {
+      const result = data as { settled?: boolean; fully_paid?: boolean; balance?: number } | null;
+      toast.success(result?.settled ? (result.fully_paid ? 'Belegte Zahlung verrechnet – Rechnung ausgeglichen' : `Belegte Zahlung verrechnet – Restbetrag ${money(result.balance ?? 0, selected.currency)}`) : 'Prüfvermerk gespeichert');
+      setSelected(null); await load();
+    }
   }
   async function edit(r: RevisionCase) {
     const { data, error: failure } = await supabase.from('bank_transactions').select('*').eq('id', r.transaction_id).maybeSingle();
@@ -78,7 +82,7 @@ export default function Revision() {
       <p className="text-sm">{selected?.reason}</p><Label>Prüfstatus</Label><Select value={reviewStatus} onValueChange={setReviewStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(revisionStatuses).map(([key, name]) => <SelectItem key={key} value={key}>{name}</SelectItem>)}</SelectContent></Select>
       <Label htmlFor="revision-note">Prüfvermerk</Label><Textarea id="revision-note" value={note} onChange={e => setNote(e.target.value)} maxLength={4000} />
       {selected?.history.map((h, i) => <div key={`${h.at}-${i}`} className="border-t border-border pt-3 text-sm"><div className="text-xs text-muted-foreground">{new Date(h.at).toLocaleString('de-DE')} · {revisionStatuses[h.status]}</div><p className="whitespace-pre-wrap">{h.note}</p></div>)}
-      <DialogFooter><Button variant="outline" onClick={() => setSelected(null)}>Abbrechen</Button><Button onClick={save} disabled={saving || !validRevisionReview(reviewStatus, note)}>Prüfvermerk speichern</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={() => setSelected(null)}>Abbrechen</Button><Button onClick={save} disabled={saving || !validRevisionReview(reviewStatus, note)}>{reviewStatus === 'reviewed' ? 'Prüfung abschließen & Zahlung verrechnen' : 'Prüfvermerk speichern'}</Button></DialogFooter>
     </DialogContent></Dialog>
     <TxDetailPanel tx={tx} region={tx?.currency === 'CHF' ? 'CH' : 'EU'} onClose={() => setTx(null)} onChanged={load} />
     {returnTx && <ReturnDebitDialog tx={returnTx} region={returnTx.currency === 'CHF' ? 'CH' : 'EU'} open onOpenChange={open => { if (!open) setReturnTx(null); }} onChanged={load} />}

@@ -58876,6 +58876,7 @@ export type Database = {
         Args: { p_case_key: string; p_note: string; p_status: string }
         Returns: Json
       }
+      revision_settle_case: { Args: { p_case: Json }; Returns: Json }
       revoke_break_glass: { Args: { _session_id: string }; Returns: undefined }
       revoke_temporary_role_grant: {
         Args: { _grant_id: string; _reason: string }
