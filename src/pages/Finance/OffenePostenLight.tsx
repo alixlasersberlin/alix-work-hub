@@ -17,6 +17,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { cn } from '@/lib/utils';
+import { bookingAccountKey, bookingInvoices } from '@/lib/finance/booking-selection';
 
 type OpenItem = {
   id: string;
@@ -165,6 +166,8 @@ export default function OffenePostenLight() {
   // Schnellbuchung
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickSearch, setQuickSearch] = useState('');
+  const [quickMode, setQuickMode] = useState<'invoices' | 'accounts'>('invoices');
+  const [quickAccount, setQuickAccount] = useState<string | null>(null);
 
   // Mahnung
   const [dunOpen, setDunOpen] = useState(false);
@@ -886,11 +889,20 @@ export default function OffenePostenLight() {
   };
 
   const quickResults = useMemo(() => {
-    const q = quickSearch.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return items.filter((i) =>
-      [i.customer_name, i.invoice_number, i.legal_invoice_number, i.id].filter(Boolean)
-        .join(' ').toLowerCase().includes(q)).slice(0, 12);
+    return bookingInvoices(items, quickSearch, quickAccount || undefined);
+  }, [items, quickSearch, quickAccount]);
+
+  const quickAccounts = useMemo(() => {
+    const accounts = new Map<string, { key: string; name: string; source: string | null; currency: string | null; balance: number; count: number }>();
+    for (const item of bookingInvoices(items, '')) {
+      const key = bookingAccountKey(item);
+      const account = accounts.get(key) || { key, name: item.customer_name || item.customer_id || 'Kunde nicht angegeben', source: item.source_system, currency: item.currency, balance: 0, count: 0 };
+      account.balance += Number(item.balance || 0);
+      account.count += 1;
+      accounts.set(key, account);
+    }
+    const matching = new Set(bookingInvoices(items, quickSearch).map(bookingAccountKey));
+    return [...accounts.values()].filter(account => matching.has(account.key)).sort((a, b) => a.name.localeCompare(b.name, 'de'));
   }, [items, quickSearch]);
 
   const markedItems = useMemo(() => filtered.filter((i) => listChecked[i.id]), [filtered, listChecked]);
@@ -970,7 +982,7 @@ export default function OffenePostenLight() {
           onClick={() => { setTab('arbeitsliste'); setFilter('ueberfaellig'); }}>
           <AlertTriangle className="h-5 w-5 mr-2" /> ÜBERFÄLLIGE BEARBEITEN
         </Button>
-        <Button size="lg" className="h-14 text-base" onClick={() => { setQuickSearch(''); setQuickOpen(true); }}>
+        <Button size="lg" className="h-14 text-base" onClick={() => { setQuickSearch(''); setQuickAccount(null); setQuickMode('invoices'); setQuickOpen(true); }}>
           <Banknote className="h-5 w-5 mr-2" /> ZAHLUNG BUCHEN
         </Button>
         <Button size="lg" variant="outline" className="h-14 text-base" onClick={() => setTab('mahncenter')}>
@@ -1622,20 +1634,36 @@ export default function OffenePostenLight() {
 
       {/* Schnellbuchung */}
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader><DialogTitle>Zahlung buchen – Rechnung suchen</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Manuelle Buchung</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Button variant={quickMode === 'invoices' ? 'default' : 'outline'} onClick={() => { setQuickMode('invoices'); setQuickAccount(null); }}>Offene Rechnungen</Button>
+              <Button variant={quickMode === 'accounts' ? 'default' : 'outline'} onClick={() => { setQuickMode('accounts'); setQuickAccount(null); }}>Kundenkonten</Button>
+            </div>
             <div className="relative">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
-              <Input autoFocus className="pl-9" placeholder="Rechnungsnummer, Kunde oder interne ID …"
+              <Input autoFocus className="pl-9" placeholder="Rechnungsnummer, Kunde oder Kundennummer …"
                 value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} />
             </div>
+            {quickMode === 'accounts' && quickAccount && <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span>{items.find(i => bookingAccountKey(i) === quickAccount)?.customer_name} · {quickResults.length} offene Rechnungen</span>
+              <Button variant="ghost" size="sm" onClick={() => setQuickAccount(null)}>Alle Kundenkonten</Button>
+            </div>}
             <div className="max-h-80 overflow-y-auto divide-y divide-border rounded-lg border border-border">
-              {quickResults.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground">Mindestens 2 Zeichen eingeben.</div>
+              {loading ? <SkeletonTable /> : quickMode === 'accounts' && !quickAccount ? (
+                quickAccounts.length === 0 ? <div className="p-4 text-sm text-muted-foreground">Keine offenen Kundenkonten gefunden.</div> : quickAccounts.map(account => <Button key={account.key} variant="ghost" onClick={() => { setQuickAccount(account.key); setQuickSearch(''); }} className="h-auto w-full justify-start whitespace-normal rounded-none p-3 text-left">
+                  <div className="w-full space-y-1">
+                    <div className="flex flex-wrap justify-between gap-2"><span>{account.name}</span><span>{fmt(account.balance, account.currency)}</span></div>
+                    <div className="text-xs text-muted-foreground">{account.count} offene Rechnungen · {account.source || 'Quelle nicht angegeben'} · {account.currency}</div>
+                  </div>
+                </Button>)
+              ) : quickResults.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground">Keine offenen Rechnungen gefunden.</div>
               ) : quickResults.map((i) => (
-                <button key={i.id} onClick={() => startPayment(i)}
-                  className="w-full text-left p-3 hover:bg-secondary/40">
+                <Button variant="ghost" key={i.id} onClick={() => startPayment(i)}
+                  className="h-auto w-full justify-start whitespace-normal rounded-none p-3 text-left">
+                  <div className="w-full space-y-1">
                   <div className="flex justify-between text-sm font-medium">
                     <span>{i.customer_name}</span><span>{invNo(i)}</span>
                   </div>
@@ -1643,7 +1671,8 @@ export default function OffenePostenLight() {
                     Rechnung {fmt(i.total, i.currency)} · bereits bezahlt {fmt(i.paid, i.currency)} · noch offen{' '}
                     <span className="font-semibold text-foreground">{fmt(i.balance, i.currency)}</span>
                   </div>
-                </button>
+                  </div>
+                </Button>
               ))}
             </div>
           </div>
