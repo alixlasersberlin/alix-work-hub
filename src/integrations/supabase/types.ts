@@ -57492,6 +57492,23 @@ export type Database = {
         Returns: Json
       }
       backup_watchdog_mark_stuck: { Args: never; Returns: undefined }
+      bank_invoice_balance_ceiling: {
+        Args: { p_balance: number; p_net_paid: number; p_total: number }
+        Returns: number
+      }
+      bank_invoice_booked_evidence: {
+        Args: {
+          p_currency: string
+          p_external: string
+          p_id: string
+          p_source: string
+          p_tenant: string
+        }
+        Returns: {
+          last_paid: string
+          net_paid: number
+        }[]
+      }
       calc_media_package_progress: { Args: { _mp_id: string }; Returns: number }
       can_access_ai_service: { Args: never; Returns: boolean }
       can_access_esc_module: { Args: never; Returns: boolean }
