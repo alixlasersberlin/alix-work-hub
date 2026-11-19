@@ -58871,6 +58871,11 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      revision_cases: { Args: never; Returns: Json }
+      revision_review: {
+        Args: { p_case_key: string; p_note: string; p_status: string }
+        Returns: Json
+      }
       revoke_break_glass: { Args: { _session_id: string }; Returns: undefined }
       revoke_temporary_role_grant: {
         Args: { _grant_id: string; _reason: string }

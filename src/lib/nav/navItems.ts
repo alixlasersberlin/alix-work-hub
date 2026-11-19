@@ -7,12 +7,17 @@ import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, Gi
 import { Smartphone as SmartphoneIcon, Contact as ContactIcon } from 'lucide-react';
 import { FileSpreadsheet } from 'lucide-react';
 import { INQUIRY_READ_ROLES, LEAD_ACCESS_ROLES } from '@/lib/sales/lead-access';
+import { REVISION_ROLES } from '@/lib/finance/revision';
 
 
 export type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 export type NavItem = NavChild & { children?: NavChild[] };
 
 export const navItems: NavItem[] = [
+  { path: '/revision', label: 'REVISION', icon: ShieldCheck, roles: REVISION_ROLES, children: [
+    { path: '/revision', label: 'Prüffälle', icon: ClipboardCheck, roles: REVISION_ROLES },
+    { path: '/finance/audit-revision', label: 'Änderungsprotokoll', icon: ScrollText, roles: REVISION_ROLES },
+  ] },
   { path: '/vertrieb/meine-leads', label: 'VERTRIEB', icon: Users, roles: null, children: [
     { path: '/vertrieb/meine-leads', label: 'Meine Leads', icon: Inbox, roles: null },
     { path: '/vertrieb/meine-leads?ansicht=neu', label: 'Neue Leads', icon: Inbox, roles: null },

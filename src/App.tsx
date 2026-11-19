@@ -1,5 +1,6 @@
 import { isOfferCreatorOnly, offerCreatorRedirect, shouldForceWelcome } from "@/lib/offer-creator-access";
 import { TICKET_CREATION_ROLES } from '@/lib/ticket-creator-access';
+import { REVISION_ROLES } from '@/lib/finance/revision';
 import { Suspense } from "react";
 import { RouteErrorBoundary, RouteFallback } from "@/components/RouteBoundary";
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
@@ -55,6 +56,7 @@ import { isMfaMandatory } from "@/lib/mfa-required";
 const SetPassword = lazy(() => import("./pages/SetPassword"));
 const AlixSmartRegister = lazy(() => import("./pages/AlixSmartRegister"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const FinanceRevision = lazy(() => import('./pages/Finance/Revision'));
 const Startseite = lazy(() => import("./pages/Startseite"));
 const Willkommen = lazy(() => import("./pages/Willkommen"));
 const VerkaufDashboard = lazy(() => import("./pages/VerkaufDashboard"));
@@ -1809,6 +1811,7 @@ function AppRoutes() {
           <Route path="/finance/zahlungsuebersicht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceZahlungsuebersicht /></ProtectedRoute>} />
           <Route path="/finance/datev-export" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatevExport /></ProtectedRoute>} />
           <Route path="/finance/audit-revision" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAuditRevision /></ProtectedRoute>} />
+          <Route path="/revision" element={<ProtectedRoute requiredRoles={REVISION_ROLES}><FinanceRevision /></ProtectedRoute>} />
 
           <Route path="/finance/zahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceZahlungen /></ProtectedRoute>} />
           <Route path="/finance/vertraege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceVertraege /></ProtectedRoute>} />
