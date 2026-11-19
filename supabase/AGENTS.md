@@ -1,0 +1,2 @@
+- Invoice balances are capped by source-scoped, currency/tenant-matched net booked bank allocations in database triggers; use min(existing balance, total minus net payments), never subtract allocations twice, so imports cannot reopen confirmed payments. Ignore fees, unbooked and return-debit transactions; signed reversals offset payments. Internal helpers remain service-only.
+- collect_sync_customer must clean its session-local temporary invoice table before each call so repeated updates in one transaction refresh every affected customer.
