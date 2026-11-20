@@ -3,6 +3,8 @@ import {
   AlertTriangle, Banknote, CalendarClock, CheckCircle2, FileText, Gavel, History, Landmark, Loader2, Lock,
   Mail, MessageSquare, RefreshCw, Search, Send, ShieldAlert, StickyNote, Undo2, Unlock, Wallet, X,
 } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { sortOpenItems, type OpenItemSortKey, type SortDir } from '@/lib/finance/open-item-sort';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -394,11 +396,32 @@ export default function OffenePostenLight() {
   const [page, setPage] = useState(1);
   const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
+  const [sortKey, setSortKey] = useState<OpenItemSortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const toggleSort = (k: OpenItemSortKey) => {
+    if (sortKey !== k) { setSortKey(k); setSortDir(['total', 'paid', 'balance'].includes(k) ? 'desc' : 'asc'); }
+    else if (sortDir === 'asc') setSortDir('desc');
+    else if (['total', 'paid', 'balance'].includes(k)) setSortDir('asc');
+    else setSortKey(null);
+    setPage(1);
+  };
+  const sorted = useMemo(
+    () => (sortKey ? sortOpenItems(filtered, sortKey, sortDir, (id) => lastMails[id]?.sent_at ?? null) : filtered),
+    [filtered, sortKey, sortDir, lastMails],
+  );
   const visible = useMemo(() => {
-    if (pageSize === 'all') return filtered;
+    if (pageSize === 'all') return sorted;
     const start = (safePage - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, pageSize, safePage]);
+    return sorted.slice(start, start + pageSize);
+  }, [sorted, pageSize, safePage]);
+  const SortTh = ({ k, label, right }: { k: OpenItemSortKey; label: string; right?: boolean }) => (
+    <th className={cn('px-3 py-3', right ? 'text-right' : 'text-left')} aria-sort={sortKey === k ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+      <button type="button" onClick={() => toggleSort(k)} className={cn('inline-flex items-center gap-1 uppercase hover:text-foreground', sortKey === k && 'text-primary')}>
+        {label}
+        {sortKey === k ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+      </button>
+    </th>
+  );
   useEffect(() => { setPage(1); }, [search, filter, tab]);
 
   const dunningItems = useMemo(
@@ -1123,13 +1146,13 @@ export default function OffenePostenLight() {
                           <Checkbox checked={allMarked} onCheckedChange={(v) => toggleAllMarked(!!v)} aria-label="Alle markieren" />
                         </th>
                         <th className="w-8" />
-                        <th className="text-left px-3 py-3">Kunde</th>
-                        <th className="text-left px-3 py-3">Rechnung</th>
-                        <th className="text-left px-3 py-3">Fällig</th>
-                        <th className="text-right px-3 py-3">Betrag</th>
-                        <th className="text-right px-3 py-3">Bezahlt</th>
-                        <th className="text-right px-3 py-3">Offen</th>
-                        <th className="text-left px-3 py-3">Letzte E-Mail</th>
+                        <SortTh k="customer" label="Kunde" />
+                        <SortTh k="invoice" label="Rechnung" />
+                        <SortTh k="due" label="Fällig" />
+                        <SortTh k="total" label="Betrag" right />
+                        <SortTh k="paid" label="Bezahlt" right />
+                        <SortTh k="balance" label="Offen" right />
+                        <SortTh k="lastMail" label="Letzte E-Mail" />
                         <th className="text-left px-3 py-3">{tab === 'zahlungsziel' ? 'Zahlungsziel' : 'Arbeitsstatus'}</th>
                         <th className="text-left px-3 py-3">Nächste Aktion</th>
                         <th className="text-right px-3 py-3" />
