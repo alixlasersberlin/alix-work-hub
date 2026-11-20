@@ -57974,6 +57974,13 @@ export type Database = {
         }
         Returns: Json
       }
+      fibu_light_due_date_changes: {
+        Args: never
+        Returns: {
+          invoice_id: string
+          metadata: Json
+        }[]
+      }
       fibu_light_invoice_history: {
         Args: { p_invoice_id: string }
         Returns: Json

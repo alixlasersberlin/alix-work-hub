@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { bookingAccountKey, bookingInvoices } from '@/lib/finance/booking-selection';
 import { manualPaymentError } from '@/lib/finance/manual-payment';
 import { InvoiceDueDateDialog } from '@/components/finance/InvoiceDueDateDialog';
+import { paymentTargetReason, type DueDateChange } from '@/lib/finance/payment-target';
 
 type OpenItem = {
   id: string;
@@ -56,7 +57,7 @@ type OpenItem = {
 };
 
 type Filter = 'alle' | 'heute' | 'ueberfaellig' | 'teilbezahlt' | 'mahnung' | 'klaerung' | 'raten' | 'anwalt' | 'inkasso';
-type Tab = 'arbeitsliste' | 'anzahlungen' | 'mahncenter' | 'bank';
+type Tab = 'arbeitsliste' | 'anzahlungen' | 'mahncenter' | 'bank' | 'zahlungsziel';
 
 /** Offene Anzahlung (finance_deposits) – reine Anzeige, keine Buchungen in FIBU LIGHT. */
 type DepositRow = {
@@ -157,6 +158,8 @@ export default function OffenePostenLight() {
   const [bankKpi, setBankKpi] = useState<Record<string, number>>({});
   const [dueInvoice, setDueInvoice] = useState<OpenItem | null>(null);
   const [dueInvoices, setDueInvoices] = useState<OpenItem[] | undefined>();
+  const [dueChanges, setDueChanges] = useState<Record<string, DueDateChange>>({});
+  const [dueChangesError, setDueChangesError] = useState<string | null>(null);
 
   // Zahlung
   const [payOpen, setPayOpen] = useState(false);
@@ -246,11 +249,16 @@ export default function OffenePostenLight() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data, error }, rulesRes, bankRes] = await Promise.all([
+    const [{ data, error }, rulesRes, bankRes, changesRes] = await Promise.all([
       rpcAll('fibu_light_open_items'),
       supabase.from('op_light_dunning_rules' as any).select('level,label,offset_days').order('level'),
       rpc('fibu_light_bank_dashboard'),
+      rpcAll('fibu_light_due_date_changes'),
     ]);
+    setDueChangesError(changesRes.error ? 'Verschobene Fälligkeiten konnten nicht geladen werden. Die Zahlungsziel-Liste ist unvollständig.' : null);
+    const changes: Record<string, DueDateChange> = {};
+    for (const change of (changesRes.data as DueDateChange[]) || []) changes[change.invoice_id] = change;
+    setDueChanges(changes);
     if (!bankRes.error) setBankKpi((bankRes.data as Record<string, number>) || {});
     if (error) {
       toast.error(`Offene Posten konnten nicht geladen werden: ${error.message}`);
@@ -366,6 +374,7 @@ export default function OffenePostenLight() {
           .filter(Boolean).join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
+      if (tab === 'zahlungsziel') return !!paymentTargetReason(i, dueChanges[i.id], today);
       switch (filter) {
         case 'heute': return i.due_date === today;
         case 'ueberfaellig': return (i.days_overdue ?? 0) > 0 && !i.case_active;
@@ -379,7 +388,7 @@ export default function OffenePostenLight() {
         default: return !i.escalation_stage;
       }
     });
-  }, [items, search, filter]);
+  }, [items, search, filter, tab, dueChanges]);
 
   const [pageSize, setPageSize] = useState<number | 'all'>(20);
   const [page, setPage] = useState(1);
@@ -390,7 +399,7 @@ export default function OffenePostenLight() {
     const start = (safePage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
   }, [filtered, pageSize, safePage]);
-  useEffect(() => { setPage(1); }, [search, filter]);
+  useEffect(() => { setPage(1); }, [search, filter, tab]);
 
   const dunningItems = useMemo(
     () => items.filter((i) => !i.case_active && Number(i.next_action_level || 0) > 0),
@@ -1009,26 +1018,27 @@ export default function OffenePostenLight() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 mb-4 border-b border-border">
+      <div className="flex flex-wrap items-center gap-2 mb-4 border-b border-border">
         {([
           { key: 'arbeitsliste', label: 'Arbeitsliste' },
           { key: 'anzahlungen', label: 'Anzahlungen' },
           { key: 'mahncenter', label: 'Mahnungen heute' },
           { key: 'bank', label: 'Bankvorschläge' },
+          { key: 'zahlungsziel', label: 'Zahlungsziel' },
 
         ] as { key: Tab; label: string }[]).map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={cn('px-4 py-2 text-sm border-b-2 -mb-px',
+          <Button variant="ghost" key={t.key} onClick={() => setTab(t.key)}
+            className={cn('rounded-none px-4 py-2 text-sm border-b-2 -mb-px',
               tab === t.key ? 'border-primary text-foreground font-medium' : 'border-transparent text-muted-foreground')}>
             {t.label}
-          </button>
+          </Button>
         ))}
       </div>
 
-      {tab === 'arbeitsliste' && (
+      {(tab === 'arbeitsliste' || tab === 'zahlungsziel') && (
         <>
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            {FILTERS.map((f) => (
+            {tab === 'arbeitsliste' && FILTERS.map((f) => (
               <Button key={f.key} size="sm" variant={filter === f.key ? 'default' : 'outline'} onClick={() => setFilter(f.key)}>
                 {f.label}
               </Button>
@@ -1049,6 +1059,14 @@ export default function OffenePostenLight() {
               <Input placeholder="Kunde, Rechnungsnummer oder ID …" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
           </div>
+
+          {tab === 'zahlungsziel' && <div className="mb-4 flex flex-wrap gap-3 text-sm">
+            <span>{filtered.length} Rechnungen</span>
+            {Object.entries(filtered.reduce<Record<string, number>>((sums, item) => {
+              const currency = item.currency || 'EUR'; sums[currency] = (sums[currency] || 0) + Number(item.balance || 0); return sums;
+            }, {})).map(([currency, amount]) => <span key={currency} className="font-semibold">{fmt(amount, currency)}</span>)}
+            {dueChangesError && <p role="alert" className="w-full text-destructive">{dueChangesError}</p>}
+          </div>}
 
           <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-muted-foreground">
             {[
@@ -1112,7 +1130,7 @@ export default function OffenePostenLight() {
                         <th className="text-right px-3 py-3">Bezahlt</th>
                         <th className="text-right px-3 py-3">Offen</th>
                         <th className="text-left px-3 py-3">Letzte E-Mail</th>
-                        <th className="text-left px-3 py-3">Arbeitsstatus</th>
+                        <th className="text-left px-3 py-3">{tab === 'zahlungsziel' ? 'Zahlungsziel' : 'Arbeitsstatus'}</th>
                         <th className="text-left px-3 py-3">Nächste Aktion</th>
                         <th className="text-right px-3 py-3" />
                       </tr>
@@ -1165,7 +1183,7 @@ export default function OffenePostenLight() {
                                 );
                               })()}
                             </td>
-                            <td className={cn('px-3 py-2 whitespace-nowrap', light.text)}>{light.label}</td>
+                            <td className={cn('px-3 py-2 whitespace-nowrap', tab === 'zahlungsziel' ? 'text-foreground' : light.text)}>{tab === 'zahlungsziel' ? paymentTargetReason(i, dueChanges[i.id], new Date().toISOString().slice(0, 10)) : light.label}</td>
                             <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                               {i.escalation_stage
                                 ? `Übergeben: ${ESC_LABEL[i.escalation_stage]}${i.escalation_at ? ` am ${fmtDate(i.escalation_at)}` : ''}`
