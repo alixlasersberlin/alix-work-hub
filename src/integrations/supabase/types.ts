@@ -58088,6 +58088,15 @@ export type Database = {
         }
         Returns: Json
       }
+      fibu_light_set_due_date_with_note: {
+        Args: {
+          p_due_date: string
+          p_expected_due_date: string
+          p_invoice_id: string
+          p_note?: string
+        }
+        Returns: Json
+      }
       fibu_light_set_escalation: {
         Args: { p_invoice_ids: string[]; p_note?: string; p_stage: string }
         Returns: {

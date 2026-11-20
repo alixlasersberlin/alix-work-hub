@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { z } from 'zod';
 import { changeInvoiceDueDates, parseDueDate, type DueDateInvoice } from '@/lib/finance/invoice-due-date';
 
 export function InvoiceDueDateDialog({ invoice, invoices, onClose, onSaved }: {
@@ -18,6 +20,7 @@ export function InvoiceDueDateDialog({ invoice, invoices, onClose, onSaved }: {
   onSaved: (ids: string[]) => Promise<void>;
 }) {
   const [dateText, setDateText] = useState('');
+  const [note, setNote] = useState('');
   const date = parseDueDate(dateText);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
@@ -30,17 +33,21 @@ export function InvoiceDueDateDialog({ invoice, invoices, onClose, onSaved }: {
     const initial = invoices?.length === 1 ? invoices[0] : invoice;
     setDateText(initial?.due_date ? format(new Date(`${initial.due_date}T00:00:00`), 'dd.MM.yyyy') : '');
     setError(null);
+    setNote('');
     setResult(null); setDone(0); setCalendarOpen(false);
   }, [invoice, invoices]);
   const save = async () => {
     if (!targets.length || inFlight.current || result) return;
     if (!date) { setError('Bitte ein gültiges Datum im Format TT.MM.JJJJ eingeben.'); return; }
+    const checkedNote = z.string().trim().max(2000).safeParse(note);
+    if (!checkedNote.success) { setError('Bemerkung darf höchstens 2000 Zeichen enthalten.'); return; }
     inFlight.current = true;
     setBusy(true); setError(null);
     try {
       const outcome = await changeInvoiceDueDates(targets, format(date, 'yyyy-MM-dd'), async (target, dueDate) => {
-        const { error: failure } = await supabase.rpc('fibu_light_set_due_date', {
+        const { error: failure } = await supabase.rpc('fibu_light_set_due_date_with_note', {
           p_invoice_id: target.id, p_due_date: dueDate, p_expected_due_date: target.due_date,
+          p_note: checkedNote.data || null,
         });
         if (failure) throw failure;
       }, setDone);
@@ -67,6 +74,8 @@ export function InvoiceDueDateDialog({ invoice, invoices, onClose, onSaved }: {
         </PopoverContent>
       </Popover>
       </div>
+      <Label htmlFor="invoice-due-date-note">Bemerkung / Notiz (optional)</Label>
+      <Textarea id="invoice-due-date-note" value={note} onChange={event => setNote(event.target.value)} maxLength={2000} rows={3} disabled={busy || !!result} />
       {busy && <p role="status" className="text-sm text-muted-foreground">Festschreiben: {done} / {targets.length}</p>}
       {result && <div role="status" className="text-sm">{result.succeeded.length} festgeschrieben · {result.failed.length} nicht geändert<div className="max-h-48 overflow-auto">{result.failed.map(failure => <p key={failure.invoice.id} className="mt-2 text-destructive">{failure.invoice.legal_invoice_number || failure.invoice.invoice_number}: {failure.message}</p>)}</div></div>}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
