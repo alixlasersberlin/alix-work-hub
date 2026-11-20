@@ -1,0 +1,1 @@
+ALTER FUNCTION public.fibu_light_set_due_date(uuid,date,date) SECURITY INVOKER;

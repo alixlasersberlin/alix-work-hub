@@ -19,6 +19,7 @@ import { EmptyState } from '@/components/infinity/EmptyState';
 import { cn } from '@/lib/utils';
 import { bookingAccountKey, bookingInvoices } from '@/lib/finance/booking-selection';
 import { manualPaymentError } from '@/lib/finance/manual-payment';
+import { InvoiceDueDateDialog } from '@/components/finance/InvoiceDueDateDialog';
 
 type OpenItem = {
   id: string;
@@ -154,6 +155,7 @@ export default function OffenePostenLight() {
   const [history, setHistory] = useState<any | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [bankKpi, setBankKpi] = useState<Record<string, number>>({});
+  const [dueInvoice, setDueInvoice] = useState<OpenItem | null>(null);
 
   // Zahlung
   const [payOpen, setPayOpen] = useState(false);
@@ -1237,6 +1239,9 @@ export default function OffenePostenLight() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mb-2">
+                  <Button size="sm" variant="outline" className="col-span-2" onClick={() => setDueInvoice(selected)}>
+                    <CalendarClock className="h-4 w-4 mr-2" /> Fälligkeit ändern
+                  </Button>
                   <Button size="sm" onClick={() => startPayment(selected)}>
                     <Banknote className="h-4 w-4 mr-2" /> Zahlung buchen
                   </Button>
@@ -1695,6 +1700,11 @@ export default function OffenePostenLight() {
       </Dialog>
 
       {/* Zahlung buchen */}
+      <InvoiceDueDateDialog invoice={dueInvoice} onClose={() => setDueInvoice(null)} onSaved={async () => {
+        await load();
+        setSelected(null);
+        toast.success('Neue Fälligkeit festgeschrieben.');
+      }} />
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Zahlung buchen · {selected ? invNo(selected) : ''}</DialogTitle></DialogHeader>
