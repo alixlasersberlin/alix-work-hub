@@ -156,6 +156,7 @@ export default function OffenePostenLight() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [bankKpi, setBankKpi] = useState<Record<string, number>>({});
   const [dueInvoice, setDueInvoice] = useState<OpenItem | null>(null);
+  const [dueInvoices, setDueInvoices] = useState<OpenItem[] | undefined>();
 
   // Zahlung
   const [payOpen, setPayOpen] = useState(false);
@@ -1068,6 +1069,9 @@ export default function OffenePostenLight() {
               </span>
               <div className="ml-auto flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => setListChecked({})}>Auswahl aufheben</Button>
+                <Button size="sm" variant="outline" onClick={() => setDueInvoices([...markedItems])}>
+                  <CalendarClock className="h-4 w-4 mr-2" /> Fälligkeit ändern
+                </Button>
                 <Button size="sm" onClick={() => void openMail(markedItems)} disabled={mailBusy}>
                   {mailBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
                   E-Mail versenden
@@ -1704,6 +1708,16 @@ export default function OffenePostenLight() {
         await load();
         setSelected(null);
         toast.success('Neue Fälligkeit festgeschrieben.');
+      }} />
+      <InvoiceDueDateDialog invoices={dueInvoices} onClose={() => setDueInvoices(undefined)} onSaved={async ids => {
+        setListChecked(previous => {
+          const next = { ...previous };
+          for (const id of ids) delete next[id];
+          return next;
+        });
+        await load();
+        setSelected(null);
+        toast.success(`Fälligkeit für ${ids.length} Rechnungen festgeschrieben.`);
       }} />
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogContent className="sm:max-w-md">

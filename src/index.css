@@ -2200,8 +2200,8 @@ html :is([role="dialog"], [role="alertdialog"])[data-state="open"] {
 
 /* Radix Portal-Wrapper (body > div, das den Center-Container enthält) darf
    die Zentrierung nicht durch position/transform/filter blockieren. */
-html body > div:has([role="dialog"][data-state="open"]),
-html body > div:has([role="alertdialog"][data-state="open"]) {
+html body > div:not([data-radix-popper-content-wrapper]):has([role="dialog"][data-state="open"]),
+html body > div:not([data-radix-popper-content-wrapper]):has([role="alertdialog"][data-state="open"]) {
   transform: none !important;
   filter: none !important;
 }
@@ -2224,8 +2224,8 @@ html [data-state="open"][class*="translate-y"] {
 }
 
 /* Portal-Wrapper darf nicht in einem niedrigeren Stacking-Context landen */
-html body > div:has(> [role="dialog"][data-state="open"]),
-html body > div:has(> [role="alertdialog"][data-state="open"]) {
+html body > div:not([data-radix-popper-content-wrapper]):has(> [role="dialog"][data-state="open"]),
+html body > div:not([data-radix-popper-content-wrapper]):has(> [role="alertdialog"][data-state="open"]) {
   position: relative;
   z-index: 2147483646 !important;
 }
