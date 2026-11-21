@@ -14,6 +14,16 @@ function setup() {
 }
 const products = [{ id: 'a', name: 'Gerät A' }, { id: 'b', name: 'Gerät B' }];
 describe('Abgleich All', () => {
+  it('Beauty uses the protected direct sender without substituting a COM or DE identity', async () => {
+    const s = setup();
+    const channels: string[] = [];
+    s.ports.pushGlobal = async (id, channel) => { s.pushes.push(id); channels.push(channel); };
+    await publishAllProducts(products, [{ code: 'beautyco', name: 'Beauty', is_active: true }, { code: 'us', name: 'US', is_active: true }, { code: 'usa', name: 'USA', is_active: true }], [], s.ports, s.progress);
+    expect(s.pushes).toEqual(['a', 'b']);
+    expect(channels).toEqual(['beautyco', 'beautyco']);
+    expect(s.results.map(r => r.state)).toEqual(['accepted', 'accepted']);
+    expect(s.updates.some(p => 'active_de' in p || 'active_usa' in p)).toBe(false);
+  });
   it('releases every product to active websites, not inactive ones', async () => {
     const s = setup();
     await publishAllProducts(products, [{ code: 'dubai', name: 'AE', is_active: true }, { code: 'at', name: 'AT', is_active: false }], [], s.ports, s.progress);

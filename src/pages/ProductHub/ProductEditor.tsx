@@ -430,7 +430,7 @@ export default function ProductHubEditor() {
                     await phUpsertChannel(id, ch.code, {
                       hold: false, status: 'published', publish_state: 'published', has_pending_changes: true,
                     });
-                    if (ch.code === 'com' || ch.code === 'de') {
+                    if (ch.code === 'com' || ch.code === 'de' || ch.code === 'beautyco') {
                       await pushGlobalProduct(id, ch.code);
                       results.push({ label: ch.label, ok: true, note: 'Online veröffentlicht und geprüft' });
                     } else results.push({ label: ch.label, ok: true, note: 'Freigegeben – Webseite übernimmt automatisch beim nächsten Abruf' });
@@ -849,7 +849,7 @@ export default function ProductHubEditor() {
                           try {
                             if (!await save()) return;
                             await phUpsertChannel(id, ch.code, { hold: false, status: 'published', publish_state: 'published', has_pending_changes: true });
-                            if (ch.code === 'com' || ch.code === 'de') {
+                            if (ch.code === 'com' || ch.code === 'de' || ch.code === 'beautyco') {
                               await pushGlobalProduct(id, ch.code);
                               toast.success(`Für ${ch.short} online veröffentlicht und geprüft`);
                             } else toast.success(`Für ${ch.short} zum Abruf freigegeben`);

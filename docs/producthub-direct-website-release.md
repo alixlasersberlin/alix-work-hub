@@ -8,6 +8,17 @@ Aktueller Umstellungsumfang: **alix-lasers.de, alix-lasers.at, alix-lasers.ae un
 
 ## Geprüfter Ausgangsstand (21.11.2026)
 
+### Auftrag „alle Webseiten umstellen“ · 08:32 UTC
+
+- AT `41a9a5f1` und AE `a2000359` erneut gelesen: weiterhin kein bestätigter Direkt-Veröffentlichungs-/Abschaltvertrag. Diese Projekte sind hier nur lesbar und müssen dort umgestellt werden; keine erfundenen Empfänger oder Freigaben senden.
+- Beauty `e24bcde2` enthält zusätzlich den bereits veröffentlichten **PATCH https://alix-beauty.com/api/public/product-hub/release**. AlixWork verbindet diesen nun mit dem vorhandenen Beauty-Schlüssel: identitäts-/versionsgebundener Probelauf und Einzelversand, aktive Super-Admin-/Mandantenprüfung vor jedem Aufruf, service-only Reservierung, keine automatischen Wiederholungen. Der Empfänger holt Texte, Technik, Anwendungen und Bilder exakt aus der freigegebenen Product-Hub-Version ohne Preise; keine zweite redaktionelle Freigabe. Er verlangt weiterhin `active_de=true`, veröffentlichte Version und Beauty-Kanalmitgliedschaft; eine Beauty-Aktion schaltet Deutschland nicht eigenmächtig frei.
+- Nur passendes `state:online`, Geräte-/Kanal-/Vorgangs-/Versionskennung, echte Beauty-Detailadresse und Inhalts-Hash speichern `beauty_online` als Nachweis; dieser wird auch für spätere Abschaltungen verwendet. Ein Probelauf ist kein ONLINE-Nachweis. Bestätigte Abschaltungen bleiben bis zu einem eigenen Reaktivierungsvertrag gesperrt.
+- COM/DE bleiben am bestehenden GLOBAL-Sender; US bleibt ausgenommen. Echtabnahme benötigt aktive Super-Admin-Anmeldung; keine Geräte durch diese Anschlussarbeiten veröffentlichen oder abschalten.
+
+**Im AT-Projekt und im AE-Projekt jeweils eingeben:**
+
+> Stelle diese Webseite auf direkte Product-Hub-Steuerung durch AlixWork um. Lies den aktuellen Auftrag in `docs/producthub-direct-website-release.md` im AlixWork-Projekt `13914134-4b95-4f3f-a064-71f725c7d887` und den GLOBAL-Vertrag im Projekt `6f9be453-1a13-42cd-90a9-5402b3cfbf8a`. Implementiere signierte direkte Artikel-Freigabe, Inhaltsaktualisierung, Abschaltung und explizite sichere Reaktivierung im tatsächlich öffentlich ausgelieferten Gerätebestand. Nur AlixWork Super Admin entscheidet, keine weitere redaktionelle Webseitenbestätigung. Verwende vorhandene Datenquellen, bestätigte eigene Gerätekennungen, separate sichere Zugänge, exakte Versionen und eindeutige Vorgänge. Texte, Bilder, Technik und Anwendungen übernehmen; Preise und andere Länder unverändert. Keine frei wählbaren Ziel-URLs, keine unsicheren Wiederholungen, keine neuen echten Gerätefreigaben für Tests. Prüfe Authentisierung, Ländertrennung, Parallelität, veraltete Vorgänge, Preisbestand und öffentliche ONLINE/OFFLINE-Anzeige. Melde veröffentlichte feste Empfänger-URLs, Signaturvertrag, sicheren Secret-Namen und passende ONLINE/OFFLINE-Antworten hier zurück, damit AlixWork den Sender anschließen kann. US bleibt ausgenommen.
+
 ### Aktualisierung: GLOBAL COM/DE (Snapshot `4c242e67`)
 
 - Neuer Vertrag im GLOBAL-Projekt: `docs/producthub-direct-website-release.md`. Empfänger: `POST https://www.alix-lasers.com/api/public/product-hub/direct-release` und `POST https://alix-lasers.de/api/public/product-hub/direct-release`; beide antworten bei unsignierten Anfragen mit 401.

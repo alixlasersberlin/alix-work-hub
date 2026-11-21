@@ -58840,11 +58840,24 @@ export type Database = {
         Args: { p_product_id: string; p_request: Json }
         Returns: undefined
       }
+      ph_beauty_claim_release: {
+        Args: { p_product_id: string; p_request: Json }
+        Returns: undefined
+      }
       ph_beauty_finish_offline: {
         Args: {
           p_offline: boolean
           p_operation_id: string
           p_product_id: string
+          p_reply: Json
+        }
+        Returns: undefined
+      }
+      ph_beauty_finish_release: {
+        Args: {
+          p_online: boolean
+          p_product_id: string
+          p_publication_id: string
           p_reply: Json
         }
         Returns: undefined

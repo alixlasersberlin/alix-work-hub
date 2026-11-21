@@ -1,6 +1,13 @@
 import { expect, it } from 'vitest';
 import { websiteState } from './websiteState';
 
+it('Beauty requires its own ONLINE receipt and unresolved reservations invalidate prior success', () => {
+  const row = { status: 'published', remote_snapshot: { beauty_online: { ok: true, online: true, channel: 'beautyco', state: 'online' } } };
+  expect(websiteState({}, 'beautyco', row).confirmed).toBe(true);
+  expect(websiteState({}, 'beautyco', { ...row, remote_snapshot: { ...row.remote_snapshot, beauty_pending: { publication_id: 'pending' } } }).confirmed).toBe(false);
+  expect(websiteState({}, 'beautyco', { ...row, remote_snapshot: { beauty_online: { ...row.remote_snapshot.beauty_online, channel: 'de' } } }).confirmed).toBe(false);
+});
+
 it('DE-Freigabe zeigt Aktiv; Zurückhalten hat Vorrang vor dem Aktivflag', () => {
   expect(websiteState({ active_de: true }, 'de').active).toBe(true);
   expect(websiteState({ active_de: true }, 'de', { hold: true }).active).toBe(false);

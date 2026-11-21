@@ -4,6 +4,7 @@ import { z } from 'npm:zod@3';
 import { buildContent, confirmedReply, endpoints, signedHeaders, versionFor } from './contract.ts';
 import { deactivateGlobal } from './offline.ts';
 import { deactivateBeauty } from './beauty.ts';
+import { publishBeauty } from './beauty-release.ts';
 import { blockedOperation, operationStatus } from './operation-response.ts';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status: operationStatus(status), headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -41,8 +42,9 @@ Deno.serve(async req => {
     if (channel === 'beautyco') {
       const beautyKey = Deno.env.get('BEAUTY_PRODUCT_HUB_WRITE_KEY');
       if (!beautyKey) return json(503, { ok: false, error: 'Sicherer Beauty-Zugang fehlt' });
-      if (action !== 'deactivate') return json(400, { ok: false, error: 'Dieser Beauty-Anschluss unterstützt ausschließlich Abschaltungen' });
-      return json(200, await deactivateBeauty(admin, product, session.user.id, beautyKey, dry_run));
+      return json(200, action === 'deactivate'
+        ? await deactivateBeauty(admin, product, session.user.id, beautyKey, dry_run)
+        : await publishBeauty(admin, caller, product, session.user.id, beautyKey, dry_run));
     }
     if (!key) return json(503, { ok: false, error: 'Sicherer GLOBAL-Zugang fehlt' });
     if (action === 'deactivate') return json(200, await deactivateGlobal(admin, product, session.user.id, channel, key, dry_run));

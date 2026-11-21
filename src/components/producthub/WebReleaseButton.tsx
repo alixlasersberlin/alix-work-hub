@@ -57,7 +57,7 @@ export function WebReleaseButton({ product, sites, activeCodes, onDone }: {
             <Checkbox checked={selected.includes(site.code)} disabled={running} onCheckedChange={value => setSelected(previous => value === true ? [...previous, site.code] : previous.filter(code => code !== site.code))} />
             <span className="break-words">{site.label}</span>
           </label>)}</div>}
-          <p className="text-sm text-muted-foreground">Freigabe ausschließlich durch AlixWork · keine weitere manuelle Webseitenfreigabe. COM und DE: direkte GLOBAL-Veröffentlichung. AT/AE/Beauty: zum automatischen Abruf bereit. US bleibt ausgenommen.</p>
+          <p className="text-sm text-muted-foreground">Freigabe ausschließlich durch AlixWork · keine weitere manuelle Webseitenfreigabe. COM, DE und Beauty: direkter Versand. AT/AE: zum automatischen Abruf bereit. US bleibt ausgenommen.</p>
           <div className="max-h-64 overflow-y-auto divide-y divide-border" aria-live="polite">{results.map(result => <div key={result.site} className="py-2 text-sm">
             <p className="font-medium">{result.site}</p>
             <p className={result.state === 'error' || result.state === 'skipped' ? 'text-destructive' : 'text-muted-foreground'}>{result.note}</p>

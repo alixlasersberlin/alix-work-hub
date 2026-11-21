@@ -7,7 +7,7 @@ export async function toggleProductSite(product: BulkProduct, site: BulkSite, ac
   if (['us', 'usa'].includes(site.code)) throw new Error('US bleibt von Änderungen ausgenommen');
   if (active) {
     const snapshot = channel?.remote_snapshot;
-    if (snapshot?.global_offline || snapshot?.global_offline_pending || snapshot?.global_pending || snapshot?.beauty_offline || snapshot?.beauty_offline_pending) {
+    if (snapshot?.global_offline || snapshot?.global_offline_pending || snapshot?.global_pending || snapshot?.beauty_offline || snapshot?.beauty_offline_pending || snapshot?.beauty_pending) {
       throw new Error('Abschaltsperre oder unklarer Versand: erneute Aktivierung benötigt einen bestätigten Reaktivierungsvertrag');
     }
     const results: BulkResult[] = [];

@@ -7,12 +7,12 @@ export interface BulkResult { productId: string; product: string; site: string; 
 export interface BulkPublishPorts {
   updateProduct: (id: string, patch: Record<string, unknown>) => Promise<void>;
   updateChannel: (id: string, code: string, patch: Record<string, unknown>) => Promise<unknown>;
-  pushGlobal: (id: string, channel: 'com' | 'de') => Promise<void>;
+  pushGlobal: (id: string, channel: 'com' | 'de' | 'beautyco') => Promise<void>;
 }
 
 export async function publishAllProducts(products: BulkProduct[], sites: BulkSite[], mappings: BulkMapping[], ports: BulkPublishPorts,
   onProgress: (completed: number, result: BulkResult) => void) {
-  const targets = sites.filter(s => s.is_active);
+  const targets = sites.filter(s => s.is_active && !['us', 'usa'].includes(s.code));
   let completed = 0;
   for (const product of products) {
     for (const site of targets) {
@@ -28,7 +28,7 @@ export async function publishAllProducts(products: BulkProduct[], sites: BulkSit
           await ports.updateChannel(product.id, site.code, {
             hold: false, status: 'published', publish_state: 'published', has_pending_changes: true,
           });
-          if (site.code === 'com' || site.code === 'de') {
+          if (site.code === 'com' || site.code === 'de' || site.code === 'beautyco') {
             await ports.pushGlobal(product.id, site.code);
             result.state = 'accepted'; result.note = 'In AlixWork freigegeben · online veröffentlicht und geprüft';
           } else {
