@@ -58905,6 +58905,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      ph_set_de_identity: {
+        Args: { p_product_id: string; p_remote_id: string }
+        Returns: Json
+      }
       plm_can_write: { Args: never; Returns: boolean }
       plm_merge_manufacturers: {
         Args: { p_source: string; p_target: string }

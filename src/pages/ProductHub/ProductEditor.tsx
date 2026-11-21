@@ -34,6 +34,7 @@ import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 import { isSiteSelected, siteSelectionPatch } from '@/lib/producthub/siteSelection';
 import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
 import { autoSyncTargets } from '@/lib/producthub/autoSync';
+import { DeIdentityField } from '@/components/producthub/DeIdentityField';
 
 import { catalogsForProduct } from '@/lib/producthub/catalog';
 import {
@@ -835,6 +836,7 @@ export default function ProductHubEditor() {
                   <span className="text-xs text-muted-foreground">Letzter Sync: {row?.last_sync_at ? new Date(row.last_sync_at).toLocaleString('de-DE') : '—'}</span>
                   <span className="text-xs text-muted-foreground">Live-Version: {row?.live_version || '—'}</span>
                   {row?.has_pending_changes && <Badge className="bg-sky-500 text-white">Änderungen verfügbar</Badge>}
+                  {isSuperAdmin && id && ch.code === 'de' && <DeIdentityField productId={id} />}
                   <div className="ml-auto flex gap-2">
                     {row?.live_url && <Button size="sm" variant="outline" asChild><a href={row.live_url} target="_blank" rel="noreferrer">Vorschau</a></Button>}
                     {isSuperAdmin && (
