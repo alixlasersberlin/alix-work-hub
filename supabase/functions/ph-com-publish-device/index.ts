@@ -1,5 +1,5 @@
 // Product Hub -> alix-lasers.com: deutsche Haupttexte eines Geraets direkt uebertragen.
-// Nur fuer Admin/Super Admin. Nur bestaetigte Zuordnung. Keine Preise, keine Medien.
+// Nur fuer Super Admin; Freigabe aus AlixWork wird ohne Zwischenpruefung veroeffentlicht. Nur bestaetigte Zuordnung. Keine Preise, keine Medien.
 // Ablauf: Probelauf -> Schreiben -> Kontrolle (erneuter Probelauf vergleicht Werte).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -58,13 +58,8 @@ Deno.serve(async (req) => {
     const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } } });
     const { data: u } = await userClient.auth.getUser();
     if (!u?.user) return json(401, { error: "Nicht angemeldet" });
-    const { data: isAdmin } = await userClient.rpc("is_admin");
-    let allowed = !!isAdmin;
-    if (!allowed) {
-      const { data: sa } = await userClient.rpc("has_role", { check_role: "Super Admin" });
-      allowed = !!sa;
-    }
-    if (!allowed) return json(403, { error: "Nur Admin oder Super Admin dürfen an alix-lasers.com senden" });
+    const { data: sa } = await userClient.rpc("has_role", { check_role: "Super Admin" });
+    if (!sa) return json(403, { error: "Nur der Super Admin darf Geräte für Webseiten freigeben" });
 
     const parsed = z.object({ product_id: z.string().uuid(), dry_run: z.boolean().optional() }).safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return json(400, { error: "Ungültige Anfrage" });

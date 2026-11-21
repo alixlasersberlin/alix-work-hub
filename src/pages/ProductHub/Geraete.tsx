@@ -115,7 +115,7 @@ export default function ProductHubGeraete() {
       <PageHeader title="Product Hub · Geräte" subtitle="Zentraler Gerätestamm (Master)" icon={Cpu}
         actions={canWrite ? (
           <div className="flex flex-wrap gap-2">
-            <BulkPublishButton onDone={load} />
+            {(roles || []).includes('Super Admin') && <BulkPublishButton onDone={load} />}
             <Button size="sm" variant="outline" onClick={() => { setEnrichRes(null); setEnrichOpen(true); }}>
               <Sparkles className="w-4 h-4 mr-1" /> Daten anreichern
             </Button>

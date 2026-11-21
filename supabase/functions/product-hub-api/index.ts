@@ -211,6 +211,8 @@ Deno.serve(async (req) => {
   };
 
   // Content Hub: nur freigegebene, veröffentlichte Snapshots ausliefern (EDIT ONCE · PUBLISH EVERYWHERE)
+  // Freigabe erfolgt ausschliesslich durch den Super Admin in AlixWork: Webseiten uebernehmen ohne eigene Zwischenpruefung.
+  const AUTO_PUBLISH = { approval_source: "alixwork", auto_publish: true, review_required: false };
   const CH_ALLOWED = ["website", "offer", "datasheet", "comparison", "portal", "social"];
 
   try {
@@ -264,7 +266,7 @@ Deno.serve(async (req) => {
         locale,
         products: rows.map((r) => {
           const { id, ...rest } = applyLocale(withUae(stripPrices(r, channel, noPrices), comps[r.id]), trs[r.id], locale);
-          return rest;
+          return { ...rest, ...AUTO_PUBLISH };
         }),
       });
     }

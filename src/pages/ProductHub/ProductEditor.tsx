@@ -412,7 +412,7 @@ export default function ProductHubEditor() {
             {id && <WebPreviewButton productId={id} product={form} />}
             {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
             {canWrite && id && <DuplicateProductButton productId={id} product={form} />}
-            {canWrite && id && <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" disabled={saving || publishingAll} onClick={async () => {
+            {isSuperAdmin && id && <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" disabled={saving || publishingAll} onClick={async () => {
               const targets = siteList.filter(site => isSiteSelected(form, site.code, customSites));
               if (!targets.length) { toast.error('Bitte mindestens eine Webseite auswählen und speichern.'); return; }
               if (!confirm(`Für ausgewählte Webseiten freigeben: ${targets.map(t => t.label).join(', ')}?`)) return;
@@ -436,7 +436,7 @@ export default function ProductHubEditor() {
                       const m = (r as any)?.master;
                       if (m && !e2 && !(r as any)?.error) results.push({ label: `${ch.label} · Technik & Bilder`, ok: !!m.ok,
                         note: m.ok ? (m.fields?.length ? `Angenommen: ${m.fields.join(', ')}` : 'Nichts zu senden') : (m.error || 'Fehlgeschlagen') });
-                    } else results.push({ label: ch.label, ok: true, note: 'Für Webseitenabruf freigegeben – Annahme noch nicht bestätigt' });
+                    } else results.push({ label: ch.label, ok: true, note: 'Freigegeben – Webseite übernimmt automatisch beim nächsten Abruf' });
                   } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
                 }
                 setPublishResult(results);
@@ -444,7 +444,7 @@ export default function ProductHubEditor() {
               } catch (e: any) { toast.error(e?.message || 'Freigabe fehlgeschlagen'); }
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
-            {canWrite && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
+            {isSuperAdmin && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
               if (!confirm('Gerät auf ALLEN Webseiten offline stellen?')) return;
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
