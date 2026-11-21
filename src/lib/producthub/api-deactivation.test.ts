@@ -33,4 +33,9 @@ describe('gespeicherte Deaktivierung und automatischer Versand', () => {
     await phUpsertChannel('device', 'usa', { hold: true });
     expect(mocks.invoke).not.toHaveBeenCalled();
   });
+  it('Beauty-Zurückhalten verwendet beautyco und den eigenen OFFLINE-Antwortvertrag', async () => {
+    mocks.invoke.mockResolvedValue({ data: { ok: true, offline: true, state: 'OFFLINE' }, error: null });
+    expect((await phUpsertChannel('device', 'beautyco', { hold: true }))?.offline).toBe(true);
+    expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith('ph-global-publish-device', { body: { product_id: 'device', channel: 'beautyco', action: 'deactivate' } });
+  });
 });

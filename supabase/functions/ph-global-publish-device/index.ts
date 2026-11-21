@@ -3,9 +3,10 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
 import { buildContent, confirmedReply, endpoints, signedHeaders, versionFor } from './contract.ts';
 import { deactivateGlobal } from './offline.ts';
+import { deactivateBeauty } from './beauty.ts';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de']), action: z.enum(['publish', 'deactivate']).default('publish'), dry_run: z.boolean().default(false) }).strict();
+const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de', 'beautyco']), action: z.enum(['publish', 'deactivate']).default('publish'), dry_run: z.boolean().default(false) }).strict();
 
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -17,7 +18,7 @@ Deno.serve(async req => {
     const anon = Deno.env.get('SUPABASE_ANON_KEY');
     const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const key = Deno.env.get('GLOBAL_PRODUCT_HUB_DIRECT_RELEASE_KEY');
-    if (!url || !anon || !service || !key) return json(503, { ok: false, error: 'GLOBAL-Versandzugang nicht vollständig eingerichtet' });
+    if (!url || !anon || !service) return json(503, { ok: false, error: 'Versandzugang nicht vollständig eingerichtet' });
     const caller = createClient(url, anon, { global: { headers: { Authorization: auth } } });
     const { data: session, error: authError } = await caller.auth.getUser();
     if (authError || !session.user) return json(401, { ok: false, error: 'Nicht angemeldet' });
@@ -36,6 +37,13 @@ Deno.serve(async req => {
     const { data: tenantAllowed, error: tenantError } = await (caller as any).rpc('tenant_scope_id_ok', { _tenant_id: typeof tenantId === 'string' ? tenantId : null });
     if (tenantError || !tenantAllowed) return json(403, { ok: false, error: 'Keine Mandantenberechtigung' });
     const admin = createClient(url, service);
+    if (channel === 'beautyco') {
+      const beautyKey = Deno.env.get('BEAUTY_PRODUCT_HUB_WRITE_KEY');
+      if (!beautyKey) return json(503, { ok: false, error: 'Sicherer Beauty-Zugang fehlt' });
+      if (action !== 'deactivate') return json(400, { ok: false, error: 'Dieser Beauty-Anschluss unterstützt ausschließlich Abschaltungen' });
+      return json(200, await deactivateBeauty(admin, product, session.user.id, beautyKey, dry_run));
+    }
+    if (!key) return json(503, { ok: false, error: 'Sicherer GLOBAL-Zugang fehlt' });
     if (action === 'deactivate') return json(200, await deactivateGlobal(admin, product, session.user.id, channel, key, dry_run));
     const field = channel === 'com' ? 'active_com' : 'active_de';
     if (!product[field] || !['approved', 'published'].includes(product.status)) return json(409, { ok: false, error: 'Gerät für diesen Kanal nicht freigegeben' });

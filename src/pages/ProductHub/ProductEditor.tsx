@@ -439,7 +439,7 @@ export default function ProductHubEditor() {
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
             {isSuperAdmin && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
-              if (!confirm('Gerät für alle Webseiten außer US deaktivieren? COM/DE erhalten automatisch den Abschaltauftrag; für andere Webseiten fehlt noch der bestätigte Anschluss.')) return;
+              if (!confirm('Gerät für alle Webseiten außer US deaktivieren? COM/DE und Beauty erhalten automatisch den Abschaltauftrag, wenn ihre Voraussetzungen erfüllt sind; andere Webseiten sind noch nicht angeschlossen.')) return;
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
               try {

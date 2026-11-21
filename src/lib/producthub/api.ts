@@ -6,7 +6,7 @@ import { deactivatedGlobalChannels, isChannelDeactivation } from './deactivation
 const db = supabase as any;
 
 async function syncDeactivation(productId: string, channel: string) {
-  if (channel !== 'com' && channel !== 'de') {
+  if (channel !== 'com' && channel !== 'de' && channel !== 'beautyco') {
     const result = { offline: false, note: 'In AlixWork deaktiviert – für diese Webseite fehlt der bestätigte Abschaltanschluss.' };
     toast.warning(result.note);
     return result;
@@ -18,7 +18,7 @@ async function syncDeactivation(productId: string, channel: string) {
       try { const body = await error.context?.json(); message = body?.error || message; } catch { /* preserve original error */ }
       throw new Error(message);
     }
-    if (!data?.ok || data.offline !== true || data.status !== 'OFFLINE') throw new Error(data?.error || 'OFFLINE-Nachweis fehlt');
+    if (!data?.ok || data.offline !== true || (channel === 'beautyco' ? data.state !== 'OFFLINE' : data.status !== 'OFFLINE')) throw new Error(data?.error || 'OFFLINE-Nachweis fehlt');
     toast.success(`${channel.toUpperCase()}: Abschaltung auf der Webseite bestätigt`);
     return { offline: true, note: 'Abschaltung auf der Webseite bestätigt' };
   } catch (error) {
