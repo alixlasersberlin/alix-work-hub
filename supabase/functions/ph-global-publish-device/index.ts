@@ -4,8 +4,9 @@ import { z } from 'npm:zod@3';
 import { buildContent, confirmedReply, endpoints, signedHeaders, versionFor } from './contract.ts';
 import { deactivateGlobal } from './offline.ts';
 import { deactivateBeauty } from './beauty.ts';
+import { blockedOperation, operationStatus } from './operation-response.ts';
 
-const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status: operationStatus(status), headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de', 'beautyco']), action: z.enum(['publish', 'deactivate']).default('publish'), dry_run: z.boolean().default(false) }).strict();
 
 Deno.serve(async req => {
@@ -92,5 +93,5 @@ Deno.serve(async req => {
     const { error: finishError } = await admin.rpc('ph_global_finish_release', { p_product_id: product_id, p_channel: channel, p_publish_id: publish_id, p_reply: result.body, p_online: online });
     if (finishError) return json(200, { ok: false, online: false, publish_id, error: 'GLOBAL-Antwort erhalten, lokales Freigabeprotokoll nicht bestätigt; nicht erneut senden' });
     return json(200, online ? result.body : { ok: false, online: false, publish_id, error: `GLOBAL-Veröffentlichung nicht nachgewiesen: ${result.body.error || result.response.status}`, details: result.body });
-  } catch (error) { return json(400, { ok: false, online: false, error: error instanceof Error ? error.message : 'GLOBAL-Freigabe fehlgeschlagen' }); }
+  } catch (error) { return json(200, blockedOperation(error)); }
 });
