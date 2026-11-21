@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { DeIdentityField } from '@/components/producthub/DeIdentityField';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -275,7 +276,7 @@ export default function ProductHubGeraete() {
                       ) : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="text-center">{p.active_com ? '🟢' : '—'}</TableCell>
-                    <TableCell className="text-center">{p.active_de ? '🟢' : '—'}</TableCell>
+                    <TableCell className="text-center"><div className="flex flex-col items-center gap-1"><span>{p.active_de ? '🟢' : '—'}</span>{isSuperAdmin && <DeIdentityField productId={p.id} compact />}</div></TableCell>
                     <TableCell><Badge variant="outline">{p.status}</Badge></TableCell>
                     <TableCell className="text-xs">{p.mdr_status || <span className="text-amber-500">offen</span>}</TableCell>
                     <TableCell className="text-center">{media[p.id] || 0}</TableCell>

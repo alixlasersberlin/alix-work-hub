@@ -8,7 +8,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isValidDeIdentity = (v: string) => UUID.test(v.trim());
 
 /** Super Admin legt die bestätigte Geräte-Kennung von alix-lasers.de fest. */
-export function DeIdentityField({ productId }: { productId: string }) {
+export function DeIdentityField({ productId, compact = false }: { productId: string; compact?: boolean }) {
   const [current, setCurrent] = useState<string | null>(null);
   const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
@@ -19,8 +19,8 @@ export function DeIdentityField({ productId }: { productId: string }) {
     setCurrent(id); setValue(id ?? '');
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [productId]);
-  const save = async () => {
-    const v = value.trim();
+  const save = async (input?: string) => {
+    const v = (input ?? value).trim();
     if (!isValidDeIdentity(v)) { toast.error('Bitte eine gültige DE-Kennung (Format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) eingeben.'); return; }
     if (current && current !== v && !confirm('Bestehende DE-Kennung ersetzen? Die alte Kennung wird protokolliert.')) return;
     setBusy(true);
@@ -30,11 +30,20 @@ export function DeIdentityField({ productId }: { productId: string }) {
     toast.success('DE-Kennung gespeichert und bestätigt');
     load();
   };
+  if (compact) return (
+    <div className="flex flex-col items-center gap-1" onClick={e => e.stopPropagation()}>
+      <span title={current ?? 'DE-Kennung fehlt – Versand gesperrt'} className={current ? 'text-success text-xs' : 'text-destructive text-xs'}>{current ? 'Kennung ✓' : 'Kennung fehlt'}</span>
+      <Button size="sm" variant="outline" className="h-6 px-2 text-[11px]" disabled={busy} onClick={() => {
+        const v = window.prompt('DE-Kennung von alix-lasers.de eingeben:', current ?? '');
+        if (v !== null && v.trim() !== (current ?? '')) save(v);
+      }}>{current ? 'Ändern' : 'Zuordnen'}</Button>
+    </div>
+  );
   return (
     <div className="w-full flex flex-wrap items-center gap-2 text-xs">
       <span className="text-muted-foreground">DE-Kennung:</span>
       <Input className="h-8 w-80 font-mono text-xs" placeholder="Kennung von alix-lasers.de" value={value} onChange={e => setValue(e.target.value)} />
-      <Button size="sm" variant="outline" disabled={busy || value.trim() === (current ?? '')} onClick={save}>Kennung speichern</Button>
+      <Button size="sm" variant="outline" disabled={busy || value.trim() === (current ?? '')} onClick={() => save()}>Kennung speichern</Button>
       <span className={current ? 'text-success' : 'text-destructive'}>{current ? 'bestätigt' : 'fehlt – Versand gesperrt'}</span>
     </div>
   );
