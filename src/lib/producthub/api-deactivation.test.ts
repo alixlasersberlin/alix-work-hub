@@ -6,7 +6,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   from: () => ({ upsert: mocks.upsert, update: (patch: unknown) => { mocks.update(patch); return { eq: async () => ({ error: null }) }; }, select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: mocks.before, error: null }) }) }) }),
 } }));
 vi.mock('sonner', () => ({ toast: { success: mocks.success, warning: mocks.warning } }));
-import { phUpdateProduct, phUpsertChannel } from './api';
+import { phUpdateProduct, phUpsertChannel, phSendDeactivation } from './api';
 
 describe('gespeicherte Deaktivierung und automatischer Versand', () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.upsert.mockResolvedValue({ error: null }); mocks.invoke.mockResolvedValue({ data: { ok: true, offline: true, status: 'OFFLINE' }, error: null }); });
@@ -19,6 +19,19 @@ describe('gespeicherte Deaktivierung und automatischer Versand', () => {
   it('Zurückhalten sendet den DE-Abschaltauftrag', async () => {
     expect(await phUpsertChannel('device', 'de', { hold: true })).toEqual({ offline: true, note: 'Abschaltung auf der Webseite bestätigt' });
     expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith('ph-global-publish-device', { body: { product_id: 'device', channel: 'de', action: 'deactivate' } });
+  });
+  it('separater Skin Master Mini DE-Versand verändert weder COM noch lokale Freigaben', async () => {
+    const productId = '03701a94-e0b3-4d56-8ce2-17a0ab79d720';
+    expect((await phSendDeactivation(productId, 'de')).offline).toBe(true);
+    expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith('ph-global-publish-device', { body: { product_id: productId, channel: 'de', action: 'deactivate' } });
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+  it('separater DE-Versand wiederholt unklaren Abschaltstand nicht', async () => {
+    mocks.invoke.mockResolvedValue({ data: { ok: false, offline: false, error: 'GLOBAL-Vorgang läuft oder ist unklar' }, error: null });
+    expect((await phSendDeactivation('03701a94-e0b3-4d56-8ce2-17a0ab79d720', 'de')).offline).toBe(false);
+    expect(mocks.invoke).toHaveBeenCalledOnce();
+    expect(mocks.success).not.toHaveBeenCalled();
   });
   it('fehlende Remote-Bestätigung erhält die lokale Deaktivierung ohne Neuversand', async () => {
     mocks.invoke.mockResolvedValue({ data: { ok: false, offline: false, error: 'Transport unklar' }, error: null });

@@ -5,7 +5,7 @@ import { deactivatedGlobalChannels, isChannelDeactivation } from './deactivation
 
 const db = supabase as any;
 
-async function syncDeactivation(productId: string, channel: string) {
+export async function phSendDeactivation(productId: string, channel: string) {
   if (channel !== 'com' && channel !== 'de' && channel !== 'beautyco') {
     const result = { offline: false, note: 'In AlixWork deaktiviert – für diese Webseite fehlt der bestätigte Abschaltanschluss.' };
     toast.warning(result.note);
@@ -48,7 +48,7 @@ export async function phUpdateProduct(id: string, patch: Record<string, any>) {
   const { error } = await db.from('ph_products')
     .update({ ...patch, updated_by: user?.id ?? null }).eq('id', id);
   if (error) throw error;
-  for (const channel of deactivatedGlobalChannels(before ? { ...before } : {}, patch)) await syncDeactivation(id, channel);
+  for (const channel of deactivatedGlobalChannels(before ? { ...before } : {}, patch)) await phSendDeactivation(id, channel);
 }
 
 export async function phCreateProduct(row: Record<string, any>) {
@@ -80,7 +80,7 @@ export async function phUpsertChannel(productId: string, channel: string, patch:
   const { error } = await db.from('ph_product_channels')
     .upsert({ product_id: productId, channel_code: channel, ...patch }, { onConflict: 'product_id,channel_code' });
   if (error) throw error;
-  if (isChannelDeactivation(patch)) return syncDeactivation(productId, channel);
+  if (isChannelDeactivation(patch)) return phSendDeactivation(productId, channel);
   return undefined;
 }
 

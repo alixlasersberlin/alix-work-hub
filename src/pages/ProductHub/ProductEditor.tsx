@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   PH_APPLICATIONS, PH_CHANNELS, PH_CRITICAL_FIELDS, PH_STATUS, phLabel, PH_ACTIVE_FIELD, PH_DOC_TYPES, PH_DOC_VISIBILITY,
 } from '@/lib/producthub/config';
-import { phGetProduct, phUpdateProduct, phChannelRows, phUpsertChannel } from '@/lib/producthub/api';
+import { phGetProduct, phUpdateProduct, phChannelRows, phUpsertChannel, phSendDeactivation } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
@@ -824,6 +824,17 @@ export default function ProductHubEditor() {
                     {row?.live_url && <Button size="sm" variant="outline" asChild><a href={row.live_url} target="_blank" rel="noreferrer">Vorschau</a></Button>}
                     {isSuperAdmin && (
                       <>
+                        {['com', 'de', 'beautyco'].includes(ch.code) && (row?.hold || (activeField && form[activeField] === false)) && (
+                          <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
+                            if (!id || !confirm(`Abschaltvorgang ausschließlich an ${ch.label} senden? Andere Webseiten bleiben unverändert.`)) return;
+                            setPublishingAll(true);
+                            try {
+                              const outcome = await phSendDeactivation(id, ch.code);
+                              setPublishResult([{ label: ch.label, ok: outcome.offline, note: outcome.note }]);
+                              await load();
+                            } finally { setPublishingAll(false); }
+                          }}>Abschaltung senden</Button>
+                        )}
                         <Button size="sm" variant="outline" onClick={async () => {
                           if (!id) return;
                           await phUpsertChannel(id, ch.code, row?.hold ? { hold: false } : { hold: true, has_pending_changes: true });
