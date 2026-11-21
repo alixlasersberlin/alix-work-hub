@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Cpu, Plus, Star, Lock, Loader2, Search, Sparkles, ExternalLink } from 'lucide-react';
+import { Cpu, Plus, Star, Lock, Loader2, Search, Sparkles, Power } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { phTone, phToneClass, PH_STATUS, PH_APPLICATIONS, phSlug } from '@/lib/producthub/config';
-import { phCreateProduct } from '@/lib/producthub/api';
+import { phCreateProduct, phGetProduct, phUpdateProduct, phUpsertChannel } from '@/lib/producthub/api';
 import { useAuth } from '@/hooks/useAuth';
 import { EnrichProductButton } from '@/components/producthub/EnrichProductButton';
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
@@ -21,27 +21,22 @@ import { ImportFromArtikelButton } from '@/components/producthub/ImportFromArtik
 import { BulkPublishButton } from '@/components/producthub/BulkPublishButton';
 import { WebReleaseButton } from '@/components/producthub/WebReleaseButton';
 import { usePhChannels, phIsActiveOn, type PhChannel } from '@/lib/producthub/useChannels';
+import { toggleProductSite } from '@/lib/producthub/siteToggle';
+import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
+import type { BulkMapping } from '@/lib/producthub/bulkPublish';
 
 const db = supabase as any;
 
-function WebsiteStatusLink({ site }: { site: PhChannel }) {
-  let href: string | null = null;
-  try {
-    const label = site.label.trim().toLowerCase();
-    const fallback = /^[a-z0-9.-]+\.[a-z]{2,}$/.test(label) ? `https://${label}` : null;
-    const address = site.base_url || fallback;
-    if (address) {
-      const url = new URL(address);
-      if (url.protocol === 'https:' && !url.username && !url.password) href = url.href;
-    }
-  } catch { /* Invalid configured addresses remain visible, not executable. */ }
-  if (!href) return <span className="break-words">{site.label}</span>;
+function WebsiteStatusControl({ site, active, enabled, busy, onToggle }: {
+  site: PhChannel; active: boolean; enabled: boolean; busy: boolean; onToggle: () => void;
+}) {
+  if (!enabled || ['us', 'usa'].includes(site.code)) return <span className="break-words" title={['us', 'usa'].includes(site.code) ? 'US bleibt ausgenommen' : 'Änderung nur durch Super Admin'}>{site.label}</span>;
   return (
-    <Button variant="link" asChild className="h-auto p-0 text-xs font-normal text-inherit whitespace-normal justify-start text-left">
-      <a href={href} target="_blank" rel="noopener noreferrer" onClick={event => event.stopPropagation()} aria-label={`${site.label} in neuem Tab öffnen`}>
-        <span className="break-words">{site.label}</span>
-        <ExternalLink className="shrink-0" aria-hidden="true" />
-      </a>
+    <Button variant="link" disabled={busy} className="h-auto p-0 text-xs font-normal text-inherit whitespace-normal justify-start text-left"
+      title={`${active ? 'Deaktivieren' : 'Aktivieren'} auf ${site.label}`} aria-label={`${site.label} ${active ? 'deaktivieren' : 'aktivieren'}`}
+      onClick={event => { event.stopPropagation(); onToggle(); }}>
+      <span className="break-words">{site.label}</span>
+      <Power className="shrink-0" aria-hidden="true" />
     </Button>
   );
 }
@@ -51,6 +46,10 @@ export default function ProductHubGeraete() {
   const { roles } = useAuth();
   const { channels: sites } = usePhChannels();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
+  const isSuperAdmin = (roles || []).includes('Super Admin');
+  const toggleLock = useRef(false);
+  const [toggleBusy, setToggleBusy] = useState(false);
+  const [toggleResult, setToggleResult] = useState<{ title: string; note: string } | null>(null);
   const [rows, setRows] = useState<any[]>([]);
   const [media, setMedia] = useState<Record<string, number>>({});
   const [docs, setDocs] = useState<Record<string, number>>({});
@@ -131,6 +130,35 @@ export default function ProductHubGeraete() {
       toast.success('Gerät angelegt');
       nav(`/product-hub/geraete/${id}`);
     } catch (e: any) { toast.error(e.message); }
+  };
+
+  const toggleSite = async (product: any, site: PhChannel, currentlyActive: boolean) => {
+    if (toggleLock.current || !isSuperAdmin || ['us', 'usa'].includes(site.code)) return;
+    if (!confirm(`${product.name} ausschließlich auf ${site.label} ${currentlyActive ? 'deaktivieren' : 'aktivieren und freigeben'}? Andere Webseiten bleiben unverändert.`)) return;
+    toggleLock.current = true; setToggleBusy(true);
+    try {
+      const { data: allowed, error: roleError } = await supabase.rpc('has_role', { check_role: 'Super Admin' });
+      if (roleError || !allowed) throw new Error('Nur der Super Admin darf Webseitenfreigaben ändern');
+      const [freshProduct, channelResult] = await Promise.all([
+        phGetProduct(product.id),
+        db.from('ph_product_channels').select('*').eq('product_id', product.id).eq('channel_code', site.code).maybeSingle(),
+      ]);
+      if (channelResult.error) throw channelResult.error;
+      if (phIsActiveOn(freshProduct, site.code, channelResult.data) !== currentlyActive) throw new Error('Webseitenstatus wurde inzwischen geändert; bitte den aktualisierten Stand prüfen.');
+      let mappings: BulkMapping[] = [];
+      if (!currentlyActive) {
+        const { data, error } = await supabase.from('ph_lang_sync_map').select('product_id,site_code,remote_product_id,verified_at').eq('product_id', product.id).eq('site_code', site.code);
+        if (error) throw error;
+        mappings = (data || []) as BulkMapping[];
+      }
+      const note = await toggleProductSite({ id: product.id, name: product.name }, { code: site.code, name: site.label, is_active: site.is_active }, !currentlyActive,
+        channelResult.data, mappings, { updateProduct: phUpdateProduct, updateChannel: phUpsertChannel, pushGlobal: async (id, channel) => { await pushGlobalProduct(id, channel); } });
+      setToggleResult({ title: `${product.name} · ${site.label}`, note });
+    } catch (error) {
+      setToggleResult({ title: `${product.name} · ${site.label}`, note: error instanceof Error ? error.message : 'Webseitenstatus konnte nicht geändert werden' });
+    } finally {
+      await load(); toggleLock.current = false; setToggleBusy(false);
+    }
   };
 
   return (
@@ -228,7 +256,7 @@ export default function ProductHubGeraete() {
                           {disabledSites.map(site => (
                             <li key={site.code} className="flex items-start gap-1.5 text-destructive" title="Im Product Hub deaktiviert; tatsächlicher Webseitenstand nicht bestätigt">
                               <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
-                              <WebsiteStatusLink site={site} />
+                              <WebsiteStatusControl site={site} active={false} enabled={isSuperAdmin} busy={toggleBusy} onToggle={() => toggleSite(p, site, false)} />
                             </li>
                           ))}
                         </ul>
@@ -240,7 +268,7 @@ export default function ProductHubGeraete() {
                           {activeSites.map(site => (
                             <li key={site.code} className="flex items-start gap-1.5 text-success" title="Im Product Hub aktiviert; tatsächlicher Webseitenstand nicht bestätigt">
                               <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-                              <WebsiteStatusLink site={site} />
+                              <WebsiteStatusControl site={site} active enabled={isSuperAdmin} busy={toggleBusy} onToggle={() => toggleSite(p, site, true)} />
                             </li>
                           ))}
                         </ul>
@@ -269,6 +297,13 @@ export default function ProductHubGeraete() {
       </Card>
       <div className="text-xs text-muted-foreground">🟢 vollständig · 🟡 Review · 🔴 Konflikt · 🔵 Änderung wartet · ⭐ Featured · 🔒 geschützt</div>
 
+      <Dialog open={!!toggleResult} onOpenChange={open => { if (!open) setToggleResult(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{toggleResult?.title}</DialogTitle></DialogHeader>
+          <p className="text-sm" role="status">{toggleResult?.note}</p>
+          <DialogFooter><Button variant="outline" onClick={() => setToggleResult(null)}>Schließen</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={enrichOpen} onOpenChange={setEnrichOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
