@@ -1,6 +1,8 @@
-# Direkte Freigabe auf den fünf Webseiten
+# Direkte Freigabe auf den vier Webseiten
 
 Die Freigabe soll ausschließlich aus AlixWork kommen: **Super Admin gibt frei → ausgewählte Webseite übernimmt → Gerät ist online**, ohne erneute manuelle Prüfung.
+
+Der Auftrag umfasst **alix-lasers.de, alix-lasers.at, alix-lasers.ae und Alix-beauty.com**. **alix-lasers.us bleibt vorerst ausgenommen**; die bestehende US-Anbindung wird nicht verändert.
 
 Die Webseiten müssen dafür selbst angepasst werden; aus diesem Chat kann ich diese Projekte nur lesen, nicht verändern:
 
@@ -13,4 +15,4 @@ Die Webseiten müssen dafür selbst angepasst werden; aus diesem Chat kann ich d
 
 > Stelle diese Webseite auf direkte Product-Hub-Freigabe um: Eine sicher bestätigte Super-Admin-Freigabe aus AlixWork soll das ausgewählte Gerät sofort übernehmen und online stellen, ohne zusätzliche manuelle Prüfung. Lies über Cross-Project das AlixWork-Dokument `docs/producthub-direct-website-release.md` und dessen bestehenden COM-Versand als Vorlage. Setze den dort beschriebenen Auftrag für diese Webseite um, inklusive sicherem Zugang, eindeutiger Gerätezuordnung und Prüfung der öffentlich sichtbaren Geräteseite. Keine Preise verändern, keine anderen Geräte automatisch freigeben und keine Sicherheitsprüfungen entfernen. Melde den fertigen Empfangsweg zurück, damit AlixWork ihn anschließen kann.
 
-**Noch nicht umgestellt:** Der Auftrag ist vorbereitet; Änderungen und echte Veröffentlichung auf den fünf Webseiten stehen noch aus.
+**Noch nicht umgestellt:** Der Auftrag ist vorbereitet; Änderungen und echte Veröffentlichung auf den vier Webseiten stehen noch aus.

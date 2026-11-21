@@ -4,6 +4,8 @@
 
 Eine Freigabe durch einen aktiven Super Admin in AlixWork ist die einzige redaktionelle Freigabe. Die ausgewählten Webseiten übernehmen das Gerät unmittelbar und stellen es ohne weitere manuelle Zwischenprüfung online. Technische Validierung, Authentifizierung, Länderzuordnung und gesetzliche Anforderungen bleiben bestehen. Keine pauschale Freigabe aller bestehenden Geräte.
 
+Aktueller Umstellungsumfang: **alix-lasers.de, alix-lasers.at, alix-lasers.ae und Alix-beauty.com**. **alix-lasers.us bleibt auf Nutzerwunsch vorerst ausgenommen**; keine Änderung oder Deaktivierung der bestehenden US-Anbindung. COM bleibt die vorhandene Referenz.
+
 ## Geprüfter Ausgangsstand (21.11.2026)
 
 - AlixWork sendet über `supabase/functions/ph-com-publish-device/index.ts` nur an COM. Alle anderen Kanäle werden derzeit lediglich zum Abruf bereitgestellt.
@@ -12,9 +14,9 @@ Eine Freigabe durch einen aktiven Super Admin in AlixWork ist die einzige redakt
 - **Alix Austria Launch** (`c3f9a5ed-4b6a-4cb7-9aec-45b56a071d01`, Snapshot `41a9a5f1`) enthält statische Gerätestammdaten in `src/data/products.ts`. In diesem Quellstand wurde kein Product-Hub-Direktempfänger gefunden.
 - **ALIX Lasers UAE** (`f5ba6f4c-95ec-445a-8eb2-f2ba0a1b9338`, Snapshot `a2000359`) hat `/api/public/alixwork-webhook`; dieser prüft die Signatur und protokolliert nur eine Aktualisierungsanforderung. `src/lib/sync.functions.ts` setzt ausdrücklich keine Freigabeflags. `received: true` bedeutet weder übernommen noch online.
 - **Alix Beauty New** (`9eccecfc-8185-454c-8500-b19c2cad9d9c`, Snapshot `9796ae36`) hat `/api/public/hooks/sync-alixwork`: erneuter Abruf mit Zehn-Minuten-Sperre, kein authentifizierter unmittelbarer Geräte-Push. Eine übersprungene Aktualisierung darf nicht als Veröffentlichung gelten.
-- Das zuständige **US-Projekt** ist aus der vollständigen Liste der 17 zugänglichen Projekte nicht eindeutig bestimmbar.
+- **US** ist vorerst nicht Teil dieses Auftrags; eine Projektzuordnung ist dafür derzeit nicht erforderlich.
 
-Die anderen Projekte sind in diesem Chat ausschließlich lesbar. Keine Webseite, keine Gerätefreigabe und kein Zugang wurde durch diese Prüfung geändert. In AlixWork sind COM- und DE-Schreibzugänge vorhanden; eigenständige Direkt-Schreibzugänge für AT/US/AE/Beauty sind nicht nachgewiesen. Bestehende Zugänge niemals ungeprüft für einen anderen Host verwenden.
+Die anderen Projekte sind in diesem Chat ausschließlich lesbar. Keine Webseite, keine Gerätefreigabe und kein Zugang wurde durch diese Prüfung geändert. In AlixWork sind COM- und DE-Schreibzugänge vorhanden; eigenständige Direkt-Schreibzugänge für AT/AE/Beauty sind nicht nachgewiesen. Bestehende Zugänge niemals ungeprüft für einen anderen Host verwenden.
 
 ## Auftrag für jedes Webseiten-Projekt
 
@@ -26,7 +28,6 @@ Die anderen Projekte sind in diesem Chat ausschließlich lesbar. Keine Webseite,
 - **AT:** Statische Gerätekataloge durch vorhandene persistente veröffentlichte Daten ersetzen oder entsprechend anbinden. Die öffentliche Geräteanzeige muss nach dem Empfängeraufruf denselben bestätigten Stand lesen.
 - **AE:** Den vorhandenen signierten Webhook erweitern oder einen Direkt-Empfänger anschließen. Übernahme und Veröffentlichung müssen wirklich erfolgen; ein Sync-Log alleine reicht nicht. Fachliche Länder-/Sicherheitsanforderungen nicht aus ungeprüften Payload-Flags ableiten.
 - **Beauty:** Den periodischen Abruf als Rückfall behalten, aber den neuen geschützten Veröffentlichungsvorgang nicht durch die Zehn-Minuten-Sperre verzögern. Direktfreigaben und vollständigen Cache aktualisieren.
-- **US:** Projekt und produktive Domain zuerst eindeutig zuordnen, dann denselben Vertrag umsetzen.
 
 ## Anschließend in AlixWork
 
@@ -38,4 +39,4 @@ Die anderen Projekte sind in diesem Chat ausschließlich lesbar. Keine Webseite,
 
 ## Offen
 
-Direkt-Empfänger und öffentliche Anzeige in den separaten Webseiten-Projekten, US-Projektzuordnung, sichere gemeinsame Zugänge sowie anschließend AlixWork-Versandadapter und echte Ende-zu-Ende-Abnahme. Der bestehende COM-Versand bleibt bis dahin unverändert.
+Direkt-Empfänger und öffentliche Anzeige in den vier separaten Webseiten-Projekten DE/AT/AE/Beauty, sichere gemeinsame Zugänge sowie anschließend AlixWork-Versandadapter und echte Ende-zu-Ende-Abnahme. Der bestehende COM-Versand bleibt bis dahin unverändert. US bleibt vorerst ausgenommen.
