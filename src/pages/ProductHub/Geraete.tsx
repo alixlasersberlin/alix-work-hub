@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Cpu, Plus, Star, Lock, Loader2, Search, Sparkles } from 'lucide-react';
+import { Cpu, Plus, Star, Lock, Loader2, Search, Sparkles, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,9 +20,31 @@ import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 import { ImportFromArtikelButton } from '@/components/producthub/ImportFromArtikelButton';
 import { BulkPublishButton } from '@/components/producthub/BulkPublishButton';
 import { WebReleaseButton } from '@/components/producthub/WebReleaseButton';
-import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
+import { usePhChannels, phIsActiveOn, type PhChannel } from '@/lib/producthub/useChannels';
 
 const db = supabase as any;
+
+function WebsiteStatusLink({ site }: { site: PhChannel }) {
+  let href: string | null = null;
+  try {
+    const label = site.label.trim().toLowerCase();
+    const fallback = /^[a-z0-9.-]+\.[a-z]{2,}$/.test(label) ? `https://${label}` : null;
+    const address = site.base_url || fallback;
+    if (address) {
+      const url = new URL(address);
+      if (url.protocol === 'https:' && !url.username && !url.password) href = url.href;
+    }
+  } catch { /* Invalid configured addresses remain visible, not executable. */ }
+  if (!href) return <span className="break-words">{site.label}</span>;
+  return (
+    <Button variant="link" asChild className="h-auto p-0 text-xs font-normal text-inherit whitespace-normal justify-start text-left">
+      <a href={href} target="_blank" rel="noopener noreferrer" onClick={event => event.stopPropagation()} aria-label={`${site.label} in neuem Tab öffnen`}>
+        <span className="break-words">{site.label}</span>
+        <ExternalLink className="shrink-0" aria-hidden="true" />
+      </a>
+    </Button>
+  );
+}
 
 export default function ProductHubGeraete() {
   const nav = useNavigate();
@@ -206,7 +228,7 @@ export default function ProductHubGeraete() {
                           {disabledSites.map(site => (
                             <li key={site.code} className="flex items-start gap-1.5 text-destructive" title="Im Product Hub deaktiviert; tatsächlicher Webseitenstand nicht bestätigt">
                               <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
-                              <span className="break-words">{site.label}</span>
+                              <WebsiteStatusLink site={site} />
                             </li>
                           ))}
                         </ul>
@@ -218,7 +240,7 @@ export default function ProductHubGeraete() {
                           {activeSites.map(site => (
                             <li key={site.code} className="flex items-start gap-1.5 text-success" title="Im Product Hub aktiviert; tatsächlicher Webseitenstand nicht bestätigt">
                               <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-                              <span className="break-words">{site.label}</span>
+                              <WebsiteStatusLink site={site} />
                             </li>
                           ))}
                         </ul>
