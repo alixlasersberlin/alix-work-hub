@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,6 +33,7 @@ import { TranslationsTab } from '@/components/producthub/TranslationsTab';
 import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 import { isSiteSelected, siteSelectionPatch } from '@/lib/producthub/siteSelection';
 import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
+import { autoSyncTargets } from '@/lib/producthub/autoSync';
 
 import { catalogsForProduct } from '@/lib/producthub/catalog';
 import {
@@ -350,6 +351,7 @@ export default function ProductHubEditor() {
     return Object.keys(TEXT_LABELS).filter(k => (form?.[k] ?? '') !== (original?.[k] ?? ''));
   };
 
+  const skipAutoSync = useRef(false);
   const doSave = async () => {
     if (!id || !form || !canWrite) return false;
     setSaving(true);
@@ -374,6 +376,15 @@ export default function ProductHubEditor() {
       }, { onConflict: 'product_id' });
       if (seoErr) throw seoErr;
       toast.success('In AlixWork gespeichert – Änderungen wurden protokolliert');
+      if (isSuperAdmin && !skipAutoSync.current) {
+        const targets = autoSyncTargets(code => isSiteSelected(form, code, customSites), siteList);
+        const failed: string[] = [];
+        for (const code of targets) {
+          try { await pushGlobalProduct(id, code); } catch (e: any) { failed.push(`${code.toUpperCase()}: ${e?.message || 'Fehler'}`); }
+        }
+        if (targets.length && !failed.length) toast.success(`Änderungen direkt an ${targets.map(t => t.toUpperCase()).join(', ')} gesendet und online bestätigt`);
+        if (failed.length) toast.error(`Webseitenversand nicht bestätigt – ${failed.join(' · ')}`);
+      }
       await load();
       return true;
     } catch (e: any) { toast.error(e.message); return false; }
@@ -423,7 +434,8 @@ export default function ProductHubEditor() {
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
               try {
-                if (!await save()) return;
+                skipAutoSync.current = true;
+                try { if (!await save()) return; } finally { skipAutoSync.current = false; }
                 const now = new Date().toISOString();
                 for (const ch of targets) {
                   try {
