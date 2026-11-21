@@ -19,6 +19,7 @@ import { EnrichProductButton } from '@/components/producthub/EnrichProductButton
 import { WebPreviewButton } from '@/components/producthub/WebPreviewButton';
 import { ImportFromArtikelButton } from '@/components/producthub/ImportFromArtikelButton';
 import { BulkPublishButton } from '@/components/producthub/BulkPublishButton';
+import { WebReleaseButton } from '@/components/producthub/WebReleaseButton';
 import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 
 const db = supabase as any;
@@ -193,6 +194,9 @@ export default function ProductHubGeraete() {
                         {p.featured && <Star className="w-3.5 h-3.5 text-amber-400" />}
                         {p.protected && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                       </span>
+                      {(roles || []).includes('Super Admin') && <div className="mt-2" onClick={event => event.stopPropagation()}>
+                        <WebReleaseButton product={p} sites={sites} activeCodes={activeSites.map(site => site.code)} onDone={load} />
+                      </div>}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{p.model || '—'}</TableCell>
                     <TableCell className="text-xs">{(p.categories || []).concat(p.applications || []).slice(0, 2).join(', ') || '—'}</TableCell>
