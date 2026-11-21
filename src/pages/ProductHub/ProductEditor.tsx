@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -280,6 +280,9 @@ function CopyFromProduct({ currentId, disabled, onApply }: { currentId?: string;
 export default function ProductHubEditor() {
   const { id } = useParams();
   const nav = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const activeTab = requestedTab && ['allgemein', 'technik', 'konfiguration', 'preise', 'anwendungen', 'smartki', 'sprachen', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'preislisten', 'historie'].includes(requestedTab) ? requestedTab : 'allgemein';
   const { roles, hasRole } = useAuth();
   const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
   const isSuperAdmin = (roles || []).includes('Super Admin');
@@ -477,7 +480,7 @@ export default function ProductHubEditor() {
           </div>
         } />
 
-      <Tabs defaultValue="allgemein">
+      <Tabs value={activeTab} onValueChange={tab => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set('tab', tab); return next; }, { replace: true })}>
         <TabsList className="flex-wrap h-auto">
           {['allgemein', 'technik', 'konfiguration', 'preise', 'anwendungen', 'smartki', 'sprachen', 'medien', 'dokumente', 'regulatory', 'webseiten', 'seo', 'preislisten', 'historie'].map(t => (
             <TabsTrigger key={t} value={t} className="capitalize">{t === 'smartki' ? 'Smart KI' : t === 'sprachen' ? 'Sprachen' : t}</TabsTrigger>
