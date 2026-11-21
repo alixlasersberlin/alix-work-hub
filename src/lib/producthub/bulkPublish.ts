@@ -30,9 +30,9 @@ export async function publishAllProducts(products: BulkProduct[], sites: BulkSit
           if (site.code === 'com') {
             await ports.pushCom(product.id);
             await ports.updateChannel(product.id, site.code, { has_pending_changes: false, last_sync_at: new Date().toISOString(), last_sync_status: 'ok' });
-            result.state = 'accepted'; result.note = 'Texte, Technik und Bilder von der Webseite bestätigt';
+            result.state = 'accepted'; result.note = 'In AlixWork freigegeben · Texte, Technik und Bilder übertragen';
           } else {
-            result.state = 'available'; result.note = 'Freigegeben – für Webseitenabruf bereit; Annahme noch nicht bestätigt';
+            result.state = 'available'; result.note = 'In AlixWork freigegeben · zum automatischen Abruf bereit; Online-Stand noch nicht geprüft';
           }
         } catch (error) {
           result.note = error instanceof Error ? error.message : String((error as { message?: string })?.message || 'Freigabe fehlgeschlagen');

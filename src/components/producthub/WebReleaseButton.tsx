@@ -43,7 +43,7 @@ export function WebReleaseButton({ product, sites, activeCodes, onDone }: {
               throw new Error(message);
             }
             if (!reply?.ok || reply?.error || reply?.mismatches?.length || reply?.master?.ok === false) {
-              throw new Error(reply?.error || reply?.master?.error || 'Annahme nicht bestätigt');
+              throw new Error(reply?.error || reply?.master?.error || 'Übertragung nicht nachgewiesen');
             }
           },
         }, (_count, result) => setResults(previous => [...previous, result]));
@@ -66,7 +66,7 @@ export function WebReleaseButton({ product, sites, activeCodes, onDone }: {
             <Checkbox checked={selected.includes(site.code)} disabled={running} onCheckedChange={value => setSelected(previous => value === true ? [...previous, site.code] : previous.filter(code => code !== site.code))} />
             <span className="break-words">{site.label}</span>
           </label>)}</div>}
-          <p className="text-sm text-muted-foreground">COM: direkte Übertragung bei bestätigter Gerätezuordnung. Andere Webseiten: zum Abruf bereit, noch keine bestätigte Online-Veröffentlichung. US bleibt ausgenommen.</p>
+          <p className="text-sm text-muted-foreground">Freigabe ausschließlich durch AlixWork · keine weitere manuelle Webseitenfreigabe. COM: direkte Übertragung. DE/AT/AE/Beauty: zum automatischen Abruf bereit, Direktübertragung noch nicht eingerichtet. US bleibt ausgenommen.</p>
           <div className="max-h-64 overflow-y-auto divide-y divide-border" aria-live="polite">{results.map(result => <div key={result.site} className="py-2 text-sm">
             <p className="font-medium">{result.site}</p>
             <p className={result.state === 'error' || result.state === 'skipped' ? 'text-destructive' : 'text-muted-foreground'}>{result.note}</p>

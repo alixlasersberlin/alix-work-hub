@@ -57,7 +57,7 @@ export function BulkPublishButton({ onDone }: { onDone: () => void | Promise<voi
             throw new Error(message);
           }
           if (!data?.ok || data?.error || data?.mismatches?.length || data?.master?.ok === false) {
-            throw new Error(data?.error || data?.master?.error || (data?.mismatches?.length ? `Kontrolle abweichend: ${data.mismatches.join(', ')}` : 'Annahme nicht bestätigt'));
+            throw new Error(data?.error || data?.master?.error || (data?.mismatches?.length ? `Kontrolle abweichend: ${data.mismatches.join(', ')}` : 'Übertragung nicht nachgewiesen'));
           }
         },
       }, (count, result) => { setCompleted(count); setResults(prev => [...prev, result]); });
@@ -77,7 +77,7 @@ export function BulkPublishButton({ onDone }: { onDone: () => void | Promise<voi
           <p><strong>{snapshot?.products.length} Geräte</strong> · alle gespeicherten Geräte, unabhängig von der aktuellen Suche.</p>
           <p>Webseiten: {snapshot?.sites.map(s => s.name).join(', ')}</p>
           {!done && <p className="text-muted-foreground">Alle Geräte für diese aktiven Webseiten freigeben? COM erhält nur Geräte mit bestätigter Zuordnung. Preise und regulatorische Freigaben bleiben unverändert.</p>}
-          {!done && <p className="text-muted-foreground">Andere Webseiten erhalten die Freigabe zum Abruf; ihre tatsächliche Annahme kann hier nicht bestätigt werden.</p>}
+          {!done && <p className="text-muted-foreground">AlixWork ist die einzige Freigabestelle; keine weitere manuelle Webseitenfreigabe. Andere Webseiten erhalten die Freigabe zum automatischen Abruf; ihr Online-Stand ist noch nicht geprüft.</p>}
           {(running || done) && <><Progress value={total ? completed / total * 100 : 0} /><p>{completed} / {total} abgeschlossen</p></>}
           {done && <p>{results.filter(r => r.state === 'accepted').length} bestätigt · {results.filter(r => r.state === 'available').length} zum Abruf bereit · {results.filter(r => r.state === 'skipped').length} übersprungen · {results.filter(r => r.state === 'error').length} Fehler</p>}
         </div>
