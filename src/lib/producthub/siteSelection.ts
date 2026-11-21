@@ -9,5 +9,6 @@ export function siteSelectionPatch(active: boolean, previousStatus?: string) {
   return {
     status: active ? (previousStatus && previousStatus !== 'inactive' ? previousStatus : 'draft') : 'inactive',
     hold: !active,
+    ...(!active ? { has_pending_changes: true } : {}),
   };
 }

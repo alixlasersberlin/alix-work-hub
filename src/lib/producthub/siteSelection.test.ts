@@ -12,6 +12,9 @@ describe('Geräte-Webseitenauswahl', () => {
     expect(siteSelectionPatch(true, 'published')).toEqual({ status: 'published', hold: false });
   });
   it('deaktiviert abgewählte Webseiten', () => {
-    expect(siteSelectionPatch(false, 'published')).toEqual({ status: 'inactive', hold: true });
+    expect(siteSelectionPatch(false, 'published')).toEqual({ status: 'inactive', hold: true, has_pending_changes: true });
+  });
+  it('behält eine ausstehende Webseitenabschaltung auch für bereits inaktive Artikel bei', () => {
+    expect(siteSelectionPatch(false, 'inactive').has_pending_changes).toBe(true);
   });
 });

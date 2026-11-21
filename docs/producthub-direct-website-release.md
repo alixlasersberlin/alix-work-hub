@@ -49,4 +49,16 @@ Die anderen Projekte sind in diesem Chat ausschließlich lesbar. Keine Webseite,
 
 ## Offen
 
+### Automatische Abschaltung bei Deaktivierung (21.11.2026)
+
+Nutzerauftrag: Sobald ein Artikel in AlixWork für eine Webseite deaktiviert oder zurückgehalten wird, muss diese Webseite ihn automatisch deaktivieren, ohne weitere manuelle Freigabe. Keine Preise oder andere Länder ändern; US bleibt ausgenommen.
+
+Nachprüfung des GLOBAL-Snapshots `61536d69`: Der bestehende `direct-release`-Vertrag unterstützt ausschließlich Veröffentlichung mit Pflichttexten/Bildern und `ONLINE`-Nachweis. Ein Abschaltvorgang oder `OFFLINE`-Nachweis ist nicht vorhanden. Deshalb keinen erfundenen `active:false`-Aufruf an diesen Empfänger schicken und keine Veröffentlichung als Abschaltung missbrauchen. AT/AE/Beauty besitzen ebenfalls keinen bestätigten Abschaltvertrag. Diese Projekte sind hier nur lesbar.
+
+**Auftrag in GLOBAL und anschließend AT/AE/Beauty:**
+
+> Ergänze einen signaturgeschützten, kanalbezogenen Abschaltvorgang zur bestehenden Product-Hub-Anbindung. AlixWork ist die einzige Entscheidungsstelle; vertraue ausschließlich einer serverseitig geprüften aktiven Super-Admin-Bestätigung und der verifizierten Zuordnung. Abschaltungen benötigen keine neuen Texte, Übersetzungen oder Bilder. Nutze eine eindeutige Vorgangskennung, erwartete Version und vorhandene geschützte Zustände; verhindere, dass ältere Veröffentlichungen einen deaktivierten Artikel erneut aktivieren. Deaktiviere den Artikel in der tatsächlich öffentlich ausgelieferten Quelle und entferne ihn aus Listen, Suche und direkter Geräteanzeige; aktualisiere betroffene Caches. Preise, Originalinhalte und andere Kanäle bleiben unverändert. Probelauf schreibt nichts. Melde Erfolg ausschließlich nach öffentlicher Prüfung mit einem eindeutigen OFFLINE-Nachweis und passender Artikel-/Kanal-/Vorgangsidentität. Unklare Übertragungen niemals automatisch erneut senden. Liefere den bestätigten Vertrag, feste Ziel-URL und Secret-Namen an AlixWork zurück. Teste fehlende Berechtigung, fremden Kanal, Versionenkonflikt, Wiederholung, Preisbestand und öffentliche Unsichtbarkeit. Keine echten Geräte ohne ausdrückliche Auswahl deaktivieren.
+
+**Danach AlixWork:** Den bestätigten Abschaltvertrag an den gemeinsamen serverseitigen Sender anschließen und alle Deaktivierungswege (abgewählte Webseite beim Speichern, Zurückhalten, gesamte Offline-Aktion) automatisch bedienen. Lokale Deaktivierung muss erhalten bleiben, wenn die Webseite nicht erreichbar ist; Abschaltung bleibt sichtbar ausstehend und darf weder als Erfolg noch mit einem erfundenen Sync-Zeitpunkt dargestellt werden. Bereits laufende Veröffentlichungen vor Abschluss erneut auf Deaktivierung prüfen. Echte Abnahme erfordert eine verfügbare Super-Admin-Sitzung; für dieses externe Supabase-Projekt hier nicht automatisiert verfügbar.
+
 COM/DE: echte signierte Hifu-Pro-Abnahme nach Prüfung/Freigabe der veralteten englischen Übersetzung und mit angemeldetem aktivem Super Admin. AT/AE/Beauty: Direkt-Empfänger und öffentliche Anzeige in den separaten Webseiten-Projekten, sichere gemeinsame Zugänge sowie anschließend AlixWork-Versandadapter und echte Ende-zu-Ende-Abnahme. US bleibt vorerst ausgenommen.

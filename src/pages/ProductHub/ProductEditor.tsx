@@ -370,7 +370,9 @@ export default function ProductHubEditor() {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'product_id' });
       if (seoErr) throw seoErr;
-      toast.success('Gespeichert – Änderungen wurden protokolliert');
+      const deactivated = siteList.some(site => !isSiteSelected(form, site.code, customSites) && phIsActiveOn(original, site.code, channels.find(c => c.channel_code === site.code)));
+      if (deactivated) toast.warning('In AlixWork deaktiviert – Abschaltung auf der Webseite ausstehend; der Abschaltanschluss fehlt noch.');
+      else toast.success('Gespeichert – Änderungen wurden protokolliert');
       await load();
       return true;
     } catch (e: any) { toast.error(e.message); return false; }
@@ -439,7 +441,7 @@ export default function ProductHubEditor() {
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
             {isSuperAdmin && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
-              if (!confirm('Gerät auf ALLEN Webseiten offline stellen?')) return;
+              if (!confirm('Gerät in AlixWork für alle Webseiten deaktivieren? Bereits veröffentlichte Seiten bleiben möglicherweise sichtbar, da der Abschaltanschluss noch fehlt.')) return;
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
               try {
@@ -448,10 +450,8 @@ export default function ProductHubEditor() {
                 await phUpdateProduct(id, off);
                 for (const ch of siteList) {
                   try {
-                    await phUpsertChannel(id, ch.code, { hold: true, status: 'inactive', has_pending_changes: false, last_sync_at: new Date().toISOString() });
-                    results.push({ label: ch.label, ok: true, note: ch.code === 'com'
-                      ? 'In AlixWork offline – alix-lasers.com hat noch keine Offline-Schnittstelle, dort bleibt die Seite sichtbar'
-                      : 'Offline gestellt' });
+                    await phUpsertChannel(id, ch.code, siteSelectionPatch(false));
+                    results.push({ label: ch.label, ok: false, note: 'In AlixWork deaktiviert – Abschaltung auf der Webseite ausstehend; ein bestätigter Abschaltanschluss fehlt.' });
                   } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
                 }
                 setPublishResult(results);
@@ -827,8 +827,11 @@ export default function ProductHubEditor() {
                     {isSuperAdmin && (
                       <>
                         <Button size="sm" variant="outline" onClick={async () => {
-                          await phUpsertChannel(id!, ch.code, { hold: !row?.hold });
-                          toast.success(row?.hold ? 'Freigegeben' : 'Zurückgehalten'); load();
+                          if (!id) return;
+                          await phUpsertChannel(id, ch.code, row?.hold ? { hold: false } : { hold: true, has_pending_changes: true });
+                          if (row?.hold) toast.success('Freigegeben');
+                          else toast.warning('In AlixWork zurückgehalten – Abschaltung auf der Webseite ausstehend; der Abschaltanschluss fehlt noch.');
+                          load();
                         }}>{row?.hold ? 'Freigeben' : 'Zurückhalten'}</Button>
                         <Button size="sm" onClick={async () => {
                           if (!id || ['us', 'usa'].includes(ch.code)) return;
