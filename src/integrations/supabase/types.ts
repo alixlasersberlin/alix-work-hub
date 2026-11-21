@@ -58838,6 +58838,20 @@ export type Database = {
       }
       ph_can_edit: { Args: never; Returns: boolean }
       ph_catalog_public: { Args: { _catalog_id: string }; Returns: boolean }
+      ph_global_claim_release: {
+        Args: { p_channel: string; p_product_id: string; p_release: Json }
+        Returns: undefined
+      }
+      ph_global_finish_release: {
+        Args: {
+          p_channel: string
+          p_online: boolean
+          p_product_id: string
+          p_publish_id: string
+          p_reply: Json
+        }
+        Returns: undefined
+      }
       plm_can_write: { Args: never; Returns: boolean }
       plm_merge_manufacturers: {
         Args: { p_source: string; p_target: string }

@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { phUpdateProduct, phUpsertChannel } from '@/lib/producthub/api';
 import { publishAllProducts, type BulkProduct, type BulkSite, type BulkMapping, type BulkResult } from '@/lib/producthub/bulkPublish';
 import { toast } from 'sonner';
+import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
 
 const db = supabase as any;
 async function readAll<T>(table: string, fields: string): Promise<T[]> {
@@ -36,7 +37,7 @@ export function BulkPublishButton({ onDone }: { onDone: () => void | Promise<voi
         readAll<BulkSite>('ph_channels', 'id,code,name,is_active'),
         readAll<BulkMapping>('ph_lang_sync_map', 'id,product_id,site_code,remote_product_id,verified_at'),
       ]);
-      const sites = allSites.filter(s => s.is_active);
+      const sites = allSites.filter(s => s.is_active && !['us', 'usa'].includes(s.code));
       if (!products.length || !sites.length) throw new Error('Keine Geräte oder aktiven Webseiten vorhanden');
       setSnapshot({ products, sites, mappings }); setResults([]); setCompleted(0); setDone(false); setOpen(true);
     } catch (e: any) { toast.error(e?.message || 'Abgleich konnte nicht vorbereitet werden'); }
@@ -49,17 +50,7 @@ export function BulkPublishButton({ onDone }: { onDone: () => void | Promise<voi
       await publishAllProducts(snapshot.products, snapshot.sites, snapshot.mappings, {
         updateProduct: phUpdateProduct,
         updateChannel: phUpsertChannel,
-        pushCom: async id => {
-          const { data, error } = await supabase.functions.invoke('ph-com-publish-device', { body: { product_id: id } });
-          if (error) {
-            let message = error.message;
-            try { const body = await error.context?.json(); message = body?.error || message; } catch { /* response may not be JSON */ }
-            throw new Error(message);
-          }
-          if (!data?.ok || data?.error || data?.mismatches?.length || data?.master?.ok === false) {
-            throw new Error(data?.error || data?.master?.error || (data?.mismatches?.length ? `Kontrolle abweichend: ${data.mismatches.join(', ')}` : 'Übertragung nicht nachgewiesen'));
-          }
-        },
+        pushGlobal: async (id, channel) => { await pushGlobalProduct(id, channel); },
       }, (count, result) => { setCompleted(count); setResults(prev => [...prev, result]); });
       setDone(true); await onDone();
     } catch (e: any) { toast.error(e?.message || 'Abgleich unterbrochen'); }
@@ -76,7 +67,7 @@ export function BulkPublishButton({ onDone }: { onDone: () => void | Promise<voi
         <div className="text-sm space-y-2">
           <p><strong>{snapshot?.products.length} Geräte</strong> · alle gespeicherten Geräte, unabhängig von der aktuellen Suche.</p>
           <p>Webseiten: {snapshot?.sites.map(s => s.name).join(', ')}</p>
-          {!done && <p className="text-muted-foreground">Alle Geräte für diese aktiven Webseiten freigeben? COM erhält nur Geräte mit bestätigter Zuordnung. Preise und regulatorische Freigaben bleiben unverändert.</p>}
+          {!done && <p className="text-muted-foreground">Alle Geräte für diese aktiven Webseiten freigeben? COM und DE erhalten nur Geräte mit bestätigter GLOBAL-Zuordnung. Preise und regulatorische Freigaben bleiben unverändert.</p>}
           {!done && <p className="text-muted-foreground">AlixWork ist die einzige Freigabestelle; keine weitere manuelle Webseitenfreigabe. Andere Webseiten erhalten die Freigabe zum automatischen Abruf; ihr Online-Stand ist noch nicht geprüft.</p>}
           {(running || done) && <><Progress value={total ? completed / total * 100 : 0} /><p>{completed} / {total} abgeschlossen</p></>}
           {done && <p>{results.filter(r => r.state === 'accepted').length} bestätigt · {results.filter(r => r.state === 'available').length} zum Abruf bereit · {results.filter(r => r.state === 'skipped').length} übersprungen · {results.filter(r => r.state === 'error').length} Fehler</p>}

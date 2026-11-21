@@ -32,6 +32,7 @@ import { CountryPricingTab } from '@/components/producthub/CountryPricingTab';
 import { TranslationsTab } from '@/components/producthub/TranslationsTab';
 import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 import { isSiteSelected, siteSelectionPatch } from '@/lib/producthub/siteSelection';
+import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
 
 import { catalogsForProduct } from '@/lib/producthub/catalog';
 import {
@@ -413,7 +414,7 @@ export default function ProductHubEditor() {
             {canWrite && id && <EnrichProductButton productId={id} productName={form.name} onDone={load} />}
             {canWrite && id && <DuplicateProductButton productId={id} product={form} />}
             {isSuperAdmin && id && <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" disabled={saving || publishingAll} onClick={async () => {
-              const targets = siteList.filter(site => isSiteSelected(form, site.code, customSites));
+              const targets = siteList.filter(site => site.is_active && !['us', 'usa'].includes(site.code) && isSiteSelected(form, site.code, customSites));
               if (!targets.length) { toast.error('Bitte mindestens eine Webseite auswählen und speichern.'); return; }
               if (!confirm(`Für ausgewählte Webseiten freigeben: ${targets.map(t => t.label).join(', ')}?`)) return;
               setPublishingAll(true);
@@ -424,18 +425,11 @@ export default function ProductHubEditor() {
                 for (const ch of targets) {
                   try {
                     await phUpsertChannel(id, ch.code, {
-                      hold: false, status: 'published', publish_state: 'published', has_pending_changes: false,
-                      last_sync_at: now, last_sync_status: 'ok',
+                      hold: false, status: 'published', publish_state: 'published', has_pending_changes: true,
                     });
-                    if (ch.code === 'com') {
-                      const { data: r, error: e2 } = await supabase.functions.invoke('ph-com-publish-device', { body: { product_id: id } });
-                      const msg = (r as any)?.error || (e2 as any)?.context?.error || e2?.message;
-                      if (e2 || (r as any)?.error) results.push({ label: ch.label, ok: false, note: msg || 'Übertragung fehlgeschlagen' });
-                      else if ((r as any)?.mismatches?.length) results.push({ label: ch.label, ok: false, note: `Gesendet, Kontrolle abweichend: ${(r as any).mismatches.join(', ')}` });
-                      else results.push({ label: ch.label, ok: true, note: 'Texte übertragen und angenommen' });
-                      const m = (r as any)?.master;
-                      if (m && !e2 && !(r as any)?.error) results.push({ label: `${ch.label} · Technik & Bilder`, ok: !!m.ok,
-                        note: m.ok ? (m.fields?.length ? `Angenommen: ${m.fields.join(', ')}` : 'Nichts zu senden') : (m.error || 'Fehlgeschlagen') });
+                    if (ch.code === 'com' || ch.code === 'de') {
+                      await pushGlobalProduct(id, ch.code);
+                      results.push({ label: ch.label, ok: true, note: 'Online veröffentlicht und geprüft' });
                     } else results.push({ label: ch.label, ok: true, note: 'Freigegeben – Webseite übernimmt automatisch beim nächsten Abruf' });
                   } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
                 }
@@ -830,18 +824,23 @@ export default function ProductHubEditor() {
                   {row?.has_pending_changes && <Badge className="bg-sky-500 text-white">Änderungen verfügbar</Badge>}
                   <div className="ml-auto flex gap-2">
                     {row?.live_url && <Button size="sm" variant="outline" asChild><a href={row.live_url} target="_blank" rel="noreferrer">Vorschau</a></Button>}
-                    {canWrite && (
+                    {isSuperAdmin && (
                       <>
                         <Button size="sm" variant="outline" onClick={async () => {
                           await phUpsertChannel(id!, ch.code, { hold: !row?.hold });
                           toast.success(row?.hold ? 'Freigegeben' : 'Zurückgehalten'); load();
                         }}>{row?.hold ? 'Freigeben' : 'Zurückhalten'}</Button>
                         <Button size="sm" onClick={async () => {
-                          await phUpsertChannel(id!, ch.code, {
-                            status: 'published', publish_state: 'published', has_pending_changes: false,
-                            last_sync_at: new Date().toISOString(), last_sync_status: 'ok',
-                          });
-                          toast.success(`Für ${ch.short} veröffentlicht (Master-Freigabe)`); load();
+                          if (!id || ['us', 'usa'].includes(ch.code)) return;
+                          try {
+                            if (!await save()) return;
+                            await phUpsertChannel(id, ch.code, { hold: false, status: 'published', publish_state: 'published', has_pending_changes: true });
+                            if (ch.code === 'com' || ch.code === 'de') {
+                              await pushGlobalProduct(id, ch.code);
+                              toast.success(`Für ${ch.short} online veröffentlicht und geprüft`);
+                            } else toast.success(`Für ${ch.short} zum Abruf freigegeben`);
+                            load();
+                          } catch (error) { toast.error(error instanceof Error ? error.message : 'Freigabe fehlgeschlagen'); }
                         }}>Veröffentlichen</Button>
                       </>
                     )}

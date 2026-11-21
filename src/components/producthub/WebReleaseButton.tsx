@@ -10,6 +10,7 @@ import type { BulkMapping, BulkResult } from '@/lib/producthub/bulkPublish';
 import type { PhChannel } from '@/lib/producthub/useChannels';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
 
 export function WebReleaseButton({ product, sites, activeCodes, onDone }: {
   product: { id: string; name: string }; sites: PhChannel[]; activeCodes: string[]; onDone: () => void | Promise<void>;
@@ -21,7 +22,7 @@ export function WebReleaseButton({ product, sites, activeCodes, onDone }: {
   const [done, setDone] = useState(false);
   const [results, setResults] = useState<BulkResult[]>([]);
   const lock = useRef(false);
-  const targets = sites.filter(site => site.is_active && site.code !== 'us');
+  const targets = sites.filter(site => site.is_active && !['us', 'usa'].includes(site.code));
   if (!roles.includes('Super Admin')) return null;
 
   const run = async () => {
@@ -35,17 +36,7 @@ export function WebReleaseButton({ product, sites, activeCodes, onDone }: {
       await releaseSingleProduct(product, targets.map(site => ({ code: site.code, name: site.label, is_active: site.is_active })), selected,
         (data || []) as BulkMapping[], {
           updateProduct: phUpdateProduct, updateChannel: phUpsertChannel,
-          pushCom: async id => {
-            const { data: reply, error: sendError } = await supabase.functions.invoke('ph-com-publish-device', { body: { product_id: id } });
-            if (sendError) {
-              let message = sendError.message;
-              try { const body = await sendError.context?.json(); message = body?.error || message; } catch { /* Keep original error. */ }
-              throw new Error(message);
-            }
-            if (!reply?.ok || reply?.error || reply?.mismatches?.length || reply?.master?.ok === false) {
-              throw new Error(reply?.error || reply?.master?.error || 'Übertragung nicht nachgewiesen');
-            }
-          },
+          pushGlobal: async (id, channel) => { await pushGlobalProduct(id, channel); },
         }, (_count, result) => setResults(previous => [...previous, result]));
       setDone(true); await onDone();
     } catch (error) { toast.error(error instanceof Error ? error.message : 'WEB Freigabe fehlgeschlagen'); }
@@ -66,7 +57,7 @@ export function WebReleaseButton({ product, sites, activeCodes, onDone }: {
             <Checkbox checked={selected.includes(site.code)} disabled={running} onCheckedChange={value => setSelected(previous => value === true ? [...previous, site.code] : previous.filter(code => code !== site.code))} />
             <span className="break-words">{site.label}</span>
           </label>)}</div>}
-          <p className="text-sm text-muted-foreground">Freigabe ausschließlich durch AlixWork · keine weitere manuelle Webseitenfreigabe. COM: direkte Übertragung. DE/AT/AE/Beauty: zum automatischen Abruf bereit, Direktübertragung noch nicht eingerichtet. US bleibt ausgenommen.</p>
+          <p className="text-sm text-muted-foreground">Freigabe ausschließlich durch AlixWork · keine weitere manuelle Webseitenfreigabe. COM und DE: direkte GLOBAL-Veröffentlichung. AT/AE/Beauty: zum automatischen Abruf bereit. US bleibt ausgenommen.</p>
           <div className="max-h-64 overflow-y-auto divide-y divide-border" aria-live="polite">{results.map(result => <div key={result.site} className="py-2 text-sm">
             <p className="font-medium">{result.site}</p>
             <p className={result.state === 'error' || result.state === 'skipped' ? 'text-destructive' : 'text-muted-foreground'}>{result.note}</p>

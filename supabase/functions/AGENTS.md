@@ -1,2 +1,3 @@
 - Zoho calls use _shared/zoho-session (cached token, early refresh, one re-login on 401, bounded backoff) to avoid per-document logins.
 - Product Hub website release is Super-Admin-only; released devices are marked auto_publish/review_required=false for direct site publication.
+- GLOBAL direct releases sign exact timestamp/body only after active Super Admin, caller-scoped product, tenant/channel and verified remote-ID checks; COM requires approved English, DE original German, and no prices. Existing channel RPC reservations block uncertain/overlapping writes; only matching ONLINE receipts finish them, without retries or fallback to legacy endpoints.

@@ -8,6 +8,16 @@ Aktueller Umstellungsumfang: **alix-lasers.de, alix-lasers.at, alix-lasers.ae un
 
 ## Geprüfter Ausgangsstand (21.11.2026)
 
+### Aktualisierung: GLOBAL COM/DE (Snapshot `4c242e67`)
+
+- Neuer Vertrag im GLOBAL-Projekt: `docs/producthub-direct-website-release.md`. Empfänger: `POST https://www.alix-lasers.com/api/public/product-hub/direct-release` und `POST https://alix-lasers.de/api/public/product-hub/direct-release`; beide antworten bei unsignierten Anfragen mit 401.
+- AlixWork nutzt `ph-global-publish-device`: aktive Super-Admin-/Kanalprüfung, bestätigte kanalbezogene IDs, HMAC über Zeitstempel und exakten Inhalt, eindeutige Veröffentlichungskennung, Probelauf und anschließender identischer Release. Keine Preise, kein Rückfall auf alte PATCH-Empfänger.
+- COM verwendet freigegebene englische Texte, DE deutsche Mastertexte. Nur ein passender `ONLINE`-Nachweis zählt als Veröffentlichung. Unsichere Sendungen bleiben in den bestehenden Kanalständen zur Prüfung gesperrt, ohne automatischen Neuversand.
+- Gemeinsamer Zugang `GLOBAL_PRODUCT_HUB_DIRECT_RELEASE_KEY` ist sicher hinterlegt. Hifu Pro besitzt die bestätigte eigene DE-ID aus dem GLOBAL-Vertrag; die bestehende COM-Zuordnung bleibt erhalten.
+- **Echte Hifu-Pro-Abnahme offen:** COM-Übersetzung ist aktuell `outdated`; die aktive externe Super-Admin-Sitzung kann hier nicht automatisiert hergestellt werden. Erreichbarkeit ist kein signierter Live-Nachweis. Keine echte Freigabe ausgeführt.
+
+Der nachfolgende Ausgangsstand dokumentiert die frühere Prüfung vor diesem Anschluss.
+
 - AlixWork sendet über `supabase/functions/ph-com-publish-device/index.ts` nur an COM. Alle anderen Kanäle werden derzeit lediglich zum Abruf bereitgestellt.
 - **Alix Lasers Global** (`6f9be453-1a13-42cd-90a9-5402b3cfbf8a`, Snapshot `a3c470d9`) hat die geschützten PATCH-Empfänger `/api/public/product-hub/translations` und `/api/public/product-hub/master-data`. Der Quellstand enthält zusätzlich `src/features/de-site/OriginalSite.tsx` und `resolver.ts`; deshalb vor DE-Anschluss prüfen, welcher Datenbestand auf der tatsächlichen DE-Domain ausgeliefert wird. Eine COM-Annahme beweist keine Veröffentlichung auf DE.
 - **Alix Lasers DE- OLD 0511** (`c8cd4162-aa99-43c7-8e97-1a84a86c68bb`, Snapshot `e6d20bca`) hat einen älteren `/api/public/product-hub/update`-Empfänger. AlixWorks `product-hub-de-canary` adressiert dessen alte Lovable-Domain. Dieser Canary darf nicht ungeprüft als neuer DE-Live-Veröffentlichungsweg verwendet werden.
@@ -39,4 +49,4 @@ Die anderen Projekte sind in diesem Chat ausschließlich lesbar. Keine Webseite,
 
 ## Offen
 
-Direkt-Empfänger und öffentliche Anzeige in den vier separaten Webseiten-Projekten DE/AT/AE/Beauty, sichere gemeinsame Zugänge sowie anschließend AlixWork-Versandadapter und echte Ende-zu-Ende-Abnahme. Der bestehende COM-Versand bleibt bis dahin unverändert. US bleibt vorerst ausgenommen.
+COM/DE: echte signierte Hifu-Pro-Abnahme nach Prüfung/Freigabe der veralteten englischen Übersetzung und mit angemeldetem aktivem Super Admin. AT/AE/Beauty: Direkt-Empfänger und öffentliche Anzeige in den separaten Webseiten-Projekten, sichere gemeinsame Zugänge sowie anschließend AlixWork-Versandadapter und echte Ende-zu-Ende-Abnahme. US bleibt vorerst ausgenommen.

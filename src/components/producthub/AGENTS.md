@@ -1,1 +1,1 @@
-- List-level WEB release snapshots one product and selected active channels (excluding the deferred US channel), checks the current Super Admin role through the existing RPC, and reuses protected channel writes and COM publishing; pull availability never counts as confirmed online publication.
+- All COM/DE release controls use the signed GLOBAL sender with channel-specific verified IDs and ONLINE receipts; list/bulk releases exclude both US codes and retain sequential processing. Other sites remain pull-only and never count as confirmed online publication.
