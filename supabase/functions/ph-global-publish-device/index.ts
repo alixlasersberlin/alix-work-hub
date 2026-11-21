@@ -2,9 +2,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
 import { buildContent, confirmedReply, endpoints, signedHeaders, versionFor } from './contract.ts';
+import { deactivateGlobal } from './offline.ts';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de']), dry_run: z.boolean().default(false) }).strict();
+const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de']), action: z.enum(['publish', 'deactivate']).default('publish'), dry_run: z.boolean().default(false) }).strict();
 
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -27,16 +28,17 @@ Deno.serve(async req => {
     if (roleError || profileError || !role || !profile?.is_active || profile.account_status !== 'active') return json(403, { ok: false, error: 'Nur aktive Super Admins dürfen Webseiten freigeben' });
     const parsed = Body.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return json(400, { ok: false, error: 'Ungültige Anfrage', details: parsed.error.flatten().fieldErrors });
-    const { product_id, channel, dry_run } = parsed.data;
+    const { product_id, channel, dry_run, action } = parsed.data;
     // Protected caller reads precede service access and signing: no cross-scope product lookup.
     const { data: product, error: productError } = await caller.from('ph_products').select('*').eq('id', product_id).maybeSingle();
     if (productError || !product) return json(403, { ok: false, error: 'Gerät nicht zugänglich' });
     const tenantId = (product as Record<string, unknown>).tenant_id;
     const { data: tenantAllowed, error: tenantError } = await (caller as any).rpc('tenant_scope_id_ok', { _tenant_id: typeof tenantId === 'string' ? tenantId : null });
     if (tenantError || !tenantAllowed) return json(403, { ok: false, error: 'Keine Mandantenberechtigung' });
+    const admin = createClient(url, service);
+    if (action === 'deactivate') return json(200, await deactivateGlobal(admin, product, session.user.id, channel, key, dry_run));
     const field = channel === 'com' ? 'active_com' : 'active_de';
     if (!product[field] || !['approved', 'published'].includes(product.status)) return json(409, { ok: false, error: 'Gerät für diesen Kanal nicht freigegeben' });
-    const admin = createClient(url, service);
     const db = admin as any;
     const [{ data: map, error: mapError }, { data: site, error: siteError }, { data: channelRow, error: channelError }, { data: translation, error: translationError }, { data: media, error: mediaError }] = await Promise.all([
       db.from('ph_lang_sync_map').select('remote_product_id,verified_at').eq('product_id', product_id).eq('site_code', channel).maybeSingle(),
@@ -47,6 +49,7 @@ Deno.serve(async req => {
     ]);
     if (mapError || siteError || channelError || translationError || mediaError) return json(503, { ok: false, error: 'Freigabedaten konnten nicht vollständig geprüft werden' });
     if (!site?.is_active || channelRow?.hold) return json(409, { ok: false, error: 'Webseite deaktiviert oder Kanal zurückgehalten' });
+    if (channelRow?.remote_snapshot?.global_offline || channelRow?.remote_snapshot?.global_offline_pending) return json(409, { ok: false, error: 'Webseite durch Abschaltung gesperrt; Reaktivierung benötigt einen eigenen bestätigten Vertrag' });
     if (!map?.verified_at || !z.string().uuid().safeParse(map.remote_product_id).success || !product.alix_product_id) return json(409, { ok: false, error: 'Bestätigte GLOBAL-Gerätezuordnung fehlt' });
     const content = buildContent(product, translation, channel, (media ?? []).filter((row: { media_type?: string; kind?: string }) => (row.media_type ?? row.kind) === 'image'));
     const source_version = await versionFor(content);
@@ -68,6 +71,11 @@ Deno.serve(async req => {
     // Atomic reservation in existing channel state prevents overlapping/uncertain writes.
     const { error: claimError } = await admin.rpc('ph_global_claim_release', { p_product_id: product_id, p_channel: channel, p_release: release });
     if (claimError) return json(409, { ok: false, error: claimError.message });
+    const [{ data: currentProduct, error: currentProductError }, { data: currentChannel, error: currentChannelError }] = await Promise.all([
+      caller.from('ph_products').select('active_com,active_de,status').eq('id', product_id).maybeSingle(),
+      db.from('ph_product_channels').select('hold,remote_snapshot').eq('product_id', product_id).eq('channel_code', channel).maybeSingle(),
+    ]);
+    if (currentProductError || currentChannelError || !currentProduct?.[field] || !['approved', 'published'].includes(currentProduct.status) || currentChannel?.hold || currentChannel?.remote_snapshot?.global_offline_pending || currentChannel?.remote_snapshot?.global_offline) return json(409, { ok: false, online: false, error: 'Freigabe vor Versand zurückgezogen; reservierter Vorgang bleibt zur Prüfung gesperrt' });
     let result;
     try { result = await call(false); }
     catch { return json(200, { ok: false, online: false, publish_id, error: 'Übertragungsstand unklar; nicht erneut senden. Vorgang ist zur Prüfung gesperrt.' }); }

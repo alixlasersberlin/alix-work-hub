@@ -370,9 +370,7 @@ export default function ProductHubEditor() {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'product_id' });
       if (seoErr) throw seoErr;
-      const deactivated = siteList.some(site => !isSiteSelected(form, site.code, customSites) && phIsActiveOn(original, site.code, channels.find(c => c.channel_code === site.code)));
-      if (deactivated) toast.warning('In AlixWork deaktiviert – Abschaltung auf der Webseite ausstehend; der Abschaltanschluss fehlt noch.');
-      else toast.success('Gespeichert – Änderungen wurden protokolliert');
+      toast.success('In AlixWork gespeichert – Änderungen wurden protokolliert');
       await load();
       return true;
     } catch (e: any) { toast.error(e.message); return false; }
@@ -441,17 +439,17 @@ export default function ProductHubEditor() {
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
             {isSuperAdmin && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
-              if (!confirm('Gerät in AlixWork für alle Webseiten deaktivieren? Bereits veröffentlichte Seiten bleiben möglicherweise sichtbar, da der Abschaltanschluss noch fehlt.')) return;
+              if (!confirm('Gerät für alle Webseiten außer US deaktivieren? COM/DE erhalten automatisch den Abschaltauftrag; für andere Webseiten fehlt noch der bestätigte Anschluss.')) return;
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
               try {
                 const off: Record<string, boolean> = {};
-                Object.values(PH_ACTIVE_FIELD).forEach(f => { off[f] = false; });
+                Object.entries(PH_ACTIVE_FIELD).filter(([code]) => !['us', 'usa'].includes(code)).forEach(([, f]) => { off[f] = false; });
                 await phUpdateProduct(id, off);
-                for (const ch of siteList) {
+                for (const ch of siteList.filter(site => !['us', 'usa'].includes(site.code))) {
                   try {
-                    await phUpsertChannel(id, ch.code, siteSelectionPatch(false));
-                    results.push({ label: ch.label, ok: false, note: 'In AlixWork deaktiviert – Abschaltung auf der Webseite ausstehend; ein bestätigter Abschaltanschluss fehlt.' });
+                    const outcome = await phUpsertChannel(id, ch.code, siteSelectionPatch(false));
+                    results.push({ label: ch.label, ok: outcome?.offline === true, note: outcome?.note || 'Webseitenabschaltung ausstehend' });
                   } catch (e: any) { results.push({ label: ch.label, ok: false, note: e?.message || 'Fehler' }); }
                 }
                 setPublishResult(results);
@@ -830,7 +828,6 @@ export default function ProductHubEditor() {
                           if (!id) return;
                           await phUpsertChannel(id, ch.code, row?.hold ? { hold: false } : { hold: true, has_pending_changes: true });
                           if (row?.hold) toast.success('Freigegeben');
-                          else toast.warning('In AlixWork zurückgehalten – Abschaltung auf der Webseite ausstehend; der Abschaltanschluss fehlt noch.');
                           load();
                         }}>{row?.hold ? 'Freigeben' : 'Zurückhalten'}</Button>
                         <Button size="sm" onClick={async () => {

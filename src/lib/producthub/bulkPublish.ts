@@ -6,7 +6,7 @@ export interface BulkMapping { product_id: string; site_code: string; remote_pro
 export interface BulkResult { productId: string; product: string; site: string; state: 'accepted' | 'available' | 'error' | 'skipped'; note: string }
 export interface BulkPublishPorts {
   updateProduct: (id: string, patch: Record<string, unknown>) => Promise<void>;
-  updateChannel: (id: string, code: string, patch: Record<string, unknown>) => Promise<void>;
+  updateChannel: (id: string, code: string, patch: Record<string, unknown>) => Promise<unknown>;
   pushGlobal: (id: string, channel: 'com' | 'de') => Promise<void>;
 }
 
