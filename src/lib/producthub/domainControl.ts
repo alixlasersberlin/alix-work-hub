@@ -17,7 +17,7 @@ export async function controlDomain(products: (BulkProduct & Record<string, any>
     try {
       if (active) {
         result.note = await toggleProductSite(product, site, true, row, mappings, ports);
-        result.confirmed = site.code === 'com' || site.code === 'de' || site.code === 'beautyco';
+        result.confirmed = site.code === 'com' || site.code === 'de' || site.code === 'beautyco' || site.code === 'dubai';
       } else {
         // The domain adapter performs a local-only product write; withholding
         // then dispatches exactly one shutdown, including already inactive rows.

@@ -6,7 +6,7 @@ import { deactivatedGlobalChannels, isChannelDeactivation } from './deactivation
 const db = supabase as any;
 
 export async function phSendDeactivation(productId: string, channel: string) {
-  if (channel !== 'com' && channel !== 'de' && channel !== 'beautyco') {
+  if (channel !== 'com' && channel !== 'de' && channel !== 'beautyco' && channel !== 'dubai') {
     const result = { offline: false, note: 'In AlixWork deaktiviert – für diese Webseite fehlt der bestätigte Abschaltanschluss.' };
     toast.warning(result.note);
     return result;
@@ -42,7 +42,7 @@ export async function phGetProduct(id: string): Promise<PhProduct> {
 }
 
 export async function phUpdateProduct(id: string, patch: Record<string, any>) {
-  const needsBefore = patch.active_com === false || patch.active_de === false;
+  const needsBefore = patch.active_com === false || patch.active_de === false || patch.active_dubai === false;
   const before = needsBefore ? await phGetProduct(id) : null;
   const { data: { user } } = await supabase.auth.getUser();
   const { error } = await db.from('ph_products')

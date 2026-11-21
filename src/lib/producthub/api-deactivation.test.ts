@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ invoke: vi.fn(), upsert: vi.fn(), update: vi.fn(), before: { id: 'device', active_com: true, active_de: true }, success: vi.fn(), warning: vi.fn() }));
+const mocks = vi.hoisted(() => ({ invoke: vi.fn(), upsert: vi.fn(), update: vi.fn(), before: { id: 'device', active_com: true, active_de: true, active_dubai: true }, success: vi.fn(), warning: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   auth: { getUser: async () => ({ data: { user: { id: 'actor' } } }) },
   functions: { invoke: mocks.invoke },
@@ -10,6 +10,12 @@ import { phUpdateProduct, phUpsertChannel, phSendDeactivation } from './api';
 
 describe('gespeicherte Deaktivierung und automatischer Versand', () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.upsert.mockResolvedValue({ error: null }); mocks.invoke.mockResolvedValue({ data: { ok: true, offline: true, status: 'OFFLINE' }, error: null }); });
+  it('AE-Abwahl speichert zuerst und sendet genau einmal an dubai', async () => {
+    await phUpdateProduct('device', { active_dubai: false });
+    expect(mocks.update).toHaveBeenCalledExactlyOnceWith({ active_dubai: false, updated_by: 'actor' });
+    expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith('ph-global-publish-device', { body: { product_id: 'device', channel: 'dubai', action: 'deactivate' } });
+    expect(mocks.update.mock.invocationCallOrder[0]).toBeLessThan(mocks.invoke.mock.invocationCallOrder[0]);
+  });
   it('COM-Abwahl speichert zuerst und sendet nur COM', async () => {
     await phUpdateProduct('device', { active_com: false });
     expect(mocks.update).toHaveBeenCalledWith({ active_com: false, updated_by: 'actor' });

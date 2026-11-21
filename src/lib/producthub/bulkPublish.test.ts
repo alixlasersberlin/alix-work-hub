@@ -26,9 +26,20 @@ describe('Abgleich All', () => {
   });
   it('releases every product to active websites, not inactive ones', async () => {
     const s = setup();
-    await publishAllProducts(products, [{ code: 'dubai', name: 'AE', is_active: true }, { code: 'at', name: 'AT', is_active: false }], [], s.ports, s.progress);
-    expect(s.updates).toEqual([{ id: 'a', status: 'published', active_dubai: true }, { id: 'b', status: 'published', active_dubai: true }]);
+    await publishAllProducts(products, [{ code: 'at', name: 'AT', is_active: true }, { code: 'dubai', name: 'AE', is_active: false }], [], s.ports, s.progress);
+    expect(s.updates).toEqual([{ id: 'a', status: 'published', active_at: true }, { id: 'b', status: 'published', active_at: true }]);
     expect(s.results.map(r => r.state)).toEqual(['available', 'available']);
+  });
+  it('AE requires its own confirmed mapping, never COM/DE identities', async () => {
+    const s = setup(); const channels: string[] = [];
+    s.ports.pushGlobal = async (id, channel) => { s.pushes.push(id); channels.push(channel); };
+    await publishAllProducts(products, [{ code: 'dubai', name: 'AE', is_active: true }], [
+      { product_id: 'a', site_code: 'dubai', remote_product_id: 'ae-a', verified_at: '2026-11-21' },
+      { product_id: 'b', site_code: 'com', remote_product_id: 'com-b', verified_at: '2026-11-21' },
+    ], s.ports, s.progress);
+    expect(s.pushes).toEqual(['a']); expect(channels).toEqual(['dubai']);
+    expect(s.results.map(r => r.state)).toEqual(['accepted', 'skipped']);
+    expect(s.updates).toEqual([{ id: 'a', status: 'published', active_dubai: true }]);
   });
   it('pushes COM only with confirmed product mapping', async () => {
     const s = setup();

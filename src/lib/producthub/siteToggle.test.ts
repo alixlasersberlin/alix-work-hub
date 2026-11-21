@@ -12,6 +12,12 @@ it('DE deaktivieren schreibt nur DE und nutzt genau einen automatischen Abschalt
   expect(p.updateChannel).toHaveBeenCalledExactlyOnceWith('article-a', 'de', { has_pending_changes: true });
   expect(p.pushGlobal).not.toHaveBeenCalled();
 });
+it('AE deaktivieren uses only its product-write shutdown hook, not a duplicate withholding send', async () => {
+  const p = ports();
+  await toggleProductSite(product, { code: 'dubai', name: 'AE', is_active: true }, false, undefined, [], p);
+  expect(p.updateProduct).toHaveBeenCalledExactlyOnceWith('article-a', { active_dubai: false });
+  expect(p.updateChannel).toHaveBeenCalledExactlyOnceWith('article-a', 'dubai', { has_pending_changes: true });
+});
 it('DE aktivieren nutzt ausschließlich die vorhandene einzelne DE-Freigabe', async () => {
   const p = ports();
   await toggleProductSite(product, { code: 'de', name: 'DE', is_active: true }, true, undefined,

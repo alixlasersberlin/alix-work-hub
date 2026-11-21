@@ -1,6 +1,15 @@
 import { expect, it } from 'vitest';
 import { websiteState } from './websiteState';
 
+it('AE uses its own latest receipt for ONLINE/OFFLINE and pending changes invalidate confirmation', () => {
+  const receipt = { ok: true, offline: true, status: 'OFFLINE', channel: 'dubai' };
+  const row = { remote_snapshot: { ae_direct: receipt } };
+  expect(websiteState({ active_dubai: false }, 'dubai', row).confirmed).toBe(true);
+  expect(websiteState({ active_dubai: false }, 'dubai', { remote_snapshot: { ae_direct: receipt, ae_pending: {} } }).confirmed).toBe(false);
+  expect(websiteState({ active_dubai: true }, 'dubai', { remote_snapshot: { ae_direct: { ok: true, online: true, status: 'ONLINE', channel: 'dubai' } } }).confirmed).toBe(true);
+  expect(websiteState({ active_dubai: false }, 'dubai', { remote_snapshot: { ae_direct: { ...receipt, channel: 'de' } } }).confirmed).toBe(false);
+});
+
 it('Beauty requires its own ONLINE receipt and unresolved reservations invalidate prior success', () => {
   const row = { status: 'published', remote_snapshot: { beauty_online: { ok: true, online: true, channel: 'beautyco', state: 'online' } } };
   expect(websiteState({}, 'beautyco', row).confirmed).toBe(true);

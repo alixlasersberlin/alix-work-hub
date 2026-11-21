@@ -5,10 +5,11 @@ import { buildContent, confirmedReply, endpoints, signedHeaders, versionFor } fr
 import { deactivateGlobal } from './offline.ts';
 import { deactivateBeauty } from './beauty.ts';
 import { publishBeauty } from './beauty-release.ts';
+import { sendAE } from './ae.ts';
 import { blockedOperation, operationStatus } from './operation-response.ts';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status: operationStatus(status), headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de', 'beautyco']), action: z.enum(['publish', 'deactivate']).default('publish'), dry_run: z.boolean().default(false) }).strict();
+const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de', 'beautyco', 'dubai']), action: z.enum(['publish', 'deactivate', 'reactivate']).default('publish'), dry_run: z.boolean().default(false) }).strict();
 
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -39,6 +40,12 @@ Deno.serve(async req => {
     const { data: tenantAllowed, error: tenantError } = await (caller as any).rpc('tenant_scope_id_ok', { _tenant_id: typeof tenantId === 'string' ? tenantId : null });
     if (tenantError || !tenantAllowed) return json(403, { ok: false, error: 'Keine Mandantenberechtigung' });
     const admin = createClient(url, service);
+    if (channel === 'dubai') {
+      const aeKey = Deno.env.get('AE_PRODUCT_HUB_DIRECT_RELEASE_KEY');
+      if (!aeKey) return json(503, { ok: false, error: 'Sicherer AE-Zugang fehlt' });
+      return json(200, await sendAE(admin, caller, product, session.user.id, aeKey, action, dry_run));
+    }
+    if (action === 'reactivate') return json(200, { ok: false, online: false, error: 'Reaktivierung ist ausschließlich für den bestätigten AE-Vertrag angeschlossen' });
     if (channel === 'beautyco') {
       const beautyKey = Deno.env.get('BEAUTY_PRODUCT_HUB_WRITE_KEY');
       if (!beautyKey) return json(503, { ok: false, error: 'Sicherer Beauty-Zugang fehlt' });

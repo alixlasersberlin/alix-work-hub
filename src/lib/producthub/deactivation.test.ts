@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { deactivatedGlobalChannels, isChannelDeactivation } from './deactivation';
 
 describe('automatische Webseitenabschaltung', () => {
+  it('AE-Abwahl sendet ausschließlich dubai, niemals COM oder DE', () => {
+    expect(deactivatedGlobalChannels({ active_dubai: true, active_com: true, active_de: true }, { active_dubai: false })).toEqual(['dubai']);
+  });
   it('sendet bei COM-Abwahl nur COM', () => {
     expect(deactivatedGlobalChannels({ active_com: true, active_de: true }, { active_com: false })).toEqual(['com']);
   });

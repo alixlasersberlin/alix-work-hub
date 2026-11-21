@@ -1,8 +1,9 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 const invoke = vi.hoisted(() => vi.fn());
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke } } }));
+const channelRead = vi.hoisted(() => vi.fn());
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke }, from: () => ({ select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: channelRead }) }) }) }) } }));
 import { pushGlobalProduct } from './globalRelease';
-beforeEach(() => invoke.mockReset());
+beforeEach(() => { invoke.mockReset(); channelRead.mockReset(); channelRead.mockResolvedValue({ data: { remote_snapshot: {} }, error: null }); });
 
 it('shows missing mapping as a caught failed release without retry or successful publication', async () => {
   invoke.mockResolvedValue({ data: { ok: false, online: false, offline: false, error: 'Bestätigte GLOBAL-Gerätezuordnung fehlt' }, error: null });
@@ -23,4 +24,24 @@ it('Beauty validation or a different channel never counts as online publication'
   invoke.mockResolvedValue({ data: { ok: true, online: true, state: 'online', dry_run: false, channel: 'de' }, error: null });
   await expect(pushGlobalProduct('device', 'beautyco')).rejects.toThrow();
   expect(invoke).toHaveBeenCalledTimes(2);
+});
+
+it('explicit AE activation reactivates only a confirmed AE shutdown, then publishes after ONLINE', async () => {
+  channelRead.mockResolvedValue({ data: { remote_snapshot: { ae_direct: { ok: true, offline: true, status: 'OFFLINE', channel: 'dubai' } } }, error: null });
+  invoke.mockResolvedValue({ data: { ok: true, online: true, status: 'ONLINE', channel: 'dubai' }, error: null });
+  await pushGlobalProduct('device', 'dubai');
+  expect(invoke.mock.calls.map(c => c[1].body)).toEqual([
+    { product_id: 'device', channel: 'dubai', dry_run: false, action: 'reactivate' },
+    { product_id: 'device', channel: 'dubai', dry_run: false },
+  ]);
+});
+it('uncertain AE reactivation or pending reservation never proceeds to publish or retries', async () => {
+  channelRead.mockResolvedValue({ data: { remote_snapshot: { ae_direct: { ok: true, offline: true, status: 'OFFLINE', channel: 'dubai' } } }, error: null });
+  invoke.mockResolvedValue({ data: { ok: false, online: false, error: 'Transport unklar' }, error: null });
+  await expect(pushGlobalProduct('device', 'dubai')).rejects.toThrow('Transport unklar');
+  expect(invoke).toHaveBeenCalledOnce();
+  invoke.mockClear();
+  channelRead.mockResolvedValue({ data: { remote_snapshot: { ae_pending: {} } }, error: null });
+  await expect(pushGlobalProduct('device', 'dubai')).rejects.toThrow('kein Neuversand');
+  expect(invoke).not.toHaveBeenCalled();
 });

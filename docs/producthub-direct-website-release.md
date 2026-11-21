@@ -8,6 +8,14 @@ Aktueller Umstellungsumfang: **alix-lasers.de, alix-lasers.at, alix-lasers.ae un
 
 ## Geprüfter Ausgangsstand (21.11.2026)
 
+### AE-Direktanschluss · Auftrag 08:52 UTC
+
+- Vertrag aus UAE `7869afb8` geprüft: **POST https://alix-lasers.ae/api/public/product-hub/direct-release**, Kanal `dubai`, eigener gemeinsamer `AE_PRODUCT_HUB_DIRECT_RELEASE_KEY` sicher in AlixWork hinterlegt. Unsignierter echter Domainaufruf liefert 401 `INVALID_SIGNATURE`; das beweist den geschützten Empfang, nicht einen erfolgreichen Artikelversand oder die Gleichheit der Schlüssel.
+- AlixWork sendet Freigabe mit freigegebenem Englisch/Technik/Bildern ohne Preise, Abschaltung ohne Inhalte und explizite Reaktivierung mit `approval.reactivate:true`. Der letzte bestätigte `ae_direct.source_version` gilt für alle drei Aktionen als erwartete Version; niemals aus Produktdatum, fremdem Kanal oder Fehlerantwort erfinden.
+- Alle Wege nutzen eigene bestätigte AE-Geräte-UUIDs, serverseitige aktive Super-Admin-/Mandantenprüfung, signierte Probeläufe und reservierte Einzelvorgänge. `ae_pending` bleibt bei unklarem Versand bestehen; keine automatischen Wiederholungen. Nur passende ONLINE/OFFLINE-Antworten mit den EN-/AR-Detailadressen schließen ab. Eine Aktivierung eines bestätigt abgeschalteten AE-Artikels führt erst geschützte Reaktivierung durch, dann separat die Veröffentlichung der aktuellen freigegebenen Inhalte; der zweite Versand erfolgt nur nach bestätigtem ONLINE des ersten Vorgangs.
+- **Blocker:** derzeit 0 von 44 Artikeln mit bestätigter AE-Zuordnung. Aus dem AE-Projekt einen Export der vorhandenen `products`-Felder `id`, `hub_product_id`, `slug`, `hub_direct_version`, `hub_offline_at` und der letzten passenden Direct-Operationsergebnisse bereitstellen. Keine Namen als Zuordnungsersatz, keine fremden Datenbankzugänge aus dem Snapshot verwenden. Echte Abnahme zusätzlich mit verfügbarer aktiver Super-Admin-Sitzung und ausdrücklich gewähltem Gerät.
+- Das gemeldete Paket-Sicherheitsupdate betrifft das AE-Projekt; hier keine zusätzlichen Paketänderungen. Preise, andere Domains und US unverändert; AT-Direktanschluss bleibt separat offen.
+
 ### Auftrag „alle Webseiten umstellen“ · 08:32 UTC
 
 - AT `41a9a5f1` und AE `a2000359` erneut gelesen: weiterhin kein bestätigter Direkt-Veröffentlichungs-/Abschaltvertrag. Diese Projekte sind hier nur lesbar und müssen dort umgestellt werden; keine erfundenen Empfänger oder Freigaben senden.

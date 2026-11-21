@@ -100,7 +100,7 @@ export default function ProductHubWebseiten() {
           return <div key={site.code} className="flex flex-wrap items-center gap-3 py-4">
             <div className="min-w-0 flex-1"><h2 className="font-semibold break-words">{site.label}</h2>
               <p className="text-sm text-muted-foreground">AlixWork: {active} aktiv · {products.length - active} deaktiviert / zurückgehalten{excluded ? ' · ausgenommen' : ''}</p>
-              {!excluded && <span className="text-xs text-muted-foreground">{['com', 'de', 'beautyco'].includes(site.code) ? 'Direkter Freigabe- und Abschaltversand' : 'Abrufanschluss · direkter Freigabe- und Abschaltversand fehlt'}</span>}
+              {!excluded && <span className="text-xs text-muted-foreground">{['com', 'de', 'beautyco', 'dubai'].includes(site.code) ? `Direkter Freigabe- und Abschaltversand${site.code === 'dubai' ? ' · geschützte Wiederaktivierung' : ''}` : 'Abrufanschluss · direkter Freigabe- und Abschaltversand fehlt'}</span>}
             </div>
             {canWrite && !excluded && <div className="flex flex-wrap gap-2">
               <Button variant="outline" disabled={bulkBusy || !products.length} onClick={() => domainAction(site.code, 'sync')}><RefreshCw className="mr-2 h-4 w-4" />Abgleich senden</Button>

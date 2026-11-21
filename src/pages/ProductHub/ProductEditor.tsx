@@ -430,7 +430,7 @@ export default function ProductHubEditor() {
                     await phUpsertChannel(id, ch.code, {
                       hold: false, status: 'published', publish_state: 'published', has_pending_changes: true,
                     });
-                    if (ch.code === 'com' || ch.code === 'de' || ch.code === 'beautyco') {
+                    if (ch.code === 'com' || ch.code === 'de' || ch.code === 'beautyco' || ch.code === 'dubai') {
                       await pushGlobalProduct(id, ch.code);
                       results.push({ label: ch.label, ok: true, note: 'Online veröffentlicht und geprüft' });
                     } else results.push({ label: ch.label, ok: true, note: 'Freigegeben – Webseite übernimmt automatisch beim nächsten Abruf' });
@@ -442,7 +442,7 @@ export default function ProductHubEditor() {
               finally { setPublishingAll(false); }
             }}>{publishingAll ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Freigabe</Button>}
             {isSuperAdmin && id && <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
-              if (!confirm('Gerät für alle Webseiten außer US deaktivieren? COM/DE und Beauty erhalten automatisch den Abschaltauftrag, wenn ihre Voraussetzungen erfüllt sind; andere Webseiten sind noch nicht angeschlossen.')) return;
+              if (!confirm('Gerät für alle Webseiten außer US deaktivieren? COM/DE, AE und Beauty erhalten automatisch den Abschaltauftrag, wenn ihre Voraussetzungen erfüllt sind; AT ist noch nicht direkt angeschlossen.')) return;
               setPublishingAll(true);
               const results: { label: string; ok: boolean; note: string }[] = [];
               try {
@@ -827,7 +827,7 @@ export default function ProductHubEditor() {
                     {row?.live_url && <Button size="sm" variant="outline" asChild><a href={row.live_url} target="_blank" rel="noreferrer">Vorschau</a></Button>}
                     {isSuperAdmin && (
                       <>
-                        {['com', 'de', 'beautyco'].includes(ch.code) && (row?.hold || (activeField && form[activeField] === false)) && (
+                        {['com', 'de', 'beautyco', 'dubai'].includes(ch.code) && (row?.hold || (activeField && form[activeField] === false)) && (
                           <Button size="sm" variant="destructive" disabled={saving || publishingAll} onClick={async () => {
                             if (!id || !confirm(`Abschaltvorgang ausschließlich an ${ch.label} senden? Andere Webseiten bleiben unverändert.`)) return;
                             setPublishingAll(true);
@@ -849,7 +849,7 @@ export default function ProductHubEditor() {
                           try {
                             if (!await save()) return;
                             await phUpsertChannel(id, ch.code, { hold: false, status: 'published', publish_state: 'published', has_pending_changes: true });
-                            if (ch.code === 'com' || ch.code === 'de' || ch.code === 'beautyco') {
+                            if (ch.code === 'com' || ch.code === 'de' || ch.code === 'beautyco' || ch.code === 'dubai') {
                               await pushGlobalProduct(id, ch.code);
                               toast.success(`Für ${ch.short} online veröffentlicht und geprüft`);
                             } else toast.success(`Für ${ch.short} zum Abruf freigegeben`);

@@ -58836,6 +58836,19 @@ export type Database = {
           table_name: string
         }[]
       }
+      ph_ae_claim_operation: {
+        Args: { p_envelope: Json; p_product_id: string }
+        Returns: undefined
+      }
+      ph_ae_finish_operation: {
+        Args: {
+          p_confirmed: boolean
+          p_operation_id: string
+          p_product_id: string
+          p_reply: Json
+        }
+        Returns: undefined
+      }
       ph_beauty_claim_offline: {
         Args: { p_product_id: string; p_request: Json }
         Returns: undefined

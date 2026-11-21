@@ -7,7 +7,7 @@ export interface BulkResult { productId: string; product: string; site: string; 
 export interface BulkPublishPorts {
   updateProduct: (id: string, patch: Record<string, unknown>) => Promise<void>;
   updateChannel: (id: string, code: string, patch: Record<string, unknown>) => Promise<unknown>;
-  pushGlobal: (id: string, channel: 'com' | 'de' | 'beautyco') => Promise<void>;
+  pushGlobal: (id: string, channel: 'com' | 'de' | 'beautyco' | 'dubai') => Promise<void>;
 }
 
 export async function publishAllProducts(products: BulkProduct[], sites: BulkSite[], mappings: BulkMapping[], ports: BulkPublishPorts,
@@ -17,7 +17,7 @@ export async function publishAllProducts(products: BulkProduct[], sites: BulkSit
   for (const product of products) {
     for (const site of targets) {
       const result: BulkResult = { productId: product.id, product: product.name, site: site.name, state: 'error', note: '' };
-      const direct = site.code === 'com' || site.code === 'de';
+      const direct = site.code === 'com' || site.code === 'de' || site.code === 'dubai';
       const confirmed = !direct || mappings.some(m => m.product_id === product.id && m.site_code === site.code && !!m.verified_at && !!m.remote_product_id.trim());
       if (!confirmed) {
         result.state = 'skipped'; result.note = 'Keine bestätigte Gerätezuordnung – nicht übertragen';
@@ -28,7 +28,7 @@ export async function publishAllProducts(products: BulkProduct[], sites: BulkSit
           await ports.updateChannel(product.id, site.code, {
             hold: false, status: 'published', publish_state: 'published', has_pending_changes: true,
           });
-          if (site.code === 'com' || site.code === 'de' || site.code === 'beautyco') {
+          if (site.code === 'com' || site.code === 'de' || site.code === 'beautyco' || site.code === 'dubai') {
             await ports.pushGlobal(product.id, site.code);
             result.state = 'accepted'; result.note = 'In AlixWork freigegeben · online veröffentlicht und geprüft';
           } else {
