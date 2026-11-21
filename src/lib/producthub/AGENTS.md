@@ -1,0 +1,1 @@
+- Domain-wide actions snapshot all paginated authorized products and reuse protected single-channel operations sequentially; the domain adapter uses local-only product writes before one withholding shutdown dispatch, retains identity/uncertainty/reactivation gates, excludes US, and reports per-item receipts without inventing website success.

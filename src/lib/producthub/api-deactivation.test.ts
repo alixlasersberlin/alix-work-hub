@@ -17,7 +17,7 @@ describe('gespeicherte Deaktivierung und automatischer Versand', () => {
     expect(mocks.update.mock.invocationCallOrder[0]).toBeLessThan(mocks.invoke.mock.invocationCallOrder[0]);
   });
   it('Zurückhalten sendet den DE-Abschaltauftrag', async () => {
-    expect(await phUpsertChannel('device', 'de', { hold: true })).toEqual({ offline: true, note: 'Abschaltung auf der Webseite bestätigt' });
+    expect(await phUpsertChannel('device', 'de', { hold: true })).toEqual({ offline: true, note: 'Abschaltung auf der Webseite bestätigt', receipt: { ok: true, offline: true, status: 'OFFLINE' } });
     expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith('ph-global-publish-device', { body: { product_id: 'device', channel: 'de', action: 'deactivate' } });
   });
   it('separater Skin Master Mini DE-Versand verändert weder COM noch lokale Freigaben', async () => {

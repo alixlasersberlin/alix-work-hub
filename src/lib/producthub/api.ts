@@ -20,7 +20,7 @@ export async function phSendDeactivation(productId: string, channel: string) {
     }
     if (!data?.ok || data.offline !== true || (channel === 'beautyco' ? data.state !== 'OFFLINE' : data.status !== 'OFFLINE')) throw new Error(data?.error || 'OFFLINE-Nachweis fehlt');
     toast.success(`${channel.toUpperCase()}: Abschaltung auf der Webseite bestätigt`);
-    return { offline: true, note: 'Abschaltung auf der Webseite bestätigt' };
+    return { offline: true, note: 'Abschaltung auf der Webseite bestätigt', receipt: data };
   } catch (error) {
     const note = `In AlixWork deaktiviert – Webseitenabschaltung ausstehend: ${error instanceof Error ? error.message : 'Keine Bestätigung'}`;
     toast.warning(note);

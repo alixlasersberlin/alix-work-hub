@@ -6,12 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Globe } from 'lucide-react';
+import { Globe, Power, PowerOff, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { PH_CHANNELS, PH_ACTIVE_FIELD, phLabel, PH_CRITICAL_FIELDS } from '@/lib/producthub/config';
+import { PH_CHANNELS, phLabel, PH_CRITICAL_FIELDS } from '@/lib/producthub/config';
 import { phUpsertChannel } from '@/lib/producthub/api';
+import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
+import { controlDomain, type DomainAction, type DomainResult } from '@/lib/producthub/domainControl';
 import { useAuth } from '@/hooks/useAuth';
 import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
 
@@ -20,67 +21,63 @@ const COMPARE_FIELDS = ['name', 'model', 'short_description', 'wavelengths', 'po
 
 export default function ProductHubWebseiten() {
   const { roles } = useAuth();
-  const canWrite = (roles || []).some((r: string) => ['Super Admin', 'Admin'].includes(r));
+  const canWrite = (roles || []).includes('Super Admin');
   const { channels: SITES } = usePhChannels(false);
   const [products, setProducts] = useState<any[]>([]);
   const [chan, setChan] = useState<any[]>([]);
   const [compare, setCompare] = useState<any | null>(null);
-  const [bulkChannel, setBulkChannel] = useState<string>('dubai');
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [run, setRun] = useState<{ domain: string; total: number; results: DomainResult[] } | null>(null);
+
+  const readAll = async (table: string) => {
+    const rows: any[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await db.from(table).select('*').order('id').range(offset, offset + 499);
+      if (error) throw error;
+      rows.push(...(data || []));
+      if ((data || []).length < 500) return rows;
+    }
+  };
 
   const load = async () => {
-    const [p, c] = await Promise.all([
-      db.from('ph_products').select('*').order('name'),
-      db.from('ph_product_channels').select('*'),
-    ]);
-    setProducts(p.data || []); setChan(c.data || []);
+    try {
+      const [p, c] = await Promise.all([readAll('ph_products'), readAll('ph_product_channels')]);
+      setProducts(p.sort((a, b) => a.name.localeCompare(b.name, 'de'))); setChan(c);
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Webseitenübersicht konnte nicht geladen werden'); }
   };
   useEffect(() => { load(); }, []);
 
   const row = (pid: string, code: string) => chan.find(c => c.product_id === pid && c.channel_code === code);
 
   const publish = async (p: any, code: string) => {
-    await phUpsertChannel(p.id, code, {
-      status: 'published', publish_state: 'published', has_pending_changes: false,
-      last_sync_at: new Date().toISOString(), last_sync_status: 'ok',
-    });
-    await db.from('ph_sync_log').insert({ channel_code: code, direction: 'export', operation: 'publish', product_id: p.id, status: 'ok', message: `${p.name} für ${code.toUpperCase()} freigegeben` });
-    toast.success(`Für ${code.toUpperCase()} freigegeben`, {
-      description: 'Die Webseite holt die Daten selbst ab. Was sie anzeigt, entscheidet das Webseiten-Projekt.',
-    });
-    load();
+    await domainAction(code, 'activate', p.id);
   };
 
-  const publishAll = async () => {
-    const code = bulkChannel;
+  const domainAction = async (code: string, action: DomainAction, onlyId?: string) => {
+    if (bulkBusy || !canWrite || ['us', 'usa'].includes(code)) return;
     const chLabel = SITES.find(c => c.code === code)?.label || code;
-    if (!window.confirm(`Wirklich alle ${products.length} Geräte für ${chLabel} freigeben?`)) return;
+    const command = action === 'activate' ? 'aktivieren' : action === 'deactivate' ? 'deaktivieren' : 'gemäß der Geräteübersicht abgleichen';
+    if (!window.confirm(`${onlyId ? 'Diesen Artikel' : 'Alle Artikel'} ausschließlich für ${chLabel} ${command}? Andere Domains und Preise bleiben unverändert. Gesperrte Vorgänge bleiben gesperrt.`)) return;
     setBulkBusy(true);
     try {
-      const now = new Date().toISOString();
-      const activeField = PH_ACTIVE_FIELD[code];
-      const { error: e1 } = await db.from('ph_product_channels').upsert(
-        products.map(p => ({
-          product_id: p.id, channel_code: code, status: 'published', publish_state: 'published',
-          has_pending_changes: false, last_sync_at: now, last_sync_status: 'ok',
-        })),
-        { onConflict: 'product_id,channel_code' },
-      );
-      if (e1) throw e1;
-      if (activeField) {
-        const { error: e2 } = await db.from('ph_products')
-          .update({ [activeField]: true }).in('id', products.map(p => p.id));
-        if (e2) throw e2;
-      }
-      await db.from('ph_sync_log').insert(products.map(p => ({
-        channel_code: code, direction: 'export', operation: 'publish', product_id: p.id,
-        status: 'ok', message: `${p.name} für ${chLabel} freigegeben (Sammelfreigabe)`,
-      })));
-      toast.success(`${products.length} Geräte für ${chLabel} freigegeben`);
-      load();
+      const { data: allowed, error: roleError } = await supabase.rpc('has_role', { check_role: 'Super Admin' });
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (roleError || authError || !allowed || !user) throw new Error('Aktive Super-Admin-Anmeldung erforderlich');
+      const [fresh, channelRows, mappings] = await Promise.all([readAll('ph_products'), readAll('ph_product_channels'), readAll('ph_lang_sync_map')]);
+      const targets = onlyId ? fresh.filter(p => p.id === onlyId) : fresh;
+      setRun({ domain: chLabel, total: targets.length, results: [] });
+      await controlDomain(targets, { code, name: chLabel, is_active: SITES.find(s => s.code === code)?.is_active === true }, action, channelRows, mappings, {
+        updateProduct: async (id, patch) => {
+          const { error } = await db.from('ph_products').update({ ...patch, updated_by: user.id }).eq('id', id);
+          if (error) throw error;
+        },
+        updateChannel: phUpsertChannel,
+        pushGlobal: async (id, channel) => { await pushGlobalProduct(id, channel); },
+      }, result => setRun(previous => previous ? { ...previous, results: [...previous.results, result] } : previous));
     } catch (e: any) {
-      toast.error(e.message || 'Freigabe fehlgeschlagen');
+      toast.error(e.message || 'Domainänderung fehlgeschlagen');
     } finally {
+      await load();
       setBulkBusy(false);
     }
   };
@@ -99,20 +96,30 @@ export default function ProductHubWebseiten() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Webseiten" subtitle="Veröffentlichungskanäle – neue Webseiten unter Einstellungen anlegen" icon={Globe} />
-      {canWrite && (
-        <Card><CardContent className="p-4 flex flex-wrap items-center gap-3">
-          <span className="text-sm text-muted-foreground">Sammelfreigabe:</span>
-          <Select value={bulkChannel} onValueChange={setBulkChannel}>
-            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {SITES.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button onClick={publishAll} disabled={bulkBusy || products.length === 0}>
-            {bulkBusy ? 'Wird freigegeben…' : `Alle ${products.length} Geräte freigeben`}
-          </Button>
-        </CardContent></Card>
-      )}
+      <section className="divide-y divide-border border-y border-border" aria-label="Domainsteuerung">
+        {SITES.map(site => {
+          const active = products.filter(p => phIsActiveOn(p, site.code, row(p.id, site.code)) && !row(p.id, site.code)?.hold).length;
+          const excluded = ['us', 'usa'].includes(site.code);
+          return <div key={site.code} className="flex flex-wrap items-center gap-3 py-4">
+            <div className="min-w-0 flex-1"><h2 className="font-semibold break-words">{site.label}</h2>
+              <p className="text-sm text-muted-foreground">AlixWork: {active} aktiv · {products.length - active} deaktiviert / zurückgehalten{excluded ? ' · ausgenommen' : ''}</p>
+            </div>
+            {canWrite && !excluded && <div className="flex flex-wrap gap-2">
+              <Button variant="outline" disabled={bulkBusy || !products.length} onClick={() => domainAction(site.code, 'sync')}><RefreshCw className="mr-2 h-4 w-4" />Abgleich senden</Button>
+              <Button disabled={bulkBusy || !products.length || !site.is_active} onClick={() => domainAction(site.code, 'activate')}><Power className="mr-2 h-4 w-4" />Alle aktivieren</Button>
+              <Button variant="destructive" disabled={bulkBusy || !products.length} onClick={() => domainAction(site.code, 'deactivate')}><PowerOff className="mr-2 h-4 w-4" />Alle deaktivieren</Button>
+            </div>}
+          </div>;
+        })}
+      </section>
+      {run && <section aria-live="polite" className="space-y-3">
+        <h2 className="font-semibold">{run.domain} · {run.results.length} / {run.total}{bulkBusy ? ' · läuft' : ' · abgeschlossen'}</h2>
+        <Table><TableHeader><TableRow><TableHead>Artikel</TableHead><TableHead>Ziel</TableHead><TableHead>Ergebnis</TableHead></TableRow></TableHeader>
+          <TableBody>{run.results.map(result => <TableRow key={result.id}><TableCell>{result.name}</TableCell><TableCell>{result.active ? 'Aktiv' : 'OFFLINE'}</TableCell><TableCell className="max-w-lg break-words">
+            <span className={result.confirmed ? 'text-success' : 'text-muted-foreground'}>{result.note}</span>
+            {result.receipt !== undefined && <details><summary className="cursor-pointer">OFFLINE-Antwort</summary><pre className="whitespace-pre-wrap break-all text-xs">{JSON.stringify(result.receipt, null, 2)}</pre></details>}
+          </TableCell></TableRow>)}</TableBody></Table>
+      </section>}
       <Card><CardContent className="p-0 overflow-x-auto">
         <Table>
           <TableHeader><TableRow>
@@ -144,8 +151,8 @@ export default function ProductHubWebseiten() {
                 <TableCell className="space-x-1 whitespace-nowrap">
                   <Button size="sm" variant="outline" onClick={() => setCompare(p)}>Vergleich</Button>
                   {canWrite && <>
-                    <Button size="sm" variant="outline" onClick={() => publish(p, 'com')}>→ COM</Button>
-                    <Button size="sm" variant="outline" onClick={() => publish(p, 'de')}>→ DE</Button>
+                    <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => publish(p, 'com')}>→ COM</Button>
+                    <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => publish(p, 'de')}>→ DE</Button>
                   </>}
                 </TableCell>
               </TableRow>
