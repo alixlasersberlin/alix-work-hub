@@ -1,1 +1,2 @@
 - Domain-wide actions snapshot all paginated authorized products and reuse protected single-channel operations sequentially; the domain adapter uses local-only product writes before one withholding shutdown dispatch, retains identity/uncertainty/reactivation gates, excludes US, and reports per-item receipts without inventing website success.
+- Website matrix state is derived by websiteState from selected channel flags with hold overriding activation; report remote success only for channel-matched receipts without pending changes, never from local published status.

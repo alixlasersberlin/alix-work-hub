@@ -1,6 +1,6 @@
 import { PH_ACTIVE_FIELD } from './config';
 import { toggleProductSite } from './siteToggle';
-import { phIsActiveOn } from './useChannels';
+import { websiteState } from './websiteState';
 import type { BulkMapping, BulkProduct, BulkPublishPorts, BulkSite } from './bulkPublish';
 
 export type DomainAction = 'activate' | 'deactivate' | 'sync';
@@ -12,7 +12,7 @@ export async function controlDomain(products: (BulkProduct & Record<string, any>
   if (['us', 'usa'].includes(site.code)) throw new Error('US bleibt ausgenommen');
   for (const product of products) {
     const row = channels.find(c => c.product_id === product.id && c.channel_code === site.code);
-    const active = action === 'activate' || (action === 'sync' && phIsActiveOn(product, site.code, row) && !row?.hold);
+    const active = action === 'activate' || (action === 'sync' && websiteState(product, site.code, row).active);
     const result: DomainResult = { id: product.id, name: product.name, active, confirmed: false, note: '' };
     try {
       if (active) {

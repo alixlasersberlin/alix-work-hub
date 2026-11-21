@@ -14,7 +14,8 @@ import { phUpsertChannel } from '@/lib/producthub/api';
 import { pushGlobalProduct } from '@/lib/producthub/globalRelease';
 import { controlDomain, type DomainAction, type DomainResult } from '@/lib/producthub/domainControl';
 import { useAuth } from '@/hooks/useAuth';
-import { usePhChannels, phIsActiveOn } from '@/lib/producthub/useChannels';
+import { usePhChannels } from '@/lib/producthub/useChannels';
+import { websiteState } from '@/lib/producthub/websiteState';
 
 const db = supabase as any;
 const COMPARE_FIELDS = ['name', 'model', 'short_description', 'wavelengths', 'power', 'fluence', 'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class', 'mdr_status', 'ce_status', 'seo_title', 'seo_description'];
@@ -48,10 +49,6 @@ export default function ProductHubWebseiten() {
   useEffect(() => { load(); }, []);
 
   const row = (pid: string, code: string) => chan.find(c => c.product_id === pid && c.channel_code === code);
-
-  const publish = async (p: any, code: string) => {
-    await domainAction(code, 'activate', p.id);
-  };
 
   const domainAction = async (code: string, action: DomainAction, onlyId?: string) => {
     if (bulkBusy || !canWrite || ['us', 'usa'].includes(code)) return;
@@ -95,14 +92,15 @@ export default function ProductHubWebseiten() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <PageHeader title="Product Hub · Webseiten" subtitle="Veröffentlichungskanäle – neue Webseiten unter Einstellungen anlegen" icon={Globe} />
+      <PageHeader title="Product Hub · Webseiten" subtitle="Freigabestelle: AlixWork · Super Admin" icon={Globe} />
       <section className="divide-y divide-border border-y border-border" aria-label="Domainsteuerung">
         {SITES.map(site => {
-          const active = products.filter(p => phIsActiveOn(p, site.code, row(p.id, site.code)) && !row(p.id, site.code)?.hold).length;
+          const active = products.filter(p => websiteState(p, site.code, row(p.id, site.code)).active).length;
           const excluded = ['us', 'usa'].includes(site.code);
           return <div key={site.code} className="flex flex-wrap items-center gap-3 py-4">
             <div className="min-w-0 flex-1"><h2 className="font-semibold break-words">{site.label}</h2>
               <p className="text-sm text-muted-foreground">AlixWork: {active} aktiv · {products.length - active} deaktiviert / zurückgehalten{excluded ? ' · ausgenommen' : ''}</p>
+              {!excluded && <span className="text-xs text-muted-foreground">{['com', 'de'].includes(site.code) ? 'Direkter Freigabe- und Abschaltversand' : site.code === 'beautyco' ? 'Freigabe per Abruf · direkter Abschaltversand' : 'Abrufanschluss · direkter Abschaltversand fehlt'}</span>}
             </div>
             {canWrite && !excluded && <div className="flex flex-wrap gap-2">
               <Button variant="outline" disabled={bulkBusy || !products.length} onClick={() => domainAction(site.code, 'sync')}><RefreshCw className="mr-2 h-4 w-4" />Abgleich senden</Button>
@@ -134,26 +132,25 @@ export default function ProductHubWebseiten() {
                 <TableCell><Link to={`/product-hub/geraete/${p.id}`} className="text-primary hover:underline">{p.name}</Link></TableCell>
                 {SITES.map(c => {
                   const r = row(p.id, c.code);
-                  const on = phIsActiveOn(p, c.code, r);
+                  const state = websiteState(p, c.code, r);
+                  const excluded = ['us', 'usa'].includes(c.code);
                   return (
                     <TableCell key={c.code} className="text-xs">
                       <div className="flex flex-col gap-0.5">
-                        <Badge variant="outline" className={on ? 'border-emerald-500/40 text-emerald-500 w-fit' : 'w-fit'}>
-                          {r?.status || (on ? 'aktiv' : '—')}
-                        </Badge>
-                        {r?.last_sync_at && <span className="text-muted-foreground">{new Date(r.last_sync_at).toLocaleDateString('de-DE')}</span>}
-                        {r?.has_pending_changes && <span className="text-sky-500">Änderungen</span>}
-                        {r?.hold && <span className="text-amber-500">zurückgehalten</span>}
+                        {canWrite && !excluded ? <Button size="sm" variant="outline" disabled={bulkBusy || (!state.active && !c.is_active)}
+                          className={state.active ? 'w-fit border-success text-success' : 'w-fit border-destructive text-destructive'}
+                          aria-label={`${p.name} auf ${c.label} ${state.active ? 'deaktivieren' : 'aktivieren'}`}
+                          onClick={() => domainAction(c.code, state.active ? 'deactivate' : 'activate', p.id)}>
+                          {state.active ? <Power className="mr-1 h-3 w-3" /> : <PowerOff className="mr-1 h-3 w-3" />}{state.label}
+                        </Button> : <Badge variant="outline" className={state.active ? 'w-fit border-success text-success' : 'w-fit border-destructive text-destructive'}>{state.label}</Badge>}
+                        <span className={state.confirmed ? 'text-success' : 'text-muted-foreground'}>{excluded ? 'US ausgenommen' : state.delivery}</span>
+                        {r?.hold && <span className="text-muted-foreground">Zurückgehalten</span>}
                       </div>
                     </TableCell>
                   );
                 })}
                 <TableCell className="space-x-1 whitespace-nowrap">
                   <Button size="sm" variant="outline" onClick={() => setCompare(p)}>Vergleich</Button>
-                  {canWrite && <>
-                    <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => publish(p, 'com')}>→ COM</Button>
-                    <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => publish(p, 'de')}>→ DE</Button>
-                  </>}
                 </TableCell>
               </TableRow>
             ))}
