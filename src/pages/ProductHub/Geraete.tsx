@@ -133,31 +133,59 @@ export default function ProductHubGeraete() {
     } catch (e: any) { toast.error(e.message); }
   };
 
+  const applyToggle = async (product: any, site: PhChannel, currentlyActive: boolean): Promise<string> => {
+    const [freshProduct, channelResult] = await Promise.all([
+      phGetProduct(product.id),
+      db.from('ph_product_channels').select('*').eq('product_id', product.id).eq('channel_code', site.code).maybeSingle(),
+    ]);
+    if (channelResult.error) throw channelResult.error;
+    if (phIsActiveOn(freshProduct, site.code, channelResult.data) !== currentlyActive) throw new Error('Webseitenstatus wurde inzwischen geändert; bitte den aktualisierten Stand prüfen.');
+    let mappings: BulkMapping[] = [];
+    if (!currentlyActive) {
+      const { data, error } = await supabase.from('ph_lang_sync_map').select('product_id,site_code,remote_product_id,verified_at').eq('product_id', product.id).eq('site_code', site.code);
+      if (error) throw error;
+      mappings = (data || []) as BulkMapping[];
+    }
+    return toggleProductSite({ id: product.id, name: product.name }, { code: site.code, name: site.label, is_active: site.is_active }, !currentlyActive,
+      channelResult.data, mappings, { updateProduct: phUpdateProduct, updateChannel: phUpsertChannel, pushGlobal: async (id, channel) => { await pushGlobalProduct(id, channel); } });
+  };
+
+  const assertSuperAdmin = async () => {
+    const { data: allowed, error: roleError } = await supabase.rpc('has_role', { check_role: 'Super Admin' });
+    if (roleError || !allowed) throw new Error('Nur der Super Admin darf Webseitenfreigaben ändern');
+  };
+
   const toggleSite = async (product: any, site: PhChannel, currentlyActive: boolean) => {
     if (toggleLock.current || !isSuperAdmin || ['us', 'usa'].includes(site.code)) return;
     if (!confirm(`${product.name} ausschließlich auf ${site.label} ${currentlyActive ? 'deaktivieren' : 'aktivieren und freigeben'}? Andere Webseiten bleiben unverändert.`)) return;
     toggleLock.current = true; setToggleBusy(true);
     try {
-      const { data: allowed, error: roleError } = await supabase.rpc('has_role', { check_role: 'Super Admin' });
-      if (roleError || !allowed) throw new Error('Nur der Super Admin darf Webseitenfreigaben ändern');
-      const [freshProduct, channelResult] = await Promise.all([
-        phGetProduct(product.id),
-        db.from('ph_product_channels').select('*').eq('product_id', product.id).eq('channel_code', site.code).maybeSingle(),
-      ]);
-      if (channelResult.error) throw channelResult.error;
-      if (phIsActiveOn(freshProduct, site.code, channelResult.data) !== currentlyActive) throw new Error('Webseitenstatus wurde inzwischen geändert; bitte den aktualisierten Stand prüfen.');
-      let mappings: BulkMapping[] = [];
-      if (!currentlyActive) {
-        const { data, error } = await supabase.from('ph_lang_sync_map').select('product_id,site_code,remote_product_id,verified_at').eq('product_id', product.id).eq('site_code', site.code);
-        if (error) throw error;
-        mappings = (data || []) as BulkMapping[];
-      }
-      const note = await toggleProductSite({ id: product.id, name: product.name }, { code: site.code, name: site.label, is_active: site.is_active }, !currentlyActive,
-        channelResult.data, mappings, { updateProduct: phUpdateProduct, updateChannel: phUpsertChannel, pushGlobal: async (id, channel) => { await pushGlobalProduct(id, channel); } });
+      await assertSuperAdmin();
+      const note = await applyToggle(product, site, currentlyActive);
       setToggleResult({ title: `${product.name} · ${site.label}`, note });
     } catch (error) {
       setToggleResult({ title: `${product.name} · ${site.label}`, note: error instanceof Error ? error.message : 'Webseitenstatus konnte nicht geändert werden' });
     } finally {
+      await load(); toggleLock.current = false; setToggleBusy(false);
+    }
+  };
+
+  /** Deaktiviert das Gerät auf allen Webseiten aus „Aktiviert auf“ (ohne US), nacheinander, ohne automatische Wiederholung. */
+  const deactivateAllActive = async (product: any, active: PhChannel[]) => {
+    const targets = active.filter(site => !['us', 'usa'].includes(site.code));
+    if (toggleLock.current || !isSuperAdmin || !targets.length) return;
+    if (!confirm(`${product.name} auf allen aktivierten Webseiten deaktivieren?\n${targets.map(t => t.label).join(', ')}`)) return;
+    toggleLock.current = true; setToggleBusy(true);
+    const lines: string[] = [];
+    try {
+      await assertSuperAdmin();
+      for (const site of targets) {
+        try { lines.push(`${site.label}: ${await applyToggle(product, site, true)}`); }
+        catch (error) { lines.push(`${site.label}: ${error instanceof Error ? error.message : 'Fehler'}`); }
+      }
+    } catch (error) { lines.push(error instanceof Error ? error.message : 'Fehler'); }
+    finally {
+      setToggleResult({ title: `${product.name} · alle aktivierten Webseiten deaktivieren`, note: lines.join('\n') });
       await load(); toggleLock.current = false; setToggleBusy(false);
     }
   };
@@ -272,6 +300,12 @@ export default function ProductHubGeraete() {
                               <WebsiteStatusControl site={site} active enabled={isSuperAdmin} busy={toggleBusy} onToggle={() => toggleSite(p, site, true)} />
                             </li>
                           ))}
+                          {isSuperAdmin && activeSites.some(site => !['us', 'usa'].includes(site.code)) && (
+                            <li onClick={event => event.stopPropagation()}>
+                              <Button size="sm" variant="destructive" className="h-6 px-2 text-[11px] mt-1" disabled={toggleBusy}
+                                onClick={() => deactivateAllActive(p, activeSites)}>Deaktivieren</Button>
+                            </li>
+                          )}
                         </ul>
                       ) : <span className="text-muted-foreground">—</span>}
                     </TableCell>
@@ -301,7 +335,7 @@ export default function ProductHubGeraete() {
       <Dialog open={!!toggleResult} onOpenChange={open => { if (!open) setToggleResult(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{toggleResult?.title}</DialogTitle></DialogHeader>
-          <p className="text-sm" role="status">{toggleResult?.note}</p>
+          <p className="text-sm whitespace-pre-line" role="status">{toggleResult?.note}</p>
           <DialogFooter><Button variant="outline" onClick={() => setToggleResult(null)}>Schließen</Button></DialogFooter>
         </DialogContent>
       </Dialog>
