@@ -276,6 +276,9 @@ Deno.serve(async (req) => {
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
     if (customIds && !customIds.includes((prod as any).id)) return json(404, { error: "not_found" });
+    // AlixWork ist alleinige Quelle: Offline-Geräte liefern auch einzeln nichts aus.
+    if ((prod as any).status !== "published") return json(404, { error: "not_found" });
+    if (channel && activeCol[channel] && (prod as any)[activeCol[channel]] !== true) return json(404, { error: "not_found" });
     const comps1 = await complianceMap(supabase, [(prod as any).id]);
     const trs1 = await translationMap(supabase, [(prod as any).id], locale);
     const pubProd = applyLocale(
