@@ -732,6 +732,7 @@ export const navItems: NavItem[] = [
       { path: '/product-hub/dokumente', label: 'Dokumente', icon: FileText, roles: null },
       { path: '/product-hub/webseiten', label: 'Webseiten', icon: Globe, roles: null },
       { path: '/product-hub/com-abschaltpruefung', label: 'COM-Abschaltprüfung', icon: ShieldCheck, roles: ['Super Admin'] },
+      { path: '/product-hub/de-abschaltpruefung', label: 'DE-Abschaltprüfung', icon: ShieldCheck, roles: ['Super Admin'] },
       { path: '/product-hub/geraete/03701a94-e0b3-4d56-8ce2-17a0ab79d720?tab=webseiten', label: 'DE-Abschaltung', icon: Pause, roles: ['Super Admin'] },
       { path: '/product-hub/verlauf', label: 'Änderungsverlauf', icon: ScrollText, roles: null },
       { path: '/product-hub/sync-health', label: 'Sync Health', icon: Activity, roles: null },

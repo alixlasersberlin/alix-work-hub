@@ -94,6 +94,7 @@ export default function ProductHubWebseiten() {
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Webseiten" subtitle="Freigabestelle: AlixWork · Super Admin" icon={Globe} />
       {canWrite && <Button variant="outline" asChild><Link to="/product-hub/com-abschaltpruefung"><Globe className="mr-2 h-4 w-4" />COM-Abschaltprüfung</Link></Button>}
+      {canWrite && <Button variant="outline" asChild><Link to="/product-hub/de-abschaltpruefung"><Globe className="mr-2 h-4 w-4" />DE-Abschaltprüfung</Link></Button>}
       <section className="divide-y divide-border border-y border-border" aria-label="Domainsteuerung">
         {SITES.map(site => {
           const active = products.filter(p => websiteState(p, site.code, row(p.id, site.code)).active).length;

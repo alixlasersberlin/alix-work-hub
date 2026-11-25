@@ -11,11 +11,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { cardCheckLabel, isComCardCheck, type ComCardCheck } from '@/lib/producthub/comCardCheck';
 import { toast } from 'sonner';
 
-type Device = { id: string; name: string; active_com: boolean | null; alix_product_id: string | null };
+type Device = { id: string; name: string; active_com: boolean | null; active_de?: boolean | null; alix_product_id: string | null };
 type ResultRow = { product: Device; check: ComCardCheck | null; hold: boolean; offline: boolean };
 const db = supabase as any;
 
-export default function ComAbschaltpruefung() {
+export default function ComAbschaltpruefung({ channel = 'com' }: { channel?: 'com' | 'de' }) {
+  const label = channel.toUpperCase();
+  const catalog = channel === 'de' ? 'https://alix-lasers.de/produkte' : 'https://www.alix-lasers.com/devices';
   const { roles } = useAuth();
   const allowed = roles.includes('Super Admin');
   const [rows, setRows] = useState<ResultRow[]>([]);
@@ -38,42 +40,42 @@ export default function ComAbschaltpruefung() {
         }
       };
       const [products, channels, logs, mappings] = await Promise.all([
-        all('ph_products', 'id,name,active_com,alix_product_id', 'name', q => q),
-        all('ph_product_channels', 'id,product_id,hold,remote_snapshot', 'id', q => q.eq('channel_code', 'com')),
-        all('ph_sync_log', 'id,product_id,created_at,payload', 'created_at', q => q.eq('channel_code', 'com').eq('operation', 'com_card_check')),
-        all('ph_lang_sync_map', 'id,product_id,remote_product_id,verified_at', 'id', q => q.eq('site_code', 'com')),
+        all('ph_products', 'id,name,active_com,active_de,alix_product_id', 'name', q => q),
+        all('ph_product_channels', 'id,product_id,hold,remote_snapshot', 'id', q => q.eq('channel_code', channel)),
+        all('ph_sync_log', 'id,product_id,created_at,payload', 'created_at', q => q.eq('channel_code', channel).eq('operation', `${channel}_card_check`)),
+        all('ph_lang_sync_map', 'id,product_id,remote_product_id,verified_at', 'id', q => q.eq('site_code', channel)),
       ]);
       const latest = new Map<string, ComCardCheck>();
       for (const log of logs) if (isComCardCheck(log.payload)) latest.set(log.product_id, log.payload);
       setRows(products.flatMap((product: Device) => {
         const channel = channels.find((c: any) => c.product_id === product.id);
-        if (product.active_com !== false && !channel?.hold) return [];
+        if (product[channel === 'de' ? 'active_de' : 'active_com'] !== false && !channel?.hold) return [];
         const receipt = channel?.remote_snapshot?.global_offline;
         const mapping = mappings.find((m: any) => m.product_id === product.id);
         const storedCheck = latest.get(product.id);
         const check = storedCheck && storedCheck.remote_product_id === (mapping?.remote_product_id ?? null) ? storedCheck : null;
         return [{ product, hold: channel?.hold === true, check,
-          offline: mapping?.verified_at && receipt?.ok === true && receipt.offline === true && receipt.status === 'OFFLINE' && receipt.channel === 'com' && receipt.hub_id === product.alix_product_id && receipt.product_id === mapping.remote_product_id }];
+          offline: mapping?.verified_at && receipt?.ok === true && receipt.offline === true && receipt.status === 'OFFLINE' && receipt.channel === channel && receipt.hub_id === product.alix_product_id && receipt.product_id === mapping.remote_product_id }];
       }));
       setError('');
     } catch (e) { setError(e instanceof Error ? e.message : 'Prüfprotokoll konnte nicht geladen werden.'); }
     finally { setLoading(false); }
-  }, [allowed]);
+  }, [allowed, channel]);
 
   useEffect(() => {
     void load();
     const refresh = () => { if (!document.hidden) void load(); };
-    window.addEventListener('ph-com-card-check', refresh);
+    window.addEventListener(`ph-${channel}-card-check`, refresh);
     // Refresh stored results only; this timer never sends website commands or checks.
     const timer = window.setInterval(refresh, 15000);
-    return () => { window.clearInterval(timer); window.removeEventListener('ph-com-card-check', refresh); };
-  }, [load]);
+    return () => { window.clearInterval(timer); window.removeEventListener(`ph-${channel}-card-check`, refresh); };
+  }, [load, channel]);
 
   const verify = async (product: Device) => {
     if (busy) return;
     setBusy(product.id);
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke('ph-global-publish-device', { body: { product_id: product.id, channel: 'com', action: 'verify_com' } });
+      const { data, error: invokeError } = await supabase.functions.invoke('ph-global-publish-device', { body: { product_id: product.id, channel, action: `verify_${channel}` } });
       if (invokeError) {
         let detail = invokeError.message;
         try { detail = (await invokeError.context?.json())?.error || detail; } catch { /* Keep safe fallback. */ }
@@ -94,7 +96,7 @@ export default function ComAbschaltpruefung() {
 
   if (!allowed) return <div className="p-6 text-muted-foreground">Diese Prüfung steht nur Super Admins zur Verfügung.</div>;
   return <div className="p-4 md:p-6 space-y-6">
-    <PageHeader title="COM · Abschaltprüfung" subtitle="alix-lasers.com · Öffentliche Gerätekarten" icon={ScanEye} />
+    <PageHeader title={`${label} · Abschaltprüfung`} subtitle={`${new URL(catalog).host} · Öffentliche Gerätekarten`} icon={ScanEye} />
     <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-y border-border py-5" aria-label="Prüfstand">
       {[['Karte verschwunden', 'removed'], ['Weiterhin sichtbar', 'visible'], ['Offen / nicht nachweisbar', 'unknown']].map(([label, state]) =>
         <div key={state}><div className="text-2xl font-semibold tabular-nums">{rows.filter(row => state === 'unknown' ? !row.check || row.check.state === 'unknown' : row.check?.state === state).length}</div><div className="text-sm text-muted-foreground">{label}</div></div>)}
@@ -105,7 +107,7 @@ export default function ComAbschaltpruefung() {
         <SelectItem value="all">Alle Abschaltungen</SelectItem><SelectItem value="removed">Karte verschwunden</SelectItem><SelectItem value="visible">Weiterhin sichtbar</SelectItem><SelectItem value="unknown">Nicht nachweisbar</SelectItem><SelectItem value="unchecked">Noch nicht geprüft</SelectItem>
       </SelectContent></Select>
       <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className="h-4 w-4 mr-2" />Aktualisieren</Button>
-      <Button variant="outline" asChild><a href="https://www.alix-lasers.com/devices" target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" />COM-Geräte</a></Button>
+      <Button variant="outline" asChild><a href={catalog} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" />{label}-Geräte</a></Button>
     </div>
     {error && <div role="alert" className="border border-destructive rounded p-3 text-sm text-destructive">{error}</div>}
     {loading ? <div className="flex gap-2 items-center text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Prüfprotokoll wird geladen…</div> :
@@ -114,7 +116,7 @@ export default function ComAbschaltpruefung() {
         {filtered.map(({ product, check, hold, offline }) => <TableRow key={product.id}>
           <TableCell className="min-w-44"><Link className="text-primary hover:underline" to={`/product-hub/geraete/${product.id}?tab=webseiten`}>{product.name}</Link><div className="text-xs text-muted-foreground">{hold ? 'Zurückgehalten' : 'In AlixWork deaktiviert'}</div></TableCell>
           <TableCell className="text-sm">{offline ? 'OFFLINE bestätigt' : 'Ohne OFFLINE-Nachweis'}</TableCell>
-          <TableCell className="min-w-56 max-w-md"><div className={check?.state === 'removed' ? 'text-success' : check?.state === 'visible' ? 'text-destructive' : 'text-muted-foreground'}>{check?.state === 'removed' && <CheckCircle2 className="h-4 w-4 inline mr-1" />}{cardCheckLabel(check)}</div>{check && <><p className="text-xs text-muted-foreground mt-1">{check.message}</p><details className="text-xs mt-1"><summary className="cursor-pointer">Prüfdetails</summary><div className="space-y-1 py-2 break-all">{check.card_count ?? '—'} Karten · {check.attempts} Seitenabrufe<br />COM-ID: {check.remote_product_id ?? '—'}<br />Vorgang: {check.operation_id ?? '—'}{check.matched_urls?.map(url => <div key={url}>{url}</div>)}</div></details></>}</TableCell>
+          <TableCell className="min-w-56 max-w-md"><div className={check?.state === 'removed' ? 'text-success' : check?.state === 'visible' ? 'text-destructive' : 'text-muted-foreground'}>{check?.state === 'removed' && <CheckCircle2 className="h-4 w-4 inline mr-1" />}{cardCheckLabel(check)}</div>{check && <><p className="text-xs text-muted-foreground mt-1">{check.message}</p><details className="text-xs mt-1"><summary className="cursor-pointer">Prüfdetails</summary><div className="space-y-1 py-2 break-all">{check.card_count ?? '—'} Karten · {check.attempts} Seitenabrufe<br />{label}-ID: {check.remote_product_id ?? '—'}<br />Vorgang: {check.operation_id ?? '—'}{check.matched_urls?.map(url => <div key={url}>{url}</div>)}</div></details></>}</TableCell>
           <TableCell className="text-xs whitespace-nowrap">{check ? new Date(check.checked_at).toLocaleString('de-DE') : '—'}</TableCell>
           <TableCell><Button size="sm" variant="outline" disabled={busy !== null} onClick={() => void verify(product)}>{busy === product.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanEye className="h-4 w-4 mr-2" />}Jetzt prüfen</Button></TableCell>
         </TableRow>)}

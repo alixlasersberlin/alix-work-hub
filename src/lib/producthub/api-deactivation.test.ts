@@ -39,6 +39,19 @@ describe('gespeicherte Deaktivierung und automatischer Versand', () => {
     expect(mocks.invoke).toHaveBeenCalledOnce();
     expect(mocks.success).not.toHaveBeenCalled();
   });
+  it('DE-Kartenergebnis wird getrennt gemeldet, ohne den Abschaltbefehl zu wiederholen', async () => {
+    const event = vi.fn();
+    window.addEventListener('ph-de-card-check', event);
+    mocks.invoke.mockResolvedValue({ error: null, data: { ok: true, offline: true, status: 'OFFLINE', card_check: {
+      state: 'visible', product_id: 'device', checked_at: '2026-11-25T05:19:00Z', message: 'DE-Karte weiterhin sichtbar',
+    } } });
+    try {
+      expect((await phSendDeactivation('device', 'de')).offline).toBe(true);
+      expect(event).toHaveBeenCalledOnce();
+      expect(mocks.warning).toHaveBeenCalledWith('DE: DE-Karte weiterhin sichtbar');
+      expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith('ph-global-publish-device', { body: { product_id: 'device', channel: 'de', action: 'deactivate' } });
+    } finally { window.removeEventListener('ph-de-card-check', event); }
+  });
   it('fehlende Remote-Bestätigung erhält die lokale Deaktivierung ohne Neuversand', async () => {
     mocks.invoke.mockResolvedValue({ data: { ok: false, offline: false, error: 'Transport unklar' }, error: null });
     const result = await phUpsertChannel('device', 'com', { status: 'inactive', hold: true });

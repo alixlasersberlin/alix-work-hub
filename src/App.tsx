@@ -2378,6 +2378,7 @@ function AppRoutes() {
           <Route path="/product-hub/dokumente" element={<ProtectedRoute><PhDokumente /></ProtectedRoute>} />
           <Route path="/product-hub/webseiten" element={<ProtectedRoute><PhWebseiten /></ProtectedRoute>} />
           <Route path="/product-hub/com-abschaltpruefung" element={<ProtectedRoute><PhComAbschaltpruefung /></ProtectedRoute>} />
+          <Route path="/product-hub/de-abschaltpruefung" element={<ProtectedRoute><PhComAbschaltpruefung key="de" channel="de" /></ProtectedRoute>} />
           <Route path="/product-hub/verlauf" element={<ProtectedRoute><PhVerlauf /></ProtectedRoute>} />
           <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
           <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />

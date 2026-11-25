@@ -10,8 +10,8 @@ import { blockedOperation, operationStatus } from './operation-response.ts';
 import { verifyComCard } from './com-card-check.ts';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status: operationStatus(status), headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de', 'beautyco', 'dubai']), action: z.enum(['publish', 'deactivate', 'reactivate', 'verify_com']).default('publish'), dry_run: z.boolean().default(false) }).strict()
-  .refine(body => body.action !== 'verify_com' || (body.channel === 'com' && !body.dry_run), 'Kartenprüfung nur für COM ohne Probelauf');
+const Body = z.object({ product_id: z.string().uuid(), channel: z.enum(['com', 'de', 'beautyco', 'dubai']), action: z.enum(['publish', 'deactivate', 'reactivate', 'verify_com', 'verify_de']).default('publish'), dry_run: z.boolean().default(false) }).strict()
+  .refine(body => !['verify_com', 'verify_de'].includes(body.action) || (body.action === `verify_${body.channel}` && !body.dry_run), 'Kartenprüfung nur für den passenden COM-/DE-Kanal ohne Probelauf');
 
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -42,7 +42,7 @@ Deno.serve(async req => {
     const { data: tenantAllowed, error: tenantError } = await (caller as any).rpc('tenant_scope_id_ok', { _tenant_id: typeof tenantId === 'string' ? tenantId : null });
     if (tenantError || !tenantAllowed) return json(403, { ok: false, error: 'Keine Mandantenberechtigung' });
     const admin = createClient(url, service);
-    if (action === 'verify_com') return json(200, { ok: true, card_check: await verifyComCard(admin, product, null, 'manual') });
+    if (action === 'verify_com' || action === 'verify_de') return json(200, { ok: true, card_check: await verifyComCard(admin, product, null, 'manual', action === 'verify_de' ? 'de' : 'com') });
     if (channel === 'dubai') {
       const aeKey = Deno.env.get('AE_PRODUCT_HUB_DIRECT_RELEASE_KEY');
       if (!aeKey) return json(503, { ok: false, error: 'Sicherer AE-Zugang fehlt' });
@@ -61,9 +61,9 @@ Deno.serve(async req => {
       let outcome;
       try { outcome = await deactivateGlobal(admin, product, session.user.id, channel, key, dry_run); }
       catch (error) { outcome = blockedOperation(error); }
-      if (channel !== 'com' || dry_run) return json(200, outcome);
+      if (dry_run) return json(200, outcome);
       // The public read is independent of OFFLINE acceptance and never resends a write.
-      try { return json(200, { ...outcome, card_check: await verifyComCard(admin, product, outcome, 'deactivate') }); }
+      try { return json(200, { ...outcome, card_check: await verifyComCard(admin, product, outcome, 'deactivate', channel) }); }
       catch { return json(200, { ...outcome, card_check: { state: 'unknown', message: 'Kartenprüfung fehlgeschlagen; Abschaltantwort bleibt unverändert.', product_id, checked_at: new Date().toISOString(), recorded: false } }); }
     }
     const field = channel === 'com' ? 'active_com' : 'active_de';

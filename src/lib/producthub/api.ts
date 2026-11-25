@@ -19,11 +19,11 @@ export async function phSendDeactivation(productId: string, channel: string) {
       try { const body = await error.context?.json(); message = body?.error || message; } catch { /* preserve original error */ }
       throw new Error(message);
     }
-    if (channel === 'com' && isComCardCheck(data?.card_check)) {
-      window.dispatchEvent(new Event('ph-com-card-check'));
-      if (data.card_check.state === 'removed') toast.success(`COM: ${cardCheckLabel(data.card_check)}`);
-      else toast.warning(`COM: ${data.card_check.message}`);
-      if (data.card_check.recorded === false) toast.warning('COM-Prüfergebnis konnte nicht gespeichert werden.');
+    if ((channel === 'com' || channel === 'de') && isComCardCheck(data?.card_check)) {
+      window.dispatchEvent(new Event(`ph-${channel}-card-check`));
+      if (data.card_check.state === 'removed') toast.success(`${channel.toUpperCase()}: ${cardCheckLabel(data.card_check)}`);
+      else toast.warning(`${channel.toUpperCase()}: ${data.card_check.message}`);
+      if (data.card_check.recorded === false) toast.warning(`${channel.toUpperCase()}-Prüfergebnis konnte nicht gespeichert werden.`);
     }
     if (!data?.ok || data.offline !== true || (channel === 'beautyco' ? data.state !== 'OFFLINE' : data.status !== 'OFFLINE')) throw new Error(data?.error || 'OFFLINE-Nachweis fehlt');
     toast.success(`${channel.toUpperCase()}: Abschaltung auf der Webseite bestätigt`);
