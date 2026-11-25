@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { PhProduct } from './config';
 import { toast } from 'sonner';
 import { deactivatedGlobalChannels, isChannelDeactivation } from './deactivation';
+import { cardCheckLabel, isComCardCheck } from './comCardCheck';
 
 const db = supabase as any;
 
@@ -17,6 +18,12 @@ export async function phSendDeactivation(productId: string, channel: string) {
       let message = error.message;
       try { const body = await error.context?.json(); message = body?.error || message; } catch { /* preserve original error */ }
       throw new Error(message);
+    }
+    if (channel === 'com' && isComCardCheck(data?.card_check)) {
+      window.dispatchEvent(new Event('ph-com-card-check'));
+      if (data.card_check.state === 'removed') toast.success(`COM: ${cardCheckLabel(data.card_check)}`);
+      else toast.warning(`COM: ${data.card_check.message}`);
+      if (data.card_check.recorded === false) toast.warning('COM-Prüfergebnis konnte nicht gespeichert werden.');
     }
     if (!data?.ok || data.offline !== true || (channel === 'beautyco' ? data.state !== 'OFFLINE' : data.status !== 'OFFLINE')) throw new Error(data?.error || 'OFFLINE-Nachweis fehlt');
     toast.success(`${channel.toUpperCase()}: Abschaltung auf der Webseite bestätigt`);

@@ -729,6 +729,7 @@ const PhKonflikte = lazy(() => import("./pages/ProductHub/Konflikte"));
 const PhMedien = lazy(() => import("./pages/ProductHub/Medien"));
 const PhDokumente = lazy(() => import("./pages/ProductHub/Dokumente"));
 const PhWebseiten = lazy(() => import("./pages/ProductHub/Webseiten"));
+const PhComAbschaltpruefung = lazy(() => import("./pages/ProductHub/ComAbschaltpruefung"));
 const PhVerlauf = lazy(() => import("./pages/ProductHub/Verlauf"));
 const PhSyncHealth = lazy(() => import("./pages/ProductHub/SyncHealth"));
 const PhEinstellungen = lazy(() => import("./pages/ProductHub/Einstellungen"));
@@ -2376,6 +2377,7 @@ function AppRoutes() {
           <Route path="/product-hub/medien" element={<ProtectedRoute><PhMedien /></ProtectedRoute>} />
           <Route path="/product-hub/dokumente" element={<ProtectedRoute><PhDokumente /></ProtectedRoute>} />
           <Route path="/product-hub/webseiten" element={<ProtectedRoute><PhWebseiten /></ProtectedRoute>} />
+          <Route path="/product-hub/com-abschaltpruefung" element={<ProtectedRoute><PhComAbschaltpruefung /></ProtectedRoute>} />
           <Route path="/product-hub/verlauf" element={<ProtectedRoute><PhVerlauf /></ProtectedRoute>} />
           <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
           <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />
