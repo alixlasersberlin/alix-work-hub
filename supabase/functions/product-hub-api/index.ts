@@ -8,6 +8,7 @@
 //   GET /product-hub-api/content?channel=website          → alle freigegebenen Content-Hub-Releases
 //   GET /product-hub-api/products/{alix_product_id}/content?channel=website
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { productRoute } from "./product-route.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -189,9 +190,10 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean); // [product-hub-api, products, {id}, media?]
-  const idx = parts.indexOf("products");
-  const productId = idx >= 0 ? parts[idx + 1] : undefined;
-  const sub = idx >= 0 ? parts[idx + 2] : undefined;
+  let route: ReturnType<typeof productRoute>;
+  try { route = productRoute(url.pathname); }
+  catch { return json(400, { error: "invalid_product_id" }); }
+  const { productId, sub } = route;
   const rawChannel = url.searchParams.get("channel");
   // alix-lasers.ae darf als ae/uae/dubai angefragt werden – intern immer "dubai"
   const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : (["smart_ki","smartki"].includes((rawChannel||"").toLowerCase()) ? null : rawChannel);
