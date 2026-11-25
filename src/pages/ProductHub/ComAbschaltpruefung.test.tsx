@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
-const mocks = vi.hoisted(() => ({ roles: ['Super Admin'], reads: vi.fn(), filters: vi.fn(), invoke: vi.fn() }));
+const mocks = vi.hoisted(() => ({ roles: ['Super Admin'], reads: vi.fn(), filters: vi.fn(), invoke: vi.fn(), products: null as any[] | null, channels: null as any[] | null }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ roles: mocks.roles }) }));
 vi.mock('@/components/infinity/PageHeader', () => ({ PageHeader: () => null }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }));
@@ -11,9 +11,9 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   from: (table: string) => {
     mocks.reads(table);
     const query = { select: () => query, eq: (field: string, value: string) => { mocks.filters(field, value); return query; }, order: () => query,
-      range: async () => ({ error: null, data: table === 'ph_products' ? [{ id: 'device', name: 'Hifu Pro', active_com: false, active_de: false, alix_product_id: 'hub' }]
+      range: async () => ({ error: null, data: table === 'ph_products' ? mocks.products ?? [{ id: 'device', name: 'Hifu Pro', active_com: false, active_de: false, alix_product_id: 'hub' }]
         : table === 'ph_lang_sync_map' ? [{ product_id: 'device', remote_product_id: 'remote', verified_at: '2026-11-25' }]
-        : table === 'ph_product_channels' ? [{ product_id: 'device', hold: true, remote_snapshot: {} }] : [] }) };
+        : table === 'ph_product_channels' ? mocks.channels ?? [{ product_id: 'device', hold: true, remote_snapshot: {} }] : [] }) };
     return query;
   },
 } }));
@@ -21,7 +21,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
 import ComAbschaltpruefung from './ComAbschaltpruefung';
 
 describe('protected public COM verification flow', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.roles = ['Super Admin']; });
+  beforeEach(() => { vi.clearAllMocks(); mocks.roles = ['Super Admin']; mocks.products = null; mocks.channels = null; });
   afterEach(cleanup);
   it('reads authorized inventory and manually checks without issuing a shutdown', async () => {
     mocks.invoke.mockResolvedValue({ error: null, data: { ok: true, card_check: {
@@ -42,7 +42,7 @@ describe('protected public COM verification flow', () => {
   });
 });
  describe('protected DE verification flow', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.roles = ['Super Admin']; });
+  beforeEach(() => { vi.clearAllMocks(); mocks.roles = ['Super Admin']; mocks.products = null; mocks.channels = null; });
   afterEach(cleanup);
   it('uses DE inventory and a read-only DE action, never a COM command', async () => {
     mocks.invoke.mockResolvedValue({ error: null, data: { ok: true, card_check: {
@@ -59,5 +59,15 @@ describe('protected public COM verification flow', () => {
     render(<MemoryRouter><ComAbschaltpruefung channel="de" /></MemoryRouter>);
     await waitFor(() => expect(mocks.reads).not.toHaveBeenCalled());
     expect(mocks.invoke).not.toHaveBeenCalled();
+  });
+  it('checks a DE-only inactive device even when COM is active and there is no hold', async () => {
+    mocks.products = [{ id: 'device', name: 'DE-only', active_com: true, active_de: false, alix_product_id: 'hub' }];
+    mocks.channels = [{ product_id: 'device', hold: false, remote_snapshot: {} }];
+    mocks.invoke.mockResolvedValue({ error: null, data: { ok: true, card_check: {
+      state: 'visible', message: 'Present', product_id: 'device', remote_product_id: 'remote', checked_at: '2026-11-25T07:42:00Z', attempts: 1,
+    } } });
+    render(<MemoryRouter><ComAbschaltpruefung channel="de" /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'Jetzt prüfen' }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith('ph-global-publish-device', { body: { product_id: 'device', channel: 'de', action: 'verify_de' } }));
   });
 });

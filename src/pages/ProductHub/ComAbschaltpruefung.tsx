@@ -48,13 +48,13 @@ export default function ComAbschaltpruefung({ channel = 'com' }: { channel?: 'co
       const latest = new Map<string, ComCardCheck>();
       for (const log of logs) if (isComCardCheck(log.payload)) latest.set(log.product_id, log.payload);
       setRows(products.flatMap((product: Device) => {
-        const channel = channels.find((c: any) => c.product_id === product.id);
-        if (product[channel === 'de' ? 'active_de' : 'active_com'] !== false && !channel?.hold) return [];
-        const receipt = channel?.remote_snapshot?.global_offline;
+        const channelRow = channels.find((c: any) => c.product_id === product.id);
+        if (product[channel === 'de' ? 'active_de' : 'active_com'] !== false && !channelRow?.hold) return [];
+        const receipt = channelRow?.remote_snapshot?.global_offline;
         const mapping = mappings.find((m: any) => m.product_id === product.id);
         const storedCheck = latest.get(product.id);
         const check = storedCheck && storedCheck.remote_product_id === (mapping?.remote_product_id ?? null) ? storedCheck : null;
-        return [{ product, hold: channel?.hold === true, check,
+        return [{ product, hold: channelRow?.hold === true, check,
           offline: mapping?.verified_at && receipt?.ok === true && receipt.offline === true && receipt.status === 'OFFLINE' && receipt.channel === channel && receipt.hub_id === product.alix_product_id && receipt.product_id === mapping.remote_product_id }];
       }));
       setError('');
