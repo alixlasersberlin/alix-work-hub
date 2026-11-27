@@ -13,9 +13,9 @@ Deno.serve(async req => {
   const { data: { user } } = await caller.auth.getUser();
   if (!user) return json(401, { error: 'Nicht angemeldet' });
   const [{ data: profile }, { data: admin }] = await Promise.all([
-    caller.from('user_profiles').select('account_status').eq('user_id', user.id).maybeSingle(), caller.rpc('is_admin'),
+    caller.from('user_profiles').select('account_status,invitation_status,password_reset_required').eq('id', user.id).maybeSingle(), caller.rpc('is_admin'),
   ]);
-  if (profile?.account_status !== 'active' || admin !== true) return json(403, { error: 'Nur aktive Administratoren' });
+  if (profile?.account_status !== 'active' || profile.invitation_status !== 'accepted' || profile.password_reset_required !== false || admin !== true) return json(403, { error: 'Nur aktive Administratoren' });
   const body = Body.safeParse(await req.json().catch(() => null));
   if (!body.success) return json(400, { error: body.error.flatten().fieldErrors });
   try {
