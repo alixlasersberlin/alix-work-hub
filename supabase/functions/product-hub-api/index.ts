@@ -9,6 +9,8 @@
 //   GET /product-hub-api/products/{alix_product_id}/content?channel=website
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { productRoute } from "./product-route.ts";
+import { decidePublication, normalizeChannel, SIGNAL_CHANNELS } from '../_shared/ph-publication.ts';
+import { liveAllowed } from '../_shared/ph-delivery.ts';
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -246,6 +248,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Opt-in protocol 2 is prepared but locked; existing requests keep their exact live path.
+    const protocol2 = url.searchParams.get('protocol') === '2';
+    const v2Channel = normalizeChannel(rawChannel);
+    let versions: Record<string,string> = {};
+    let holds: Record<string,boolean> = {};
+    if (protocol2) {
+      if (!v2Channel || !(SIGNAL_CHANNELS as readonly string[]).includes(v2Channel)) return json(400, { error: 'unsupported_v2_channel' });
+      const { data: gate } = await supabase.from('ph_settings').select('value').eq('key', 'ph2_activation').maybeSingle();
+      if (!liveAllowed(Deno.env.get('PH_SIGNAL_LIVE_ENABLED'), gate?.value as any)) return json(503, { error: 'product_hub_2_activation_blocked' });
+      const { data: versionRows, error: ve } = await supabase.rpc('ph2_versions', { _channel: v2Channel });
+      if (ve) throw ve;
+      versions = Object.fromEntries((versionRows ?? []).map((r: any) => [r.product_id, r.version]));
+      for (let offset=0; ; offset+=250) {
+        const { data: channelRows, error: he } = await supabase.from('ph_product_channels').select('id,product_id,channel_code,hold').order('id').range(offset,offset+249);
+        if (he) throw he;
+        for (const r of channelRows ?? []) if (normalizeChannel(r.channel_code) === v2Channel) holds[r.product_id] = holds[r.product_id] === true || r.hold === true;
+        if (!channelRows || channelRows.length < 250) break;
+      }
+    }
     // Selbst angelegte Webseiten (ph_channels): nur aktive Kanäle, Geräte über ph_product_channels
     let customIds: string[] | null = null;
     if (channel && !activeCol[channel] && !CH_ALLOWED.includes(channel)) {
@@ -261,14 +282,14 @@ Deno.serve(async (req) => {
       if (customIds) q = q.in("id", customIds.length ? customIds : ["00000000-0000-0000-0000-000000000000"]);
       const { data, error } = await q;
       if (error) throw error;
-      const rows = (data || []) as any[];
+      const rows = ((data || []) as any[]).filter(r => !protocol2 || decidePublication(r,v2Channel ?? '',{hold:holds[r.id]}).desired==='ONLINE');
       const comps = await complianceMap(supabase, rows.map((r) => r.id));
       const trs = await translationMap(supabase, rows.map((r) => r.id), locale);
       return json(200, {
         locale,
         products: rows.map((r) => {
           const { id, ...rest } = applyLocale(withUae(stripPrices(r, channel, noPrices), comps[r.id]), trs[r.id], locale);
-          return { ...rest, ...AUTO_PUBLISH };
+          return { ...rest, ...AUTO_PUBLISH, ...(protocol2 ? { product_version: versions[r.id] ?? r.updated_at, publication_state: 'ONLINE' } : {}) };
         }),
       });
     }
@@ -277,6 +298,10 @@ Deno.serve(async (req) => {
       .select(`id,${PUBLIC_FIELDS}`).eq("alix_product_id", productId).maybeSingle();
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
+    if (protocol2 && decidePublication(prod as any,v2Channel ?? '',{hold:holds[(prod as any).id]}).desired!=='ONLINE') return json(404, {
+      error:'not_found', publication_state:'OFFLINE', product_id:(prod as any).alix_product_id,
+      product_version:versions[(prod as any).id] ?? (prod as any).updated_at,
+    });
     if (customIds && !customIds.includes((prod as any).id)) return json(404, { error: "not_found" });
     // AlixWork ist alleinige Quelle: Offline-Geräte liefern auch einzeln nichts aus.
     if ((prod as any).status !== "published") return json(404, { error: "not_found" });
@@ -315,7 +340,7 @@ Deno.serve(async (req) => {
     }
 
     const { id, ...pub } = pubProd as any;
-    return json(200, { product: pub });
+    return json(200, { product: { ...pub, ...(protocol2 ? { product_version:versions[(prod as any).id] ?? (prod as any).updated_at, publication_state:'ONLINE' } : {}) } });
   } catch (e) {
     return json(500, { error: (e as Error).message });
   }

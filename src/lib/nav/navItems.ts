@@ -718,6 +718,7 @@ export const navItems: NavItem[] = [
     roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM', 'Marketing', 'Vertrieb', 'Vertriebsleitung'],
     children: [
       { path: '/product-hub', label: 'Übersicht', icon: LayoutDashboard, roles: null },
+      { path: '/product-hub/v2', label: 'PRODUCT HUB 2.0 · Test', icon: Boxes, roles: ['Super Admin', 'Admin'] },
       { path: '/product-hub/geraete', label: 'Geräte', icon: Cpu, roles: null },
       { path: '/product-hub/uebersetzungen', label: 'Übersetzungen', icon: Globe, roles: null },
       { path: '/product-hub/import-export', label: 'Import/Export', icon: FileSpreadsheet, roles: null },

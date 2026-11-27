@@ -721,6 +721,7 @@ const PlmDashboard = lazy(() => import("./pages/PLM/Dashboard"));
 // PRODUCT HUB (additiv)
 const PhDashboard = lazy(() => import("./pages/ProductHub/Dashboard"));
 const PhGeraete = lazy(() => import("./pages/ProductHub/Geraete"));
+const PhV2Preview = lazy(() => import("./pages/ProductHub/V2Preview"));
 const PhUebersetzungen = lazy(() => import("./pages/ProductHub/Uebersetzungen"));
 
 const PhImportExport = lazy(() => import("./pages/ProductHub/ImportExport"));
@@ -2369,6 +2370,7 @@ function AppRoutes() {
           {/* ALIXWORK PRODUCT HUB (Master für alix-lasers.com / .de) */}
           <Route path="/product-hub" element={<ProtectedRoute><PhDashboard /></ProtectedRoute>} />
           <Route path="/product-hub/geraete" element={<ProtectedRoute><PhGeraete /></ProtectedRoute>} />
+          <Route path="/product-hub/v2" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin']}><PhV2Preview /></ProtectedRoute>} />
           <Route path="/product-hub/uebersetzungen" element={<ProtectedRoute><PhUebersetzungen /></ProtectedRoute>} />
 
           <Route path="/product-hub/import-export" element={<ProtectedRoute><PhImportExport /></ProtectedRoute>} />

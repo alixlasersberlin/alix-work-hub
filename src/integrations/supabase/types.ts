@@ -58909,6 +58909,48 @@ export type Database = {
         Args: { p_product_id: string; p_remote_id: string }
         Returns: Json
       }
+      ph2_capture: {
+        Args: { _product_id: string; _source: string }
+        Returns: undefined
+      }
+      ph2_claim: {
+        Args: { _limit?: number; _live: boolean }
+        Returns: {
+          channel_code: string | null
+          created_at: string
+          direction: string
+          duration_ms: number | null
+          id: string
+          message: string | null
+          operation: string | null
+          payload: Json | null
+          product_id: string | null
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ph_sync_log"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      ph2_finish: {
+        Args: { _id: string; _lease: string; _result: Json }
+        Returns: boolean
+      }
+      ph2_prepare: {
+        Args: { _decision: Json; _id: string; _lease: string; _signal: Json }
+        Returns: boolean
+      }
+      ph2_receipt: { Args: { _receipt: Json }; Returns: Json }
+      ph2_retry: { Args: { _event_id: string }; Returns: boolean }
+      ph2_versions: {
+        Args: { _channel: string }
+        Returns: {
+          product_id: string
+          version: string
+        }[]
+      }
       plm_can_write: { Args: never; Returns: boolean }
       plm_merge_manufacturers: {
         Args: { p_source: string; p_target: string }

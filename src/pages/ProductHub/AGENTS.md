@@ -1,0 +1,2 @@
+- The v2 preview uses paginated caller-scoped reads and session-local switches/site additions only; it must never call legacy release or product-write adapters before acceptance.
+- V2 matrix status comes from the shared publication decision and the newest identity/version-matched fresh receipt, never from the desired switch or a send acknowledgement.

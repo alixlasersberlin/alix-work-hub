@@ -5,14 +5,14 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
 import { SIGNAL_CHANNELS, normalizeChannel } from "../_shared/ph-publication.ts";
-import { confirms, isStale, verify } from "../_shared/ph-signal.ts";
+import { verify } from "../_shared/ph-signal.ts";
 
 const HOSTS: Record<string, string[]> = {
   de: ["alix-lasers.de", "www.alix-lasers.de"], com: ["alix-lasers.com", "www.alix-lasers.com"], dubai: ["alix-lasers.ae", "www.alix-lasers.ae"],
 };
 const Receipt = z.object({
   event_id: z.string().uuid(), channel: z.string().min(2).max(30), product_id: z.string().min(1).max(200),
-  version: z.string().min(10).max(40), state: z.enum(["ONLINE", "OFFLINE", "ERROR"]),
+  version: z.string().datetime({ precision: null }).max(40), state: z.enum(["ONLINE", "OFFLINE", "ERROR"]),
   public_url: z.string().url().max(500).nullable(), error_code: z.string().max(80).nullable().default(null),
   error: z.string().max(1000).nullable().default(null), observed_at: z.string().datetime(),
 });
@@ -34,28 +34,14 @@ Deno.serve(async (req) => {
   if (!secret) return json(503, { error: "channel_not_connected" });
   const v = await verify(secret, req.headers.get("x-alixwork-timestamp"), req.headers.get("x-alixwork-signature"), raw);
   if (!v.ok) return json(401, { error: v.reason });
-  if (r.public_url && !HOSTS[channel].includes(new URL(r.public_url).hostname)) return json(400, { error: "public_url_host_mismatch" });
-
-  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const { data: p } = await sb.from("ph_products").select("id").eq("alix_product_id", r.product_id).maybeSingle();
-  if (!p) return json(404, { error: "unknown_product" });
-
-  // Replay / duplicate: the same event_id is recorded once.
-  const { data: dup } = await sb.from("ph_sync_log").select("id").eq("operation", "status_receipt")
-    .eq("channel_code", channel).filter("payload->receipt->>event_id", "eq", r.event_id).limit(1).maybeSingle();
-  if (dup) return json(200, { accepted: true, duplicate: true });
-
-  const { data: last } = await sb.from("ph_sync_log").select("payload").eq("product_id", p.id).eq("channel_code", channel)
-    .eq("operation", "shadow_signal").order("created_at", { ascending: false }).limit(1).maybeSingle();
-  const signal = (last?.payload as any)?.signal ?? null;
-  const stale = signal ? isStale(r.version, signal.version) : false;
-  const confirmed = signal ? confirms(signal, r) : false;
-  const status = stale ? "stale" : r.state === "ERROR" ? "website_error" : confirmed ? "website_confirmed" : "website_mismatch";
-
-  await sb.from("ph_sync_log").insert({
-    channel_code: channel, direction: "inbound", operation: "status_receipt", product_id: p.id, status,
-    message: `Rückmeldung ${channel}: ${r.state}${r.error_code ? ` (${r.error_code})` : ""} · Version ${r.version}${stale ? " · veraltet, ignoriert" : ""}`,
-    payload: { receipt: r, desired: signal?.desired ?? null, transmitted_version: signal?.version ?? null, confirmed, stale, independent_check: "ausstehend" },
-  });
-  return json(202, { accepted: true, status, confirmed });
+  if (r.public_url) {
+    const publicUrl = new URL(r.public_url);
+    if (publicUrl.protocol !== 'https:' || publicUrl.username || publicUrl.password || !HOSTS[channel].includes(publicUrl.hostname)) return json(400, { error: 'public_url_host_mismatch' });
+  }
+  const url = Deno.env.get('SUPABASE_URL'), key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !key) return json(503, { error: 'configuration_missing' });
+  const sb = createClient(url, key);
+  const { data, error } = await sb.rpc('ph2_receipt', { _receipt: { ...r, channel } });
+  if (error) return json(500, { error: 'receipt_storage_failed' });
+  return json(data?.accepted ? data.duplicate ? 200 : 202 : 409, data);
 });

@@ -41,7 +41,10 @@ export function isStale(incoming: string, latest: string | null | undefined): bo
   if (!latest) return false;
   const a = Date.parse(incoming), b = Date.parse(latest);
   if (Number.isNaN(a) || Number.isNaN(b)) return true;
-  return a < b;
+  if (a !== b) return a < b;
+  // PostgreSQL event versions retain microseconds; Date.parse truncates them.
+  const micros = (v: string) => Number((v.match(/\.(\d+)(?:Z|[+-])/i)?.[1] ?? '').padEnd(6, '0').slice(0, 6));
+  return micros(incoming) < micros(latest);
 }
 /** Retry backoff for the durable queue: 2 s, 10 s, 30 s, 2 min, 10 min, then give up. */
 export const RETRY_DELAYS_MS = [2_000, 10_000, 30_000, 120_000, 600_000];
