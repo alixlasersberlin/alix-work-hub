@@ -1013,7 +1013,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
     const booked = await postToBuchhaltung();
     if (!booked) {
-      toast.error('Buchung fehlgeschlagen – E-Mail wurde NICHT versendet.');
+      // postToBuchhaltung already reports the precise cause; do not hide it
+      // behind a second generic notification. No mail is sent on failure.
       return;
     }
     const sent = await sendByEmail();

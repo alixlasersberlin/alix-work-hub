@@ -34,4 +34,10 @@ describe('Anzahlungsrechnung aus bestehendem Platzhalter', () => {
     expect(depositInvoiceUpdate({}, { ...placeholder, status: 'entwurf' }, false).status).toBe('offen');
     expect(depositInvoiceUpdate({}, { ...placeholder, status: 'entwurf' }, true).status).toBe('entwurf');
   });
+  it('überschreibt für die zweite Rate über 5.000 Euro weder erste Rate noch 10.000-Euro-Platzhalter', () => {
+    const order = 'b6b5b28e-f284-4bc3-a6f0-453ecd1e33fc';
+    const first = { ...placeholder, source_ref: `order:${order}:AZ-AB-2026-04691-1`, invoice_number: 'AZ-AB-2026-04691-1', gross_amount: 5000 };
+    const total = { ...placeholder, source_ref: `order:${order}`, gross_amount: 10000 };
+    expect(findDepositInvoiceTarget([first, total], `order:${order}:AZ-AB-2026-04691-2`, order, 5000)).toBeUndefined();
+  });
 });
