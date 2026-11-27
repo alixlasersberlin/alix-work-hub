@@ -8,10 +8,12 @@ import { channelAllowed, type OperatingGate } from '../_shared/ph-operating-mode
 //   GET /product-hub-api/products/{alix_product_id}/documents
 //   GET /product-hub-api/content?channel=website          → alle freigegebenen Content-Hub-Releases
 //   GET /product-hub-api/products/{alix_product_id}/content?channel=website
+//   GET /product-hub-api/bundle?channel=de   → v1.2: alle Kanalgeräte inkl. media/documents/content + sync_scope in EINER Antwort
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { productRoute } from "./product-route.ts";
 import { decidePublication, normalizeChannel, SIGNAL_CHANNELS, webImagePath } from '../_shared/ph-publication.ts';
 import { liveAllowed } from '../_shared/ph-delivery.ts';
+import { BUNDLE_CONTRACT, forChannel, groupBy, syncAllowed, syncScope } from './bundle.ts';
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -236,6 +238,69 @@ Deno.serve(async (req) => {
   // Freigabe erfolgt ausschliesslich durch den Super Admin in AlixWork: Webseiten uebernehmen ohne eigene Zwischenpruefung.
   const AUTO_PUBLISH = { approval_source: "alixwork", auto_publish: true, review_required: false };
   const CH_ALLOWED = ["website", "offer", "datasheet", "comparison", "portal", "social"];
+
+  // v1.2 Bulk: same visibility rules as the list route; read-only, never changes product data.
+  async function pagedIn(table: string, cols: string, ids: string[], extra?: (q: any) => any) {
+    const out: any[] = [];
+    for (let i = 0; i < ids.length; i += 100) {
+      for (let off = 0; ; off += 1000) {
+        let q = supabase.from(table).select(cols).in("product_id", ids.slice(i, i + 100)).order("product_id").range(off, off + 999);
+        if (extra) q = extra(q);
+        const { data, error } = await q;
+        if (error) throw error;
+        out.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+    }
+    return out;
+  }
+
+  if (parts[1] === "bundle" && !productId) {
+    try {
+      const col = activeCol[channel || ""];
+      if (!channel || !col) return json(400, { error: "channel_required" });
+      const { data, error } = await supabase.from("ph_products").select(`id,${PUBLIC_FIELDS}`)
+        .eq("status", "published").eq(col, true).order("sort_order");
+      if (error) throw error;
+      const rows = (data || []) as any[];
+      const ids = rows.map((r) => r.id);
+      const { data: gateRow } = await supabase.from("ph_settings").select("value").eq("key", "ph2_activation").maybeSingle();
+      const gate = (gateRow?.value ?? null) as any;
+      const pilotUuid = gate?.channels?.[channel]?.pilot_product_id ?? null;
+      let pilotHubId: string | null = rows.find((r) => r.id === pilotUuid)?.alix_product_id ?? null;
+      if (pilotUuid && !pilotHubId) {
+        const { data: pp } = await supabase.from("ph_products").select("alix_product_id").eq("id", pilotUuid).maybeSingle();
+        pilotHubId = pp?.alix_product_id ?? null;
+      }
+      const ch = CH_ALLOWED.includes(url.searchParams.get("content_channel") || "") ? url.searchParams.get("content_channel")! : "website";
+      const [media, docs, content, comps, trs] = await Promise.all([
+        pagedIn("ph_media", "product_id,url,kind,media_type,title,alt_text,channels,sort_order,is_primary", ids, (q) => q.order("sort_order")),
+        pagedIn("ph_documents", "product_id,title,doc_type,visibility,language,version,url,channels", ids, (q) => q.eq("visibility", "website")),
+        pagedIn("ch_channel_state", "product_id,published_version,published_at,published_hash,payload", ids, (q) => q.eq("channel", ch).not("published_at", "is", null)),
+        complianceMap(supabase, ids),
+        translationMap(supabase, ids, locale),
+      ]);
+      const mediaBy = groupBy(forChannel(media, channel), "product_id");
+      const docsBy = groupBy(forChannel(docs, channel), "product_id");
+      const contentBy = Object.fromEntries(content.map((c: any) => [c.product_id, c]));
+      return json(200, {
+        contract: BUNDLE_CONTRACT, channel, locale, generated_at: new Date().toISOString(),
+        sync_scope: syncScope(gate, channel, pilotHubId),
+        products: rows.map((r) => {
+          const { id, ...rest } = applyLocale(withUae(stripPrices(r, channel, noPrices), comps[r.id]), trs[r.id], locale);
+          const c = contentBy[r.id];
+          return {
+            ...rest, ...AUTO_PUBLISH,
+            sync_allowed: syncAllowed(gate, channel, r.id),
+            media: mediaBy[r.id] ?? [], documents: docsBy[r.id] ?? [],
+            content: c ? { channel: ch, version: c.published_version, published_at: c.published_at, content_hash: c.published_hash, content: c.payload } : null,
+          };
+        }),
+      });
+    } catch (e) {
+      return json(500, { error: (e as Error).message });
+    }
+  }
 
   try {
     if (parts.includes("content") && !productId) {

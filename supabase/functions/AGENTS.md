@@ -16,3 +16,4 @@
 - Signed-offer conversion resolves orders by source and customer, preferring the canonical number over legacy rows; insert-only conflict handling re-reads concurrent winners without overwriting orders or duplicating child writes.
 
 - Controlled DE/COM modes preserve all acceptance and environment gates, exact single-pilot UUID, and operating revision at capture/claim/prepare/final dispatch; block legacy writers to prevent stop bypass, retain in-flight receipts, and never replay shadow or prior-revision events.
+- product-hub-api /bundle (v1.2) mirrors list visibility and exposes sync_scope/sync_allowed from ph2_activation; receivers' periodic reconcile may only apply sync_allowed products, so the pilot gate cannot be bypassed via public reads.
