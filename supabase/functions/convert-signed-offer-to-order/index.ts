@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { createOrderOnce, OrderIdentityConflict } from './order-identity.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,25 +18,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
+    const url = Deno.env.get('SUPABASE_URL');
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!url || !serviceKey) throw new Error('Auftragsdienst nicht konfiguriert');
+    const supabase = createClient(url, serviceKey);
 
     // Nummernkreis-Regel: Auftragsnummern IMMER mit "AB-"-Präfix speichern
     const base = offer_number.replace(/^ANG-/i, '').replace(/^AB-/i, '');
     const order_number = `AB-${base}`;
     const legacy_order_number = base; // Alt-Datensätze ohne Präfix erkennen
-
-    // Already converted?
-    const { data: existing } = await supabase
-      .from('orders').select('id, order_number').in('order_number', [order_number, legacy_order_number]).maybeSingle();
-    if (existing) {
-      return new Response(JSON.stringify({ ok: true, already: true, order_id: existing.id }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
 
     // Latest signed sign-request
     const { data: sr, error: srErr } = await supabase
@@ -79,8 +70,9 @@ Deno.serve(async (req) => {
     }
 
     // Get customer source_system for consistency
-    const { data: cust } = await supabase
+    const { data: cust, error: customerError } = await supabase
       .from('customers').select('source_system').eq('id', customer_id).maybeSingle();
+    if (customerError) throw customerError;
     const source_system = cust?.source_system || 'zoho_eu_1';
 
     const payment = payload.payment || {};
@@ -110,9 +102,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: order, error: oErr } = await supabase
-      .from('orders')
-      .insert({
+    const { order, already } = await createOrderOnce(supabase, {
         customer_id,
         order_number,
         source_system,
@@ -123,10 +113,12 @@ Deno.serve(async (req) => {
         expected_shipment_date: expectedShipmentIso,
         deposit_amount: downPayment,
         raw_data: { from_alix_sign: true, offer_payload: payload, offer_date: payload.offerDate || null, delivery_week: payload.deliveryWeek || null },
-      })
-      .select('id')
-      .single();
-    if (oErr) throw oErr;
+      }, legacy_order_number);
+    if (already) {
+      return new Response(JSON.stringify({ ok: true, already: true, order_id: order.id }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const lines: any[] = Array.isArray(payload.lines) ? payload.lines : [];
     if (lines.length > 0) {
@@ -191,7 +183,8 @@ Deno.serve(async (req) => {
     });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: e instanceof OrderIdentityConflict ? 409 : 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
