@@ -2,6 +2,8 @@ import { channelAllowed, type OperatingGate } from '../_shared/ph-operating-mode
 
 /** Bulk contract version; existing routes keep their unchanged responses. */
 export const BUNDLE_CONTRACT = '1.2';
+/** Reported only when the caller opts in with include_offline=1; default responses stay 1.2. */
+export const BUNDLE_CONTRACT_OFFLINE = '1.3';
 const GOVERNED = ['de', 'com'];
 
 export type SyncScope =
@@ -38,4 +40,23 @@ export function groupBy<T extends Record<string, any>>(rows: T[], key: string): 
     (out[k] ??= []).push(rest);
   }
   return out;
+}
+
+/** v1.3 opt-in: classification of products that are NOT in `products` (never public content). */
+export type OfflineState = 'offline' | 'not_released';
+export function offlineState(p: { status?: string | null }): OfflineState {
+  return p.status === 'published' ? 'offline' : 'not_released';
+}
+
+/** Minimal, content-free status entry; versions fall back to updated_at when no signal exists yet. */
+export function offlineEntry(
+  p: { id: string; alix_product_id: string; slug: string | null; status: string | null; updated_at: string | null },
+  channel: string, gate: OperatingGate | null, version: string | null,
+) {
+  return {
+    alix_product_id: p.alix_product_id, slug: p.slug, channel,
+    state: offlineState(p), online: false as const,
+    sync_allowed: syncAllowed(gate, channel, p.id),
+    product_version: version ?? p.updated_at, updated_at: p.updated_at,
+  };
 }

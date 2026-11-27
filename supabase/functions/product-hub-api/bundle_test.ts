@@ -32,3 +32,19 @@ Deno.test("channel filter and grouping match existing subroutes", () => {
   assertEquals(forChannel(rows, "de").length, 2);
   assertEquals(Object.keys(groupBy(forChannel(rows, "com"), "product_id")), ["a"]);
 });
+
+import { offlineEntry } from "./bundle.ts";
+const base = { id: APEX, alix_product_id: "Apex", slug: "apex", updated_at: "2026-11-27T10:00:00Z" };
+for (const ch of ["de", "com"]) {
+  Deno.test(`${ch}: offline entry separates switched-off from unreleased and honours pilot`, () => {
+    const off = offlineEntry({ ...base, status: "published" }, ch, pilot(ch), null);
+    assertEquals([off.state, off.online, off.sync_allowed, off.product_version], ["offline", false, true, base.updated_at]);
+    assertEquals(offlineEntry({ ...base, status: "draft" }, ch, pilot(ch), "v7").state, "not_released");
+    assertEquals(offlineEntry({ ...base, id: OTHER, status: "published" }, ch, pilot(ch), null).sync_allowed, false);
+    assertEquals(offlineEntry({ ...base, status: "published" }, ch, { ...pilot(ch), emergency_stopped: true }, null).sync_allowed, false);
+  });
+}
+Deno.test("offline entry carries no public content fields", () => {
+  const e = offlineEntry({ ...base, status: "published" }, "de", null, null) as Record<string, unknown>;
+  for (const f of ["name", "hero_image_url", "media", "price_public", "long_description"]) assertEquals(f in e, false);
+});

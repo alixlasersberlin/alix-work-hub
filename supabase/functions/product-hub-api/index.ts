@@ -9,11 +9,12 @@ import { channelAllowed, type OperatingGate } from '../_shared/ph-operating-mode
 //   GET /product-hub-api/content?channel=website          → alle freigegebenen Content-Hub-Releases
 //   GET /product-hub-api/products/{alix_product_id}/content?channel=website
 //   GET /product-hub-api/bundle?channel=de   → v1.2: alle Kanalgeräte inkl. media/documents/content + sync_scope in EINER Antwort
+//   GET /product-hub-api/bundle?channel=de&include_offline=1 → v1.3: zusätzlich offline_products (nur Status, kein Inhalt)
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { productRoute } from "./product-route.ts";
 import { decidePublication, normalizeChannel, SIGNAL_CHANNELS, webImagePath } from '../_shared/ph-publication.ts';
 import { liveAllowed } from '../_shared/ph-delivery.ts';
-import { BUNDLE_CONTRACT, forChannel, groupBy, syncAllowed, syncScope } from './bundle.ts';
+import { BUNDLE_CONTRACT, BUNDLE_CONTRACT_OFFLINE, offlineEntry, forChannel, groupBy, syncAllowed, syncScope } from './bundle.ts';
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -283,9 +284,29 @@ Deno.serve(async (req) => {
       const mediaBy = groupBy(forChannel(media, channel), "product_id");
       const docsBy = groupBy(forChannel(docs, channel), "product_id");
       const contentBy = Object.fromEntries(content.map((c: any) => [c.product_id, c]));
+      // v1.3 opt-in: status-only list of every other product, never public content.
+      let offline: any[] | undefined;
+      if (url.searchParams.get("include_offline") === "1") {
+        const rest: any[] = [];
+        for (let off = 0; ; off += 1000) {
+          const { data: od, error: oe } = await supabase.from("ph_products").select("id,alix_product_id,slug,status,updated_at")
+            .not("alix_product_id", "is", null).order("id").range(off, off + 999);
+          if (oe) throw oe;
+          rest.push(...(od || []));
+          if (!od || od.length < 1000) break;
+        }
+        const online = new Set(ids);
+        let versions: Record<string, string> = {};
+        if (channel === "de" || channel === "com" || channel === "dubai") {
+          const { data: vr } = await supabase.rpc("ph2_versions", { _channel: channel });
+          versions = Object.fromEntries((vr ?? []).map((v: any) => [v.product_id, v.version]));
+        }
+        offline = rest.filter((p) => !online.has(p.id)).map((p) => offlineEntry(p, channel, gate, versions[p.id] ?? null));
+      }
       return json(200, {
-        contract: BUNDLE_CONTRACT, channel, locale, generated_at: new Date().toISOString(),
+        contract: offline ? BUNDLE_CONTRACT_OFFLINE : BUNDLE_CONTRACT, channel, locale, generated_at: new Date().toISOString(),
         sync_scope: syncScope(gate, channel, pilotHubId),
+        ...(offline ? { offline_products: offline, catalog_complete: true } : {}),
         products: rows.map((r) => {
           const { id, ...rest } = applyLocale(withUae(stripPrices(r, channel, noPrices), comps[r.id]), trs[r.id], locale);
           const c = contentBy[r.id];
