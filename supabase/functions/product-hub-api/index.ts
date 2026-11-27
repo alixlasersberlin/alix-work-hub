@@ -1,3 +1,4 @@
+import { channelAllowed, type OperatingGate } from '../_shared/ph-operating-mode.ts';
 // ALIXWORK PRODUCT HUB – öffentliche, serverseitige Lese-API für die Webseiten (COM/DE).
 // Auth über Header x-api-key = PRODUCT_HUB_API_KEY. Keine Secrets im Frontend.
 // Routen:
@@ -270,10 +271,12 @@ Deno.serve(async (req) => {
     const v2Channel = normalizeChannel(rawChannel);
     let versions: Record<string,string> = {};
     let holds: Record<string,boolean> = {};
+    let operatingGate: OperatingGate | null = null;
     if (protocol2) {
       if (!v2Channel || !(SIGNAL_CHANNELS as readonly string[]).includes(v2Channel)) return json(400, { error: 'unsupported_v2_channel' });
       const { data: gate } = await supabase.from('ph_settings').select('value').eq('key', 'ph2_activation').maybeSingle();
-      if (!liveAllowed(Deno.env.get('PH_SIGNAL_LIVE_ENABLED'), gate?.value as any)) return json(503, { error: 'product_hub_2_activation_blocked' });
+      operatingGate = gate?.value as OperatingGate | null;
+      if (!liveAllowed(Deno.env.get('PH_SIGNAL_LIVE_ENABLED'), gate?.value as any) || operatingGate?.emergency_stopped !== false || !operatingGate.channels?.[v2Channel] || operatingGate.channels[v2Channel].mode === 'blocked') return json(503, { error: 'product_hub_2_activation_blocked' });
       const { data: versionRows, error: ve } = await supabase.rpc('ph2_versions', { _channel: v2Channel });
       if (ve) throw ve;
       versions = Object.fromEntries((versionRows ?? []).map((r: any) => [r.product_id, r.version]));
@@ -299,6 +302,7 @@ Deno.serve(async (req) => {
       if (customIds) q = q.in("id", customIds.length ? customIds : ["00000000-0000-0000-0000-000000000000"]);
       const { data, error } = await q;
       if (error) throw error;
+      if (protocol2 && operatingGate?.channels?.[v2Channel ?? '']?.mode === 'pilot') return json(503, { error: 'product_hub_2_pilot_requires_single_product' });
       const rows = ((data || []) as any[]).filter(r => !protocol2 || decidePublication(r,v2Channel ?? '',{hold:holds[r.id]}).desired==='ONLINE');
       const comps = await complianceMap(supabase, rows.map((r) => r.id));
       const trs = await translationMap(supabase, rows.map((r) => r.id), locale);
@@ -315,6 +319,7 @@ Deno.serve(async (req) => {
       .select(`id,${PUBLIC_FIELDS}`).eq("alix_product_id", productId).maybeSingle();
     if (pe) throw pe;
     if (!prod) return json(404, { error: "not_found" });
+    if (protocol2 && !channelAllowed(operatingGate, v2Channel ?? '', (prod as any).id)) return json(503, { error: 'product_hub_2_pilot_scope_blocked' });
     if (protocol2 && decidePublication(prod as any,v2Channel ?? '',{hold:holds[(prod as any).id]}).desired!=='ONLINE') return json(404, {
       error:'not_found', publication_state:'OFFLINE', product_id:(prod as any).alix_product_id,
       product_version:versions[(prod as any).id] ?? (prod as any).updated_at,

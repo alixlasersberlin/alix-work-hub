@@ -1,11 +1,9 @@
 // Product Hub -> alix-lasers.com: echte, freigegebene Sprachfassungen übertragen (ohne Rendering/Publish).
 // Schreibt ausschließlich redaktionelle Felder. Technische Daten, Preise, Medien bleiben unberührt.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const cors = corsHeaders;
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -138,6 +136,8 @@ Deno.serve(async (req) => {
   try {
     if (!KEY) return json(500, { error: "COM_PRODUCT_HUB_WRITE_KEY fehlt" });
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: control, error: controlError } = await admin.from('ph_settings').select('value').eq('key', 'ph2_activation').maybeSingle();
+    if (controlError || control?.value?.controlled_modes === true) return json(200, { ok: false, error: 'Kontrollierter PRODUCT HUB 2.0: alter COM-Versand gesperrt; keine Übertragung ausgeführt' });
     const body = await req.json().catch(() => ({} as any));
     const action = String(body.action ?? "push");
     const dryRun = body.dryRun === true;

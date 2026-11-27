@@ -14,3 +14,5 @@
 - Signed private Product Hub images are served read-only via product-hub-api /images/{media_id} (API key, published + channel-active, product-hub-docs/images/{product_id}/ only); buckets stay private and stored references unchanged. isPublicImage rejects only signed/credentialed URLs, not resize params.
 - Full connection tests send a content-free signed connection.test (never product.changed), require unsigned 401, and accept only a signed kind=connection_test receipt logged in ph_sync_log; 405 never counts as authentication.
 - Signed-offer conversion resolves orders by source and customer, preferring the canonical number over legacy rows; insert-only conflict handling re-reads concurrent winners without overwriting orders or duplicating child writes.
+
+- Controlled DE/COM modes preserve all acceptance and environment gates, exact single-pilot UUID, and operating revision at capture/claim/prepare/final dispatch; block legacy writers to prevent stop bypass, retain in-flight receipts, and never replay shadow or prior-revision events.

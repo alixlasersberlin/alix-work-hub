@@ -16,6 +16,7 @@ import { controlDomain, type DomainAction, type DomainResult } from '@/lib/produ
 import { useAuth } from '@/hooks/useAuth';
 import { usePhChannels } from '@/lib/producthub/useChannels';
 import { websiteState } from '@/lib/producthub/websiteState';
+import { ProductionControl } from '@/components/producthub/ProductionControl';
 import { ConnectionOverview } from '@/components/producthub/ConnectionOverview';
 
 const db = supabase as any;
@@ -94,6 +95,7 @@ export default function ProductHubWebseiten() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Webseiten" subtitle="Freigabestelle: AlixWork · Super Admin" icon={Globe} />
+      <ProductionControl canWrite={canWrite} products={products} />
       <ConnectionOverview canTest={canWrite || (roles || []).includes('Admin')} />
       {canWrite && <Button variant="outline" asChild><Link to="/product-hub/com-abschaltpruefung"><Globe className="mr-2 h-4 w-4" />COM-Abschaltprüfung</Link></Button>}
       {canWrite && <Button variant="outline" asChild><Link to="/product-hub/de-abschaltpruefung"><Globe className="mr-2 h-4 w-4" />DE-Abschaltprüfung</Link></Button>}

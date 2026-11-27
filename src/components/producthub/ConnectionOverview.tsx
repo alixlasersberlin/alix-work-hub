@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query';
+import { OPERATING_QUERY } from './ProductionControl';
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,6 +36,8 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
   const [protocol, setProtocol] = useState<Record<string, FullTest>>({});
   const [lastOk, setLastOk] = useState<Record<string, string>>({});
   const [allBusy, setAllBusy] = useState(false);
+  const { data: operatingGate } = useQuery({ queryKey: [...OPERATING_QUERY, 'connection-status'], queryFn: async () => { const { data, error } = await db.from('ph_settings').select('value').eq('key', 'ph2_activation').maybeSingle(); if (error) throw error; return data?.value ?? {}; }, refetchInterval: 10000 });
+  const siteLive = (code: string) => ov?.live_enabled === true && operatingGate?.enabled === true && operatingGate?.emergency_stopped === false && ['pilot','full'].includes(operatingGate?.channels?.[code]?.mode);
 
   const loadProtocol = async () => {
     const { data: ft } = await db.from('ph_sync_log').select('channel_code,payload,created_at').eq('operation', 'ph2_connection_test').order('created_at', { ascending: false }).limit(200);
@@ -115,13 +119,13 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
           <TableRow><TableCell className="text-xs">Antwortzeit</TableCell>{ACCEPT.map(c => <TableCell key={c} className="text-xs font-mono">{protocol[c]?.response_ms != null ? `${protocol[c].response_ms} ms` : '—'}</TableCell>)}</TableRow>
           <TableRow><TableCell className="text-xs">Letzter erfolgreicher Verbindungstest</TableCell>{ACCEPT.map(c => <TableCell key={c} className="text-xs">{fmt(lastOk[c])}</TableCell>)}</TableRow>
           <TableRow><TableCell className="text-xs">Technische Abnahme</TableCell>{ACCEPT.map(c => { const cause = failureCause(protocol[c]); return <TableCell key={c} className="text-xs">{cause ? <span className="text-destructive">{SITE_NAMES[c]}: {cause}</span> : <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">Erfolgreich</Badge>}</TableCell>; })}</TableRow>
-          <TableRow><TableCell className="text-xs">Status des Produktivbetriebs</TableCell>{ACCEPT.map(c => <TableCell key={c}><Badge variant={live ? 'default' : 'secondary'}>{live ? 'AN' : 'GESPERRT'}</Badge></TableCell>)}</TableRow>
+          <TableRow><TableCell className="text-xs">Status des Produktivbetriebs</TableCell>{ACCEPT.map(c => <TableCell key={c}><Badge variant={siteLive(c) ? 'default' : 'secondary'}>{siteLive(c) ? operatingGate.channels[c].mode === 'pilot' ? 'PILOT' : 'VOLLSTÄNDIG' : 'GESPERRT'}</Badge></TableCell>)}</TableRow>
         </TableBody>
       </Table>
       <div className="text-xs text-muted-foreground">Eine erfolgreiche Abnahme schaltet den Produktivbetrieb nicht frei; die Freigabe erfolgt ausschließlich manuell durch einen Super Admin.</div>
     </CardContent></Card>
     <Card><CardContent className="p-0 overflow-x-auto">
-      <div className="px-4 pt-4 pb-2 text-sm font-medium">Technische Verbindung (PRODUCT HUB 2.0) · Produktivbetrieb gesperrt, nur Anzeige</div>
+      <div className="px-4 pt-4 pb-2 text-sm font-medium">Technische Verbindung (PRODUCT HUB 2.0) · Abnahme aktiviert keinen Produktivbetrieb</div>
       <Table>
         <TableHeader><TableRow>
           <TableHead>Webseite</TableHead><TableHead>Domain</TableHead><TableHead>Webseiten-ID</TableHead><TableHead>Receiver-URL</TableHead>
@@ -134,7 +138,7 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
           const fullNewer = !!p?.checked_at && (!t || new Date(p.checked_at) >= new Date(t.at));
           const status = !info ? 'Kein Empfänger vorgesehen' : !info.signal_auth || !info.receipt_auth ? 'Nicht angebunden' : fullNewer ? (p.result === 'accepted' ? 'Technische Abnahme erfolgreich' : p.message) : t ? t.message : 'Bereit für Test';
           const ok = fullNewer && p?.result === 'accepted';
-          const live = !!info && ov?.live_enabled === true && gate && info.signal_auth && info.receipt_auth;
+          const live = !!info && siteLive(s.code) && info.signal_auth && info.receipt_auth;
           return (
             <TableRow key={s.id}>
               <TableCell>{s.name}</TableCell>

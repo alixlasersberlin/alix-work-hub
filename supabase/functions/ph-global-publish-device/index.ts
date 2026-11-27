@@ -43,6 +43,10 @@ Deno.serve(async req => {
     if (tenantError || !tenantAllowed) return json(403, { ok: false, error: 'Keine Mandantenberechtigung' });
     const admin = createClient(url, service);
     if (action === 'verify_com' || action === 'verify_de') return json(200, { ok: true, card_check: await verifyComCard(admin, product, null, 'manual', action === 'verify_de' ? 'de' : 'com') });
+    if (['de', 'com'].includes(channel) && !dry_run) {
+      const { data: gate, error: gateError } = await admin.from('ph_settings').select('value').eq('key', 'ph2_activation').maybeSingle();
+      if (gateError || (gate?.value as any)?.controlled_modes === true) return json(200, { ok: false, online: false, error: 'Kontrollierter PRODUCT HUB 2.0: alter Direktversand gesperrt. Nur die bestehende signierte Warteschlange darf das freigegebene Pilotgerät übertragen.' });
+    }
     if (channel === 'dubai') {
       const aeKey = Deno.env.get('AE_PRODUCT_HUB_DIRECT_RELEASE_KEY');
       if (!aeKey) return json(503, { ok: false, error: 'Sicherer AE-Zugang fehlt' });

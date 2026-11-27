@@ -1,1 +1,3 @@
 - All COM/DE/AE/Beauty release controls use the signed protected sender: GLOBAL/AE require channel-specific verified IDs, Beauty its exact hub identity and source version; only matching ONLINE receipts count as publication. List/bulk releases exclude both US codes and retain sequential processing. AT remains pull-only until its contract is confirmed.- Final acceptance readiness comes only from src/lib/phAcceptance.ts (DE and COM must pass every check); display-only, never toggles production gates.
+
+- ProductionControl reads existing protected settings/logs and uses exact-Super-Admin mode/stop/proof RPCs; automatic refresh only reads, never releases. Display/cache checks require explicit evidence separate from signed receipts.

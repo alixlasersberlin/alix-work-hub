@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
 import { liveAllowed, prepareSignal, deliverSignal } from '../_shared/ph-delivery.ts';
+import { operatingAllowed, revisionMatches } from '../_shared/ph-operating-mode.ts';
 import { legacyDecision } from '../_shared/ph-publication.ts';
 const Body = z.object({ limit: z.number().int().min(1).max(20).default(10) });
 declare const EdgeRuntime: { waitUntil(task: Promise<unknown>): void };
@@ -39,13 +40,24 @@ Deno.serve(async req => {
           sb.from('ph_sync_log').select('id').eq('operation', 'ph2_signal').eq('product_id', job.product_id).eq('channel_code', job.channel_code).order('payload->signal->>version', { ascending: false }).limit(1).maybeSingle(),
         ]);
         const secret = Deno.env.get(`PH_NOTIFY_SECRET_${signal.channel.toUpperCase()}`);
-        if (!liveAllowed(Deno.env.get('PH_SIGNAL_LIVE_ENABLED'), gate?.value as any)) result = { ok: false, error: 'activation_blocked', duration_ms: 0 };
+        if (!revisionMatches(gate?.value as any, payload.operating_revision) || !operatingAllowed(Deno.env.get('PH_SIGNAL_LIVE_ENABLED'), gate?.value as any, signal.channel, job.product_id)) result = { ok: false, error: 'activation_blocked', duration_ms: 0 };
         else if (latest?.id !== job.id) result = { ok: false, error: 'superseded', duration_ms: 0 };
         else if (!secret) result = { ok: false, error: 'channel_not_connected', duration_ms: 0 };
-        else { result = await deliverSignal(signal, secret); if (result.ok) sent++; }
+        else {
+          // Persist the attempt before transport; an immediate signed receipt may finish the row first.
+          const attempted_at = new Date().toISOString();
+          const { data: reserved, error: reserveError } = await sb.from('ph_sync_log').update({ payload: { ...payload, signal, decision, attempted_at,
+            attempt_history: [...(payload.attempt_history ?? []), { attempted_at, version: signal.version, desired: signal.desired }] } }).eq('id', job.id).eq('status', 'sending').select('id');
+          if (reserveError || !reserved?.length) result = { ok: false, error: 'transmission_reservation_lost', duration_ms: 0 };
+          else {
+            const { data: finalGate, error: finalGateError } = await sb.from('ph_settings').select('value').eq('key','ph2_activation').maybeSingle();
+            if (finalGateError || !revisionMatches(finalGate?.value as any, payload.operating_revision) || !operatingAllowed(Deno.env.get('PH_SIGNAL_LIVE_ENABLED'), finalGate?.value as any, signal.channel, job.product_id)) result = { ok: false, error: 'activation_blocked', duration_ms: 0 };
+            else { result = await deliverSignal(signal, secret); if (result.ok) sent++; }
+          }
+        }
       } else shadow++;
       const { error: finishError } = await sb.rpc('ph2_finish', { _id: job.id, _lease: payload.lease_token,
-        _result: { ...result, signal, decision, legacy_decision: legacyDecision(payload.snapshot, signal.channel), shadow_mode: !live } });
+        _result: { ...result, attempted_at: new Date().toISOString(), signal, decision, legacy_decision: legacyDecision(payload.snapshot, signal.channel), shadow_mode: !live } });
       if (finishError) throw finishError;
     }
     // Short retries are event-driven. Long delays and interrupted workers use the dormant

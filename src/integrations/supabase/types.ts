@@ -58914,6 +58914,10 @@ export type Database = {
         Args: { _product_id: string; _source: string }
         Returns: undefined
       }
+      ph2_channel_allowed: {
+        Args: { _channel: string; _product_id: string }
+        Returns: boolean
+      }
       ph2_claim: {
         Args: { _limit?: number; _live: boolean }
         Returns: {
@@ -58944,7 +58948,29 @@ export type Database = {
         Returns: boolean
       }
       ph2_receipt: { Args: { _receipt: Json }; Returns: Json }
+      ph2_record_pilot_check: {
+        Args: {
+          _channel: string
+          _check: string
+          _event?: string
+          _evidence: string
+          _passed: boolean
+          _product: string
+        }
+        Returns: undefined
+      }
       ph2_retry: { Args: { _event_id: string }; Returns: boolean }
+      ph2_set_operating_mode: {
+        Args: {
+          _channel: string
+          _confirmation: string
+          _mode: string
+          _pilot: string
+          _revision: number
+        }
+        Returns: Json
+      }
+      ph2_stop_production: { Args: never; Returns: Json }
       ph2_versions: {
         Args: { _channel: string }
         Returns: {
