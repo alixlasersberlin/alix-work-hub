@@ -48,4 +48,3 @@
 - Shopify full invoices are triggered only by newly imported orders and use confirmed source tax/shipping, existing legal numbering and private PDF storage; locked service-only state prevents duplicate invoices and uncertain-send retries, while the existing reconciliation resumes bounded pre-send failures without another polling job.
 - Offer finance previews reuse existing installment/lease PDF generators in an explicit demo-only mode with local Blob downloads; disable finance writes, document capture, facsimiles and unrelated offer lookup so previews never create live obligations.
 
-- PRODUCT HUB final acceptance readiness is computed only in src/lib/phAcceptance.ts (both DE and COM must pass every check); it is display-only and never toggles production gates.
