@@ -494,3 +494,6 @@ verify_jwt = false
 
 [functions.rp-send-prenotifications]
 verify_jwt = false
+
+[functions.backup-external-media]
+verify_jwt = false
