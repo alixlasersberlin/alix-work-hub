@@ -16,6 +16,20 @@ const Receipt = z.object({
   public_url: z.string().url().max(500).nullable(), error_code: z.string().max(80).nullable().default(null),
   error: z.string().max(1000).nullable().default(null), observed_at: z.string().datetime(),
 });
+// Connection-test receipts: signed like normal receipts, stored only as log evidence, never touch product state.
+const TestReceipt = z.object({ kind: z.literal("connection_test"), test_id: z.string().uuid(), channel: z.enum(["de", "com"]), observed_at: z.string().datetime() });
+async function testReceipt(req: Request, raw: string, r: z.infer<typeof TestReceipt>) {
+  const secret = Deno.env.get(`PH_STATUS_SECRET_${r.channel.toUpperCase()}`);
+  if (!secret) return json(503, { error: "channel_not_connected" });
+  const v = await verify(secret, req.headers.get("x-alixwork-timestamp"), req.headers.get("x-alixwork-signature"), raw);
+  if (!v.ok) return json(401, { error: v.reason });
+  const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return json(503, { error: "configuration_missing" });
+  const sb = createClient(url, key);
+  const { error } = await sb.from("ph_sync_log").insert({ channel_code: r.channel, direction: "inbound", operation: "ph2_connection_test_receipt", status: "ok", message: "Testrückmeldung", payload: r });
+  if (error) return json(500, { error: "receipt_storage_failed" });
+  return json(202, { accepted: true, test: true });
+}
 const json = (s: number, b: unknown) => new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {
@@ -24,6 +38,8 @@ Deno.serve(async (req) => {
   const raw = await req.text();
   if (raw.length > 8000) return json(413, { error: "too_large" });
   let body: unknown; try { body = JSON.parse(raw); } catch { return json(400, { error: "invalid_json" }); }
+  const test = TestReceipt.safeParse(body);
+  if (test.success) return testReceipt(req, raw, test.data);
   const parsed = Receipt.safeParse(body);
   if (!parsed.success) return json(400, { error: parsed.error.flatten().fieldErrors });
   const r = parsed.data;
