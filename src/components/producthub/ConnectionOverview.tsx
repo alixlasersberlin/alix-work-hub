@@ -20,7 +20,7 @@ const RESULT: Record<string, { label: string; v: 'default' | 'secondary' | 'dest
 const yesNo = (v: boolean | undefined) => <Badge variant={v ? 'default' : 'outline'}>{v ? 'JA' : 'NEIN'}</Badge>;
 const fmt = (s?: string | null) => (s ? new Date(s).toLocaleString('de-DE') : '—');
 
-/** Read-only technical connection overview; the only action is a harmless GET reachability test. */
+/** Technical connection overview: GET reachability test and the content-free signed full connection test (no product writes). */
 export function ConnectionOverview({ canTest }: { canTest: boolean }) {
   const [sites, setSites] = useState<any[]>([]);
   const [ov, setOv] = useState<Overview | null>(null);
@@ -29,6 +29,13 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
   const [tests, setTests] = useState<Record<string, { at: string; message: string; status?: number }>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [protocol, setProtocol] = useState<Record<string, FullTest>>({});
+
+  const loadProtocol = async () => {
+    const { data: ft } = await db.from('ph_sync_log').select('channel_code,payload,created_at').eq('operation', 'ph2_connection_test').order('created_at', { ascending: false }).limit(20);
+    const pr: Record<string, FullTest> = {};
+    for (const r of ft || []) if (r.channel_code && !pr[r.channel_code]) pr[r.channel_code] = { ...r.payload, checked_at: r.payload?.checked_at ?? r.created_at };
+    setProtocol(pr);
+  };
 
   useEffect(() => {
     (async () => {
@@ -40,10 +47,7 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
       const lr: Record<string, string> = {};
       for (const l of logs || []) if (l.channel_code && !lr[l.channel_code]) lr[l.channel_code] = l.created_at;
       setLastReceipt(lr);
-      const { data: ft } = await db.from('ph_sync_log').select('channel_code,payload').eq('operation', 'ph2_connection_test').order('created_at', { ascending: false }).limit(20);
-      const pr: Record<string, FullTest> = {};
-      for (const r of ft || []) if (r.channel_code && !pr[r.channel_code]) pr[r.channel_code] = r.payload;
-      setProtocol(pr);
+      await loadProtocol();
       const { data, error } = await supabase.functions.invoke('ph-signal-admin', { body: { action: 'overview' } });
       if (!error) setOv(data as Overview);
     })();
@@ -62,7 +66,10 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
     const { data, error } = await supabase.functions.invoke('ph-signal-admin', { body: { action: 'full_test', channel: code } });
     setBusy(null);
     if (error || !data) return toast.error('Vollständiger Verbindungstest nicht möglich');
-    setProtocol(p => ({ ...p, [code]: data as FullTest }));
+    const res = { ...(data as FullTest), checked_at: (data as FullTest).checked_at ?? new Date().toISOString() };
+    setProtocol(p => ({ ...p, [code]: res }));
+    if (res.result === 'accepted') toast.success('Technische Abnahme erfolgreich'); else toast.error(res.message || 'Verbindungstest fehlgeschlagen');
+    await loadProtocol().catch(() => {});
   };
 
   return (
@@ -72,12 +79,15 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
       <Table>
         <TableHeader><TableRow>
           <TableHead>Webseite</TableHead><TableHead>Domain</TableHead><TableHead>Webseiten-ID</TableHead><TableHead>Receiver-URL</TableHead>
-          <TableHead>Status</TableHead><TableHead>Signal-Auth</TableHead><TableHead>Rückmeldung</TableHead><TableHead>Letzter Test</TableHead><TableHead>Produktiv</TableHead>
+          <TableHead>Status</TableHead><TableHead>Signal-Auth</TableHead><TableHead>Rückmeldung</TableHead><TableHead>Letzter Test</TableHead><TableHead>Produktiv</TableHead><TableHead>Aktionen</TableHead>
         </TableRow></TableHeader>
         <TableBody>{sites.map(s => {
           const info = ov?.channels?.[s.code];
           const t = tests[s.code];
-          const status = !info ? 'Kein Empfänger vorgesehen' : !info.signal_auth || !info.receipt_auth ? 'Nicht angebunden' : t ? t.message : 'Bereit für Test';
+          const p = protocol[s.code];
+          const fullNewer = !!p?.checked_at && (!t || new Date(p.checked_at) >= new Date(t.at));
+          const status = !info ? 'Kein Empfänger vorgesehen' : !info.signal_auth || !info.receipt_auth ? 'Nicht angebunden' : fullNewer ? (p.result === 'accepted' ? 'Technische Abnahme erfolgreich' : p.message) : t ? t.message : 'Bereit für Test';
+          const ok = fullNewer && p?.result === 'accepted';
           const live = !!info && ov?.live_enabled === true && gate && info.signal_auth && info.receipt_auth;
           return (
             <TableRow key={s.id}>
@@ -85,14 +95,19 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
               <TableCell className="text-xs">{s.base_url || '—'}</TableCell>
               <TableCell className="font-mono text-xs">{s.code} · {String(s.id).slice(0, 8)}</TableCell>
               <TableCell className="font-mono text-xs break-all">{info?.receiver_url || '—'}</TableCell>
-              <TableCell className="text-xs">{status}{t?.status ? ` (HTTP ${t.status})` : ''}</TableCell>
+              <TableCell className="text-xs">{ok ? <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">Technische Abnahme erfolgreich</Badge> : <>{status}{!fullNewer && t?.status ? ` (HTTP ${t.status})` : ''}{fullNewer && p ? ` (GET ${p.http_get ?? '—'} · unsigniert ${p.http_unsigned ?? '—'} · signiert ${p.http_signed ?? '—'})` : ''}</>}</TableCell>
               <TableCell>{info ? yesNo(info.signal_auth) : '—'}</TableCell>
               <TableCell>{info ? yesNo(info.receipt_auth) : '—'}</TableCell>
               <TableCell className="text-xs">
-                {fmt(t?.at ?? lastReceipt[s.code])}
-                {info && canTest && <Button size="sm" variant="ghost" disabled={busy === s.code} onClick={() => test(s.code)}>Testen</Button>}
+                {fmt(fullNewer ? p?.checked_at : t?.at ?? lastReceipt[s.code])}
               </TableCell>
               <TableCell><Badge variant={live ? 'default' : 'secondary'}>{live ? 'AN' : 'AUS'}</Badge></TableCell>
+              <TableCell>
+                {info && canTest && <div className="flex flex-col gap-1 min-w-[190px]">
+                  <Button size="sm" variant="outline" disabled={busy === s.code} onClick={() => test(s.code)}>Erreichbarkeit testen</Button>
+                  {['de', 'com'].includes(s.code) && <Button size="sm" disabled={busy === s.code} onClick={() => fullTest(s.code)}>{busy === s.code ? 'Prüfe…' : 'Vollständiger Verbindungstest'}</Button>}
+                </div>}
+              </TableCell>
             </TableRow>
           );
         })}</TableBody>
@@ -117,7 +132,7 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
               <TableCell className="text-xs">{p ? SIG[p.signature] : '—'}</TableCell>
               <TableCell className="text-xs">{p ? (p.receipt ? 'Rückmeldung erfolgreich empfangen' : 'Keine Rückmeldung') : '—'}</TableCell>
               <TableCell className="text-xs">{p?.response_ms != null ? `${p.response_ms} ms` : '—'}</TableCell>
-              <TableCell>{r ? <Badge variant={r.v}>{r.label}</Badge> : '—'}</TableCell>
+              <TableCell>{r ? <Badge variant={r.v} className={p?.result === 'accepted' ? 'bg-emerald-600 text-white hover:bg-emerald-600' : ''}>{r.label}</Badge> : '—'}</TableCell>
               <TableCell className="text-xs max-w-xs">{p?.message ?? 'Noch kein vollständiger Test'}</TableCell>
               <TableCell>{canTest && ov?.channels?.[code] && <Button size="sm" variant="outline" disabled={busy === code} onClick={() => fullTest(code)}>{busy === code ? 'Prüfe…' : 'Vollständiger Verbindungstest'}</Button>}</TableCell>
             </TableRow>
