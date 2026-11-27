@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
   const { productId, sub } = route;
   const rawChannel = url.searchParams.get("channel");
   // alix-lasers.ae darf als ae/uae/dubai angefragt werden – intern immer "dubai"
-  const channel = rawChannel === "ae" || rawChannel === "uae" ? "dubai" : (["smart_ki","smartki"].includes((rawChannel||"").toLowerCase()) ? null : rawChannel);
+  const channel = url.searchParams.get('protocol') === '2' ? normalizeChannel(rawChannel) : rawChannel === "ae" || rawChannel === "uae" ? "dubai" : (["smart_ki","smartki"].includes((rawChannel||"").toLowerCase()) ? null : rawChannel);
   // Alix Smart KI: niemals Preise ausliefern (consumer=smart_ki|ai oder channel=smart_ki)
   const consumer = (url.searchParams.get("consumer") || "").toLowerCase();
   const noPrices = ["smart_ki", "smartki", "ai", "ki"].includes(consumer) || ["smart_ki", "smartki"].includes((rawChannel || "").toLowerCase()) || url.searchParams.get("no_prices") === "1";

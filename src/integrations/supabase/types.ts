@@ -58909,6 +58909,7 @@ export type Database = {
         Args: { p_product_id: string; p_remote_id: string }
         Returns: Json
       }
+      ph2_arm_retries: { Args: never; Returns: boolean }
       ph2_capture: {
         Args: { _product_id: string; _source: string }
         Returns: undefined

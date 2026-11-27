@@ -16,6 +16,11 @@ import { ACTIVE_COLUMN, normalizeChannel, newestLogs, previewState, type QueueLo
 const db = supabase as any;
 type Site = { code: string; name: string; base_url: string | null; is_active: boolean };
 const TONES: Record<string, string> = { online: 'text-success', offline: 'text-muted-foreground', pending: 'text-warning', error: 'text-destructive', locked: 'text-muted-foreground', unknown: 'text-muted-foreground' };
+function ProductThumbnail({ url }: { url?: string | null }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [url]);
+  return <div className="w-11 h-11 shrink-0 bg-muted rounded overflow-hidden">{url && !failed ? <img className="w-full h-full object-contain" src={url} alt="" loading="lazy" onError={() => setFailed(true)} /> : <Boxes className="w-5 h-5 m-3 text-muted-foreground" />}</div>;
+}
 
 async function allRows(table: string, fields: string, operation?: string) {
   const rows: any[] = [];
@@ -129,7 +134,7 @@ export default function ProductHubV2Preview() {
             </tr></thead>
             <tbody>{loading && !products.length ? <tr><td colSpan={sites.length+4} className="py-10 text-center text-muted-foreground">Geräte werden geladen …</td></tr> : !filtered.length ? <tr><td colSpan={sites.length+4} className="py-10 text-center text-muted-foreground">Keine Geräte gefunden.</td></tr> : filtered.map(p => <tr key={p.id} className="border-b">
               <td className="sticky left-0 z-20 bg-background p-3"><Checkbox aria-label={`${p.name} auswählen`} checked={selection.has(p.id)} onCheckedChange={v => setSelection(old => { const next = new Set(old); v ? next.add(p.id) : next.delete(p.id); return next; })} /></td>
-              <td className="sticky left-10 z-20 bg-background p-3"><div className="flex items-center gap-3"><div className="w-11 h-11 shrink-0 bg-muted rounded overflow-hidden">{p.hero_image_url ? <img className="w-full h-full object-contain" src={p.hero_image_url} alt="" loading="lazy" /> : <Boxes className="w-5 h-5 m-3 text-muted-foreground" />}</div><span className="font-medium break-words max-w-44">{p.name}</span></div></td>
+              <td className="sticky left-10 z-20 bg-background p-3"><div className="flex items-center gap-3"><ProductThumbnail url={p.hero_image_url} /><span className="font-medium break-words max-w-44">{p.name}</span></div></td>
               <td className="p-3 text-muted-foreground">{p.sku || '—'}</td>
               {sites.map(s => { const state = stateFor(p,s.code); return <td key={s.code} className="p-3"><div className="flex items-center gap-2">
                 {state.state === 'locked' ? <Lock className="h-4 w-4" aria-label="Gesperrt" /> : <Switch aria-label={`${p.name} auf ${s.name}`} checked={overrides[`${p.id}:${s.code}`] ?? (ACTIVE_COLUMN[s.code] ? p[ACTIVE_COLUMN[s.code]] === true : channelRow(p.id,s.code).some(c => c.status !== 'inactive'))} disabled={!superAdmin} onCheckedChange={v => setTest(p,s,v)} className={state.state === 'online' ? 'data-[state=checked]:bg-success' : state.state === 'error' ? 'data-[state=checked]:bg-destructive' : 'data-[state=checked]:bg-warning'} />}

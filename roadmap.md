@@ -5,9 +5,10 @@
 - [x] Backup-Verwaltung: Fortschritt (Tabelle/Speicher i von n, MB, Ausstehendes), SHA-256 je Teil, Hetzner-Abgleich, Watchdog-Fehlermail, 24-h-Dashboardwarnung, Fortsetzen; Restore-Secrets dokumentiert; externe Dateien gelistet (425 Verweise, 8 defekt) mit Sicherungskonzept.
 - [ ] Externe Produktdateien zusätzlich sichern (Konzept backup-external-media) — wartet auf Freigabe.
 - [ ] ALIXWORK RESTORE TEST — Administrator muss Supabase-Projekt + separates Lovable-Projekt anlegen (Anleitung in docs/backup-wiederherstellung-2026-11-27.md).
-- [ ] PRODUCT HUB 2.0 Prompt 3.1: signierter, deaktivierter Sender; dauerhafte Warteschlange, vollständige Änderungsereignisse, Rückmeldungen, isolierte Tests und lesender Schattenvergleich.
-- [ ] PRODUCT HUB 2.0 Prompt 4: DE/COM-Empfangsmodule separat vorbereiten; Umsetzung in den Webseitenprojekten erforderlich, ohne Aktivierung.
-- [ ] PRODUCT HUB 2.0 Prompt 5: drei Ansichten Geräte/Webseiten/Protokoll hinter Feature Flag; ausschließlich lokale Testschalter, bisherige Funktionen erhalten.
+- [x] PRODUCT HUB 2.0 Prompt 3.1: gesperrter signierter Versand, dauerhafte Warteschlange, vollständige Ereignisse, Rückmeldungen, Tests und Schattenvergleich umgesetzt.
+- [ ] PRODUCT HUB 2.0 Prompt 4: Empfangsmodule in ALIX DE und ALIX COM bauen — Webseitenprojekte hier nicht bearbeitbar; Prompt liegt bereit.
+- [x] PRODUCT HUB 2.0 Prompt 5: Testoberfläche Geräte/Webseiten/Protokoll hinter Feature Flag; Schalter nur lokal.
+- [ ] PRODUCT HUB 2.0 Aktivierung: wartet auf Vollsicherung, Wiederherstellungstest, Empfangsmodule, Kanal-Secrets und ausdrückliche Freigabe.
 - [x] Auftrag 25.11. 07:42 AlixWork: Kanalüberschattung in Abschaltprüfung korrigiert (DE-inaktive/COM-aktive Geräte ohne Hold und eigene OFFLINE-Belege); 17 Tests und Build OK. Bestehende COM-/DE-Kontrollen erhalten, private Veröffentlichung vorbereitet.
 - [ ] Auftrag 25.11. 07:42 Webseiten: COM-/DE-Entwurf im GLOBAL-Projekt 96eb1020 liest serverseitig PRODUCT_HUB_API_KEY; hier nur lesbar, Veröffentlichung und Schlüsselbestätigung dort erforderlich. Öffentliche Listen gelesen, aber Geräteabwesenheit ohne identitätsgesicherten vollständigen Abruf nicht als Erfolg bestätigt. Angemeldete AlixWork-Ende-zu-Ende-Abnahme wegen fehlender externer Supabase-Sitzung offen.
 - [x] DE-Abschaltprüfung analog COM: automatische getrennte Kartenkontrolle nach echten DE-Abschaltaktionen, eigene Menüseite /product-hub/de-abschaltpruefung, getrennte DE-IDs/Protokolle und Meldungen; Sender bereitgestellt. 48 Edge-Tests und 57 Frontendtests bestanden (56 vor zusätzlichem DE-Ereignistest, 13 betroffene danach). Echter DE-Katalog mit 19 Karten ausgewertet und im Browser bestätigt; keine Testabschaltungen.
