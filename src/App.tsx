@@ -18,6 +18,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { BackupHealthBanner } from "@/components/backup/BackupHealthBanner";
 import { useComplianceProfile } from "@/hooks/useComplianceProfile";
 import { useSyncRevenueMaskGlobal } from "@/lib/revenue-mask";
 import { useRadixBodyPointerEventsFix } from "@/hooks/useRadixBodyPointerEventsFix";
@@ -1402,7 +1403,7 @@ function HomeRoute() {
   if (roles.includes('Österreich') && !(roles.includes('Super Admin') || roles.includes('Admin')) && !roles.includes('Admin')) {
     return <Navigate to="/at-dashboard" replace />;
   }
-  return <Dashboard />;
+  return <><BackupHealthBanner /><Dashboard /></>;
 }
 
 function AppRoutes() {

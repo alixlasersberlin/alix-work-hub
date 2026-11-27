@@ -26,6 +26,11 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function parseS3Error(xmlText: string) {
   const code = xmlText.match(/<Code>([^<]+)<\/Code>/i)?.[1] ?? null;
   const message = xmlText.match(/<Message>([^<]+)<\/Message>/i)?.[1] ?? null;
@@ -58,7 +63,21 @@ Deno.serve(async (req) => {
     (expected && authHeader === expected) ||
     authHeader === `Bearer ${serviceRoleKey}` ||
     apiKeyHeader === serviceRoleKey;
-  if (!isAuthorized) return json({ error: "Unauthorized" }, 401);
+  // Read-only Hetzner comparison may also be requested by a signed-in Admin/Super Admin.
+  const peek = req.method === "POST" ? await req.clone().json().catch(() => ({})) : {};
+  const verifyOnly = peek?.verify === true;
+  let adminVerify = false;
+  if (!isAuthorized && verifyOnly && authHeader.startsWith("Bearer ")) {
+    const probe = createClient(supabaseUrl, serviceRoleKey);
+    const { data: u } = await probe.auth.getUser(authHeader.slice(7));
+    if (u?.user) {
+      const { data: profile } = await probe.from("user_profiles").select("account_status").eq("id", u.user.id).maybeSingle();
+      const { data: rr } = await probe.from("user_roles").select("roles!inner(name)").eq("user_id", u.user.id);
+      const names = (rr ?? []).map((r: any) => r.roles?.name);
+      adminVerify = profile?.account_status === "active" && (names.includes("Admin") || names.includes("Super Admin"));
+    }
+  }
+  if (!isAuthorized && !adminVerify) return json({ error: "Unauthorized" }, 401);
 
   const endpoint = Deno.env.get("HETZNER_S3_ENDPOINT");
   const region = Deno.env.get("HETZNER_S3_REGION") ?? "eu-central";
@@ -89,6 +108,47 @@ Deno.serve(async (req) => {
       continuation = Number(requestBody?.continuation ?? 0) || 0;
     }
   } catch (_) { /* ignore */ }
+
+  if (verifyOnly) {
+    // Compare manifest entries (size + SHA-256 written at backup time) with the Hetzner copy. Read-only.
+    try {
+      const id = String(peek?.backup_id ?? "");
+      const { data: row } = await supabase.from("backups_metadata").select("id,storage_path,backup_status").eq("id", id).maybeSingle();
+      if (!row?.storage_path) return json({ success: false, error: "Sicherung ohne Manifest" }, 404);
+      const { data: mf, error: mfErr } = await supabase.storage.from("backups").download(row.storage_path);
+      if (mfErr || !mf) return json({ success: false, error: "Manifest nicht lesbar – Sicherung evtl. unvollständig" }, 404);
+      const manifestBytes = new Uint8Array(await mf.arrayBuffer());
+      const manifest = JSON.parse(new TextDecoder().decode(manifestBytes));
+      const entries: { path: string; size: number; sha256?: string }[] = [
+        { path: row.storage_path, size: manifestBytes.byteLength, sha256: await sha256Hex(manifestBytes) },
+        ...((manifest.files ?? []) as any[]).map((f) => ({ path: f.path, size: Number(f.size_bytes), sha256: f.sha256 })),
+      ];
+      const missing: string[] = [], sizeMismatch: string[] = [], shaMismatch: string[] = [];
+      let shaVerified = 0, shaUnavailable = 0, idx = 0;
+      const verifyStart = Date.now();
+      const worker = async () => {
+        while (idx < entries.length && Date.now() - verifyStart < 120_000) {
+          const e = entries[idx++];
+          const head = await aws.fetch(`${base}/${bucket}/${e.path}`, { method: "HEAD" }).catch(() => null);
+          if (!head || !head.ok) { missing.push(e.path); continue; }
+          if (Number(head.headers.get("content-length")) !== e.size) { sizeMismatch.push(e.path); continue; }
+          const remoteSha = head.headers.get("x-amz-meta-sha256");
+          if (e.sha256 && remoteSha) { if (remoteSha === e.sha256) shaVerified++; else shaMismatch.push(e.path); }
+          else shaUnavailable++;
+        }
+      };
+      await Promise.all(Array.from({ length: 8 }, worker));
+      const checked = Math.min(idx, entries.length);
+      return json({
+        success: checked === entries.length && !missing.length && !sizeMismatch.length && !shaMismatch.length,
+        backup_id: id, total: entries.length, checked, missing_count: missing.length, size_mismatch_count: sizeMismatch.length,
+        sha_mismatch_count: shaMismatch.length, sha_verified: shaVerified, sha_unavailable: shaUnavailable,
+        complete: checked === entries.length, missing: missing.slice(0, 50), size_mismatch: sizeMismatch.slice(0, 50), sha_mismatch: shaMismatch.slice(0, 50),
+      });
+    } catch (e) {
+      return json({ success: false, error: e instanceof Error ? e.message : String(e) }, 500);
+    }
+  }
 
   // Recursively list files in a given Supabase Storage bucket
   async function listWithRetry(srcBucket: string, cur: string) {
@@ -158,7 +218,7 @@ Deno.serve(async (req) => {
     const put = await aws.fetch(targetUrl, {
       method: "PUT",
       body: buf,
-      headers: { "Content-Type": blob.type || "application/octet-stream" },
+      headers: { "Content-Type": blob.type || "application/octet-stream", "x-amz-meta-sha256": await sha256Hex(new Uint8Array(buf)) },
     });
     if (!put.ok) {
       const t2 = await put.text();

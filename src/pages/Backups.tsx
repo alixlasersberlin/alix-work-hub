@@ -13,7 +13,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { decryptBackupFile, backupPasswordError } from '@/lib/backup/crypto';
-import { Lock, KeyRound, FileLock2 } from 'lucide-react';
+import { Lock, KeyRound, FileLock2, Play, ScanSearch } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { parseBackupProgress } from '@/lib/backup/progress';
 
 interface BackupRow {
   id: string;
@@ -28,7 +30,22 @@ interface BackupRow {
   file_count: number | null;
   notify_email: string | null;
   message: string | null;
+  integrity_status?: string | null;
   created_at: string;
+}
+
+interface VerifyResult {
+  success: boolean;
+  total: number;
+  checked: number;
+  complete: boolean;
+  missing_count: number;
+  size_mismatch_count: number;
+  sha_mismatch_count: number;
+  sha_verified: number;
+  sha_unavailable: number;
+  missing: string[];
+  error?: string;
 }
 
 const fmtSize = (b: number | null) => {
@@ -53,6 +70,8 @@ export default function Backups() {
   const [decFile, setDecFile] = useState<File | null>(null);
   const [decPw, setDecPw] = useState('');
   const [decrypting, setDecrypting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [verify, setVerify] = useState<{ row: BackupRow; result: VerifyResult } | null>(null);
 
 
   const load = async () => {
@@ -71,6 +90,42 @@ export default function Backups() {
   };
 
   useEffect(() => { load(); }, []);
+  // Live-Fortschritt: solange eine Sicherung läuft, alle 10 Sekunden aktualisieren.
+  const anyRunning = backups.some((b) => b.backup_status === 'running');
+  useEffect(() => {
+    if (!anyRunning) return;
+    const t = setInterval(() => { load(); }, 10_000);
+    return () => clearInterval(t);
+  }, [anyRunning]);
+
+  const resumeBackup = async (b: BackupRow) => {
+    setBusyId(b.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-full-backup', { body: { resume_backup_id: b.id } });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Fortsetzen nicht möglich');
+      toast.success('Sicherung wird ab dem letzten Zwischenstand fortgesetzt.');
+      await load();
+    } catch (e: any) {
+      toast.error('Fortsetzen fehlgeschlagen: ' + (e?.message ?? String(e)));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const verifyHetzner = async (b: BackupRow) => {
+    setBusyId(b.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-backup-to-hetzner', { body: { verify: true, backup_id: b.id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setVerify({ row: b, result: data as VerifyResult });
+    } catch (e: any) {
+      toast.error('Hetzner-Abgleich fehlgeschlagen: ' + (e?.message ?? String(e)));
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const runBackup = async () => {
     setRunning(true);
@@ -212,9 +267,9 @@ export default function Backups() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Automatik</CardDescription>
-            <CardTitle className="text-base">Wöchentlich</CardTitle>
+            <CardTitle className="text-base">Täglich + wöchentlich</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">Sonntags 03:00 UTC – automatisches Vollbackup.</CardContent>
+          <CardContent className="text-xs text-muted-foreground">Täglich 22:00 UTC und sonntags 03:00 UTC Vollsicherung, 22:30 UTC Kopie nach Hetzner. Fehler werden an den Administrator gemeldet.</CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
@@ -304,12 +359,35 @@ export default function Backups() {
                       {fmtDate(b.started_at)} • {fmtSize(b.backup_size_bytes)}
                       {b.file_count != null && ` • ${b.file_count} Storage-Dateien`}
                     </div>
-                    {b.message && <div className="text-xs text-muted-foreground mt-1 truncate">{b.message}</div>}
+                    {b.backup_status === 'running' && (() => {
+                      const pr = parseBackupProgress(b.message);
+                      return (
+                        <div className="mt-2 space-y-1">
+                          <Progress value={pr?.percent ?? 2} className="h-1.5" />
+                          <div className="text-xs">
+                            {pr ? <>{pr.phase === 'tables' ? 'Tabelle' : 'Speicher'} {pr.current} von {pr.total}: <span className="font-mono">{pr.item}</span> · {pr.percent}%</> : 'Wird vorbereitet …'}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {b.message && <div className="text-xs text-muted-foreground mt-1 break-words">{b.message}</div>}
                   </div>
                   <div className="flex items-center gap-2">
                     {b.storage_path && (b.backup_status === 'success' || b.backup_status === 'completed') && (
                       <Button size="sm" variant="outline" onClick={() => startDownload(b)} disabled={downloadingId === b.id}>
                         {downloadingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                      </Button>
+                    )}
+                    {b.backup_status === 'failed' && b.storage_path && (
+                      <Button size="sm" variant="outline" onClick={() => resumeBackup(b)} disabled={busyId === b.id} title="Ab letztem Zwischenstand fortsetzen">
+                        {busyId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                        <span className="ml-1 hidden sm:inline">Fortsetzen</span>
+                      </Button>
+                    )}
+                    {(b.backup_status === 'success' || b.backup_status === 'completed') && b.storage_path && (
+                      <Button size="sm" variant="outline" onClick={() => verifyHetzner(b)} disabled={busyId === b.id} title="SHA-256 / Größe mit Hetzner-Kopie vergleichen">
+                        {busyId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ScanSearch className="w-3.5 h-3.5" />}
+                        <span className="ml-1 hidden sm:inline">Hetzner prüfen</span>
                       </Button>
                     )}
                     <Button size="sm" variant="ghost" onClick={() => deleteBackup(b)} className="text-destructive hover:text-destructive">
@@ -322,6 +400,29 @@ export default function Backups() {
           )}
         </CardContent>
       </Card>
+      <Dialog open={!!verify} onOpenChange={(o) => !o && setVerify(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ScanSearch className="w-4 h-4" /> Abgleich mit Hetzner-Kopie</DialogTitle>
+            <DialogDescription>Sicherung vom {fmtDate(verify?.row.started_at ?? null)} – Größe und SHA-256 je Datei.</DialogDescription>
+          </DialogHeader>
+          {verify && (
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                {verify.result.success ? <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">Übereinstimmend</Badge> : <Badge className="bg-destructive/10 text-destructive border-destructive/30">Abweichungen</Badge>}
+                {!verify.result.complete && <Badge variant="outline">Nur teilweise geprüft (Zeitlimit)</Badge>}
+              </div>
+              <div>Geprüft: {verify.result.checked} von {verify.result.total} Dateien</div>
+              <div>SHA-256 bestätigt: {verify.result.sha_verified} · ohne Prüfsumme auf Hetzner (ältere Kopien): {verify.result.sha_unavailable}</div>
+              <div>Fehlend: {verify.result.missing_count} · Größe abweichend: {verify.result.size_mismatch_count} · Prüfsumme abweichend: {verify.result.sha_mismatch_count}</div>
+              {verify.result.missing.length > 0 && (
+                <div className="max-h-40 overflow-auto rounded border p-2 font-mono text-xs">{verify.result.missing.map((m) => <div key={m}>{m}</div>)}</div>
+              )}
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={() => setVerify(null)}>Schließen</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!pwTarget} onOpenChange={(o) => !o && setPwTarget(null)}>
         <DialogContent>
           <DialogHeader>

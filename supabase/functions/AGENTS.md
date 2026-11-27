@@ -9,3 +9,4 @@
 - Product Hub websites render only devices returned by product-hub-api for their channel (published + active flag); list and detail both 404 offline devices, so AlixWork Online/Offline is the single source without site-side confirmations.
 - Product Hub route identities are URL-decoded exactly once before all detail/subresource lookups; preserve stored hub IDs so name-based identities remain compatible without breaking website mappings.
 - Nightly backups export oversized rows (alix_sign_signatures, up to ~7 MB) one row per worker invocation; multi-row batches crashed workers. Product Hub ph_* tables and product-hub-docs/ph-catalog-media buckets are part of backup and Hetzner mirror.
+- Backup progress is encoded in backups_metadata.message ("Tabelle i/n" / "Speicher i/n" markers parsed by src/lib/backup/progress.ts); parts carry SHA-256 in manifest v5 and Hetzner objects carry x-amz-meta-sha256 for read-only verification. Resume reuses state.json; no new tables.

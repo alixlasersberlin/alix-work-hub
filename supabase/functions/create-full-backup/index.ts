@@ -7,6 +7,7 @@ type BackupFileEntry = {
   path: string;
   rows: number;
   size_bytes: number;
+  sha256?: string;
 };
 
 type BackupState = {
@@ -298,6 +299,7 @@ async function uploadNdjsonPart(
   }
   const bytes = encoder.encode(`${lines.join("\n")}\n`);
   const size = bytes.byteLength;
+  const sha256 = await sha256Hex(bytes);
   let lastErr: string | null = null;
   for (let attempt = 1; attempt <= 6; attempt += 1) {
     const { error } = await adminClient.storage
@@ -306,13 +308,29 @@ async function uploadNdjsonPart(
         contentType: "application/x-ndjson",
         upsert: true,
       });
-    if (!error) return size;
+    if (!error) return { size, sha256 };
     lastErr = error.message || String(error);
     const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|<html|Web server|Cloudflare|Unexpected token|not valid JSON/i.test(lastErr);
     if (!transient || attempt === 6) throw new Error(`Upload ${path}: ${lastErr}`);
     await new Promise((r) => setTimeout(r, Math.min(500 * 2 ** (attempt - 1), 8000)));
   }
   throw new Error(`Upload ${path}: ${lastErr ?? "unknown error"}`);
+}
+
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function fmtMb(bytes: number) {
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/** Progress text parsed by the backup page: keep the "Tabelle i/n" / "Speicher i/n" markers. */
+function progressText(state: BackupState, detail: string) {
+  const tablesLeft = Math.max(BACKUP_TABLES.length - state.tableIndex - 1, 0);
+  const bucketsLeft = state.phase === "tables" ? STORAGE_BUCKETS.length : Math.max(STORAGE_BUCKETS.length - state.bucketIndex - 1, 0);
+  return `Backup läuft · ${detail} · ${state.files.length} Dateien · ${fmtMb(state.totalSize)} gesichert · ausstehend: ${state.phase === "tables" ? tablesLeft : 0} Tabellen, ${bucketsLeft} Speicher`;
 }
 
 async function listBucketEntries(
@@ -361,10 +379,11 @@ async function updateBackupMessage(
   adminClient: BackupAdminClient,
   backupId: string,
   message: string,
+  extra: Record<string, unknown> = {},
 ) {
   const { error } = await adminClient
     .from("backups_metadata")
-    .update({ message })
+    .update({ message, ...extra })
     .eq("id", backupId);
   if (error) {
     console.error("Failed to update backup message:", error.message);
@@ -667,11 +686,12 @@ async function processBackupStep(params: {
 
       while (state.tableIndex < BACKUP_TABLES.length) {
         const table = BACKUP_TABLES[state.tableIndex];
-        if (pagesProcessed === 0 || pagesProcessed % 25 === 0) {
+        if (pagesProcessed === 0 || pagesProcessed % 5 === 0) {
           await updateBackupMessage(
             adminClient,
             backupId,
-            `Backup läuft: Tabelle ${table} ab Datensatz ${state.rowOffset + 1}`,
+            progressText(state, `Tabelle ${state.tableIndex + 1}/${BACKUP_TABLES.length}: ${table} ab Datensatz ${state.rowOffset + 1}`),
+            { backup_size_bytes: state.totalSize },
           );
         }
 
@@ -719,13 +739,13 @@ async function processBackupStep(params: {
         } else {
           const partName = `part-${String(state.partIndex).padStart(5, "0")}.ndjson`;
           const partPath = `${folderPath}/tables/${table}/${partName}`;
-          const size = await uploadNdjsonPart(
+          const { size, sha256 } = await uploadNdjsonPart(
             adminClient,
             partPath,
             data as Record<string, unknown>[],
           );
 
-          state.files.push({ table, path: partPath, rows: pageRows, size_bytes: size });
+          state.files.push({ table, path: partPath, rows: pageRows, size_bytes: size, sha256 });
           state.counts[table] = (state.counts[table] ?? 0) + pageRows;
           state.totalSize += size;
           state.partIndex += 1;
@@ -773,7 +793,8 @@ async function processBackupStep(params: {
       await updateBackupMessage(
         adminClient,
         backupId,
-        `Backup läuft: Storage-Inventar ${bucket}`,
+        progressText(state, `Speicher ${state.bucketIndex + 1}/${STORAGE_BUCKETS.length}: ${bucket}`),
+        { backup_size_bytes: state.totalSize },
       );
 
       const entries = await listBucketEntries(adminClient, bucket);
@@ -797,7 +818,8 @@ async function processBackupStep(params: {
         source,
         scope,
         project_ref: "xmrmkgfgpoundfwhnxfs",
-        version: 4,
+        version: 5,
+        checksum: "sha256 per table part (files[].sha256)",
       },
       counts: state.counts,
       files: state.files,
@@ -821,7 +843,7 @@ async function processBackupStep(params: {
         backup_size_bytes: sizeBytes,
         file_count: state.storageFileCount,
         integrity_status: "valid",
-        message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen (NDJSON), ${state.storageFileCount} Storage-Dateien indexiert.`,
+        message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen (NDJSON, ${state.files.filter((f) => f.sha256).length}/${state.files.length} Teile mit SHA-256), ${state.storageFileCount} Storage-Dateien indexiert, ${fmtMb(sizeBytes)}.`,
       })
       .eq("id", backupId);
 
@@ -968,6 +990,62 @@ Deno.serve(async (req) => {
         .maybeSingle();
       notifyEmail = profile?.email ?? null;
     }
+  }
+
+  // Watchdog-Abbrüche (SQL, ohne Mail) nachträglich melden; idempotent je Backup-ID.
+  try {
+    const { data: stuck } = await adminClient
+      .from("backups_metadata")
+      .select("id,backup_type,backup_scope,message")
+      .eq("backup_status", "failed")
+      .ilike("message", "%watchdog%")
+      .gte("started_at", new Date(Date.now() - 3 * 86400_000).toISOString());
+    for (const row of stuck ?? []) {
+      await sendFailureAlert({
+        adminClient,
+        backupId: row.id,
+        source: row.backup_type === "automated" ? "cron" : "manual",
+        scope: row.backup_scope === "db_only" ? "db_only" : "full",
+        errorMsg: String(row.message ?? "Watchdog: Sicherung hängengeblieben").slice(0, 500),
+      });
+    }
+  } catch (alertErr) {
+    console.error("watchdog alert scan failed:", alertErr);
+  }
+
+  // Wiederaufnahme einer unterbrochenen Sicherung ab gespeichertem Zwischenstand.
+  if (typeof body.resume_backup_id === "string" && body.resume_backup_id) {
+    const { data: row } = await adminClient
+      .from("backups_metadata")
+      .select("id,backup_status,backup_scope,backup_type,storage_path,created_at,message")
+      .eq("id", body.resume_backup_id)
+      .maybeSingle();
+    if (!row || row.backup_status !== "failed" || !row.storage_path) {
+      return json({ success: false, error: "Nur fehlgeschlagene Sicherungen mit Zwischenstand können fortgesetzt werden." }, 400);
+    }
+    const resumeFolder = String(row.storage_path).replace(/\/manifest\.json$/, "");
+    try {
+      const st = await readJson<BackupState>(adminClient, `${resumeFolder}/state.json`);
+      if (!st?.phase) throw new Error("Zwischenstand fehlt");
+    } catch (e) {
+      return json({ success: false, error: `Zwischenstand nicht lesbar: ${e instanceof Error ? e.message : String(e)}` }, 409);
+    }
+    const resumedAt = new Date().toISOString();
+    await adminClient.from("backups_metadata").update({
+      backup_status: "running",
+      started_at: resumedAt,
+      completed_at: null,
+      integrity_status: null,
+      message: `Sicherung fortgesetzt am ${resumedAt} (vorher: ${String(row.message ?? "").slice(0, 160)})`,
+    }).eq("id", row.id);
+    triggerNextStep(adminClient, {
+      supabaseUrl, serviceRoleKey, backupId: row.id, folderPath: resumeFolder,
+      manifestPath: String(row.storage_path), notify: false, notifyEmail: null,
+      source: row.backup_type === "automated" ? "cron" : "manual",
+      scope: row.backup_scope === "db_only" ? "db_only" : "full",
+      startedAt: String(row.created_at ?? resumedAt),
+    });
+    return json({ success: true, accepted: true, resumed: true, backup_id: row.id }, 202);
   }
 
   const backupId = crypto.randomUUID();
