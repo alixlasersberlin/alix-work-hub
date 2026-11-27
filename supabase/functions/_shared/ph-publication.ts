@@ -29,9 +29,25 @@ export type ChannelInput = { hold?: boolean | null; status?: string | null } | n
 
 export type Decision = { channel: string; desired: "ONLINE" | "OFFLINE"; reasons: string[] };
 
+const SIGNED_PARAMS = ["token", "x-amz-signature", "x-amz-credential", "signature", "sig", "expires"];
+/** Public = https, no credentials, not a signed/expiring storage link. Harmless resize params (?width=) are allowed. */
 export function isPublicImage(url: unknown): boolean {
   if (typeof url !== "string" || !/^https:\/\//i.test(url)) return false;
-  try { const u = new URL(url); return !u.search && !/\/object\/sign\//.test(u.pathname); } catch { return false; }
+  try {
+    const u = new URL(url);
+    if (u.username || u.password || /\/object\/(sign|authenticated)\//.test(u.pathname)) return false;
+    return ![...u.searchParams.keys()].some(k => SIGNED_PARAMS.includes(k.toLowerCase()));
+  } catch { return false; }
+}
+
+/** Storage path of a signed product-hub-docs image belonging to the product, else null (no other buckets/paths). */
+export function webImagePath(url: unknown, productId: string): string | null {
+  if (typeof url !== "string") return null;
+  try {
+    const m = new URL(url).pathname.match(/\/storage\/v1\/object\/sign\/product-hub-docs\/(images\/[^?]+)$/);
+    const path = m ? decodeURIComponent(m[1]) : null;
+    return path && path.startsWith(`images/${productId}/`) && !path.includes("..") && /\.(jpe?g|png|webp|avif)$/i.test(path) ? path : null;
+  } catch { return null; }
 }
 
 /** AN/AUS is binding unless a regulatory hold, exclusion or missing required data blocks it. */

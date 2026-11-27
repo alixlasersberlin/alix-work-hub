@@ -16,6 +16,7 @@ import { controlDomain, type DomainAction, type DomainResult } from '@/lib/produ
 import { useAuth } from '@/hooks/useAuth';
 import { usePhChannels } from '@/lib/producthub/useChannels';
 import { websiteState } from '@/lib/producthub/websiteState';
+import { ConnectionOverview } from '@/components/producthub/ConnectionOverview';
 
 const db = supabase as any;
 const COMPARE_FIELDS = ['name', 'model', 'short_description', 'wavelengths', 'power', 'fluence', 'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class', 'mdr_status', 'ce_status', 'seo_title', 'seo_description'];
@@ -93,6 +94,7 @@ export default function ProductHubWebseiten() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Webseiten" subtitle="Freigabestelle: AlixWork · Super Admin" icon={Globe} />
+      <ConnectionOverview canTest={canWrite} />
       {canWrite && <Button variant="outline" asChild><Link to="/product-hub/com-abschaltpruefung"><Globe className="mr-2 h-4 w-4" />COM-Abschaltprüfung</Link></Button>}
       {canWrite && <Button variant="outline" asChild><Link to="/product-hub/de-abschaltpruefung"><Globe className="mr-2 h-4 w-4" />DE-Abschaltprüfung</Link></Button>}
       <section className="divide-y divide-border border-y border-border" aria-label="Domainsteuerung">

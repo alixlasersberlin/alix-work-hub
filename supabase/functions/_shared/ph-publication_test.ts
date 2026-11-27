@@ -22,3 +22,20 @@ Deno.test("Abweichung zur Live-Logik wird erkannt", () => {
   const p = { ...base, hero_image_url: null };
   assertEquals([legacyDecision(p, "de"), decidePublication(p, "de").desired], ["ONLINE", "OFFLINE"]);
 });
+
+import { isPublicImage as isPub2, webImagePath as wip } from "./ph-publication.ts";
+Deno.test("public images allow resize params but reject signed links", () => {
+  const a = (c: boolean) => { if (!c) throw new Error("assert"); };
+  a(isPub2("https://framerusercontent.com/images/x.jpg?width=1202&height=1200"));
+  a(!isPub2("https://x.supabase.co/storage/v1/object/sign/product-hub-docs/images/p/a.jpg?token=abc"));
+  a(!isPub2("https://cdn.example.com/a.jpg?X-Amz-Signature=1"));
+  a(!isPub2("http://cdn.example.com/a.jpg"));
+});
+Deno.test("web image path only for own product images in product-hub-docs", () => {
+  const a = (c: boolean) => { if (!c) throw new Error("assert"); };
+  const u = "https://x.supabase.co/storage/v1/object/sign/product-hub-docs/images/P1/1-nexus1.jpg?token=t";
+  a(wip(u, "P1") === "images/P1/1-nexus1.jpg");
+  a(wip(u, "P2") === null);
+  a(wip("https://x.supabase.co/storage/v1/object/sign/product-hub-docs/docs/P1/a.pdf?token=t", "P1") === null);
+  a(wip("https://x.supabase.co/storage/v1/object/sign/production-orders/images/P1/a.jpg?token=t", "P1") === null);
+});

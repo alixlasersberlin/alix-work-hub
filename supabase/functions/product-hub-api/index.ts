@@ -9,7 +9,7 @@
 //   GET /product-hub-api/products/{alix_product_id}/content?channel=website
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { productRoute } from "./product-route.ts";
-import { decidePublication, normalizeChannel, SIGNAL_CHANNELS } from '../_shared/ph-publication.ts';
+import { decidePublication, normalizeChannel, SIGNAL_CHANNELS, webImagePath } from '../_shared/ph-publication.ts';
 import { liveAllowed } from '../_shared/ph-delivery.ts';
 
 const cors = {
@@ -213,6 +213,23 @@ Deno.serve(async (req) => {
     com: "active_com", de: "active_de", at: "active_at", usa: "active_usa",
     dubai: "active_dubai", ae: "active_dubai", uae: "active_dubai",
   };
+
+  // Web image delivery (prepared, read-only): streams one web-approved product image from the private bucket
+  // without making the bucket public or rewriting stored product references.
+  const imageMatch = url.pathname.match(/\/images\/([0-9a-f-]{36})$/i);
+  if (imageMatch) {
+    const col = activeCol[channel || ""];
+    if (!col) return json(400, { error: "channel_required" });
+    const { data: media } = await supabase.from("ph_media").select("id,url,kind,product_id").eq("id", imageMatch[1]).maybeSingle();
+    if (!media || media.kind !== "image") return json(404, { error: "not_found" });
+    const { data: owner } = await supabase.from("ph_products").select("id,status," + col).eq("id", media.product_id).maybeSingle();
+    if (!owner || (owner as any).status !== "published" || (owner as any)[col] !== true) return json(404, { error: "not_found" });
+    const path = webImagePath(media.url, media.product_id);
+    if (!path) return json(404, { error: "not_found" });
+    const { data: file, error: fe } = await supabase.storage.from("product-hub-docs").download(path);
+    if (fe || !file) return json(404, { error: "not_found" });
+    return new Response(file, { status: 200, headers: { ...cors, "Content-Type": file.type || "image/jpeg", "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" } });
+  }
 
   // Content Hub: nur freigegebene, veröffentlichte Snapshots ausliefern (EDIT ONCE · PUBLISH EVERYWHERE)
   // Freigabe erfolgt ausschliesslich durch den Super Admin in AlixWork: Webseiten uebernehmen ohne eigene Zwischenpruefung.
