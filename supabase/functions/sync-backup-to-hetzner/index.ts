@@ -209,6 +209,7 @@ Deno.serve(async (req) => {
     const ALL_BUCKETS = [
       "alix-sign-pdfs","alixdocs-private","bank-offers","bug-capa-attachments","finance-documents",
       "order-invoices","production-orders","production-photos","repair-files",
+      "product-hub-docs","ph-catalog-media",
     ];
     const targetBuckets = mirrorBucketsFlag ? (bucketsToMirror ?? ALL_BUCKETS) : [];
     for (const b of targetBuckets) {

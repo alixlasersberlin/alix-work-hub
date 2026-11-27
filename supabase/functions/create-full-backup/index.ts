@@ -115,6 +115,15 @@ const BACKUP_TABLES = [
   "finance_audit_trail","bank_accounts","bank_audit_log","bank_imports",
   "bank_transactions","bank_transaction_allocations","bank_transaction_matches",
   "bank_return_debits","bank_return_debit_allocations",
+  // PRODUCT HUB (alle ph_*-Tabellen; Prompt 1.1, 27.11.2026)
+  "ph_attribute_values","ph_attributes","ph_canary_batches","ph_canary_snapshots",
+  "ph_catalog_items","ph_catalog_media","ph_catalog_pages","ph_catalog_templates",
+  "ph_catalog_versions","ph_catalogs","ph_channels","ph_compliance","ph_conflicts",
+  "ph_documents","ph_field_history","ph_glossary","ph_lang_sync_fields","ph_lang_sync_map",
+  "ph_lang_sync_runs","ph_lang_sync_targets","ph_marketing","ph_master_fields","ph_media",
+  "ph_price_history","ph_prices","ph_product_channels","ph_product_translations","ph_products",
+  "ph_publish_queue","ph_publish_rollbacks","ph_roles","ph_scope_items","ph_seo","ph_settings",
+  "ph_sync_log","ph_translation_qa","ph_validation_runs","ph_variants","ph_workflow_steps",
 ];
 
 // All Storage Buckets (außer `backups` – das ist das Ziel selbst).
@@ -130,6 +139,8 @@ const STORAGE_BUCKETS = [
   "production-orders",
   "production-photos",
   "repair-files",
+  "product-hub-docs",
+  "ph-catalog-media",
 ];
 const DB_PAGE_SIZE = 120;
 // Tabellen mit großen JSON-Payloads (details/raw_data/attachments) → deutlich
@@ -190,7 +201,9 @@ const LOG_TABLES = new Set<string>([
 ]);
 const HEAVY_PAGE_SIZE = 60;
 const XL_PAGE_SIZE = 8;
-const NANO_PAGE_SIZE = 2;
+// Signaturzeilen sind unkomprimiert bis ~7,3 MB; zwei Zeilen je Seite plus
+// mehrere Seiten pro Worker brachten den Edge-Worker ab 06.11. zum Absturz.
+const NANO_PAGE_SIZE = 1;
 // Performance: Log-Zeilen sind schmal — größere Seiten reduzieren die Anzahl
 // der Einzelabfragen um Faktor 6 und entlasten die Datenbank spürbar.
 // WICHTIG: PostgREST liefert maximal 1000 Zeilen pro Anfrage. Eine größere
@@ -738,6 +751,8 @@ async function processBackupStep(params: {
         // Budget-Check: nach großen Uploads / Zeit ausbrechen und neu triggern.
         if (Date.now() - batchStart >= BATCH_MAX_MS) break;
         if (batchBytes >= BATCH_MAX_BYTES) break;
+        // Sehr große Zeilen: genau eine Seite je Worker, damit Speicher freigegeben wird.
+        if (NANO_TABLES.has(table)) break;
       }
 
       await uploadJson(adminClient, statePath, state, true);
