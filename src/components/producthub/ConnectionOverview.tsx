@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CHECK_LABELS, evaluateChecks, failureCause, allReady, type CheckKey } from '@/lib/phAcceptance';
 
 const db = supabase as any;
 type ChannelInfo = { receiver_url: string; signal_auth: boolean; receipt_auth: boolean };
 type Overview = { live_enabled: boolean; channels: Record<string, ChannelInfo> };
 
-type FullTest = { checked_at: string; reachable: boolean; auth_required: boolean; signature: string; receipt: boolean; result: string; message: string; http_get: number | null; http_unsigned: number | null; http_signed: number | null; response_ms?: number };
+type FullTest = { checked_at: string; reachable: boolean; auth_required: boolean; signature: string; receipt: boolean; result: string; message: string; http_get: number | null; http_unsigned: number | null; http_signed: number | null; response_ms?: number; test_id?: string };
 const SIG: Record<string, string> = { verified: 'Signatur erfolgreich geprüft', rejected: 'Signatur abgelehnt', unsupported: 'Testsignal nicht unterstützt', unknown: 'Nicht geprüft' };
 const RESULT: Record<string, { label: string; v: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   accepted: { label: 'Technische Abnahme erfolgreich', v: 'default' }, signature_ok: { label: 'Signatur erfolgreich geprüft', v: 'secondary' },
@@ -18,6 +19,8 @@ const RESULT: Record<string, { label: string; v: 'default' | 'secondary' | 'dest
   error: { label: 'Verbindungsfehler', v: 'destructive' },
 };
 const yesNo = (v: boolean | undefined) => <Badge variant={v ? 'default' : 'outline'}>{v ? 'JA' : 'NEIN'}</Badge>;
+const ACCEPT = ['de', 'com'];
+const SITE_NAMES: Record<string, string> = { de: 'alix-lasers.de', com: 'alix-lasers.com' };
 const fmt = (s?: string | null) => (s ? new Date(s).toLocaleString('de-DE') : '—');
 
 /** Technical connection overview: GET reachability test and the content-free signed full connection test (no product writes). */
@@ -29,12 +32,18 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
   const [tests, setTests] = useState<Record<string, { at: string; message: string; status?: number }>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [protocol, setProtocol] = useState<Record<string, FullTest>>({});
+  const [lastOk, setLastOk] = useState<Record<string, string>>({});
+  const [allBusy, setAllBusy] = useState(false);
 
   const loadProtocol = async () => {
-    const { data: ft } = await db.from('ph_sync_log').select('channel_code,payload,created_at').eq('operation', 'ph2_connection_test').order('created_at', { ascending: false }).limit(20);
-    const pr: Record<string, FullTest> = {};
-    for (const r of ft || []) if (r.channel_code && !pr[r.channel_code]) pr[r.channel_code] = { ...r.payload, checked_at: r.payload?.checked_at ?? r.created_at };
-    setProtocol(pr);
+    const { data: ft } = await db.from('ph_sync_log').select('channel_code,payload,created_at').eq('operation', 'ph2_connection_test').order('created_at', { ascending: false }).limit(200);
+    const pr: Record<string, FullTest> = {}; const lo: Record<string, string> = {};
+    for (const r of ft || []) {
+      if (!r.channel_code) continue;
+      if (!pr[r.channel_code]) pr[r.channel_code] = { ...r.payload, checked_at: r.payload?.checked_at ?? r.created_at };
+      if (!lo[r.channel_code] && r.payload?.result === 'accepted') lo[r.channel_code] = r.payload?.checked_at ?? r.created_at;
+    }
+    setProtocol(pr); setLastOk(lo);
   };
 
   useEffect(() => {
@@ -72,8 +81,45 @@ export function ConnectionOverview({ canTest }: { canTest: boolean }) {
     await loadProtocol().catch(() => {});
   };
 
+  // Each site is tested independently; one failure never stops the other. Display only — never enables production.
+  const testAll = async () => {
+    setAllBusy(true);
+    const res = await Promise.allSettled(ACCEPT.map(async code => {
+      const { data, error } = await supabase.functions.invoke('ph-signal-admin', { body: { action: 'full_test', channel: code } });
+      if (error || !data) throw new Error(code);
+      return data as FullTest;
+    }));
+    await loadProtocol().catch(() => {});
+    setAllBusy(false);
+    const failed = res.map((r, i) => (r.status === 'rejected' || (r as any).value?.result !== 'accepted' ? ACCEPT[i].toUpperCase() : null)).filter(Boolean);
+    failed.length ? toast.error(`Abnahme nicht bestanden: ${failed.join(', ')}`) : toast.success('Beide Webseiten technisch abgenommen');
+  };
+  const ready = allReady(ACCEPT, protocol);
+  const live = ov?.live_enabled === true && gate;
+  const mark = (v: boolean | null) => v === null ? <Badge variant="outline">—</Badge> : v ? <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">OK</Badge> : <Badge variant="destructive">Fehler</Badge>;
+
   return (
     <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-sm font-medium">Zentrale Statusübersicht · Abschließende technische Abnahme</div>
+        {canTest && <Button size="sm" disabled={allBusy || !!busy} onClick={testAll}>{allBusy ? 'Teste…' : 'Alle Webseiten vollständig testen'}</Button>}
+      </div>
+      <div className={`rounded-md border px-3 py-2 text-sm font-semibold ${ready ? 'border-emerald-600 bg-emerald-600/15 text-emerald-500' : 'border-amber-600 bg-amber-600/10 text-amber-500'}`}>
+        {ready ? 'PRODUCT HUB – Technisch betriebsbereit' : 'PRODUCT HUB – Technische Abnahme ausstehend'}
+      </div>
+      <Table>
+        <TableHeader><TableRow><TableHead>Prüfung</TableHead>{ACCEPT.map(c => <TableHead key={c}>{SITE_NAMES[c]}</TableHead>)}</TableRow></TableHeader>
+        <TableBody>
+          {(Object.keys(CHECK_LABELS) as CheckKey[]).map(k => <TableRow key={k}><TableCell className="text-xs">{CHECK_LABELS[k]}</TableCell>{ACCEPT.map(c => <TableCell key={c}>{mark(evaluateChecks(protocol[c])[k])}</TableCell>)}</TableRow>)}
+          <TableRow><TableCell className="text-xs">Antwortzeit</TableCell>{ACCEPT.map(c => <TableCell key={c} className="text-xs font-mono">{protocol[c]?.response_ms != null ? `${protocol[c].response_ms} ms` : '—'}</TableCell>)}</TableRow>
+          <TableRow><TableCell className="text-xs">Letzter erfolgreicher Verbindungstest</TableCell>{ACCEPT.map(c => <TableCell key={c} className="text-xs">{fmt(lastOk[c])}</TableCell>)}</TableRow>
+          <TableRow><TableCell className="text-xs">Technische Abnahme</TableCell>{ACCEPT.map(c => { const cause = failureCause(protocol[c]); return <TableCell key={c} className="text-xs">{cause ? <span className="text-destructive">{SITE_NAMES[c]}: {cause}</span> : <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">Erfolgreich</Badge>}</TableCell>; })}</TableRow>
+          <TableRow><TableCell className="text-xs">Status des Produktivbetriebs</TableCell>{ACCEPT.map(c => <TableCell key={c}><Badge variant={live ? 'default' : 'secondary'}>{live ? 'AN' : 'GESPERRT'}</Badge></TableCell>)}</TableRow>
+        </TableBody>
+      </Table>
+      <div className="text-xs text-muted-foreground">Eine erfolgreiche Abnahme schaltet den Produktivbetrieb nicht frei; die Freigabe erfolgt ausschließlich manuell durch einen Super Admin.</div>
+    </CardContent></Card>
     <Card><CardContent className="p-0 overflow-x-auto">
       <div className="px-4 pt-4 pb-2 text-sm font-medium">Technische Verbindung (PRODUCT HUB 2.0) · Produktivbetrieb gesperrt, nur Anzeige</div>
       <Table>
