@@ -53,9 +53,9 @@ export default function ProductHubSyncHealth() {
               <TableRow key={l.id}>
                 <TableCell className="text-xs whitespace-nowrap">{new Date(l.created_at).toLocaleString('de-DE')}</TableCell>
                 <TableCell className="text-xs">{l.channel_code || '—'}</TableCell>
-                <TableCell className="text-xs">{l.direction}</TableCell>
+                <TableCell className="text-xs">{l.direction === 'shadow' ? <Badge variant="outline" className="border-amber-500/50 text-amber-500">SHADOW MODE</Badge> : l.direction}</TableCell>
                 <TableCell className="text-xs">{l.operation || '—'}</TableCell>
-                <TableCell><Badge variant="outline" className={l.status === 'error' ? 'border-destructive text-destructive' : 'border-emerald-500/40 text-emerald-500'}>{l.status}</Badge></TableCell>
+                <TableCell><Badge variant="outline" className={l.status === 'shadow' ? 'border-amber-500/50 text-amber-500' : ['error','website_error','stale','website_mismatch'].includes(l.status) ? 'border-destructive text-destructive' : 'border-emerald-500/40 text-emerald-500'}>{l.status}</Badge></TableCell>
                 <TableCell className="text-xs max-w-[400px] truncate">{l.message}</TableCell>
               </TableRow>
             ))}

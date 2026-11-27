@@ -497,3 +497,9 @@ verify_jwt = false
 
 [functions.backup-external-media]
 verify_jwt = false
+
+[functions.ph-signal-shadow]
+verify_jwt = false
+
+[functions.ph-status-receipt]
+verify_jwt = false
