@@ -1,3 +1,5 @@
+import { escapeMailText } from '../_shared/security-v42-input.ts';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 import "../_shared/global-bcc.ts";
 // Sendet automatische Erinnerungen an Kunden, die auf eine Antwort warten.
 // Läuft per Cron (z. B. stündlich). Nach 2 Remindern → comm_status='customer_unreachable'.
@@ -13,16 +15,18 @@ const MAX_REMINDERS = 2;
 function html(customerName: string, ticketNumber: string, subject: string) {
   return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#fff;color:#111;padding:24px">
     <h2 style="color:#0f172a">Erinnerung zu Ihrer Anfrage</h2>
-    <p>Hallo ${customerName || ''},</p>
-    <p>wir warten aktuell noch auf Ihre Rückmeldung zu <b>${subject || 'Ihrer Anfrage'}</b>.</p>
+    <p>Hallo ${escapeMailText(customerName || '')},</p>
+    <p>wir warten aktuell noch auf Ihre Rückmeldung zu <b>${escapeMailText(subject || 'Ihrer Anfrage')}</b>.</p>
     <p>Bitte antworten Sie einfach auf diese E-Mail oder loggen Sie sich in unser Kundenportal ein.</p>
-    ${ticketNumber ? `<p><b>Ticket:</b> ${ticketNumber}</p>` : ''}
+    ${ticketNumber ? `<p><b>Ticket:</b> ${escapeMailText(ticketNumber)}</p>` : ''}
     <p style="margin-top:24px;color:#64748b;font-size:12px">Diese Nachricht wurde automatisch von AlixWork erstellt.</p>
   </body></html>`;
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,

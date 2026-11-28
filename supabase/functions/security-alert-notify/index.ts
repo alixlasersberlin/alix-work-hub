@@ -6,6 +6,8 @@ import "../_shared/global-bcc.ts";
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireJobAccess } from '../_shared/job-auth.ts';
+import { z } from 'npm:zod@3.25.76';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -15,13 +17,13 @@ const COOLDOWN_HOURS = 6;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders, ['Super Admin']);
+  if (denied) return denied;
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-    let lookback = 60;
-    try {
-      const b = await req.json().catch(() => ({}));
-      if (typeof b?.lookback_minutes === 'number') lookback = b.lookback_minutes;
-    } catch { /* noop */ }
+    const parsed = z.object({ lookback_minutes: z.number().int().min(1).max(10080).default(60) }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json({ error: 'Invalid lookback interval' }, 400);
+    const lookback = parsed.data.lookback_minutes;
 
     const since = new Date(Date.now() - lookback * 60_000).toISOString();
     const { data: findings } = await admin
@@ -50,14 +52,13 @@ Deno.serve(async (req) => {
     // Recipients: Super Admins
     const { data: sa } = await admin
       .from('user_roles')
-      .select('user_id, roles!inner(name)')
-      .eq('roles.name', 'Super Admin');
-    const uids = (sa ?? []).map((r: any) => r.user_id);
+      .select('user_id, roles:role_id(name)');
+    const uids = (sa ?? []).filter((r: any) => r.roles?.name === 'Super Admin').map((r: any) => r.user_id);
     const { data: profs } = await admin
       .from('user_profiles')
       .select('email, is_active')
       .in('id', uids)
-      .eq('is_active', true);
+      .eq('is_active', true).eq('account_status', 'active').eq('invitation_status', 'accepted').eq('password_reset_required', false);
     const recipients = (profs ?? []).map((p: any) => p.email).filter(Boolean);
     if (recipients.length === 0) return json({ ok: false, error: 'no super admin recipients' }, 400);
 
@@ -110,7 +111,7 @@ Deno.serve(async (req) => {
   }
 });
 
-function escapeHtml(s: string) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!)); }
+function escapeHtml(s: string) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] ?? c)); }
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }

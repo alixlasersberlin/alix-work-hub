@@ -1,3 +1,4 @@
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 // Phase 2: Bridge Zoho invoices -> finance_transactions / finance_accounts
 // Idempotent via unique reference. Aggregates balances per customer.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
@@ -21,14 +22,16 @@ function detectRegion(raw: any, currency?: string | null): 'EU' | 'CH' {
   return 'EU';
 }
 
-type Row = { customer_id: string | null; external_customer_id: string | null };
+type Row = { id: string; external_customer_id: string | null };
 
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
   const started = Date.now();
   try {
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const admin = access.client;
 
     // 1) Load customer mapping (external_customer_id -> id)
     const custMap = new Map<string, string>();
@@ -43,7 +46,7 @@ Deno.serve(async (req) => {
           .range(from, from + pageSize - 1);
         if (error) throw error;
         for (const r of (data ?? []) as Row[]) {
-          if (r.external_customer_id && r.customer_id == null) custMap.set(r.external_customer_id, (r as any).id);
+          if (r.external_customer_id) custMap.set(r.external_customer_id, r.id);
         }
         if (!data || data.length < pageSize) break;
         from += pageSize;

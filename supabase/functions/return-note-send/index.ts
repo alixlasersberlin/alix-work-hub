@@ -1,6 +1,8 @@
 import "../_shared/global-bcc.ts";
 // Retouren – Abholavis / Retourenschein per E-Mail an den Kunden senden.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +24,7 @@ const TYPES: Record<string, string> = {
 };
 
 function esc(s: unknown) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] ?? c));
 }
 
 function fmtDate(v?: string | null) {
@@ -40,24 +42,29 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    const userSb = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: authHeader } } });
-    const { data: userData } = await userSb.auth.getUser();
-    if (!userData?.user) return json({ error: "Nicht angemeldet" }, 401);
-
-    const body = await req.json().catch(() => ({}));
-    const returnId = String(body?.return_id ?? "");
-    const to = String(body?.email ?? "").trim();
-    if (!returnId) return json({ error: "return_id fehlt" }, 400);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return json({ error: "E-Mail-Adresse ungültig" }, 400);
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich']);
+    if ('response' in access) return access.response;
+    const parsed = z.object({ return_id: z.string().uuid(), email: z.string().trim().email() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json({ error: 'Invalid return request' }, 400);
+    const returnId = parsed.data.return_id;
+    const to = parsed.data.email;
     if (!RESEND_API_KEY) return json({ error: "RESEND_API_KEY nicht konfiguriert" }, 500);
 
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const sb = access.caller;
+    const { data: canPlan, error: permissionError } = await sb.rpc('can_plan_delivery');
+    if (permissionError || canPlan !== true) return json({ error: 'return_send_denied' }, 403);
     const { data: r, error } = await sb.from("delivery_returns").select("*").eq("id", returnId).maybeSingle();
     if (error) return json({ error: error.message }, 500);
     if (!r) return json({ error: "Retoure nicht gefunden" }, 404);
+    if (!r.order_id) return json({ error: 'Return order assignment unavailable' }, 403);
+    const { data: order, error: orderError } = await sb.from('orders').select('id,customer_id,source_system').eq('id', r.order_id).maybeSingle();
+    const tenant = access.tenants.find((t: any) => t.zoho_source_system && t.zoho_source_system === order?.source_system);
+    if (orderError || !order || !tenant || !order.customer_id) return json({ error: 'Return order scope denied' }, 403);
+    const { data: customer, error: customerError } = await sb.from('customers').select('email,source_system').eq('id', order.customer_id).maybeSingle();
+    if (customerError || !customer || customer.source_system !== order.source_system || customer.email?.trim().toLowerCase() !== to.toLowerCase()) return json({ error: 'Only the stored customer recipient is permitted' }, 403);
 
     const rows: [string, unknown][] = [
       ["Retouren-Nr.", r.return_number],

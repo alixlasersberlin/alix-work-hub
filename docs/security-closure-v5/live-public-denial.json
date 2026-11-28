@@ -1,0 +1,110 @@
+[
+  {
+    "function": "ticket-customer-reminder",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "escalation-engine",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "alixdocs-expiry-scan",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "delivery-escalation-engine",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "sync-zoho-to-finance",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "collect-morning-report",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "ac-report-snapshot",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "license-royalty-run",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "finance-reminder-engine",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "collect-engine",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "finance-management-pack",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "finance-ai-forecast",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "alixdocs-upload",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "return-note-send",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "ph-com-registry-push",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "security-alert-notify",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "orders-inbox-process",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  },
+  {
+    "function": "offer-followup-engine",
+    "credential": "public_project_key",
+    "status": 401,
+    "denied": true
+  }
+]

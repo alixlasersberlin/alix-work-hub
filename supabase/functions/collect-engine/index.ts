@@ -4,7 +4,7 @@
 // berechnet Mahnkosten/Verzugszinsen und erzeugt Aufgaben. Versendet NICHTS automatisch.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { getTenantScope } from '../_shared/tenant-scope.ts';
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -19,14 +19,20 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const started = Date.now();
   try {
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const scope = await getTenantScope(req);
-    const scopedIds = scope.restricted ? scope.tenantIds : null;
+    const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+    if ('response' in access) return access.response;
+    const admin = access.client;
+    const scopedIds = access.machine ? null : access.tenantIds;
     if (scopedIds && scopedIds.length === 0) return json({ ok: false, error: 'kein Mandanten-Zugriff' }, 403);
 
     // 1) Fälle aus zoho_invoices aufbauen
-    const { data: syncRes, error: syncErr } = await admin.rpc('collect_sync_cases');
-    if (syncErr) throw syncErr;
+    // Human runs use the existing realtime invoice synchronization, never the global rebuild.
+    let syncRes: unknown = { skipped: 'machine_only_global_sync' };
+    if (access.machine) {
+      const synced = await admin.rpc('collect_sync_cases');
+      if (synced.error) throw synced.error;
+      syncRes = synced.data;
+    }
 
     // 2) Stammdaten laden: Stufen, Playbooks, Gebührenregeln
     const [{ data: stages }, { data: playbooks }, { data: feeRules }] = await Promise.all([
@@ -39,43 +45,36 @@ Deno.serve(async (req) => {
     // 3) Aktive Fälle
     let casesQ: any = admin
       .from('collect_cases')
-      .select('id, customer_id, customer_name, customer_email, stage_code, status, overdue_amount, open_amount, fee_amount, interest_amount, max_days_overdue, next_action, next_action_at, last_contact_at, paused_until, playbook_code, complaint_hold, country_code, customer_type, seller_name, health_score')
+      .select('id, tenant_id, customer_id, customer_name, customer_email, stage_code, status, overdue_amount, open_amount, fee_amount, interest_amount, max_days_overdue, next_action, next_action_at, last_contact_at, paused_until, playbook_code, complaint_hold, country_code, customer_type, seller_name, health_score')
       .neq('status', 'closed')
       .order('overdue_amount', { ascending: false })
       .limit(2000);
     if (scopedIds) casesQ = casesQ.in('tenant_id', scopedIds);
     const { data: cases } = await casesQ;
 
-    // 3b) Fehlende Kontaktdaten aus Kundenstamm nachtragen
-    const missing = (cases ?? []).filter((c: any) => !c.customer_email && c.customer_name);
-    if (missing.length) {
-      const names = Array.from(new Set(missing.map((c: any) => c.customer_name)));
-      const contacts = new Map<string, { email: string | null; phone: string | null }>();
-      for (let i = 0; i < names.length; i += 200) {
-        const { data: cust } = await admin
-          .from('customers').select('company_name, email, phone').in('company_name', names.slice(i, i + 200));
-        (cust ?? []).forEach((x: any) => { if (x.email || x.phone) contacts.set(x.company_name, { email: x.email, phone: x.phone }); });
-      }
-      for (const c of missing) {
-        const hit = contacts.get(c.customer_name);
-        if (!hit?.email && !hit?.phone) continue;
-        await admin.from('collect_cases')
-          .update({ customer_email: hit.email, customer_phone: hit.phone }).eq('id', c.id);
-        c.customer_email = hit.email;
-      }
+    // Contacts are resolved by the stored customer identity, never by a cross-company name.
+    const missing = (cases ?? []).filter((c: any) => !c.customer_email && c.customer_id);
+    for (const c of missing) {
+      let contactQuery = admin.from('customers').select('email,phone,tenant_id').eq('id', c.customer_id);
+      if (scopedIds) contactQuery = contactQuery.in('tenant_id', scopedIds);
+      const { data: contact, error } = await contactQuery.maybeSingle();
+      if (error || !contact || (!contact.email && !contact.phone)) continue;
+      if (contact.tenant_id !== c.tenant_id) continue;
+      await admin.from('collect_cases').update({ customer_email: contact.email, customer_phone: contact.phone }).eq('id', c.id);
+      c.customer_email = contact.email;
     }
 
     const today = new Date().toISOString().slice(0, 10);
     const now = new Date().toISOString();
     const caseIds = (cases ?? []).map((c: any) => c.id);
-    const caseNames = Array.from(new Set((cases ?? []).map((c: any) => c.customer_name).filter(Boolean)));
+    const customerIds = Array.from(new Set((cases ?? []).map((c: any) => c.customer_id).filter(Boolean)));
 
     // 4) Reklamationssperre: offene Tickets/Servicefälle je Kunde ermitteln
     const complaintCustomers = new Set<string>();
-    for (let i = 0; i < caseNames.length; i += 200) {
-      const chunk = caseNames.slice(i, i + 200);
+    for (let i = 0; i < customerIds.length; i += 200) {
+      const chunk = customerIds.slice(i, i + 200);
       const { data: tix } = await admin
-        .from('tickets').select('customer_name, status').in('customer_name', chunk).limit(2000);
+        .from('tickets').select('customer_name, status').in('customer_id', chunk).limit(2000);
       (tix ?? []).forEach((t: any) => {
         if (t.customer_name && OPEN_TICKET_STATES.includes(String(t.status ?? '').toLowerCase())) {
           complaintCustomers.add(t.customer_name);
@@ -85,8 +84,12 @@ Deno.serve(async (req) => {
 
     // 5) Ratenpläne (für Playbook "ratenzahler")
     const installmentCustomers = new Set<string>();
-    const { data: plans } = await admin
-      .from('collect_payment_plans').select('case_id, status').eq('status', 'active').limit(2000);
+    const plans: any[] = [];
+    for (let i = 0; i < caseIds.length; i += 100) {
+      const { data, error } = await admin.from('collect_payment_plans').select('case_id,status').eq('status', 'active').in('case_id', caseIds.slice(i, i + 100));
+      if (error) throw error;
+      plans.push(...(data ?? []));
+    }
     (plans ?? []).forEach((p: any) => installmentCustomers.add(p.case_id));
 
     // Bestehende Protokolleinträge & Sperren gebündelt laden
@@ -220,12 +223,13 @@ Deno.serve(async (req) => {
 
     // 6) Gebrochene Zahlungsversprechen erkennen
     let brokenPromises = 0;
-    const { data: promises } = await admin
-      .from('collect_promises')
-      .select('id, case_id, amount, promised_date')
-      .eq('status', 'open')
-      .lt('promised_date', today)
-      .limit(1000);
+    const promises: any[] = [];
+    for (let i = 0; i < caseIds.length; i += 100) {
+      const { data, error } = await admin.from('collect_promises').select('id,case_id,amount,promised_date')
+        .eq('status', 'open').lt('promised_date', today).in('case_id', caseIds.slice(i, i + 100)).limit(1000);
+      if (error) throw error;
+      promises.push(...(data ?? []));
+    }
     for (const p of promises ?? []) {
       await admin.from('collect_promises').update({ status: 'broken' }).eq('id', p.id);
       await admin.from('collect_events').insert({
@@ -238,8 +242,13 @@ Deno.serve(async (req) => {
     }
 
     // 7) Aufgaben erzeugen
-    const { data: openTasks } = await admin
-      .from('collect_tasks').select('case_id, task_type').eq('status', 'open').limit(5000);
+    const openTasks: any[] = [];
+    for (let i = 0; i < caseIds.length; i += 100) {
+      const { data, error } = await admin.from('collect_tasks').select('case_id,task_type').eq('status','open')
+        .in('case_id', caseIds.slice(i, i + 100)).limit(5000);
+      if (error) throw error;
+      openTasks.push(...(data ?? []));
+    }
     const taskKeys = new Set((openTasks ?? []).map((t: any) => `${t.case_id}|${t.task_type}`));
     const newTasks: any[] = [];
     const pushTask = (c: any, task_type: string, title: string, priority: number) => {

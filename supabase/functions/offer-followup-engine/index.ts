@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     if (oErr) throw oErr;
 
     // Outcomes lookup
-    const numbers = (offers || []).map((o) => o.offer_number);
+    const numbers: string[] = (offers || []).map((o: { offer_number: string }) => o.offer_number);
     const { data: outcomes } = numbers.length
       ? await admin.from('offer_outcomes').select('offer_number, outcome').in('offer_number', numbers)
       : { data: [] as any[] };
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     let notified = 0;
     try {
       const nowISO = new Date().toISOString();
-      const { data: dueTasks } = await admin
+      let dueQuery = admin
         .from('offer_followup_tasks')
         .select('id, offer_number, customer_id, owner_user_id, stage, due_at, title, priority')
         .eq('status', 'offen')
@@ -146,6 +146,8 @@ Deno.serve(async (req) => {
         .lte('due_at', nowISO)
         .not('owner_user_id', 'is', null)
         .limit(500);
+      if (!access.machine) dueQuery = dueQuery.in('offer_number', numbers);
+      const { data: dueTasks } = await dueQuery;
 
       if (dueTasks?.length) {
         const ownerIds = [...new Set(dueTasks.map((t: any) => t.owner_user_id))];

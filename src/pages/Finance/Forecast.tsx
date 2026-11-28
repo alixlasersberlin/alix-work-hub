@@ -11,11 +11,13 @@ import { toast } from 'sonner';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { BUDGET_CATEGORIES, MONTH_NAMES, fmt, classifyTx, mapIncomingCategory } from './_controlling';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { useTenant } from '@/contexts/TenantContext';
 
 type Scenario = 'base' | 'best' | 'worst' | 'ai';
 
 export default function FinanceForecast() {
   const { region } = useAccountingRegion();
+  const { current } = useTenant();
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
   const [scenario, setScenario] = useState<Scenario>('base');
@@ -24,10 +26,11 @@ export default function FinanceForecast() {
   const [aiLoading, setAiLoading] = useState(false);
 
   async function aiGenerate() {
+    if (!current || String(region) === 'ALL') return toast.error('Bitte einen Mandanten und Buchungskreis auswählen.');
     setAiLoading(true);
     try {
       const months = 12 - new Date().getMonth();
-      const { data, error } = await supabase.functions.invoke('finance-ai-forecast', { body: { category: 'Umsatz', months } });
+      const { data, error } = await supabase.functions.invoke('finance-ai-forecast', { body: { category: 'Umsatz', months, tenant_id: current.id, accounting_region: region } });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       toast.success(`KI-Forecast erstellt (${(data as any)?.written ?? 0} Monate, Szenario "ai")`);

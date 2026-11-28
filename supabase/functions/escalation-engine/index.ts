@@ -1,3 +1,4 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 // escalation-engine — plant, storniert und löst Eskalationen für ALIX INBOX Conversations aus.
 // Läuft per Cron (jede Minute). Kein Client-Zugriff mit Geheimnissen.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -6,12 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const admin = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  { auth: { persistSession: false } },
-);
 
 const FN_URL = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-mobile-notification`;
 
@@ -30,6 +25,9 @@ async function dispatch(body: Record<string, unknown>) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
+  const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', { auth: { persistSession: false } });
   const now = new Date();
   const result = { scheduled: 0, cancelled: 0, triggered: 0, failed: 0 };
 
@@ -45,7 +43,7 @@ Deno.serve(async (req) => {
       .limit(500);
 
     for (const c of convs ?? []) {
-      const answered = c.last_agent_message_at && new Date(c.last_agent_message_at) > new Date(c.last_customer_message_at!);
+      const answered = c.last_agent_message_at && new Date(c.last_agent_message_at) > new Date(c.last_customer_message_at ?? now);
       if (answered) continue;
       const prio = (c.priority ?? 'P3').toUpperCase();
       const dept = (c.assigned_department || c.category || null);
@@ -58,19 +56,19 @@ Deno.serve(async (req) => {
         .select('id').eq('conversation_id', c.id).eq('status', 'SCHEDULED').limit(1);
       if (existing?.length) continue;
 
-      const base = new Date(c.last_customer_message_at!).getTime();
+      const base = new Date(c.last_customer_message_at ?? now).getTime();
       const levels = [
         { lvl: 1, min: rule.first_reminder_minutes },
         { lvl: 2, min: rule.second_reminder_minutes },
         { lvl: 3, min: rule.escalate_minutes },
-      ].filter((l) => typeof l.min === 'number' && l.min! > 0);
+      ].filter((l) => typeof l.min === 'number' && Number(l.min) > 0);
       if (!levels.length) continue;
 
       const rows = levels.map((l) => ({
         conversation_id: c.id,
         rule_id: rule.id,
         escalation_level: l.lvl,
-        scheduled_for: new Date(base + l.min! * 60_000).toISOString(),
+        scheduled_for: new Date(base + Number(l.min) * 60_000).toISOString(),
         status: 'SCHEDULED',
         target_user_id: l.lvl === 3 ? (rule.escalate_to_user_id ?? c.assigned_to ?? null) : (c.assigned_to ?? null),
         target_role: l.lvl === 3 ? (rule.escalate_to_role ?? null) : null,

@@ -3,6 +3,8 @@
 // Keine Übersetzungen, keine Produktdaten, keine Preise, keine Medien.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
 const cors = corsHeaders;
 const json = (s: number, b: unknown) =>
@@ -20,12 +22,20 @@ const CANDIDATE_PATHS = [
   "/api/public/product-hub/register",
   "/api/public/product-hub-registry",
 ];
+const allowedPath = z.string().refine((path) => [...CANDIDATE_PATHS, '/api/public/product-hub/products', '/api/public/product-hub/export'].includes(path), 'Unapproved registry path');
+const RegistryBody = z.object({
+  action: z.enum(['discover', 'dryrun', 'register', 'raw', 'probe', 'resolve']).default('dryrun'),
+  endpoint: allowedPath.optional(), path: allowedPath.optional(), paths: z.array(allowedPath).max(8).optional(),
+  method: z.enum(['GET', 'POST']).default('POST'), payload: z.record(z.unknown()).optional(),
+}).strict();
 
 async function call(path: string, method: string, payload: unknown) {
+  if (!allowedPath.safeParse(path).success) throw new Error('Unapproved registry path');
   const r = await fetch(`${HOST}${path}`, {
     method,
     headers: { "content-type": "application/json", "x-api-key": KEY },
-    body: JSON.stringify(payload),
+    ...(method === 'GET' ? {} : { body: JSON.stringify(payload) }),
+    redirect: 'error',
   });
   const text = await r.text();
   let body: any = text;
@@ -48,12 +58,17 @@ async function discover(explicitPath?: string, method = "POST") {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
   try {
+    const access = await requireCallerAccess(req, cors, ['Super Admin']);
+    if ('response' in access) return access.response;
+    const parsed = RegistryBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json(400, { error: 'Invalid registry request' });
     if (!KEY) return json(500, { error: "COM_PRODUCT_HUB_WRITE_KEY fehlt" });
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: control, error: controlError } = await admin.from('ph_settings').select('value').eq('key', 'ph2_activation').maybeSingle();
     if (controlError || control?.value?.controlled_modes === true) return json(200, { ok: false, error: 'Kontrollierter PRODUCT HUB 2.0: alter COM-Versand gesperrt; keine Übertragung ausgeführt' });
-    const body = await req.json().catch(() => ({} as any));
+    const body = parsed.data;
     const action = String(body.action ?? "dryrun"); // discover | dryrun | register
     const endpoint: string | undefined = body.endpoint;
     const method = String(body.method ?? "POST");
@@ -113,7 +128,7 @@ Deno.serve(async (req) => {
       ];
       const out: any[] = [];
       for (const p of paths) {
-        const r = await fetch(`${HOST}${p}`, { headers: { "x-api-key": KEY } });
+        const r = await fetch(`${HOST}${p}`, { headers: { "x-api-key": KEY }, redirect: 'error' });
         const t = await r.text();
         let b: any; try { b = JSON.parse(t); } catch { b = t.slice(0, 200); }
         if (typeof b === "string" && b.startsWith("<!DOCTYPE")) b = "HTML_404_SPA";

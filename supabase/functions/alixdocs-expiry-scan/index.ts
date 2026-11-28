@@ -1,3 +1,4 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 // AlixDocs — Ablauf-Warnungen: erzeugt app_notifications für Dokumente,
 // deren expiry_date in <= expiry_warning_days fällt.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -9,6 +10,8 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -33,7 +36,8 @@ Deno.serve(async (req) => {
 
   let created = 0;
   for (const d of docs ?? []) {
-    const daysLeft = Math.round((new Date(d.expiry_date!).getTime() - new Date(today).getTime()) / 86400000);
+    if (!d.expiry_date) continue;
+    const daysLeft = Math.round((new Date(d.expiry_date).getTime() - new Date(today).getTime()) / 86400000);
     if (daysLeft > (d.expiry_warning_days ?? 30) || daysLeft < -1) continue;
 
     for (const uid of targetUserIds) {

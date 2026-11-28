@@ -1,3 +1,4 @@
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 // ALIX COLLECT – Morgenreport
 // Erstellt täglich eine KI-Zusammenfassung der Forderungslage inkl. Empfehlungen.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
@@ -15,8 +16,10 @@ const eur = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', c
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
   try {
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const admin = access.client;
     const today = new Date().toISOString().slice(0, 10);
 
     const [{ data: cases }, { data: tasks }, { data: forecast }, { data: promises }] = await Promise.all([

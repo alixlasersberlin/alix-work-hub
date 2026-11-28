@@ -1,3 +1,4 @@
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -36,11 +37,10 @@ function matchProduct(products: any[], sku: unknown, name: unknown, date?: strin
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Finance']);
+  if ('response' in access) return access.response;
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  );
+  const supabase = access.client;
 
   try {
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
         ? `${r.licensee_tenant_id}|${r.source_invoice_number}`
         : `${r.licensee_tenant_id}|${String(r.source_invoice_date).slice(0, 7)}`;
       if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(r);
+      groups.get(key)?.push(r);
     });
 
     let invoicesCreated = 0;

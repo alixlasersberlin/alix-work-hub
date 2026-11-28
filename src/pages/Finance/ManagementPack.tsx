@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { useTenant } from '@/contexts/TenantContext';
 
 const SECTIONS = [
   { v: 'executive_summary', l: 'Executive Summary' },
@@ -25,8 +26,9 @@ const SECTIONS = [
 ];
 
 export default function FinanceManagementPack() {
-  const { roles } = useAuth();
+  const { roles, user } = useAuth();
   const { region } = useAccountingRegion();
+  const { current } = useTenant();
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
   const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);
@@ -52,10 +54,12 @@ export default function FinanceManagementPack() {
   useEffect(() => { load(); }, []);
 
   const save = async () => {
+    if (!current || String(region) === 'ALL') return toast({ title: 'Bitte einen Mandanten und Buchungskreis auswählen', variant: 'destructive' });
     try {
       const payload: any = {
         name: form.name, period_start: form.period_start, period_end: form.period_end,
         sections: form.sections, status: 'draft',
+        tenant_id: current.id, accounting_region: region, created_by: user?.id,
       };
       const { error } = await supabase.from('finance_management_packs' as any).insert(payload);
       if (error) throw error;

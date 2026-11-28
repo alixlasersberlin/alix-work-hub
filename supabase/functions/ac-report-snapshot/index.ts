@@ -1,3 +1,4 @@
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 // Aggregates KPIs across channels for the Executive Cockpit.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -9,13 +10,15 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+  if ('response' in access) return access.response;
   try {
     const body = await req.json().catch(() => ({} as any));
     const days = Math.max(1, Math.min(365, Number(body.days) || 30));
     const end = new Date();
     const start = new Date(end.getTime() - days * 86400_000);
 
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const sb = access.client;
 
     const [calls, messages, tickets, meetings] = await Promise.all([
       sb.from('ac_calls').select('id,direction,status,duration_seconds,sentiment,agent_user_id,started_at')

@@ -5,6 +5,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { getTenantScope } from '../_shared/tenant-scope.ts';
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -25,7 +26,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const started = Date.now();
   try {
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+    if ('response' in access) return access.response;
+    const admin = access.client;
     const scope = await getTenantScope(req);
     const scopedIds = scope.restricted ? scope.tenantIds : null;
     if (scopedIds && scopedIds.length === 0) {
@@ -56,12 +59,10 @@ Deno.serve(async (req) => {
 
       let accQ: any = admin
         .from('finance_accounts')
-        .select('id, customer_id, reminder_level, overdue_balance')
+        .select('id, tenant_id, customer_id, reminder_level, overdue_balance')
         .eq('accounting_region', region)
         .gt('overdue_balance', 0);
-      // Mandantenneutrale Altbestände (tenant_id NULL) sind laut tenant-scope.ts
-      // ebenfalls zugelassen und dürfen nicht aus manuellen Läufen verschwinden.
-      if (scopedIds) accQ = accQ.or(`tenant_id.in.(${scopedIds.join(',')}),tenant_id.is.null`);
+      if (scopedIds) accQ = accQ.in('tenant_id', scopedIds);
       if (onlyCustomerIds) accQ = accQ.in('customer_id', onlyCustomerIds);
       const { data: accounts } = await accQ;
       rSeen = accounts?.length ?? 0;
@@ -72,6 +73,7 @@ Deno.serve(async (req) => {
           .from('finance_reminders')
           .select('id')
           .eq('customer_id', acc.customer_id)
+          .filter('tenant_id', acc.tenant_id ? 'eq' : 'is', acc.tenant_id)
           .eq('accounting_region', region)
           .eq('status', 'Entwurf')
           .limit(1);
@@ -82,6 +84,7 @@ Deno.serve(async (req) => {
           .from('finance_transactions')
           .select('id, amount, booking_date, notes, reference')
           .eq('customer_id', acc.customer_id)
+          .filter('tenant_id', acc.tenant_id ? 'eq' : 'is', acc.tenant_id)
           .eq('accounting_region', region)
           .eq('transaction_type', 'Rechnung');
         const items = (txs ?? []).map((t) => {
@@ -104,6 +107,7 @@ Deno.serve(async (req) => {
           .from('finance_reminders')
           .insert({
             customer_id: acc.customer_id,
+            tenant_id: acc.tenant_id,
             accounting_region: region,
             level: nextLevel.level,
             amount,

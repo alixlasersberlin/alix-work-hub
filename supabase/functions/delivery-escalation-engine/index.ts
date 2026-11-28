@@ -2,6 +2,7 @@
 // Läuft per Cron: berechnet Ampel/ETA-Status neu, erinnert Kunden an offene Terminbestätigungen
 // und eskaliert kritische Lieferungen intern (App-Benachrichtigung + Historieneintrag).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,6 +68,8 @@ function evaluate(r: any, openBlockers: number, tourPlanned: boolean) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   try {
     const { data: rows } = await admin

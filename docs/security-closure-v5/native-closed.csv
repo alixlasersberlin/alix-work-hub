@@ -1,0 +1,92 @@
+internal_id,level,name,location,status
+lov_finding_01a8fbdc7c7589de,warn,Tenant-scoped users can break promises across tenants,supabase/functions/collect-engine/index.ts,fixed_verified
+lov_finding_047203441bd5591f_88e4cf42,error,Anyone can generate forecasts from private finance transactions,supabase/functions/finance-ai-forecast/index.ts,fixed_verified
+lov_finding_047203441bd5591f_a1096153,error,Anyone can read and rewrite your financial forecasts,supabase/functions/finance-ai-forecast/index.ts,fixed_verified
+lov_finding_051cc14add9055ea_4f5096db,error,Anyone can see the collections morning report,supabase/functions/collect-morning-report/index.ts,fixed_verified
+lov_finding_051cc14add9055ea_5afc9388,error,Public morning report exposes collection and debtor data,supabase/functions/collect-morning-report/index.ts,fixed_verified
+lov_finding_05cb9174c5b00b2b,warn,Anyone can mark any finance pack generated,supabase/functions/finance-management-pack/index.ts,fixed_verified
+lov_finding_0a37d5bf9bcd54f1,warn,Anyone can trigger document expiry notifications,supabase/functions/alixdocs-expiry-scan/index.ts,fixed_verified
+lov_finding_0ef9a1ba000a3ecc,warn,Public endpoint exposes private security-finding counts,supabase/functions/security-alert-notify/index.ts,fixed_verified
+lov_finding_113966ca22401a64,error,Anyone can trigger the finance sync with service-role access,supabase/functions/sync-zoho-to-finance/index.ts,fixed_verified
+lov_finding_113d7858a1afa09d,error,Any signed-in user can email another customer’s return details,supabase/functions/return-note-send/index.ts,fixed_verified
+lov_finding_11ea5a4ad40462ce,error,Anyone can trigger the finance sync with service-role access,supabase/functions/sync-zoho-to-finance/index.ts,fixed_verified
+lov_finding_1286b4f098655e09,error,Anyone can inject query syntax during order inbox processing,orders-inbox-process,fixed_verified
+lov_finding_1686e4eb17c3f7b8,error,Anyone can trigger finance data synchronization,supabase/functions/sync-zoho-to-finance/index.ts,fixed_verified
+lov_finding_20c2cb8fbb147660,warn,Signed-in user can select any return record,supabase/functions/return-note-send/index.ts,fixed_verified
+lov_finding_31221c7496d98893,error,Anyone can run private royalty accounting,supabase/functions/license-royalty-run/index.ts,fixed_verified
+lov_finding_38f4a9ca79e49956,error,Anyone can mark your management reports as sent,supabase/functions/finance-management-pack/index.ts,fixed_verified
+lov_finding_41134da809e5afa0_4a6a345b,warn,Tenant-scoped users can break promises across tenants,supabase/functions/collect-engine/index.ts,fixed_verified
+lov_finding_41134da809e5afa0_a978d53a,warn,Tenant-scoped users can trigger a global collection sync,supabase/functions/collect-engine/index.ts,fixed_verified
+lov_finding_43acae9749b04b8c,error,Anyone can create your finance transactions,supabase/functions/sync-zoho-to-finance/index.ts,fixed_verified
+lov_finding_44ec9efee945753d_16baf99a,warn,Signed-in user can select any return record,supabase/functions/return-note-send/index.ts,fixed_verified
+lov_finding_44ec9efee945753d_4d29d29f,warn,Any signed-in user can email another customer's return details,supabase/functions/return-note-send/index.ts,fixed_verified
+lov_finding_48c15e5c018def20,warn,Tenant users can process unassigned finance accounts,supabase/functions/finance-reminder-engine/index.ts,fixed_verified
+lov_finding_4fcc6310686c49bd_2e856bd1,warn,Anyone can trigger private conversation escalation processing,supabase/functions/escalation-engine/index.ts,fixed_verified
+lov_finding_4fcc6310686c49bd_40ebea2f,warn,Anyone can change your conversation escalations,supabase/functions/escalation-engine/index.ts,fixed_verified
+lov_finding_561c551c36bc7973,warn,Any signed-in user can email another customer's return details,supabase/functions/return-note-send/index.ts,fixed_verified
+lov_finding_597a547a91b6cb80,error,Anyone can process pending customer orders,supabase/functions/orders-inbox-process/index.ts,fixed_verified
+lov_finding_5dbd6ef95ef7bd34,warn,Anyone can trigger delivery status escalation and notifications,supabase/functions/delivery-escalation-engine/index.ts,fixed_verified
+lov_finding_657a386ea20479fa_19fb2cab_19fb2cab,warn,Anyone can trigger ticket reminders,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_657a386ea20479fa_19fb2cab_19fb2cab_1,warn,Anyone can trigger ticket reminders,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_657a386ea20479fa_2cfe2486,warn,Anyone can trigger ticket reminders,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_657a386ea20479fa_61fa22e3,warn,Anyone can change tickets and send reminders,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_657a386ea20479fa_6427c9a6,warn,Public reminder endpoint reads private tickets,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_657a386ea20479fa_e4d1c2e5,error,Public endpoint accesses and changes customer tickets,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_689b0326e896c2b9,error,Anyone can see the collections morning report,supabase/functions/collect-morning-report/index.ts,fixed_verified
+lov_finding_69960c8d8502d094,warn,Any signed-in user can create reminders across tenants,supabase/functions/finance-reminder-engine/index.ts,fixed_verified
+lov_finding_70fb63eb0b0d83b0,error,Anyone can trigger order inbox processing without authentication,supabase/functions/orders-inbox-process/index.ts,fixed_verified
+lov_finding_752434abd9742e22,error,Anyone can read and rewrite your financial forecasts,supabase/functions/finance-ai-forecast/index.ts,fixed_verified
+lov_finding_77ffe1f8a4ceaa49,error,Forecast handler reads finance transactions across tenants,supabase/functions/finance-ai-forecast/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_30e3a779,warn,Anyone can register product mappings,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_50ac0c04,warn,Anyone can read the protected mapping registry,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_50ac0c04_50ac0c04,warn,Anyone can read the protected mapping registry,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_50ac0c04_50ac0c04_1,error,Anyone can read the protected mapping registry,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_68117057,warn,Anyone can read the protected mapping registry,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_973913fd,warn,Anyone can manage product-to-shop mappings,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_a39b0b4a,warn,Anyone can call the product mapping registry function,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_be30d2a4,warn,Anyone can read the protected mapping registry,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_7c49fdc537737f7d_d30fbb88,warn,Anyone can register product mappings,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_80f949ebfeee1886,error,No-assignment users can generate all-tenant reminders,supabase/functions/finance-reminder-engine/index.ts,fixed_verified
+lov_finding_81b88db2a699dccb,warn,Anyone can trigger shared conversation escalations,supabase/functions/escalation-engine/index.ts,fixed_verified
+lov_finding_87822496c4c3d76b,warn,Anyone can trigger staff escalation notifications,supabase/functions/escalation-engine/index.ts,fixed_verified
+lov_finding_89378af05f306e7c,warn,Anyone can trigger ticket reminders,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_92d6177d8f94b16b,warn,Anyone can run the collections engine,supabase/functions/collect-engine/index.ts,fixed_verified
+lov_finding_9328ed89c215056e,warn,Tenant-scoped caller can mark other tenants' reminders sent,supabase/functions/offer-followup-engine/index.ts,fixed_verified
+lov_finding_a1b561efb919465b,warn,Anyone can trigger security alert emails,supabase/functions/security-alert-notify/index.ts,fixed_verified
+lov_finding_a635886623a0d45a,error,Anyone can change another user's finance report,supabase/functions/finance-management-pack/index.ts,fixed_verified
+lov_finding_a8fedd27400985ed,warn,Anyone can run royalty billing,supabase/functions/license-royalty-run/index.ts,fixed_verified
+lov_finding_ade0a1b2acaf1de5,warn,Anyone can trigger delivery escalation alerts,supabase/functions/delivery-escalation-engine/index.ts,fixed_verified
+lov_finding_b067377a92344776,error,Anyone can run collections processing,supabase/functions/collect-engine/index.ts,fixed_verified
+lov_finding_b46bb147dac54ffd_3be70c29,error,Anyone can process pending customer orders,supabase/functions/orders-inbox-process/index.ts,fixed_verified
+lov_finding_b8bb25d184a6646e_6979a297,warn,Anyone can view private business performance reports,supabase/functions/ac-report-snapshot/index.ts,fixed_verified
+lov_finding_b8bb25d184a6646e_c9edd845,warn,Anyone can read and snapshot private business metrics,supabase/functions/ac-report-snapshot/index.ts,fixed_verified
+lov_finding_b9623e1a2a17a707_3c427d87,warn,Anyone can count private security findings,supabase/functions/security-alert-notify/index.ts,fixed_verified
+lov_finding_b9623e1a2a17a707_4882f84e,warn,Anyone can trigger security alert emails,supabase/functions/security-alert-notify/index.ts,fixed_verified
+lov_finding_ba12e323f71e0fa4,error,Signed-in users can send return details to arbitrary addresses,supabase/functions/return-note-send/index.ts,fixed_verified
+lov_finding_baa5414ce6fda013,error,Anyone can turn queued imports into orders,supabase/functions/orders-inbox-process/index.ts,fixed_verified
+lov_finding_c8d3bf30e8a1b68c_4e1a6ee1,error,Anyone can mark your management reports as sent,supabase/functions/finance-management-pack/index.ts,fixed_verified
+lov_finding_c8d3bf30e8a1b68c_dc6f6332,error,Unauthenticated requests can change finance packs,supabase/functions/finance-management-pack/index.ts,fixed_verified
+lov_finding_c9b9a1c253f3111b,error,Public morning report exposes collection financial data,supabase/functions/collect-morning-report/index.ts,fixed_verified
+lov_finding_ccf733e8823a9436_03b7ba47,warn,Anyone can trigger document expiry notifications and view counts,supabase/functions/alixdocs-expiry-scan/index.ts,fixed_verified
+lov_finding_ccf733e8823a9436_0794a8cb,warn,Anyone can trigger private document expiry alerts,supabase/functions/alixdocs-expiry-scan/index.ts,fixed_verified
+lov_finding_cec0ac18e56d6bd7_b5f2cb8f,warn,Any signed-in user can create tasks across tenants,supabase/functions/offer-followup-engine/index.ts,fixed_verified
+lov_finding_cec0ac18e56d6bd7_f40c647c,warn,Any signed-in user can mark offers inactive,supabase/functions/offer-followup-engine/index.ts,fixed_verified
+lov_finding_d14e93d9aacd6cbd,warn,Anyone can consume the app's paid AI forecast service,supabase/functions/finance-ai-forecast/index.ts,fixed_verified
+lov_finding_d24ffd0340173825,warn,Anyone can trigger delivery escalations,supabase/functions/delivery-escalation-engine/index.ts,fixed_verified
+lov_finding_d3639d61199e93c2,error,Anyone can register product mappings,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_d76d8adca9d2e204,error,Anyone can mark your management reports as sent,supabase/functions/finance-management-pack/index.ts,fixed_verified
+lov_finding_db22a4167bb6e8c4,warn,Anyone can trigger ticket reminders,supabase/functions/ticket-customer-reminder/index.ts,fixed_verified
+lov_finding_dbd4ea3dfc6fc0db,error,Any signed-in user can overwrite another user's document,supabase/functions/alixdocs-upload/index.ts,fixed_verified
+lov_finding_dee2f25deaa8bfd7,error,Anyone can issue keyed requests to the external hub,supabase/functions/ph-com-registry-push/index.ts,fixed_verified
+lov_finding_e1bc98324f66bddf,warn,Anyone can read and snapshot private business metrics,supabase/functions/ac-report-snapshot/index.ts,fixed_verified
+lov_finding_e2c148fb68294c0b_0e12c928,error,Upload advances any selected document’s version,supabase/functions/alixdocs-upload/index.ts,fixed_verified
+lov_finding_e2c148fb68294c0b_18b1b361,error,Any signed-in user can overwrite another user's document,supabase/functions/alixdocs-upload/index.ts,fixed_verified
+lov_finding_e2c148fb68294c0b_b501ba6c,error,Any signed-in user can replace another user's document,supabase/functions/alixdocs-upload/index.ts,fixed_verified
+lov_finding_e2c148fb68294c0b_ef5f34ce,error,Any signed-in user can overwrite another user's document,supabase/functions/alixdocs-upload/index.ts,fixed_verified
+lov_finding_e957b3f005ee7506,error,Anyone can create license royalty invoices,supabase/functions/license-royalty-run/index.ts,fixed_verified
+lov_finding_e9aceb6d535ce210,error,Any signed-in user can upload a new version of any document,supabase/functions/alixdocs-upload/index.ts,fixed_verified
+lov_finding_ec69936c237f33df_020961d4,error,Anyone can change your finance transaction records,supabase/functions/sync-zoho-to-finance/index.ts,fixed_verified
+lov_finding_ec69936c237f33df_0622ac84,error,Anyone can trigger the finance sync with service-role access,supabase/functions/sync-zoho-to-finance/index.ts,fixed_verified
+lov_finding_f008824f6a06989a,warn,Anyone can read company-wide performance reports,supabase/functions/ac-report-snapshot/index.ts,fixed_verified
+lov_finding_f4f349506d1e5f16,error,Anyone can process privileged order-inbox records,supabase/functions/orders-inbox-process/index.ts,fixed_verified
+lov_finding_fc4755355dbc5321,warn,Anyone can change your conversation escalations,supabase/functions/escalation-engine/index.ts,fixed_verified

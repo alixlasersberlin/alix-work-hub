@@ -3,6 +3,8 @@
 // category_code, title?, description?, document_date?, confidentiality_level?,
 // existing_document_id? (für neue Version), change_note?
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,20 +46,14 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
 
   const authHeader = req.headers.get('Authorization') ?? '';
-  if (!authHeader) return json(401, { error: 'missing_auth' });
-
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: userData, error: userErr } = await userClient.auth.getUser();
-  if (userErr || !userData?.user) return json(401, { error: 'unauthorized' });
-  const userId = userData.user.id;
-
-  const admin = createClient(supabaseUrl, serviceKey);
+  const access = await requireCallerAccess(req, corsHeaders);
+  if ('response' in access) return access.response;
+  const { data: internal, error: staffError } = await access.caller.rpc('is_internal_staff');
+  if (staffError || internal !== true) return json(403, { error: 'document_access_denied' });
+  const userId = access.user.id;
+  const admin = access.caller;
 
   let form: FormData;
   try { form = await req.formData(); }
@@ -79,6 +75,26 @@ Deno.serve(async (req) => {
   const confidentiality_level = (form.get('confidentiality_level') as string) || 'normal';
   const existing_document_id = (form.get('existing_document_id') as string) || null;
   const change_note = (form.get('change_note') as string) || null;
+  const identifiers = z.object({ order_id: z.string().uuid().nullable(), customer_id: z.string().uuid().nullable(), device_id: z.string().uuid().nullable(), existing_document_id: z.string().uuid().nullable() }).safeParse({ order_id, customer_id, device_id, existing_document_id });
+  if (!identifiers.success || !['normal', 'vertraulich', 'streng_vertraulich'].includes(confidentiality_level) || typeof title !== 'string' || title.length > 500 || typeof category_code !== 'string' || category_code.length > 100) return json(400, { error: 'invalid_document_fields' });
+  let tenantId: string | null = null;
+  // Existing versions use only stored parents, never identities submitted alongside the file.
+  let existing: any = null;
+  if (existing_document_id) {
+    const { data: doc, error } = await admin.from('alixdocs_documents').select('id,current_version,order_id,customer_id,device_id,tenant_id,uploaded_by').eq('id', existing_document_id).maybeSingle();
+    if (error || !doc) return json(404, { error: 'document_not_found' });
+    if (doc.uploaded_by !== userId && !access.roles.some((role) => ['Super Admin', 'Admin', 'Geschäftsführung', 'Buchhaltung', 'Order'].includes(role))) return json(403, { error: 'document_update_denied' });
+    if (doc.tenant_id && !access.tenants.some((tenant: any) => tenant.id === doc.tenant_id)) return json(403, { error: 'document_company_denied' });
+    tenantId = doc.tenant_id;
+    existing = doc;
+  }
+  for (const [table, parentId] of [['orders', existing ? existing.order_id : order_id], ['customers', existing ? existing.customer_id : customer_id], ['lager_devices', existing ? existing.device_id : device_id]] as const) {
+    if (!parentId) continue;
+    const { data: parent, error } = await admin.from(table).select('id,source_system').eq('id', parentId).maybeSingle();
+    const tenant = access.tenants.find((t: any) => t.zoho_source_system && t.zoho_source_system === parent?.source_system);
+    if (error || !parent || !tenant || (tenantId && tenantId !== tenant.id)) return json(403, { error: 'document_parent_scope_denied' });
+    tenantId = tenant.id;
+  }
 
   // Load category
   const { data: cat } = await admin.from('alixdocs_categories').select('id').eq('code', category_code).maybeSingle();
@@ -92,14 +108,12 @@ Deno.serve(async (req) => {
   let versionNumber = 1;
 
   if (existing_document_id) {
-    const { data: doc, error: docErr } = await admin.from('alixdocs_documents')
-      .select('id, current_version, order_id, customer_id').eq('id', existing_document_id).maybeSingle();
-    if (docErr || !doc) return json(404, { error: 'document_not_found' });
-    versionNumber = (doc.current_version ?? 1) + 1;
+    versionNumber = (existing?.current_version ?? 1) + 1;
   } else {
-    // Create the document row (service role bypasses RLS but we set uploaded_by to actual user)
+    // Parent checks plus caller-scoped insertion must succeed before private storage access.
     const { data: inserted, error: insErr } = await admin.from('alixdocs_documents').insert({
       order_id, customer_id, device_id, serial_number, category_id,
+      tenant_id: tenantId,
       title, description, document_date,
       mime_type: file.type, file_size: file.size,
       original_filename: file.name,
@@ -107,14 +121,15 @@ Deno.serve(async (req) => {
       confidentiality_level,
       uploaded_by: userId,
     }).select('id').single();
-    if (insErr) return json(500, { error: 'insert_failed', details: insErr.message });
+    if (insErr || !inserted) return json(403, { error: 'document_insert_denied' });
     documentId = inserted.id;
   }
 
   // Path: docs/{document_id}/v{n}/{name}
   const storagePath = `docs/${documentId}/v${versionNumber}/${sanitized}`;
 
-  const { error: upErr } = await admin.storage.from(BUCKET)
+  const storage = createClient(supabaseUrl, serviceKey);
+  const { error: upErr } = await storage.storage.from(BUCKET)
     .upload(storagePath, new Uint8Array(buf), {
       contentType: file.type,
       upsert: false,
@@ -136,12 +151,13 @@ Deno.serve(async (req) => {
   if (verErr) return json(500, { error: 'version_insert_failed', details: verErr.message });
 
   if (existing_document_id) {
-    await admin.from('alixdocs_documents').update({
+    const { error: updateError } = await admin.from('alixdocs_documents').update({
       current_version: versionNumber,
       mime_type: file.type,
       file_size: file.size,
       original_filename: file.name,
-    }).eq('id', documentId);
+    }).eq('id', documentId).eq('current_version', existing?.current_version ?? 1).select('id').single();
+    if (updateError) return json(409, { error: 'document_version_conflict' });
   }
 
   await admin.from('alixdocs_audit_log').insert({

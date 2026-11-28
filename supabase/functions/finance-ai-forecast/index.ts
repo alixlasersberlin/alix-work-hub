@@ -1,5 +1,8 @@
 // Phase 10 – KI-Forecast: schreibt scenario='ai' Werte in finance_forecasts.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { financeRegionAllowed } from '../_shared/process-access.ts';
+import { ForecastBody, forecastTenant } from '../_shared/security-v5-input.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,18 +15,24 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   try {
-    const supa = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const body = await req.json().catch(() => ({}));
-    const tenant_id = body.tenant_id ?? null;
-    const category = String(body.category || "Umsatz");
-    const months = Math.min(Math.max(Number(body.months || 6), 1), 12);
+    const access = await requireCallerAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Finance']);
+    if ('response' in access) return access.response;
+    const parsed = ForecastBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid forecast request' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { category, months, accounting_region } = parsed.data;
+    const tenant_id = forecastTenant(access.tenants.map((t: any) => t.id), parsed.data.tenant_id);
+    if (!tenant_id || !financeRegionAllowed(access.roles, accounting_region)) return new Response(JSON.stringify({ error: 'Select an authorized company for the forecast' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const supa = access.caller;
 
     // 12 Monate Historie holen
     const since = new Date(); since.setMonth(since.getMonth() - 12); since.setDate(1);
-    const { data: tx } = await supa.from("finance_transactions")
+    const { data: tx, error: txError } = await supa.from("finance_transactions")
       .select("amount, transaction_type, booking_date")
+      .eq('tenant_id', tenant_id).eq('accounting_region', accounting_region)
       .gte("booking_date", since.toISOString().slice(0, 10));
+    if (txError) throw txError;
 
     const monthly = new Map<string, number>();
     for (const r of tx ?? []) {
@@ -63,13 +72,13 @@ Deno.serve(async (req) => {
     const rows = arr.slice(0, months).map((v, i) => {
       const d = new Date(start); d.setMonth(d.getMonth() + i);
       return {
-        tenant_id, scenario: "ai", category,
+        tenant_id, accounting_region, scenario: "ai", category,
         period_date: d.toISOString().slice(0, 10),
         forecast_amount: Number(v) || 0,
       };
     });
 
-    const { error } = await supa.from("finance_forecasts").upsert(rows, { onConflict: "tenant_id,period_date,category,scenario" });
+    const { error } = await supa.from("finance_forecasts").upsert(rows, { onConflict: "tenant_id,period_date,category,scenario,accounting_region" });
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     return new Response(JSON.stringify({ ok: true, written: rows.length, rows }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });

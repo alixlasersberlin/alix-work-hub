@@ -1,7 +1,8 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 // Processes rows from public.orders_inbox with status='received':
 // creates/updates public.orders and public.order_items, then marks inbox row processed.
 // Idempotent: skips if an order with (source_system, order_number) already exists.
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 function json(status: number, body: unknown) {
@@ -21,7 +22,7 @@ const normPhone = (p: unknown) => {
 };
 
 async function linkAlixSmart(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   customerId: string,
   c: any,
   method: string,
@@ -43,7 +44,7 @@ async function linkAlixSmart(
 }
 
 async function resolveCustomerId(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   payload: any,
   sourceSystem: string,
 ): Promise<string | null> {
@@ -107,12 +108,14 @@ async function resolveCustomerId(
   // 4) Telefon-Match (nur wenn zusätzlich ein Name passt)
   const nameNeedle = (c.company_name ?? c.contact_name ?? "").trim();
   if (phone && nameNeedle.length >= 3) {
-    const { data } = await supabase
-      .from("customers")
-      .select("id, phone, company_name, contact_name")
-      .or(`company_name.ilike.%${nameNeedle}%,contact_name.ilike.%${nameNeedle}%`)
-      .limit(20);
-    const hit = (data ?? []).find((r: any) => normPhone(r.phone) === phone);
+    const matches: any[] = [];
+    for (const column of ['company_name', 'contact_name'] as const) {
+      const { data, error } = await supabase.from('customers').select('id,phone,company_name,contact_name')
+        .ilike(column, `%${nameNeedle}%`).limit(20);
+      if (error) continue;
+      matches.push(...(data ?? []));
+    }
+    const hit = matches.find((r: any) => normPhone(r.phone) === phone);
     if (hit?.id) {
       if (isAlixSmart) await linkAlixSmart(supabase, hit.id, { ...c, email }, "phone_name", 70);
       return hit.id;
@@ -145,9 +148,9 @@ async function resolveCustomerId(
 
 
 async function processOne(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   row: any,
-): Promise<{ ok: boolean; order_id?: string; skipped?: boolean; error?: string }> {
+): Promise<{ ok: boolean; order_id?: string; skipped?: boolean; warning?: string; error?: string }> {
   const payload = row.payload ?? {};
   const sourceSystem = row.source_system || payload.source || "alixsmart";
   const rawOrderNumber =
@@ -234,7 +237,7 @@ async function processOne(
     const qty = Number(it.quantity ?? 1);
     const rate = Number(it.unit_price_net ?? it.rate ?? it.unit_price ?? 0);
     const amount = Number(
-      it.line_total_gross ?? it.amount ?? rate * qty ?? 0,
+      it.line_total_gross ?? it.amount ?? rate * qty,
     );
     return {
       order_id: order.id,
@@ -266,6 +269,8 @@ async function processOne(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
