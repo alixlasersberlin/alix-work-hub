@@ -18,6 +18,7 @@ import { usePhChannels } from '@/lib/producthub/useChannels';
 import { websiteState } from '@/lib/producthub/websiteState';
 import { ProductionControl } from '@/components/producthub/ProductionControl';
 import { ConnectionOverview } from '@/components/producthub/ConnectionOverview';
+import { ReleaseDashboard } from '@/components/producthub/ReleaseDashboard';
 
 const db = supabase as any;
 const COMPARE_FIELDS = ['name', 'model', 'short_description', 'wavelengths', 'power', 'fluence', 'pulse_duration', 'frequency', 'spot_sizes', 'cooling', 'laser_class', 'mdr_status', 'ce_status', 'seo_title', 'seo_description'];
@@ -95,6 +96,7 @@ export default function ProductHubWebseiten() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title="Product Hub · Webseiten" subtitle="Freigabestelle: AlixWork · Super Admin" icon={Globe} />
+      <ReleaseDashboard canWrite={canWrite} products={products} />
       <ProductionControl canWrite={canWrite} products={products} />
       <ConnectionOverview canTest={canWrite || (roles || []).includes('Admin')} />
       {canWrite && <Button variant="outline" asChild><Link to="/product-hub/com-abschaltpruefung"><Globe className="mr-2 h-4 w-4" />COM-Abschaltprüfung</Link></Button>}

@@ -58943,6 +58943,10 @@ export type Database = {
         Args: { _id: string; _lease: string; _result: Json }
         Returns: boolean
       }
+      ph2_lift_emergency_stop: {
+        Args: { _confirmation: string; _revision: number }
+        Returns: Json
+      }
       ph2_prepare: {
         Args: { _decision: Json; _id: string; _lease: string; _signal: Json }
         Returns: boolean
@@ -58958,6 +58962,16 @@ export type Database = {
           _product: string
         }
         Returns: undefined
+      }
+      ph2_record_release_proof: {
+        Args: {
+          _actor: string
+          _channel: string
+          _details: Json
+          _kind: string
+          _passed: boolean
+        }
+        Returns: Json
       }
       ph2_retry: { Args: { _event_id: string }; Returns: boolean }
       ph2_set_operating_mode: {
