@@ -25,7 +25,7 @@ Deno.test('Signature entity status comes only from the stored completed document
   globalThis.fetch = async (input, init) => {
     const u = new URL(String(input instanceof Request ? input.url : input)); assertEquals(u.hostname, host);
     if (u.pathname.endsWith('/sig_documents')) return Response.json({ id, entity_type: 'order', entity_id: id, status: 'signiert', completed_at: '2026-11-28T12:00:00Z' });
-    assert(u.pathname.endsWith('/orders')); assertEquals(init?.method, 'PATCH'); update = JSON.parse(String(init.body)); return new Response(null, { status: 204 });
+    assert(u.pathname.endsWith('/orders')); assertEquals(init?.method, 'PATCH'); update = JSON.parse(String(init?.body)); return new Response(null, { status: 204 });
   };
   try { const r = await h(request({ document_id: id, status: 'abgelehnt' })); assertEquals(r.status, 200); await r.body?.cancel(); assertEquals(update.signature_status, 'signiert'); assertEquals(update.signature_signed_at, '2026-11-28T12:00:00Z'); } finally { globalThis.fetch = original; }
 });

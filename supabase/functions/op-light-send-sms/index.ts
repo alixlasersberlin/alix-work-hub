@@ -1,6 +1,11 @@
 // FIBU LIGHT – SMS-Versand an Kunden mit offenen Posten (Twilio)
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { smsReview } from '../_shared/sms-policy.ts';
+import { resolveSmsContext } from '../_shared/sms-context.ts';
+import { maskPhone } from '../_shared/security-core.ts';
+import { z } from 'npm:zod@3';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -37,25 +42,35 @@ Deno.serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
   try {
-    const authHeader = req.headers.get('Authorization') ?? '';
-    if (!authHeader.startsWith('Bearer ')) return json({ error: 'Sitzung abgelaufen – bitte neu anmelden' }, 200);
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: 'Sitzung abgelaufen – bitte neu anmelden' }, 200);
-
-    const { data: roleRows } = await admin.from('user_roles').select('roles(name)').eq('user_id', user.id);
-    const roleNames = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-    if (!roleNames.some((n: string) => ALLOWED.includes(n))) return json({ error: 'Keine Berechtigung' }, 200);
-
-    const body = await req.json().catch(() => ({}));
-    const to = normalizePhone(String(body?.to ?? ''));
-    const text = String(body?.message ?? '').trim().slice(0, 600);
-    if (!to) return json({ error: 'Keine gültige Mobilnummer' }, 200);
-    if (!text) return json({ error: 'Nachricht fehlt' }, 200);
+    if (req.method !== 'POST') return json({error:'Method not allowed'},405);
+    const access = await requireCallerAccess(req,corsHeaders,ALLOWED);
+    if ('response' in access) return access.response;
+    const parsed = z.object({to:z.string().max(40).optional(),message:z.string().trim().min(1).max(600).optional(),preview:z.boolean().optional(),
+      record_type:z.enum(['invoice','deposit','device_lock','prenotification']),record_id:z.string().uuid(),
+      record_ids:z.array(z.string().uuid()).min(1).max(100).optional(),
+      alternative_phone_confirmed:z.boolean().optional(),alternative_phone_reason:z.string().max(500).optional(),
+    }).safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({error:parsed.error.flatten()},400);
+    const body = parsed.data;
+    const context = await resolveSmsContext(access.caller,access.tenants,body.record_type,body.record_id);
+    if (!context) return json({error:'SMS-Vorgang oder Kunde nicht zugänglich'},404);
+    // Grouped lock notices may contain only independently authorized records for this customer.
+    for (const id of body.record_ids ?? []) {
+      const member = await resolveSmsContext(access.caller,access.tenants,body.record_type,id);
+      if (!member || member.customerId !== context.customerId) return json({error:'Sammelvorgänge gehören nicht zum selben Kunden'},403);
+    }
+    const {data: permission} = await access.caller.rpc('security_has_permission',{_user_id:access.user.id,_permission_key:'sms.send_alternative_phone'});
+    const canOverride = access.roles.some(r => r === 'Admin' || r === 'Super Admin') || permission === true;
+    if (body.preview) return json({stored_phone:context.storedPhones.find(p => typeof p === 'string' && p.trim()) ?? '',can_override:canOverride,record_number:context.recordNumber});
+    if (!body.to || !body.message) return json({error:'Mobilnummer und Nachricht erforderlich'},400);
+    const review = smsReview(body.to,context.storedPhones,canOverride,body.alternative_phone_confirmed,body.alternative_phone_reason);
+    if ('error' in review) return json({error:review.error},review.status);
+    const to = review.phone;
+    const text = body.message;
     if (!TWILIO_FROM) return json({ error: 'SMS-Absender fehlt (TWILIO_SMS_FROM_NUMBER)' }, 200);
+    const attemptId = crypto.randomUUID();
+    const {error:auditError} = await admin.from('audit_logs').insert({user_id:access.user.id,action:'sms_send_requested',module:'sms',record_id:context.recordId,details:{attempt_id:attemptId,record_type:body.record_type,record_ids:body.record_ids ?? [body.record_id],record_number:context.recordNumber,customer_id:context.customerId,alternative_phone:review.alternative,reason:review.reason,destination_masked:maskPhone(to)}});
+    if (auditError) return json({error:'Versandprotokoll konnte nicht gespeichert werden'},503);
 
     const params = new URLSearchParams({ To: to, From: TWILIO_FROM, Body: text });
 
@@ -85,18 +100,20 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       const errorBody = await res.text();
-      console.error(`twilio failed [${res.status}]: ${errorBody}`);
+      console.error(`twilio failed [${res.status}]`);
       let code: number | null = null;
       try { code = JSON.parse(errorBody)?.code ?? null; } catch { /* ignore */ }
       const reason = code === 21408
         ? 'SMS in dieses Land ist bei Twilio nicht freigeschaltet (Geo-Berechtigung)'
         : code === 21211 ? 'Ungültige Mobilnummer' : 'SMS-Versand fehlgeschlagen';
-      return json({ success: false, error: reason, twilio_code: code, status: res.status, details: errorBody }, 200);
+      await admin.from('audit_logs').insert({user_id:access.user.id,action:'sms_send_result',module:'sms',record_id:context.recordId,details:{attempt_id:attemptId,status:'failed',provider_status:res.status,provider_code:code,destination_masked:maskPhone(to)}});
+      return json({ success: false, error: reason, twilio_code: code, status: res.status }, 200);
     }
     const payload = await res.json().catch(() => ({}));
-    return json({ success: true, sid: payload?.sid ?? null, to });
+    const {error:resultAuditError} = await admin.from('audit_logs').insert({user_id:access.user.id,action:'sms_send_result',module:'sms',record_id:context.recordId,details:{attempt_id:attemptId,status:'accepted',provider_sid:payload?.sid ?? null,destination_masked:maskPhone(to)}});
+    return json({ success: true, sid: payload?.sid ?? null, destination_masked:maskPhone(to),warning:resultAuditError ? 'Versand erfolgt; Ergebnisprotokoll unvollständig. Nicht erneut senden.' : undefined });
   } catch (e: any) {
-    console.error('op-light-send-sms error', e);
-    return json({ error: e?.message ?? 'Unbekannter Fehler' }, 200);
+    console.error('op-light-send-sms failed without confirmed result');
+    return json({ error: 'Versandergebnis nicht bestätigt; nicht automatisch erneut senden' }, 200);
   }
 });

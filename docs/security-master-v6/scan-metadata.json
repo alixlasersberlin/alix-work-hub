@@ -1,0 +1,37 @@
+{
+  "agent_security_v2": {
+    "completion_status": "incomplete",
+    "scanner_name": "agent_security_v2",
+    "timestamp": "2026-11-28T14:39:56.202630836Z",
+    "up_to_date": true,
+    "version": "1.94"
+  },
+  "app_mcp": {
+    "completion_status": "complete",
+    "scanner_name": "app_mcp",
+    "timestamp": "2026-11-28T14:39:56.202630836Z",
+    "up_to_date": true,
+    "version": "1.0"
+  },
+  "app_mcp_deep": {
+    "completion_status": "complete",
+    "scanner_name": "app_mcp_deep",
+    "timestamp": "2026-11-28T14:39:56.202630836Z",
+    "up_to_date": true,
+    "version": "1.2"
+  },
+  "lov_pgscan": {
+    "completion_status": "complete",
+    "scanner_name": "lov_pgscan",
+    "timestamp": "2026-11-28T14:08:59.591945889Z",
+    "up_to_date": true,
+    "version": "0.2.6"
+  },
+  "supply_chain": {
+    "completion_status": "complete",
+    "scanner_name": "supply_chain",
+    "timestamp": "2026-11-28T07:06:12.989831028Z",
+    "up_to_date": false,
+    "version": "2.2.1"
+  }
+}

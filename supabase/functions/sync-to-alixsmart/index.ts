@@ -1,5 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { TicketSyncInput } from "../_shared/business-input.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -43,21 +45,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    if (!authHeader.startsWith("Bearer ")) {
-      return json({ error: "unauthorized" }, 401);
-    }
-
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
-    // verify caller
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData } = await userClient.auth.getUser();
-    if (!userData?.user) return json({ error: "unauthorized" }, 401);
-
-    const body = (await req.json()) as Body;
-    if (!body?.ticket_id) return json({ error: "ticket_id required" }, 400);
+    const access = await requireCallerAccess(req, corsHeaders);
+    if ('response' in access) return access.response;
+    const supabase = access.caller;
+    const parsed = TicketSyncInput.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({ error: parsed.error.flatten() }, 400);
+    const body = parsed.data;
     const action: Action = body.action || "manual";
 
     // load ticket
@@ -86,8 +79,10 @@ Deno.serve(async (req) => {
         .from("ticket_messages")
         .select("id, message, sender_type, sender_name, is_internal, created_at")
         .eq("id", body.message_id)
+        .eq("ticket_id", ticket.id)
         .maybeSingle();
-      if (m && !m.is_internal) msg = m;
+      if (!m || m.is_internal) return json({ error: "Nachricht nicht zugänglich" }, 403);
+      msg = m;
     }
 
     // Build customer-safe payload (no internal notes, no internal staff info, no department info)

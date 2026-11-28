@@ -6,6 +6,8 @@ import {
 import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { sortOpenItems, type OpenItemSortKey, type SortDir } from '@/lib/finance/open-item-sort';
 import { supabase } from '@/integrations/supabase/client';
+import { SmsAlternativeFields } from '@/components/SmsAlternativeFields';
+import { prepareSmsReview, smsReview, type SmsReviewState } from '@/lib/sms-review';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -241,7 +243,7 @@ export default function OffenePostenLight() {
   const [mailText, setMailText] = useState('');
   const [mailBusy, setMailBusy] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
-  const [smsRows, setSmsRows] = useState<{ item: OpenItem; phone: string }[]>([]);
+  const [smsRows, setSmsRows] = useState<{ item: OpenItem; phone: string; review:SmsReviewState }[]>([]);
   const [smsText, setSmsText] = useState('');
   const [smsBusy, setSmsBusy] = useState(false);
 
@@ -335,7 +337,7 @@ export default function OffenePostenLight() {
   const [depSmsOpen, setDepSmsOpen] = useState(false);
   const [depSmsBusy, setDepSmsBusy] = useState(false);
   const [depSmsText, setDepSmsText] = useState('');
-  const [depSmsRows, setDepSmsRows] = useState<{ row: DepositRow; phone: string }[]>([]);
+  const [depSmsRows, setDepSmsRows] = useState<{ row: DepositRow; phone: string; review:SmsReviewState }[]>([]);
 
 
   const loadHistory = useCallback(async (invoiceId: string) => {
@@ -525,8 +527,9 @@ export default function OffenePostenLight() {
   const openDepSms = async () => {
     if (depMarked.length === 0) { toast.error('Bitte zuerst Anzahlungen markieren.'); return; }
     setDepSmsBusy(true);
-    const prepared: { row: DepositRow; phone: string }[] = [];
-    for (const d of depMarked) prepared.push({ row: d, phone: await resolvePhoneByName(d.customer_name) });
+    const prepared: { row: DepositRow; phone: string; review:SmsReviewState }[] = [];
+    try {for (const d of depMarked) {const review=await prepareSmsReview('deposit',d.id);prepared.push({row:d,phone:review.storedPhone,review});}}
+    catch(e){setDepSmsBusy(false);toast.error(e instanceof Error ? e.message : 'SMS-Vorgang nicht zugänglich');return;}
     setDepSmsRows(prepared);
     setDepSmsText('Alix Lasers: Bitte gleichen Sie Ihre offene Anzahlung {nummer} über {betrag} kurzfristig aus. Vielen Dank.');
     setDepSmsBusy(false);
@@ -535,6 +538,7 @@ export default function OffenePostenLight() {
 
   const sendDepSms = async () => {
     if (!depSmsText.trim()) { toast.error('Bitte einen Text für die SMS eingeben.'); return; }
+    for (const row of depSmsRows) {if (!row.phone.trim()) continue; const check=smsReview(row.phone,[row.review.storedPhone],row.review.canOverride,row.review.confirmed,row.review.reason);if ('error' in check){toast.error(check.error);return;}}
     setDepSmsBusy(true);
     let ok = 0, fail = 0, skipped = 0;
     for (const r of depSmsRows) {
@@ -546,7 +550,7 @@ export default function OffenePostenLight() {
         .replace(/\{kunde\}/g, r.row.customer_name ?? '');
       try {
         const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
-          body: { to: phone, message },
+          body: { to: phone, message,record_type:'deposit',record_id:r.row.id,alternative_phone_confirmed:r.review.confirmed,alternative_phone_reason:r.review.reason },
         });
         if (error) throw error;
         if ((data as any)?.error) throw new Error((data as any).error);
@@ -835,8 +839,9 @@ export default function OffenePostenLight() {
   const openSms = async (rows: OpenItem[]) => {
     if (rows.length === 0) { toast.error('Bitte zuerst offene Posten markieren.'); return; }
     setSmsBusy(true);
-    const prepared: { item: OpenItem; phone: string }[] = [];
-    for (const it of rows) prepared.push({ item: it, phone: await resolvePhone(it) });
+    const prepared: { item: OpenItem; phone: string; review:SmsReviewState }[] = [];
+    try {for (const it of rows) {const review=await prepareSmsReview('invoice',it.id);prepared.push({item:it,phone:review.storedPhone,review});}}
+    catch(e){setSmsBusy(false);toast.error(e instanceof Error ? e.message : 'SMS-Vorgang nicht zugänglich');return;}
     setSmsRows(prepared);
     setSmsText('Alix Lasers: Bitte gleichen Sie Ihre offene Rechnung {rechnung} über {betrag} kurzfristig aus. Vielen Dank.');
     setSmsBusy(false);
@@ -845,6 +850,7 @@ export default function OffenePostenLight() {
 
   const sendSms = async () => {
     if (!smsText.trim()) { toast.error('Bitte einen Text für die SMS eingeben.'); return; }
+    for (const row of smsRows) {if (!row.phone.trim()) continue;const check=smsReview(row.phone,[row.review.storedPhone],row.review.canOverride,row.review.confirmed,row.review.reason);if ('error' in check){toast.error(check.error);return;}}
     setSmsBusy(true);
     let ok = 0, fail = 0, skipped = 0;
     for (const row of smsRows) {
@@ -856,7 +862,7 @@ export default function OffenePostenLight() {
         .replace(/\{kunde\}/g, row.item.customer_name ?? '');
       try {
         const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
-          body: { to: phone, message, invoice_id: row.item.id },
+          body: { to: phone, message,record_type:'invoice',record_id:row.item.id,alternative_phone_confirmed:row.review.confirmed,alternative_phone_reason:row.review.reason },
         });
         if (error) throw error;
         if ((data as any)?.error) throw new Error((data as any).error);
@@ -1570,8 +1576,7 @@ export default function OffenePostenLight() {
                         <span>{r.row.customer_name} · {depNo(r.row)}</span>
                         <span>{fmt(r.row.open_amount, r.row.currency)}</span>
                       </div>
-                      <Input className="mt-1 h-8 text-xs" value={r.phone} placeholder="keine Mobilnummer hinterlegt"
-                        onChange={(e) => setDepSmsRows((prev) => prev.map((p, i) => (i === idx ? { ...p, phone: e.target.value } : p)))} />
+                      <SmsAlternativeFields phone={r.phone} review={r.review} recordNumber={depNo(r.row)} onPhone={phone=>setDepSmsRows(prev=>prev.map((p,i)=>i===idx?{...p,phone}:p))} onReview={patch=>setDepSmsRows(prev=>prev.map((p,i)=>i===idx?{...p,review:{...p.review,...patch}}:p))} />
                     </div>
                   ))}
                 </div>
@@ -1912,8 +1917,7 @@ export default function OffenePostenLight() {
                     <span>{r.item.customer_name} · {invNo(r.item)}</span>
                     <span>{fmt(r.item.balance, r.item.currency)}</span>
                   </div>
-                  <Input className="mt-1 h-8 text-xs" value={r.phone} placeholder="keine Mobilnummer hinterlegt"
-                    onChange={(e) => setSmsRows((prev) => prev.map((p, i) => (i === idx ? { ...p, phone: e.target.value } : p)))} />
+                  <SmsAlternativeFields phone={r.phone} review={r.review} recordNumber={invNo(r.item)} onPhone={phone=>setSmsRows(prev=>prev.map((p,i)=>i===idx?{...p,phone}:p))} onReview={patch=>setSmsRows(prev=>prev.map((p,i)=>i===idx?{...p,review:{...p.review,...patch}}:p))} />
                 </div>
               ))}
             </div>

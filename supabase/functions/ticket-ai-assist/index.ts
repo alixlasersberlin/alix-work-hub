@@ -5,7 +5,8 @@
 // Schreibt NICHT in die DB. Das Frontend übernimmt den Text in das Antwortfeld.
 
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { TicketAiInput } from '../_shared/business-input.ts';
 
 const MODEL = 'google/gemini-3-flash-preview';
 
@@ -15,20 +16,12 @@ Deno.serve(async (req) => {
     const key = Deno.env.get('LOVABLE_API_KEY');
     if (!key) return j({ error: 'LOVABLE_API_KEY fehlt' }, 500);
 
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const supa = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-    const { data: userRes } = await supa.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (!userRes?.user) return j({ error: 'unauthorized' }, 401);
-
-    const body = await req.json().catch(() => ({}));
-    const ticket_id = String(body?.ticket_id ?? '');
-    const mode: 'reply' | 'insights' = body?.mode === 'insights' ? 'insights' : 'reply';
-    const tone = typeof body?.tone === 'string' ? body.tone : 'freundlich, professionell, lösungsorientiert';
-    const hint = typeof body?.hint === 'string' ? body.hint.slice(0, 500) : '';
-    if (!ticket_id) return j({ error: 'ticket_id required' }, 400);
+    const access = await requireCallerAccess(req, corsHeaders);
+    if ('response' in access) return access.response;
+    const supa = access.caller;
+    const parsedInput = TicketAiInput.safeParse(await req.json().catch(() => ({})));
+    if (!parsedInput.success) return j({ error: parsedInput.error.flatten() }, 400);
+    const { ticket_id, mode, tone, hint } = parsedInput.data;
 
     const { data: ticket } = await supa
       .from('tickets')
@@ -37,12 +30,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!ticket) return j({ error: 'Ticket nicht gefunden' }, 404);
 
-    const { data: msgs } = await supa
+    const { data: msgs, error: messagesError } = await supa
       .from('ticket_messages')
       .select('message, sender_type, sender_name, is_internal, created_at')
       .eq('ticket_id', ticket_id)
       .order('created_at', { ascending: false })
       .limit(12);
+    if (messagesError) return j({ error: 'Nachrichten nicht zugänglich' }, 403);
     const history = (msgs ?? [])
       .reverse()
       .map((m: any) => `[${m.sender_type === 'customer' ? 'Kunde' : 'Agent'}${m.is_internal ? ' · intern' : ''}${m.sender_name ? ` · ${m.sender_name}` : ''}] ${String(m.message ?? '').slice(0, 900)}`)

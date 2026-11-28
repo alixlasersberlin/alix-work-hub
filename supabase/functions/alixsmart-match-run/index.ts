@@ -5,6 +5,8 @@
 // Möglich:     Kunde hat E-Mail, es gibt Kandidaten mit gleicher Domain (schwacher Hinweis)
 // Sonst:       unregistriert
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireProcessAccess } from "../_shared/process-access.ts";
+import { z } from "npm:zod@3";
 import { toE164 } from "../_shared/phone-e164.ts";
 
 
@@ -31,29 +33,31 @@ function normEmail(e: string | null | undefined) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const authHeader = req.headers.get("Authorization");
-    const isService = authHeader?.includes(SERVICE_ROLE);
-    let userId: string | null = null;
-    if (!isService) {
-      if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-      const userClient = createClient(SUPABASE_URL, ANON, {
-        global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
-      });
-      const token = authHeader.replace("Bearer ", "");
-      const { data: claims } = await userClient.auth.getClaims(token);
-      if (!claims?.claims) return json({ error: "Unauthorized" }, 401);
-      userId = claims.claims.sub as string;
-      const { data: roleRows } = await admin
-        .from("user_roles").select("roles!inner(name)").eq("user_id", userId);
-      const names = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-      if (!names.some((n: string) => ALLOWED.has(n))) return json({ error: "Forbidden" }, 403);
+    const access = await requireProcessAccess(req,corsHeaders,[...ALLOWED]);
+    if ('response' in access) return access.response;
+    const client=access.client;
+    const parsed=z.object({dry_run:z.boolean().default(false)}).safeParse(await req.json().catch(()=>({})));
+    if(!parsed.success) return json({error:'Invalid input'},400);
+    const dryRun=parsed.data.dry_run;
+    let allowedIds:string[]|null=null;
+    if(!access.machine){
+      const {data:tenants,error:tenantError}=await client.from('tenants').select('zoho_source_system').in('id',access.tenantIds);
+      const sources=(tenants??[]).flatMap(t=>typeof t.zoho_source_system==='string'?[t.zoho_source_system]:[]);
+      if(tenantError||!sources.length) return json({error:'Forbidden'},403);
+      allowedIds=[];
+      for(let offset=0;;offset+=500){
+        const {data:customers,error}=await client.from('customers').select('id').in('source_system',sources).order('id').range(offset,offset+499);
+        if(error) return json({error:'Customer scope unavailable'},403);
+        allowedIds.push(...(customers??[]).map(c=>c.id));
+        if((customers??[]).length<500) break;
+      }
+      if(!allowedIds.length) return json({ok:true,processed:0,dry_run:dryRun});
     }
 
     // Kandidaten laden
-    const { data: rows, error } = await admin
-      .from("v_alixsmart_customer_status")
-      .select("customer_id, email, serial_numbers")
-      .limit(5000);
+    let query=client.from('v_alixsmart_customer_status').select('customer_id,email,serial_numbers').limit(5000);
+    if(allowedIds) query=query.in('customer_id',allowedIds);
+    const {data:rows,error}=await query;
     if (error) return json({ error: error.message }, 500);
 
     const ids = (rows as any[]).map((r) => r.customer_id);
@@ -63,8 +67,8 @@ Deno.serve(async (req) => {
     for (let i = 0; i < ids.length; i += 500) {
       const chunk = ids.slice(i, i + 500);
       const [{ data: cs }, { data: ls }] = await Promise.all([
-        admin.from("customers").select("id, phone").in("id", chunk),
-        admin.from("alixsmart_customer_links").select("alixwork_customer_id, alixsmart_phone").in("alixwork_customer_id", chunk),
+        client.from("customers").select("id, phone").in("id", chunk),
+        client.from("alixsmart_customer_links").select("alixwork_customer_id, alixsmart_phone").in("alixwork_customer_id", chunk),
       ]);
       for (const c of cs ?? []) { const p = toE164((c as any).phone); if (p) phoneOfCustomer.set((c as any).id, p); }
       for (const l of ls ?? []) { const p = toE164((l as any).alixsmart_phone); if (p) smartPhoneOfCustomer.set((l as any).alixwork_customer_id, p); }
@@ -78,7 +82,7 @@ Deno.serve(async (req) => {
       const smartPhone = smartPhoneOfCustomer.get(r.customer_id) ?? null;
 
       // Prüfe Geräte für diesen Kunden
-      const { data: devs } = await admin
+      const { data: devs } = await client
         .from("v_alixsmart_customer_devices")
         .select("alixsmart_user_id, serial_number")
         .eq("customer_id", r.customer_id);
@@ -101,7 +105,8 @@ Deno.serve(async (req) => {
         status = "possible"; score = smartPhone ? 45 : 25; possible++;
       } else { status = "unregistered"; score = 0; unregistered++; }
 
-      await admin.from("alixsmart_customer_links").upsert({
+      if(dryRun) continue;
+      await client.from("alixsmart_customer_links").upsert({
         alixwork_customer_id: r.customer_id,
         // Nummer beibehalten (API-Priorität), sonst Kundenstamm nachtragen
         alixsmart_phone: smartPhone ?? custPhone,
@@ -113,7 +118,7 @@ Deno.serve(async (req) => {
         registered_at: status === "registered" ? new Date().toISOString() : null,
       }, { onConflict: "alixwork_customer_id" });
 
-      await admin.from("alixsmart_match_logs").insert({
+      await client.from("alixsmart_match_logs").insert({
         customer_id: r.customer_id,
         match_score: score,
         compared_fields: compared,
@@ -122,7 +127,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return json({ ok: true, processed: rows?.length ?? 0, registered, possible, unregistered, matched_by_phone: byPhone });
+    return json({ ok: true, processed: rows?.length ?? 0, registered, possible, unregistered, matched_by_phone: byPhone, dry_run:dryRun });
 
 
     return json({ ok: true, processed: rows?.length ?? 0, registered, possible, unregistered });

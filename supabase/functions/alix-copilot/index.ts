@@ -7,7 +7,10 @@
 //  - Tools führen ausschließlich SELECT-Queries via Service-Role aus.
 //  - RBAC: bestimmte Tools (z.B. Finance/AT-Einkauf) nur für entsprechende Rollen.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { CopilotInput, copilotSources } from "../_shared/copilot-input.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -340,7 +343,7 @@ function tableRequiresRole(table: string): string[] | null {
 }
 
 // ---------- Tool Implementierungen ----------
-type Ctx = { userId: string; roles: string[]; isAdmin: boolean; isFinance: boolean; tenantSources: string[] | null; extraBlocked: Set<string>; disabledModules: Set<string> };
+type Ctx = { client:SupabaseClient; userId: string; roles: string[]; isAdmin: boolean; isFinance: boolean; tenantSources: string[] | null; extraBlocked: Set<string>; disabledModules: Set<string> };
 
 function pick<T extends Record<string, unknown>>(row: T, keys: (keyof T)[]): Partial<T> {
   const o: any = {};
@@ -349,7 +352,8 @@ function pick<T extends Record<string, unknown>>(row: T, keys: (keyof T)[]): Par
 }
 
 async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
-  const limit = Math.min(Number(args?.limit) || 20, 50);
+  args = {...args,query:typeof args?.query==='string'?args.query.replace(/[%,().:]/g,' ').slice(0,200):args?.query};
+  const limit = Math.min(Math.max(Number(args?.limit) || 20,1), 50);
   const sourceFilter = (q: any) => {
     if (ctx.tenantSources && ctx.tenantSources.length > 0) return q.in("source_system", ctx.tenantSources);
     return q;
@@ -361,10 +365,10 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         const qt = String(args?.query ?? "").replace(/[%,()]/g, " ").trim();
         let ids: string[] = [];
         if (qt) {
-          const { data: cs } = await admin.from("customers").select("id").or(`company_name.ilike.%${qt}%,contact_name.ilike.%${qt}%,email.ilike.%${qt}%`).limit(50);
+          const { data: cs } = await ctx.client.from("customers").select("id").or(`company_name.ilike.%${qt}%,contact_name.ilike.%${qt}%,email.ilike.%${qt}%`).limit(50);
           ids = (cs ?? []).map((c: any) => c.id);
         }
-        let q = admin.from("orders")
+        let q = ctx.client.from("orders")
           .select("id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date, finance_open_amount, finance_payment_status, source_system, customer_id, salesperson_name")
           .order("order_date", { ascending: false }).limit(limit);
         if (qt) q = q.or([`order_number.ilike.%${qt}%`, ids.length ? `customer_id.in.(${ids.join(",")})` : ""].filter(Boolean).join(","));
@@ -374,13 +378,13 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         const { data, error } = await q;
         if (error) throw error;
         const cids = [...new Set((data ?? []).map((o: any) => o.customer_id).filter(Boolean))];
-        const { data: cs2 } = cids.length ? await admin.from("customers").select("id, company_name, contact_name").in("id", cids) : { data: [] as any[] };
+        const { data: cs2 } = cids.length ? await ctx.client.from("customers").select("id, company_name, contact_name").in("id", cids) : { data: [] as any[] };
         const nm = new Map((cs2 ?? []).map((c: any) => [c.id, c.company_name || c.contact_name]));
         return (data ?? []).map((o: any) => ({ ...o, kunde: nm.get(o.customer_id) ?? null }));
       }
       case "get_order": {
-        const num = String(args.order_number).trim().replace(/-AT$/i, "");
-        const { data: order, error } = await admin.from("orders").select("*")
+        const num = String(args.order_number).trim().replace(/-AT$/i, "").replace(/[%,().:]/g," ").slice(0,100);
+        const { data: order, error } = await ctx.client.from("orders").select("*")
           .or(`order_number.eq.${num},order_number.ilike.%${num.replace(/[%,()]/g, "")}%`).limit(1).maybeSingle();
         if (error) throw error;
         if (!order) return { error: "Auftrag nicht gefunden", order_number: num };
@@ -420,17 +424,17 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         await Promise.all(rel.map(async ([key, table, col, needFin]) => {
           if (needFin && !fin) return;
           if (ctx.extraBlocked.has(table)) return;
-          const { data } = await admin.from(table).select("*").eq(col, id).limit(30);
+          const { data } = await ctx.client.from(table).select("*").eq(col, id).limit(30);
           if (data && data.length) out[key] = data.map((r: any) => { delete r.raw_data; delete r.html_body; delete r.body_html; return r; });
         }));
         const onum = o.order_number;
         if (o.customer_id) {
-          const { data: c } = await admin.from("customers").select("company_name, contact_name, email, phone, billing_address, external_customer_id, is_vip").eq("id", o.customer_id).maybeSingle();
+          const { data: c } = await ctx.client.from("customers").select("company_name, contact_name, email, phone, billing_address, external_customer_id, is_vip").eq("id", o.customer_id).maybeSingle();
           if (c) out.kunde = c;
         }
         const [devs, invs] = await Promise.all([
-          admin.from("lager_devices").select("serial_number, model_name, device_status, customer_name, notes, entry_date, commissioning_date, updated_at").or(`reserved_order_id.eq.${id},delivered_order_id.eq.${id}`).limit(20),
-          fin ? admin.from("zoho_invoices").select("invoice_number, legal_invoice_number, invoice_date, due_date, total, balance, status").or(`reference_number.ilike.%${onum}%,invoice_number.ilike.%${onum}%`).limit(30) : Promise.resolve({ data: null }),
+          ctx.client.from("lager_devices").select("serial_number, model_name, device_status, customer_name, notes, entry_date, commissioning_date, updated_at").or(`reserved_order_id.eq.${id},delivered_order_id.eq.${id}`).limit(20),
+          fin ? ctx.client.from("zoho_invoices").select("invoice_number, legal_invoice_number, invoice_date, due_date, total, balance, status").or(`reference_number.ilike.%${onum}%,invoice_number.ilike.%${onum}%`).limit(30) : Promise.resolve({ data: null }),
         ]);
         if (devs.data?.length) out.geraete = devs.data;
         if ((invs as any).data?.length) out.rechnungen = (invs as any).data;
@@ -440,7 +444,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
       }
       case "search_customers": {
         const qt = String(args.query ?? "").replace(/[%,()]/g, " ").trim();
-        const { data, error } = await admin.from("customers")
+        const { data, error } = await ctx.client.from("customers")
           .select("id, external_customer_id, company_name, contact_name, email, phone, source_system, is_vip, billing_address")
           .or(`company_name.ilike.%${qt}%,contact_name.ilike.%${qt}%,email.ilike.%${qt}%,phone.ilike.%${qt}%,external_customer_id.ilike.%${qt}%`)
           .limit(limit);
@@ -449,11 +453,11 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
       }
       case "get_customer": {
         const qt = String(args.customer_number ?? "").replace(/-AT$/i, "").replace(/[%,()]/g, " ").trim();
-        const { data: cust } = await admin.from("customers")
+        const { data: cust } = await ctx.client.from("customers")
           .select("id, external_customer_id, company_name, contact_name, email, phone, billing_address, shipping_address, source_system, is_vip")
           .or(`external_customer_id.eq.${qt},company_name.ilike.%${qt}%,contact_name.ilike.%${qt}%`).limit(1).maybeSingle();
         if (!cust) return { error: "Kunde nicht gefunden", suche: qt };
-        const { data: orders } = await admin.from("orders")
+        const { data: orders } = await ctx.client.from("orders")
           .select("order_number, order_status, total_amount, currency, order_date, expected_shipment_date, finance_open_amount")
           .eq("customer_id", (cust as any).id).order("order_date", { ascending: false }).limit(30);
         return { customer: cust, orders: orders ?? [], hinweis: "Offene Posten über customer_statement abrufen." };
@@ -466,9 +470,9 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         const today = new Date().toISOString().slice(0, 10);
         const cols = "invoice_number, legal_invoice_number, customer_name, invoice_date, due_date, total, balance, status, source_system";
         const [inv, rec, dep] = await Promise.all([
-          sourceFilter(admin.from("zoho_invoices").select(cols).ilike("customer_name", t).gt("balance", 0.009).order("due_date", { ascending: true }).limit(200)),
-          sourceFilter(admin.from("zoho_recurring_invoices").select(cols).ilike("customer_name", t).gt("balance", 0.009).order("due_date", { ascending: true }).limit(200)),
-          admin.from("finance_deposits").select("deposit_number, order_number, customer_name, due_date, gross_amount, paid_amount, open_amount, status").ilike("customer_name", t).gt("open_amount", 0.009).neq("status", "storniert").limit(100),
+          sourceFilter(ctx.client.from("zoho_invoices").select(cols).ilike("customer_name", t).gt("balance", 0.009).order("due_date", { ascending: true }).limit(200)),
+          sourceFilter(ctx.client.from("zoho_recurring_invoices").select(cols).ilike("customer_name", t).gt("balance", 0.009).order("due_date", { ascending: true }).limit(200)),
+          ctx.client.from("finance_deposits").select("deposit_number, order_number, customer_name, due_date, gross_amount, paid_amount, open_amount, status").ilike("customer_name", t).gt("open_amount", 0.009).neq("status", "storniert").limit(100),
         ]);
         if (inv.error) throw inv.error;
         const days = (d: string | null) => d && d < today ? Math.round((Date.parse(today) - Date.parse(d)) / 86400000) : 0;
@@ -490,7 +494,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
       }
       case "search_invoices": {
         if (!ctx.isAdmin && !ctx.isFinance) return { error: "Nicht berechtigt – Finance-Rolle nötig." };
-        let q = admin
+        let q = ctx.client
           .from("zoho_invoices")
           .select("invoice_number, customer_name, status, total, balance, currency_code, invoice_date, due_date, source_system")
           .order("invoice_date", { ascending: false })
@@ -504,7 +508,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return data;
       }
       case "search_tickets": {
-        let q = admin
+        let q = ctx.client
           .from("tickets")
           .select("id, ticket_number, subject, status, priority, customer_name, customer_email, created_at")
           .order("created_at", { ascending: false })
@@ -516,7 +520,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return data;
       }
       case "search_production_orders": {
-        let q = admin
+        let q = ctx.client
           .from("production_orders")
           .select("id, order_number, customer_name, status, approval_status, total, created_at")
           .order("created_at", { ascending: false })
@@ -529,7 +533,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return data;
       }
       case "search_repair_orders": {
-        let q = admin
+        let q = ctx.client
           .from("repair_orders")
           .select("id, repair_number, customer_name, device_model, serial_number, status, created_at")
           .order("created_at", { ascending: false })
@@ -541,7 +545,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return data;
       }
       case "search_sales_leads": {
-        let q = admin
+        let q = ctx.client
           .from("sales_leads")
           .select("id, first_name, last_name, company, email, phone, lead_score, score_category, ai_priority, status, created_at")
           .order("created_at", { ascending: false })
@@ -553,7 +557,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         return data;
       }
       case "search_lager_devices": {
-        let q = admin.from("lager_devices")
+        let q = ctx.client.from("lager_devices")
           .select("id, serial_number, model_name, device_status, customer_name, notes, source_system, updated_at")
           .order("updated_at", { ascending: false }).limit(limit);
         if (args?.query) q = q.or(`serial_number.ilike.%${args.query}%,model_name.ilike.%${args.query}%,customer_name.ilike.%${args.query}%`);
@@ -566,10 +570,10 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         const today = new Date().toISOString().slice(0, 10);
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
         const [orders, tickets, overdue, leads] = await Promise.all([
-          admin.from("orders").select("id", { count: "exact", head: true }).neq("order_status", "closed"),
-          admin.from("tickets").select("id", { count: "exact", head: true }).neq("status", "closed"),
-          admin.from("zoho_unpaid_invoices").select("invoice_number", { count: "exact", head: true }).lt("due_date", today),
-          admin.from("sales_leads").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
+          ctx.client.from("orders").select("id", { count: "exact", head: true }).neq("order_status", "closed"),
+          ctx.client.from("tickets").select("id", { count: "exact", head: true }).neq("status", "closed"),
+          ctx.client.from("zoho_unpaid_invoices").select("invoice_number", { count: "exact", head: true }).lt("due_date", today),
+          ctx.client.from("sales_leads").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
         ]);
         return {
           offene_auftraege: orders.count ?? 0,
@@ -599,7 +603,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
         if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
           return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
         }
-        const { data, error } = await admin.rpc("get_table_columns", { _table: t });
+        const { data, error } = await ctx.client.rpc("get_table_columns", { _table: t });
         if (error) throw error;
         return { table: t, columns: data ?? [] };
       }
@@ -612,7 +616,8 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
           return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
         }
         const select = typeof args?.select === "string" && args.select.trim().length > 0 ? args.select : "*";
-        let q: any = admin.from(t).select(select).limit(limit);
+        if (!/^(?:\*|[a-z_][a-z0-9_]*(?:\s*,\s*[a-z_][a-z0-9_]*)*)$/i.test(select)) return {error:"Ungültige Spaltenauswahl"};
+        let q: any = ctx.client.from(t).select(select).limit(limit);
 
         // Mandantenfilter wo passend
         if (ctx.tenantSources && ["orders", "customers", "production_orders", "zoho_invoices", "zoho_unpaid_invoices", "zoho_items", "lager_devices"].includes(t)) {
@@ -668,25 +673,15 @@ Deno.serve(async (req) => {
   try {
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY fehlt" }, 500);
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const { data: userData } = await userClient.auth.getUser();
-    const user = userData?.user;
-    if (!user) return json({ error: "Nicht authentifiziert" }, 401);
-
-    const body = await req.json();
-    const { messages = [], page, tenantSources } = body ?? {};
-    if (!Array.isArray(messages) || messages.length === 0) return json({ error: "messages required" }, 400);
-
-    // Rollen laden
-    const { data: roleRows } = await admin
-      .from("user_roles")
-      .select("roles(name)")
-      .eq("user_id", user.id);
-    const roles: string[] = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+    const access = await requireCallerAccess(req,corsHeaders);
+    if ('response' in access) return access.response;
+    const user = access.user;
+    const roles:string[] = access.roles;
+    const parsed = CopilotInput.safeParse(await req.json().catch(()=>({})));
+    if (!parsed.success) return json({error:parsed.error.flatten()},400);
+    const {messages,page,tenantSources} = parsed.data;
+    const sources = copilotSources(access.tenants.flatMap(t=>typeof t.zoho_source_system==='string'?[t.zoho_source_system]:[]),tenantSources);
+    if (!sources) return json({error:'Kein Zugriff auf angeforderte Firma'},403);
 
     // Copilot-Config aus app_settings (Legacy)
     let cfg: any = {};
@@ -732,11 +727,12 @@ Deno.serve(async (req) => {
     } catch (_) { /* tables optional */ }
 
     const ctx: Ctx = {
+      client:access.caller,
       userId: user.id,
       roles,
       isAdmin: roles.some((r) => r === "Super Admin" || r === "Admin"),
       isFinance: roles.some((r) => ["Super Admin", "Admin", "Finance", "FIBU LIGHT", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"].includes(r)),
-      tenantSources: Array.isArray(tenantSources) && tenantSources.length > 0 ? tenantSources : null,
+      tenantSources: sources,
       extraBlocked,
       disabledModules,
     };
@@ -763,7 +759,7 @@ Deno.serve(async (req) => {
       if (rules.length) chatMessages.push({ role: "system", content: `# ALIX Copilot Steuerzentrale – Antwortverhalten\n- ${rules.join("\n- ")}` });
     }
     const allKb = [
-      ...knowledgeSnippets.filter((s) => (s?.content ?? "").trim().length > 0).map((s) => ({ title: s.title || "Wissens-Eintrag", content: s.content!, priority: undefined as any, source: undefined as any })),
+      ...knowledgeSnippets.filter((s) => (s?.content ?? "").trim().length > 0).map((s) => ({ title: s.title || "Wissens-Eintrag", content: s.content, priority: undefined as any, source: undefined as any })),
       ...kbFromCentral,
     ];
     if (allKb.length > 0) {

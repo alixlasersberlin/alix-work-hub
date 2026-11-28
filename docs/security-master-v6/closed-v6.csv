@@ -1,0 +1,20 @@
+internal_id,level,name,location
+lov_finding_10f8cecb0704b792,warn,Users can create finance insights for arbitrary tenants,supabase/functions/finance-ai-analyze/index.ts
+lov_finding_1c06d10916b40cbc,error,Any finance user can export another company's tax data,supabase/functions/finance-tax-export/index.ts
+lov_finding_1db44b11440eae18,error,Any signed-in user can approve invoices,supabase/functions/finance-approval-action/index.ts
+lov_finding_274746008eddd8d1_655decbe,warn,Any workspace member can set the AI's instructions,supabase/functions/alix-copilot/index.ts
+lov_finding_274746008eddd8d1_80ef5cea,warn,Anyone with access to your app can alter AI instructions,supabase/functions/alix-copilot/index.ts
+lov_finding_274746008eddd8d1_cbff9981,warn,Any signed-in user can override the Copilot’s instructions,supabase/functions/alix-copilot/index.ts
+lov_finding_274746008eddd8d1_d5f8d092,warn,Any signed-in user can set copilot instructions,alix-copilot
+lov_finding_274746008eddd8d1_fe4f6b83,warn,Copilot callers can override model instructions,supabase/functions/alix-copilot/index.ts
+lov_finding_28ad318b9fbc4915,error,Any signed-in user can approve supplier invoices,public.finance_approvals
+lov_finding_2aa56442a73cdc6e,error,Any signed-in user can create finance AI insights,supabase/functions/finance-ai-analyze/index.ts
+lov_finding_8703f96241dee35e_4db211d4,error,Any signed-in user can sync a caller-selected protected ticket,supabase/functions/sync-to-alixsmart/index.ts
+lov_finding_8703f96241dee35e_aec296a4,error,Any signed-in user can send another customer's ticket details,supabase/functions/sync-to-alixsmart/index.ts
+lov_finding_abc50d73c14567ef,error,Signed-in users can sync tickets outside their access,supabase/functions/sync-to-alixsmart/index.ts
+lov_finding_b25fdd69f8b74481,error,Any signed-in user can approve invoices,supabase/functions/finance-approval-action/index.ts
+lov_finding_e31b07153234b28b,error,Any signed-in user can analyze another person's contract,supabase/functions/sig-ai-analyze/index.ts
+lov_finding_e9bbf4a68ab93184,error,Tax export trusts a caller-selected tenant,supabase/functions/finance-tax-export/index.ts
+lov_finding_ec3de0a630ccb72f_284b8152,warn,Authenticated users can view resolved ticket details,supabase/functions/ticket-ai-assist/index.ts
+lov_finding_ec3de0a630ccb72f_3f6f0b90,error,Any signed-in user can read another user's ticket,supabase/functions/ticket-ai-assist/index.ts
+lov_finding_f3e088e322e2434c,warn,Authenticated users can retrieve other tickets,supabase/functions/ticket-ai-assist/index.ts

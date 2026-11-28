@@ -21,6 +21,8 @@ import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
+import { SmsAlternativeFields } from '@/components/SmsAlternativeFields';
+import { prepareSmsReview, smsReview, type SmsReviewState } from '@/lib/sms-review';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { AccountStatementActions } from '@/components/finance/AccountStatementActions';
 import { depositInvoiceBody, depositInvoiceSubject } from '../../../supabase/functions/_shared/deposit-invoice-email';
@@ -209,6 +211,7 @@ export default function OffeneAnzahlungen() {
   const [smsPhone, setSmsPhone] = useState('');
   const [smsText, setSmsText] = useState('');
   const [smsSending, setSmsSending] = useState(false);
+  const [smsReviewState,setSmsReviewState] = useState<SmsReviewState>({storedPhone:'',canOverride:false,reason:'',confirmed:false});
   const openSms = async (d: Deposit) => {
     const name = d.contact_name || d.customer_name || d.company_name || '';
     const nr = d.invoice_number || d.deposit_number || d.order_number || '';
@@ -219,22 +222,17 @@ export default function OffeneAnzahlungen() {
     );
     setSmsPhone('');
     setSmsFor(d);
-    let cid = d.customer_id;
-    if (!cid && d.order_id) {
-      const { data: o } = await supabase.from('orders').select('customer_id').eq('id', d.order_id).maybeSingle();
-      cid = (o as any)?.customer_id ?? null;
-    }
-    if (cid) {
-      const { data: c } = await supabase.from('customers').select('phone').eq('id', cid).maybeSingle();
-      if ((c as any)?.phone) setSmsPhone((c as any).phone);
-    }
+    try { const review = await prepareSmsReview('deposit',d.id); setSmsReviewState(review); setSmsPhone(review.storedPhone); }
+    catch (e) {setSmsFor(null);toast.error(e instanceof Error ? e.message : 'SMS-Vorgang nicht zugänglich');}
   };
   const submitSms = async () => {
     if (!smsFor) return;
+    const review = smsReview(smsPhone,[smsReviewState.storedPhone],smsReviewState.canOverride,smsReviewState.confirmed,smsReviewState.reason);
+    if ('error' in review) {toast.error(review.error);return;}
     setSmsSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
-        body: { to: smsPhone, message: smsText },
+        body: { to: smsPhone, message: smsText, record_type:'deposit',record_id:smsFor.id,alternative_phone_confirmed:smsReviewState.confirmed,alternative_phone_reason:smsReviewState.reason },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Versand fehlgeschlagen');
@@ -709,10 +707,7 @@ export default function OffeneAnzahlungen() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <Label>Mobilnummer</Label>
-              <Input value={smsPhone} onChange={(e) => setSmsPhone(e.target.value)} placeholder="+49 …" />
-            </div>
+            <SmsAlternativeFields phone={smsPhone} review={smsReviewState} recordNumber={smsFor?.invoice_number || smsFor?.deposit_number || ''} onPhone={setSmsPhone} onReview={patch=>setSmsReviewState(current=>({...current,...patch}))} />
             <div>
               <Label>Text (frei ergänzbar)</Label>
               <Textarea rows={7} value={smsText} maxLength={600} onChange={(e) => setSmsText(e.target.value)} />

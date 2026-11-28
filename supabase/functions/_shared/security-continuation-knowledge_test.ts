@@ -51,7 +51,7 @@ Deno.test('Knowledge draft uses assigned tenant messages, remains nonpublic and 
     assertEquals(u.hostname, host);
     if (u.pathname.endsWith('/ac_conversations')) return Response.json([{ id, tenant_id: id, subject: 'Synthetic' }]);
     if (u.pathname.endsWith('/ac_messages')) { assertEquals(u.searchParams.get('tenant_id'), `eq.${id}`); return Response.json([{ sender_type: 'contact', body: 'Synthetic content '.repeat(30) }]); }
-    if (u.pathname.endsWith('/ac_kb_articles')) { assertEquals(init?.method, 'POST'); inserted = JSON.parse(String(init.body)); return Response.json({ id, title: inserted.title }); }
+    if (u.pathname.endsWith('/ac_kb_articles')) { assertEquals(init?.method, 'POST'); inserted = JSON.parse(String(init?.body)); return Response.json({ id, title: inserted.title }); }
     throw new Error('Unexpected request');
   };
   try { const r = await h(request({})); assertEquals(r.status, 200); assertEquals((await r.json()).drafts.length, 1); assertEquals(inserted.public_visible, false); assertEquals(inserted.status, 'review'); assertEquals(inserted.author_id, id); assertEquals(generated, 1); } finally { globalThis.fetch = original; }

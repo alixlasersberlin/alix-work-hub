@@ -1,0 +1,158 @@
+[
+  {
+    "function": "zoho-invoices-auto-import",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "zoho-invoices-auto-import",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "ticket-ai-assist",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "ticket-ai-assist",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "sync-to-alixsmart",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "sync-to-alixsmart",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "mobile-voice-transcribe",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "mobile-voice-transcribe",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "finance-ai-analyze",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "finance-ai-analyze",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "finance-tax-export",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "finance-tax-export",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "sig-ai-analyze",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "sig-ai-analyze",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "finance-approval-action",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "finance-approval-action",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "alix-copilot",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "alix-copilot",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "op-light-send-sms",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "op-light-send-sms",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "send-customer-sms",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "send-customer-sms",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "alixsmart-match-run",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "alixsmart-match-run",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "ac-journey-run",
+    "identity": "invalid",
+    "status": 401,
+    "rejected": true
+  },
+  {
+    "function": "ac-journey-run",
+    "identity": "public",
+    "status": 401,
+    "rejected": true
+  }
+]

@@ -1,5 +1,8 @@
 // Phase 11: Approval Action (approve / reject / dual-approve)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { approvalDecision } from "./decision.ts";
+import { z } from "npm:zod@3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,27 +13,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const body = await req.json();
-    const { approval_id, action, comment } = body ?? {};
-    if (!approval_id || !["approve", "reject", "cancel"].includes(action)) {
+    const access = await requireCallerAccess(req,corsHeaders);
+    if ('response' in access) return access.response;
+    const supabase = access.caller;
+    const user = access.user;
+    const parsed = z.object({approval_id:z.string().uuid(),action:z.enum(['approve','reject','cancel']),comment:z.string().max(2000).optional()}).safeParse(await req.json().catch(()=>({})));
+    if (!parsed.success) {
       return new Response(JSON.stringify({ error: "Invalid payload" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const { approval_id, action, comment } = parsed.data;
 
     const { data: appr, error: aerr } = await supabase
       .from("finance_approvals").select("*").eq("id", approval_id).single();
@@ -47,37 +40,16 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date().toISOString();
-    let upd: any = { comment };
-
-    if (action === "cancel") {
-      upd.status = "cancelled";
-    } else if (action === "reject") {
-      upd.status = "rejected";
-      upd.rejection_reason = comment ?? "Ohne Angabe";
-      upd.approved_by = user.id;
-      upd.approved_at = now;
-    } else {
-      // approve
-      if (appr.requires_dual_approval && appr.approved_by && appr.approved_by !== user.id) {
-        upd.second_approver_id = user.id;
-        upd.second_approved_at = now;
-        upd.status = "approved";
-      } else if (appr.requires_dual_approval && !appr.approved_by) {
-        upd.approved_by = user.id;
-        upd.approved_at = now;
-        upd.status = "pending";
-      } else if (appr.requires_dual_approval && appr.approved_by === user.id) {
-        return new Response(JSON.stringify({ error: "Zweiter Genehmiger erforderlich" }), {
-          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      } else {
-        upd.approved_by = user.id;
-        upd.approved_at = now;
-        upd.status = "approved";
-      }
-    }
-
-    await supabase.from("finance_approvals").update(upd).eq("id", approval_id);
+    let upd: Record<string,unknown>;
+    try {upd=approvalDecision(appr,user.id,action,comment,now);} catch(e) {return new Response(JSON.stringify({error:e instanceof Error?e.message:'Freigabe nicht zulässig'}),{status:409,headers:{...corsHeaders,'Content-Type':'application/json'}});}
+    const {data:target,error:targetError} = appr.entity_type === 'incoming_invoice'
+      ? await supabase.from('finance_incoming_invoices').select('id,tenant_id').eq('id',appr.entity_id).maybeSingle()
+      : {data:null,error:null};
+    if (appr.entity_type === 'incoming_invoice' && (targetError || !target || target.tenant_id !== appr.tenant_id)) return new Response(JSON.stringify({error:'Zielrechnung nicht zugänglich oder falsche Firma'}),{status:403,headers:{...corsHeaders,'Content-Type':'application/json'}});
+    let update = supabase.from("finance_approvals").update(upd).eq("id",approval_id).eq('status','pending');
+    update = appr.approved_by ? update.eq('approved_by',appr.approved_by) : update.is('approved_by',null);
+    const {data:changed,error:changeError} = await update.select('id').maybeSingle();
+    if (changeError || !changed) return new Response(JSON.stringify({error:'Freigabe abgewiesen oder inzwischen verändert'}),{status:409,headers:{...corsHeaders,'Content-Type':'application/json'}});
 
     // Wirkung auf Zielentität
     if (upd.status === "approved" && appr.entity_type === "incoming_invoice") {

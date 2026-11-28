@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/table';
 import { ExternalLink, MessageSquare, Loader2, Send, RotateCw, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import { smsPhone, smsReview } from '../../supabase/functions/_shared/sms-policy';
 
 type Customer = {
   id: string;
@@ -88,6 +90,9 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
   const [recipient, setRecipient] = useState('');
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [alternativeReason, setAlternativeReason] = useState('');
+  const [alternativeConfirmed, setAlternativeConfirmed] = useState(false);
+  const alternative = smsPhone(phone) !== smsPhone(customer.phone ?? '');
 
   const customerName = customer.company_name || customer.contact_name || 'Kunde';
 
@@ -129,6 +134,8 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
   }, [customer?.id, allowed, orderId]);
 
   function openDialog(doc: DocRow) {
+    setAlternativeReason('');
+    setAlternativeConfirmed(false);
     setDialogDoc(doc);
     setPhone(customer.phone ?? '');
     setRecipient(customer.contact_name || customer.company_name || '');
@@ -170,6 +177,8 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
           phone: payload.phone,
           message_text: payload.message_text,
           base_url: 'https://alixwork.de',
+          alternative_phone_confirmed: alternativeConfirmed,
+          alternative_phone_reason: alternativeReason,
         },
       });
       if (error || (data as any)?.error) {
@@ -191,6 +200,8 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
 
   async function handleSendFromDialog() {
     if (!dialogDoc) return;
+    const review = smsReview(phone,[customer.phone],true,alternativeConfirmed,alternativeReason);
+    if ('error' in review) { toast.error(review.error); return; }
     const ok = await sendSms({
       document_id: dialogDoc.id,
       document_type: dialogDoc.document_type,
@@ -210,15 +221,8 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
       toast.error('Originaldokument nicht mehr verfügbar.');
       return;
     }
-    await sendSms({
-      document_id: doc.id,
-      document_type: doc.document_type,
-      document_number: doc.order_number,
-      order_id: doc.order_id,
-      phone: log.phone,
-      recipient_name: customerName,
-      message_text: log.message_text,
-    });
+    openDialog(doc);
+    setText(log.message_text);
   }
 
   if (!allowed) {
@@ -334,8 +338,13 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
             </div>
             <div>
               <Label>Mobilnummer</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+49 …" />
+              <Input value={phone} maxLength={40} onChange={(e) => { setPhone(e.target.value); setAlternativeConfirmed(false); }} placeholder="+49 …" />
             </div>
+            {alternative && <div className="space-y-2">
+              <Label htmlFor="sms-alternative-reason">Grund für abweichende Nummer</Label>
+              <Textarea id="sms-alternative-reason" value={alternativeReason} maxLength={500} onChange={e => { setAlternativeReason(e.target.value); setAlternativeConfirmed(false); }} />
+              <label className="flex items-center gap-2 text-sm"><Checkbox checked={alternativeConfirmed} onCheckedChange={value => setAlternativeConfirmed(value === true)} />Versand an {phone} für {dialogDoc?.order_number} ausdrücklich bestätigen</label>
+            </div>}
             <div>
               <Label>SMS-Text</Label>
               <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} />

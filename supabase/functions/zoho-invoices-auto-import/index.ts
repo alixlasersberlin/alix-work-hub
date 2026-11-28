@@ -1,6 +1,9 @@
 import "../_shared/global-bcc.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { machineAuthorized, requireJobAccess } from "../_shared/job-auth.ts";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { escapeHtml } from "../_shared/security-core.ts";
+import { ImportInput, sourcesAllowed } from "./input.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -138,7 +141,7 @@ type ChangeEntry = {
 
 function fmtVal(v: unknown): string {
   if (v == null || v === "") return "–";
-  return String(v);
+  return escapeHtml(v);
 }
 
 function buildEmailHtml(opts: {
@@ -230,9 +233,10 @@ async function sendMail(subject: string, html: string, to: string, cc: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!supabaseUrl || !serviceKey) return json({ error: "Konfiguration fehlt" }, 503);
   const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
   let runId: string | null = null;
@@ -242,16 +246,20 @@ Deno.serve(async (req) => {
     if (denied) return denied;
     const isService = machineAuthorized(req, Deno.env.get("CRON_SECRET") ?? "", serviceKey);
     let userId: string | null = null;
+    let allowedSources: (string | null)[] = [];
     if (!isService) {
-      const { data: { user } } = await createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
-        auth: { autoRefreshToken: false, persistSession: false },
-      }).auth.getUser();
-      userId = user?.id ?? null;
+      const access = await requireCallerAccess(req, corsHeaders, ["Admin", "Super Admin"]);
+      if ('response' in access) return access.response;
+      userId = access.user.id;
+      allowedSources = access.tenants.map(t => t.zoho_source_system);
     }
 
-    const body = (await req.json().catch(() => ({}))) as Payload;
-    const triggerType = body.trigger_type ?? (isService ? "cron" : "manual");
+    const parsed = ImportInput.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({ error: parsed.error.flatten() }, 400);
+    const body = parsed.data;
+    const requestedSources = body.sources ?? ["zoho_eu_1", "zoho_eu_2"];
+    if (!isService && !sourcesAllowed(requestedSources, allowedSources)) return json({ error: "Kein Zugriff auf angeforderte Firma" }, 403);
+    const triggerType = isService ? "cron" : "manual";
     // Report recipients are fixed server-side; callers cannot redirect financial reports.
     const to = MAIL_TO;
     const cc = MAIL_CC;
@@ -293,7 +301,8 @@ Deno.serve(async (req) => {
     const SOFT_DEADLINE_MS = 140_000;
 
     for (const sourceSystem of sources) {
-      const cfg = getZohoConfig(sourceSystem)!;
+      const cfg = getZohoConfig(sourceSystem);
+      if (!cfg) continue;
       if (!cfg.refreshToken || !cfg.organizationId) continue;
       const token = await getAccessToken(cfg);
       const authH = { Authorization: `Zoho-oauthtoken ${token}` };
@@ -307,7 +316,7 @@ Deno.serve(async (req) => {
           (body.date_to ? `&date_end=${body.date_to}` : "") +
           `&filter_by=Status.All&sort_column=date&sort_order=${desc ? "D" : "A"}`;
         const r = await fetch(url, { headers: authH });
-        if (!r.ok) { failed++; console.error("zoho http", r.status, (await r.text()).slice(0, 500)); break; }
+        if (!r.ok) { failed++; console.error("zoho http", r.status); break; }
         const d = await r.json();
         const invoices: any[] = d.invoices ?? [];
         if (page === 1) console.log("zoho page1", sourceSystem, "code=", d.code, "msg=", d.message, "count=", invoices.length);

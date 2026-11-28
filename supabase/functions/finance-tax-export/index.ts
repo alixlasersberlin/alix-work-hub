@@ -5,6 +5,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { selectedTenantIds, allActiveTenantsAssigned } from "../_shared/business-input.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -61,31 +63,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: { user } } = await userClient.auth.getUser();
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const { data: roleRows } = await admin
-    .from("user_roles").select("roles(name)").eq("user_id", user.id);
-  const roles = (roleRows ?? []).map((r: any) => r?.roles?.name).filter(Boolean);
-  const allowed = roles.some((r: string) =>
-    ["Super Admin", "Admin", "Geschäftsführung", "Finance"].includes(r));
-  if (!allowed) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  const access = await requireCallerAccess(req, corsHeaders, ['Super Admin','Admin','Geschäftsführung','Finance']);
+  if ('response' in access) return access.response;
+  const user = access.user;
 
   const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
@@ -94,6 +74,11 @@ Deno.serve(async (req) => {
     });
   }
   const { filing_type, period_value, tenant_id, notes, accounting_region } = parsed.data;
+  const tenantIds = selectedTenantIds(access.tenants.map(t => t.id), tenant_id);
+  const {data:activeTenants,error:tenantError}=await admin.from('tenants').select('id').eq('is_active',true);
+  const globalAggregate=!tenantError && !tenant_id && allActiveTenantsAssigned(access.tenants.map(t=>t.id),(activeTenants??[]).map(t=>t.id));
+  if (!tenantIds || (!tenant_id && tenantIds.length !== 1 && !globalAggregate)) return new Response(JSON.stringify({ error: 'Bitte eine zugängliche Firma auswählen' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const filingTenant = globalAggregate ? null : tenant_id ?? tenantIds[0];
   let range; try { range = periodToRange(period_value); } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -106,7 +91,7 @@ Deno.serve(async (req) => {
       .select("amount, currency, transaction_type, booking_date, tenant_id, counterparty_tenant_id, reference")
       .gte("booking_date", range.from).lte("booking_date", range.to)
       .eq("accounting_region", accounting_region).limit(50000);
-    if (tenant_id) txq = txq.eq("tenant_id", tenant_id);
+    txq = txq.in("tenant_id", tenantIds);
     const { data: txs, error: txErr } = await txq;
     if (txErr) throw txErr;
 
@@ -248,10 +233,10 @@ Deno.serve(async (req) => {
     // Upsert filing (replace existing for same tenant+type+period)
     await admin.from("finance_tax_filings").delete()
       .eq("filing_type", filing_type).eq("period_value", period_value)
-      .filter("tenant_id", tenant_id ? "eq" : "is", tenant_id ?? null);
+      .filter("tenant_id", filingTenant ? 'eq' : 'is', filingTenant ?? null);
 
     const { data: fil, error: filErr } = await admin.from("finance_tax_filings").insert({
-      tenant_id: tenant_id ?? null,
+      tenant_id: filingTenant,
       filing_type,
       period_year: range.year,
       period_value,

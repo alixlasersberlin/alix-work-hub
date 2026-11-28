@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
     let ok = 0, fail = 0, skipped = 0;
     const errors: string[] = [];
     for (const pn of pns || []) {
-      const item = items!.find((i) => i.id === pn.item_id)!;
+      const item = items?.find((i) => i.id === pn.item_id);
+      if (!item) {fail++;continue;}
       const [{ data: plan }, { data: cust }, { data: inv }] = await Promise.all([
         sb.from('rp_payment_plans').select('notify_channel,email,phone,sms_enabled').eq('id', item.plan_id).single(),
         sb.from('customers').select('company_name,contact_name,email,phone').eq('id', pn.customer_id).single(),
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
           const fn = ch === 'email' ? 'send-transactional-email' : 'op-light-send-sms';
           const payload = ch === 'email'
             ? { templateName: 'customer-shipping-notice', recipientEmail: to, idempotencyKey: `rp-pn-${pn.id}${isResend ? '-r' + Date.now() : ''}`, templateData: { subject: fill(subjT, vars), body: fill(bodyT, vars) } }
-            : { to, message: fill(smsT, vars) };
+            : { to, message: fill(smsT, vars),record_type:'prenotification',record_id:pn.id };
           const r = await fetch(`${url}/functions/v1/${fn}`, { method: 'POST', headers: { Authorization: auth, apikey: Deno.env.get('SUPABASE_ANON_KEY')!, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
           const t = await r.text(); let d: any = {}; try { d = JSON.parse(t); } catch { /* */ }
           if (!r.ok || d?.error || d?.success === false) { status = 'fehlgeschlagen'; err = String(d?.error || d?.reason || t).slice(0, 400); }

@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,27 +11,23 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: userData } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-    const userId = userData?.user?.id;
-    if (!userId) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: corsHeaders });
-
-    const { document_id, text_content } = await req.json();
+    const access = await requireCallerAccess(req, corsHeaders);
+    if ('response' in access) return access.response;
+    const supabase = access.caller;
+    const userId = access.user.id;
+    const parsedInput = z.object({document_id:z.string().uuid().optional(),text_content:z.string().max(15000).optional()}).safeParse(await req.json().catch(() => ({})));
+    if (!parsedInput.success) return new Response(JSON.stringify({error:'Ungültige Anfrage'}), {status:400,headers:{...corsHeaders,'Content-Type':'application/json'}});
+    const { document_id, text_content } = parsedInput.data;
     // Preview-Mode: document_id optional, wenn Text übergeben wird (Wizard vor Erstellung)
     if (!document_id && !text_content) {
       return new Response(JSON.stringify({ error: 'document_id or text_content required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     let content = text_content ?? '';
-    if (!content && document_id) {
-      const { data: doc } = await supabase.from('sig_documents').select('title, description').eq('id', document_id).single();
-      content = `${doc?.title ?? ''}\n${doc?.description ?? ''}`;
+    if (document_id) {
+      const { data: doc, error } = await supabase.from('sig_documents').select('title, description').eq('id', document_id).maybeSingle();
+      if (error || !doc) return new Response(JSON.stringify({error:'Dokument nicht zugänglich'}), {status:404,headers:{...corsHeaders,'Content-Type':'application/json'}});
+      if (!content) content = `${doc.title ?? ''}\n${doc.description ?? ''}`;
     }
     if (content.length > 15000) content = content.slice(0, 15000);
 

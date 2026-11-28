@@ -1,5 +1,7 @@
 // Phase 10 – KI-Kommentar zu Cockpit/BWA/Soll-Ist/Forecast
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { FinanceAiInput, selectedTenantIds, allActiveTenantsAssigned } from "../_shared/business-input.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,20 +22,19 @@ Maximal 250 Wörter. Keine Spekulation ohne Datenbasis.`;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const supa = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    const body = await req.json();
-    const scope = String(body.scope || "cockpit");
-    const tenant_id = body.tenant_id ?? null;
-    const period_start = body.period_start ?? null;
-    const period_end = body.period_end ?? null;
-    const kpis = body.kpis ?? {};
+    const access = await requireCallerAccess(req, corsHeaders, ['Super Admin','Admin','Finance','Geschäftsführung']);
+    if ('response' in access) return access.response;
+    const supa = access.caller;
+    const user = access.user;
+    const parsed = FinanceAiInput.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.flatten() }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { scope, tenant_id = null, period_start = null, period_end = null, kpis } = parsed.data;
+    const tenantIds = selectedTenantIds(access.tenants.map(t => t.id), tenant_id);
+    // Unscoped records are permitted only for callers assigned every active company.
+    const {data:activeTenants,error:tenantError}=await createClient(SUPABASE_URL,SERVICE_ROLE).from('tenants').select('id').eq('is_active',true);
+    const globalAggregate=!tenantError && tenant_id===null && allActiveTenantsAssigned(access.tenants.map(t=>t.id),(activeTenants??[]).map(t=>t.id));
+    if (!tenantIds || (tenant_id === null && tenantIds.length !== 1 && !globalAggregate)) return new Response(JSON.stringify({ error: 'Bitte eine zugängliche Firma auswählen' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const insightTenant = globalAggregate ? null : tenant_id ?? tenantIds[0];
 
     const userMsg = `Bereich: ${scope}\nZeitraum: ${period_start ?? "?"} – ${period_end ?? "?"}\nKennzahlen (JSON):\n${JSON.stringify(kpis, null, 2)}`;
 
@@ -56,10 +57,11 @@ Deno.serve(async (req) => {
     const j = await aiRes.json();
     const response = j.choices?.[0]?.message?.content ?? "";
 
-    const { data: ins } = await supa.from("finance_ai_insights").insert({
-      tenant_id, scope, period_start, period_end,
+    const { data: ins, error: insertError } = await supa.from("finance_ai_insights").insert({
+      tenant_id: insightTenant, scope, period_start, period_end,
       prompt: userMsg, response, model: MODEL, created_by: user.id,
     }).select().single();
+    if (insertError || !ins) return new Response(JSON.stringify({ error: 'Finanzanalyse konnte nicht gespeichert werden' }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     return new Response(JSON.stringify({ ok: true, insight: ins, response }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {

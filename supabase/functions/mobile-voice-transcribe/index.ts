@@ -3,7 +3,8 @@
 // leitet sie an die Lovable AI Gateway STT weiter (openai/gpt-transcribe)
 // und schreibt das Transkript optional als ticket_message oder route-plan-Notiz.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { isUuid } from '../_shared/security-core.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -16,14 +17,10 @@ Deno.serve(async (req) => {
   try {
     const LOVABLE = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE) return json({ error: 'LOVABLE_API_KEY missing' }, 500);
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const supa = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: { user } } = await supa.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (!user) return json({ error: 'unauthorized' }, 401);
+    const access = await requireCallerAccess(req, cors);
+    if ('response' in access) return access.response;
+    const supa = access.caller;
+    const user = access.user;
 
     const form = await req.formData();
     const file = form.get('file');
@@ -32,6 +29,16 @@ Deno.serve(async (req) => {
     if (!(file instanceof File)) return json({ error: 'file missing' }, 400);
     if (file.size < 1024) return json({ error: 'audio too short' }, 400);
     if (file.size > 24 * 1024 * 1024) return json({ error: 'audio too large' }, 400);
+    if (ticket_id) {
+      if (!isUuid(ticket_id)) return json({ error: 'Ungültiges Ticket' }, 400);
+      const { data: ticket, error } = await supa.from('tickets').select('id').eq('id', ticket_id).maybeSingle();
+      if (error || !ticket) return json({ error: 'Ticket nicht zugänglich' }, 404);
+    }
+    if (route_plan_id) {
+      if (!isUuid(route_plan_id)) return json({ error: 'Ungültige Tour' }, 400);
+      const { data: route, error } = await supa.from('route_plans').select('id').eq('id', route_plan_id).maybeSingle();
+      if (error || !route) return json({ error: 'Tour nicht zugänglich' }, 404);
+    }
 
     const upstream = new FormData();
     upstream.append('model', 'openai/gpt-transcribe');
@@ -47,9 +54,11 @@ Deno.serve(async (req) => {
     const { text } = await r.json() as { text: string };
 
     if (ticket_id && text) {
-      await supa.from('ticket_messages').insert({
-        ticket_id, author_id: user.id, body: `🎙️ Sprachnotiz (Techniker):\n\n${text}`, is_internal: true,
-      } as any);
+      const { error } = await supa.from('ticket_messages').insert({
+        ticket_id, sender_type: 'agent', sender_name: 'Mitarbeiter',
+        message: `🎙️ Sprachnotiz (Techniker):\n\n${text}`, is_internal: true,
+      });
+      if (error) return json({ error: 'Sprachnotiz konnte nicht gespeichert werden', text }, 409);
     }
     return json({ text, ticket_id, route_plan_id });
   } catch (e: any) {

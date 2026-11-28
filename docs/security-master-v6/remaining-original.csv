@@ -1,0 +1,172 @@
+internal_id,level,name,location
+lov_finding_0337ac7d70faa2b2,warn,Any signed-in user can send delivery notices to any phone,delivery-notify
+lov_finding_03c63da47731a381,warn,Autofiled uploads have no type or size limit,supabase/functions/alixdocs-autofile/index.ts
+lov_finding_040f79f8da123789,error,Any signed-in user can overwrite imported products,supabase/functions/import-alix-lasers-de/index.ts
+lov_finding_051a4bc234829b51,warn,Any signed-in user can read another user's documents,supabase/functions/alixdocs-copilot/index.ts
+lov_finding_0dab80f3d6a7ee45,warn,Any workspace member can make a printout run actions,CollectDossier print document
+lov_finding_0f377c8d465e69e6,warn,Any signed-in user can search other customers' documents,supabase/functions/alixdocs-embed/index.ts
+lov_finding_16d3e37b9c8ba4ad,error,Any signed-in user can view another website's funnel analytics,"public.ac_web_funnel_stats(uuid,timestamptz,timestamptz)"
+lov_finding_1794cebaf2967832,error,Production staff can grant their own QM approvals,public.plm_changes
+lov_finding_193e452aa8130a17,error,Anyone can send an announcement to every employee,announce-capa-cockpit fixed trigger token
+lov_finding_1b423c4366778754,warn,Any signed-in user can inspect another website’s audience,"public.ac_web_segment_stats(uuid,jsonb,timestamptz,timestamptz)"
+lov_finding_1b423c4366778754_78e6bd31,error,Any signed-in user can view another site's live visitor map,public.ac_web_live_map(uuid)
+lov_finding_1b423c4366778754_fe81bc8c,warn,Any signed-in user can view another site's experiment stats,"public.ac_web_experiment_stats(uuid,timestamptz,timestamptz)"
+lov_finding_1cf985cadb57e6af,warn,Anyone can place markup in rental inquiry emails,rental-request-submit staff inquiry emails
+lov_finding_1d0e79da2110a9d7,warn,Any signed-in user can view other customers' website analytics,"public.ac_web_segment_stats(uuid,jsonb,timestamptz,timestamptz)"
+lov_finding_1deb9bcf8e2fe9db,error,Anyone can change another user's ticket,supabase/functions/ticket-create-appointment/index.ts
+lov_finding_214081f60b07281d,error,Any signed-in user can add an internal note to any ticket,supabase/functions/mobile-voice-transcribe/index.ts
+lov_finding_21a637de07028856,error,Public token permits unauthenticated employee-data access,supabase/functions/announce-capa-cockpit/index.ts
+lov_finding_2332a1f29f9db74a,warn,Any signed-in user can read pending approval tasks,supabase/functions/alixdocs-stats/index.ts
+lov_finding_26ec1c8b0892a48e_3d2e13d0,error,Any sales or service user can contact any customer,supabase/functions/alixsmart-send-reminder/index.ts
+lov_finding_26ec1c8b0892a48e_4ae2f503,warn,Staff can send arbitrary reminder SMS text,supabase/functions/alixsmart-send-reminder/index.ts
+lov_finding_26ec1c8b0892a48e_8c170482,warn,Staff can send custom customer emails,alixsmart-send-reminder
+lov_finding_26ec1c8b0892a48e_a593460a,warn,Reminder role can retrieve any customer's contact details,supabase/functions/alixsmart-send-reminder/index.ts
+lov_finding_274746008eddd8d1_2cf3a0b0,warn,Any workspace member can widen device searches,alix-copilot: lager_devices search
+lov_finding_274746008eddd8d1_4c48cf10,warn,Finance staff can widen invoice searches,alix-copilot: zoho_invoices search
+lov_finding_274746008eddd8d1_52f768d4,warn,Any workspace member can widen production searches,alix-copilot: production_orders search
+lov_finding_2a0a6ab683598d2c,error,Any signed-in user can change another user's conversation,supabase/functions/twilio-send-whatsapp-message/index.ts
+lov_finding_2ad517073e19d7a3,error,Finance users can send and mark any customer's reminder,supabase/functions/finance-reminder-send/index.ts
+lov_finding_2bc3d9f7d79e8045,error,Ordinary users can send survey invitations,supabase/functions/survey-send-invites/index.ts
+lov_finding_2c6eeae643a145a5,error,Any signed-in user can release another contract's invoices,supabase/functions/pruefung-release/index.ts
+lov_finding_2c7eff56f6c247f6,warn,Workspace members can set AI chat instructions,ai-center-chat
+lov_finding_2cda12758b491ae3,error,Signed-in callers can send WhatsApp to arbitrary recipients,supabase/functions/twilio-send-whatsapp-message/index.ts
+lov_finding_2d96488747bd90ab,error,Unassigned approval states can be decided by any signed-in user,supabase/functions/alixdocs-approval-decide/index.ts
+lov_finding_312fcf7bf6edca18_3be70c29,error,Anyone can send emails from your business,send-invoice-mail
+lov_finding_321b0bea0163279e,error,Any finance user can create records across tenants,supabase/functions/collect-document-generate/index.ts
+lov_finding_354aea63d3df7954,warn,Any signed-in user can view all visitor chat statistics,public.ac_portal_deflection(int4)
+lov_finding_354aea63d3df7954_c76d1c81,warn,Any signed-in user can see chat-service metrics,public.ac_portal_deflection(int4)
+lov_finding_35f07aac3006ae6a,warn,Users can access restricted knowledge-base entries via copilot,supabase/functions/ac-copilot/index.ts
+lov_finding_36b05dc3eae268c4,warn,Any signed-in user can broaden the knowledge search,ac-copilot
+lov_finding_37aebb1aa2b73448,warn,Any signed-in user can message any WhatsApp contact,supabase/functions/twilio-send-whatsapp-message/index.ts
+lov_finding_3869d263c93d44fa_6e92169a,warn,The caller controls the AI system prompt,supabase/functions/ac-voice-agent-studio/index.ts
+lov_finding_3869d263c93d44fa_cf88288a,warn,Any signed-in user can replace voice test instructions,ac-voice-agent-studio
+lov_finding_3945c4fc0435bfbd,warn,Any signed-in user can share another user's documents,supabase/functions/alixdocs-share-create/index.ts
+lov_finding_3c5d483058625bb9,warn,Authorized staff can email arbitrary recipients,supabase/functions/send-transactional-email/index.ts
+lov_finding_3cea0000acc26bb1,error,Any support staff member can email any customer,supabase/functions/alixsmart-send-reminder/index.ts
+lov_finding_3dec4d354164ba27,warn,Any signed-in user can see company-wide dashboard totals,public.ac_dashboard_kpis()
+lov_finding_3e6f3a3c10a40230,error,Any signed-in user can release held invoices,supabase/functions/pruefung-release/index.ts
+lov_finding_3e98351e84204cdc,error,Signed-in users can send arbitrary branded appointment emails,supabase/functions/esc-appointment-confirmation-mail/index.ts
+lov_finding_3f531b21758d8b2f,error,Authorized mail senders can email anyone,send-mail
+lov_finding_407a2fad5d5da185,warn,Anyone can create document links,supabase/functions/alixdocs-link-suggest/index.ts
+lov_finding_43ed7481be92428b,warn,Internal staff can view visitor sessions for any website,"public.ac_web_sessions(uuid,timestamptz,timestamptz,int4)"
+lov_finding_44bb365e2d552fde,warn,Anyone can create document links,supabase/functions/alixdocs-link-suggest/index.ts
+lov_finding_44ddf2563f3b0bce,error,CMR document send lacks tenant ownership binding,supabase/functions/cmr-send-document/index.ts
+lov_finding_475b013930df976e,warn,Portal upload URLs do not limit file type or size,supabase/functions/mediapaket-portal/index.ts
+lov_finding_4809e17ddecfd250,warn,Anyone can place spreadsheet commands in customer replies,Media-package audit spreadsheet export
+lov_finding_4bd5ac08511c8e04,warn,Caller controls reminder SMS content,supabase/functions/as-send-sms-reminder/index.ts
+lov_finding_4c0bbf2efd550541,warn,Webhook test posts to any HTTPS destination,supabase/functions/ac-marketplace/index.ts
+lov_finding_51533bb728cbdfe3,warn,Any signed-in user can view every site's journey analytics,public.ac_journey_funnel(int4)
+lov_finding_51533bb728cbdfe3_c76d1c81,warn,Any signed-in user can see visitor trends,public.ac_journey_funnel(int4)
+lov_finding_5219762f92dc1e2c,warn,Any signed-in user can store unchecked files,alixdocs-autofile
+lov_finding_5374119f29248b31,warn,Anyone can trigger metered AI completion requests,supabase/functions/sales-wizard-submit/index.ts
+lov_finding_5422295243c00d10,warn,A partner can read another partner's signing request,supabase/functions/sig-partner-api/index.ts
+lov_finding_552dbb84f3b24cb8,error,Any signed-in user can view another website's visitor map,public.ac_web_live_map(uuid)
+lov_finding_56d0c79c1318c3ea,warn,Admin can make the canary fetch arbitrary URLs,supabase/functions/product-hub-com-canary/index.ts
+lov_finding_5815675e82477a6d,error,Delivery token can be sent to a caller-chosen recipient,supabase/functions/delivery-appointment-send/index.ts
+lov_finding_59d025243a7e5687_3be70c29,error,Any signed-in user can send survey invitations,supabase/functions/survey-send-invites/index.ts
+lov_finding_5a4b77537eec8b00,error,ZIP download trusts caller-writable version storage paths,supabase/functions/alixdocs-zip/index.ts
+lov_finding_5c7be8cb8b467dc0,error,Finance users can email collection documents to any address,supabase/functions/collect-document-generate/index.ts
+lov_finding_5ca4124025dad7ab,warn,Finance reports expose transactions beyond caller scope,supabase/functions/finance-report-run/index.ts
+lov_finding_5f0099b70185d10a,error,Customer details are served without caller authentication,supabase/functions/customer-portal-lookup/index.ts
+lov_finding_5f54f5d4f2f742e9,error,Anyone can change records linked to signature documents,supabase/functions/sig-entity-sync/index.ts
+lov_finding_606500d992426d16,warn,Staff can retrieve arbitrary document tokens,supabase/functions/send-customer-sms/index.ts
+lov_finding_61db72fc9101d76e,warn,Any signed-in user can inject markup into offer emails,supabase/functions/portal-offer-action/index.ts
+lov_finding_6708a45359831172,error,Finance users can email arbitrary addresses,collect-send-dunning
+lov_finding_6ca6d30004fdbfc3,warn,Anyone can place spreadsheet commands in survey responses,Feedback CSV export
+lov_finding_6cdb90a4e4b3d4f9,error,Any super admin can email reports to anyone,aic-send-report
+lov_finding_70c84e6ba8f516cf,warn,A member can point a document to another user's file,supabase/functions/alixdocs-signed-url/index.ts
+lov_finding_72a458552fb60db4,warn,Ticket readers can send arbitrary email to other users,supabase/functions/ticket-user-notify/index.ts
+lov_finding_73a591d5686cae09,warn,Any signed-in user can view every tenant's attribution totals,"public.ac_journey_attribution_ext(timestamptz,timestamptz,text)"
+lov_finding_74e13969233e5319,error,Any signed-in user can send payment reminders to customers,supabase/functions/recurring-prenotification/index.ts
+lov_finding_74e43b7ec94e2367_a4e4a3ec,warn,Unassigned users can export any customer's documents,supabase/functions/alixdocs-customer-export/index.ts
+lov_finding_75a833f07ddd47bb,error,Any signed-in user can add an internal note to any ticket,supabase/functions/mobile-voice-transcribe/index.ts
+lov_finding_767438b1724519c5,warn,Anyone can put formulas in survey exports,Feedback statistics CSV export
+lov_finding_773ec74739954988,error,Any signed-in user can copy another user's mail attachment,supabase/functions/alixdocs-mail-import/index.ts
+lov_finding_77810b1b4b728af7,error,Any signed-in user can view another site's goal results,"public.ac_web_goals_summary(uuid,timestamptz,timestamptz)"
+lov_finding_7a1b3fff5a92e03c,warn,Internal staff can view live schedule adherence for all agents,public.ac_wfm_adherence_live()
+lov_finding_7cf31af852f86c9b,warn,Any workspace member can alter order searches,alix-copilot
+lov_finding_7f3cf914eb1ff11a,warn,Any signed-in user can inject markup into support emails,supabase/functions/portal-maintenance-request/index.ts
+lov_finding_813f30cdfce0d3a0,warn,Any signed-in user can change reply instructions,ac-draft-reply
+lov_finding_82fa0f2066ce7b4b,warn,System push exposes another conversation preview,supabase/functions/send-mobile-notification/index.ts
+lov_finding_840f31fb29294dc7,error,Admins can send arbitrary test SMS messages to any number,supabase/functions/sms-config-test/index.ts
+lov_finding_860f4ef640ddf1ef,warn,Anyone with access to your app can alter AI instructions,supabase/functions/alix-copilot/index.ts
+lov_finding_86a979bd8688c2a0,error,CMR users can send arbitrary invoice emails to any address,supabase/functions/cmr-send-document/index.ts
+lov_finding_86c2e27b97555ad5,warn,Any signed-in user can view all visitor chat statistics,"public.ac_portal_deflection_breakdown(timestamptz,timestamptz)"
+lov_finding_86c2e27b97555ad5_c76d1c81,warn,Any signed-in user can see chat-service metrics,"public.ac_portal_deflection_breakdown(timestamptz,timestamptz)"
+lov_finding_86d3d8b71cfd055f,error,Any finance user can create another tenant’s payment link,supabase/functions/collect-payment-link/index.ts
+lov_finding_87a129784e09ef5c,error,Unassigned users can download invoices across Zoho tenants,supabase/functions/zoho-invoice-pdf/index.ts
+lov_finding_88c82a38d6bfce36,warn,Any workspace member can alter the copilot's searches,alix-copilot dynamic searches
+lov_finding_8bdc85f5f83cc25e,warn,Any signed-in user can reach factory invoicing by email,
+lov_finding_8deae0c69b850acd,warn,Any signed-in user can make your app contact any website,copilot-fetch-url
+lov_finding_93b12ef31e7a012a,warn,Any finance user can falsely settle collections,supabase/functions/finance-ch-reconcile/index.ts: reconciliation-key OR filter
+lov_finding_94d5de7f4e719207,warn,Signed-in users can send order emails to arbitrary recipients,supabase/functions/delivery-notify/index.ts
+lov_finding_950f643578026644,warn,Any signed-in user can view every tenant's visitor cohorts,public.ac_journey_cohorts(int4)
+lov_finding_96a4ae412ce2a520,warn,Any signed-in user can start another user's approval,supabase/functions/alixdocs-approval-start/index.ts
+lov_finding_98051a4a477129d7,error,Any signed-in user can request signatures on others' documents,supabase/functions/alixdocs-sign-request/index.ts
+lov_finding_982d4e7da963d70c,warn,Any signed-in user can read another tenant's messages,supabase/functions/ac-draft-reply/index.ts
+lov_finding_9a1236c1ec5aad94,warn,Request controls the AI system instruction,supabase/functions/ticket-ai-assist/index.ts
+lov_finding_9be076cefe3fc4a5,error,Regional finance users can send payment demands across regions,supabase/functions/collect-send-dunning/index.ts
+lov_finding_9dba44d0fdbab251,warn,Finance users can text arbitrary phone numbers,op-light-send-sms
+lov_finding_a11f999fb688bec4,warn,Uploaded document can be attached to any customer or order,supabase/functions/alixdocs-autofile/index.ts
+lov_finding_a45b5b5828593c3e,warn,Regional finance users can send payment links for any customer,supabase/functions/collect-payment-link/index.ts
+lov_finding_a7401cb3c80f2da9,error,Any signed-in user can add internal notes to tickets,supabase/functions/mobile-voice-transcribe/index.ts
+lov_finding_a86d415b1fbe8c55,warn,Any signed-in user can inject roles into copilot messages,collect-copilot
+lov_finding_aca0bf1eb36bddcc,error,Any signed-in user can access another order’s review token,supabase/functions/send-review-invitation/index.ts
+lov_finding_ad6f5c1d67558ce5,warn,Anyone can put markup in appointment emails,ticket-create-appointment
+lov_finding_add1d8017d448ff5,warn,Signed-in users can send arbitrary emails,supabase/functions/esc-send-email/index.ts
+lov_finding_ae041d22cd49aa24,error,Ordinary users can send survey invitations,supabase/functions/survey-send-invites/index.ts
+lov_finding_afcf8b12fd476a3a,warn,Signed-in users can query finance data without finance access,supabase/functions/collect-copilot/index.ts
+lov_finding_b0bea2646e06d7cc,error,Anyone can finalize documents,supabase/functions/sig-render-final/index.ts
+lov_finding_b143826790bf7b30,error,Webhook test posts to any HTTPS destination,supabase/functions/ac-marketplace/index.ts
+lov_finding_b4deaaa277c70ff4,warn,Staff can send onboarding invitation links to any email address,supabase/functions/social-onboarding-invite/index.ts
+lov_finding_b535dca7da1458b2,error,Signature uploads lack type and size checks,supabase/functions/alix-sign-create/index.ts
+lov_finding_b58065ea66d180e4,warn,Anyone can mark another person's mail messages as unsubscribed,supabase/functions/mail-unsubscribe/index.ts
+lov_finding_b59f50206d13ea0b,error,Service users can text any phone number,send-customer-sms
+lov_finding_b86c0cca0683482a,error,Anyone can create ticket appointments,supabase/functions/ticket-create-appointment/index.ts
+lov_finding_b9deeea58bcd8b64,error,Any signed-in user can send another survey's invitations,supabase/functions/survey-send-invites/index.ts
+lov_finding_bcaf4da9778a3843,warn,Any signed-in user can create royalty invoices,license-royalty-run
+lov_finding_c1f51fb90f414c65,error,Signed-in users can place calls to arbitrary destinations,supabase/functions/ac-3cx-call/index.ts
+lov_finding_c4bcebcef88683c2,error,Caller controls reminder email content,supabase/functions/as-send-email-reminder/index.ts
+lov_finding_cb16ccbf1b4481ee,error,Anyone can read password-protected public catalogs,src/pages/KatalogPublic.tsx
+lov_finding_cc294c6fc858dbbb,warn,Signed-in users can send any shipment assignment,supabase/functions/carrier-shipment-send/index.ts
+lov_finding_cd2ce2ad522f11c1,error,Signature invitations target arbitrary recipients,supabase/functions/sig-create-request/index.ts
+lov_finding_d056bd7c0021c222,warn,Any signed-in user can set the AI's instructions,supabase/functions/social-ai-generate/index.ts
+lov_finding_d1d0e8fe336ec6f2,warn,Any workspace member can message arbitrary WhatsApp numbers,supabase/functions/whatsapp-cloud-send/index.ts
+lov_finding_d2473feaef579f52_4e525c0a,error,Any signed-in user can message another customer's conversation,supabase/functions/twilio-send-whatsapp-message/index.ts
+lov_finding_d2473feaef579f52_f453a872,warn,Any signed-in user can message any WhatsApp contact,supabase/functions/twilio-send-whatsapp-message/index.ts
+lov_finding_d2ea69a286d7ab4a,warn,Any signed-in user can view every tenant's attribution totals,public.ac_journey_attribution(int4)
+lov_finding_d51da742f6515a44,error,Any signed-in user can access another order’s review token,supabase/functions/send-review-invitation/index.ts
+lov_finding_d622c4a54c5625f0,warn,Any service user can widen repair-guidance searches,ai-service-analyze
+lov_finding_d73d2342e76a806c_30da19e3,warn,Ticket creation can target any customer record,supabase/functions/ac-copilot-act/index.ts
+lov_finding_d73d2342e76a806c_b7f288c1,warn,Notifications can be written to any user,supabase/functions/ac-copilot-act/index.ts
+lov_finding_d7eeaf6f33994067,warn,Unauthenticated requests can run privileged document backfill,supabase/functions/alixdocs-hash-backfill/index.ts
+lov_finding_d827e70493abbc17,error,Any signed-in user can export restricted audit logs,supabase/functions/finance-compliance-report/index.ts
+lov_finding_da722e431603e2f7,error,Any signed-in user can enumerate customer payment profiles,supabase/functions/recurring-prenotification/index.ts
+lov_finding_dc9dfcdd7cb4ab4f,warn,Finance users can send payment links to any address,collect-payment-link
+lov_finding_df6fdc9c6acda235,warn,Any signed-in user can inject markup into support emails,supabase/functions/portal-contract-sign-confirm/index.ts
+lov_finding_e2621f98e46563d0,warn,Anyone can put formulas in sales lead exports,SalesLeads/List.tsx selected-lead CSV export
+lov_finding_e2c4ff5d7611f02d,warn,Unauthenticated requests read private document metadata,supabase/functions/alixdocs-link-suggest/index.ts
+lov_finding_e2d6374bd0210117,warn,Anyone can put markup in customer reminder emails,ticket-customer-reminder
+lov_finding_e34d218037cc26e0,warn,Any sender can attach documents to another customer's record,supabase/functions/sig-create-request/index.ts
+lov_finding_e388dab58fefe4e2,warn,Caller-chosen CallSid targets privileged call updates,supabase/functions/ac-voice-twilio-webhook/index.ts
+lov_finding_e574721ebfe3c5a4,warn,Any signed-in user can set the AI's instructions,supabase/functions/ac-voice-agent-studio/index.ts
+lov_finding_e72aa2d3e18e4fc9,warn,Signed-in users can send SMS to arbitrary numbers,supabase/functions/delivery-notify/index.ts
+lov_finding_e75b8684adf72817,warn,Any signed-in user can view other tenants' activity totals,public.ac_dashboard_kpis(uuid)
+lov_finding_e7e8c924ca06a7f7,warn,Signed-in users can send invites to arbitrary addresses,supabase/functions/sig-bulk-create/index.ts
+lov_finding_e95de054b03f8db0,warn,Any signed-in customer can inject markup into support emails,supabase/functions/portal-ticket-notify/index.ts
+lov_finding_e97ee86dc03bce4c,warn,Admins can log customer billing addresses to service logs,start-zoho-import: contact billing address log (line 412)
+lov_finding_eb30b4530b5fe223,warn,Any signed-in user can process another user's private document,supabase/functions/alixdocs-ai-process/index.ts
+lov_finding_edd66577e687284b,warn,Any workspace member can access orders across accounting regions and tenants,supabase/functions/alix-copilot/index.ts
+lov_finding_ee272cd70c04cc65,warn,Any signed-in user can expose another person's event,supabase/functions/esc-token-issue/index.ts
+lov_finding_ef1070a22b723c41,error,Any signed-in caller can add an internal note to any ticket,supabase/functions/mobile-voice-transcribe/index.ts
+lov_finding_ef8daa497c253e85,error,Any signed-in user can copy another user's mail attachment,supabase/functions/alixdocs-mail-import/index.ts
+lov_finding_f1c622935a41be01,warn,Any signed-in user can view staffing forecasts,public.ac_wfm_auto_forecast(int4)
+lov_finding_f26da156240a2f62,warn,Any signed-in user can see dispatch and customer details,supabase/functions/dispatch-ai-assistant/index.ts
+lov_finding_f2c4b7f10eb12867,warn,Authenticated users can target any delivery order,supabase/functions/delivery-notify/index.ts
+lov_finding_f6c3654341e11009_561efb0f,warn,Any signed-in user can store unchecked files,alixdocs-autofile
+lov_finding_f6c3654341e11009_77ec9202,warn,Autofile accepts unbounded files of any declared type,supabase/functions/alixdocs-autofile/index.ts
+lov_finding_f925eef4435f7b1f,error,Uploaded signature PDFs have no type or size limit,supabase/functions/sig-create-request/index.ts
+lov_finding_f96755eb5792fedc,warn,Any signed-in user can set copilot instructions,alix-copilot
+lov_finding_fa76ad0c8151f87b,error,Any finance user can send demands across tenants,supabase/functions/collect-send-dunning/index.ts
+lov_finding_fcc29527a32c923f,error,CMR users can send arbitrary invoice emails to any address,supabase/functions/cmr-send-document/index.ts
+lov_finding_ff271ba19700e47f,error,Any signed-in user can send arbitrary approval PDFs to anyone,supabase/functions/delivery-approval-mail/index.ts

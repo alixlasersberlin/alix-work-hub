@@ -1,5 +1,9 @@
 // Sendet eine SMS mit signiertem PDF-Link an einen Kunden via Twilio Programmable Messaging.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { smsReview } from "../_shared/sms-policy.ts";
+import { maskPhone } from "../_shared/security-core.ts";
+import { z } from "npm:zod@3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -78,29 +82,19 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
-    const userId = claims.claims.sub as string;
-
-    // Role check
-    const { data: roleRows } = await admin
-      .from("user_roles")
-      .select("roles!inner(name)")
-      .eq("user_id", userId);
-    const roleNames = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-    if (!roleNames.some((n: string) => ALLOWED_ROLES.has(n))) {
-      return json({ error: "Forbidden: missing role" }, 403);
-    }
-
-    const body = await req.json().catch(() => ({}));
+    if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+    const access = await requireCallerAccess(req, corsHeaders, [...ALLOWED_ROLES]);
+    if ('response' in access) return access.response;
+    const userId = access.user.id;
+    const parsed = z.object({
+      customer_id:z.string().uuid(),order_id:z.string().uuid().nullable().optional(),document_id:z.string().uuid(),
+      phone:z.string().max(40),message_text:z.string().trim().min(1).max(1500),
+      document_type:z.string().max(100).nullable().optional(),document_number:z.string().max(100).nullable().optional(),
+      recipient_name:z.string().max(200).nullable().optional(),base_url:z.string().max(255).optional(),
+      alternative_phone_confirmed:z.boolean().optional(),alternative_phone_reason:z.string().max(500).optional(),
+    }).safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({ error: parsed.error.flatten() }, 400);
+    const body = parsed.data;
     const {
       customer_id,
       order_id,
@@ -117,8 +111,21 @@ Deno.serve(async (req) => {
       return json({ error: "Pflichtfelder fehlen (customer_id, document_id, phone, message_text)." }, 400);
     }
 
-    const to = normalizeE164(String(phone));
-    if (!to) return json({ error: "Ungültige Mobilnummer (E.164 erforderlich, z. B. +49…)." }, 400);
+    const { data: doc, error: docError } = await access.caller.from('order_documents').select('id,order_id,document_type').eq('id',document_id).maybeSingle();
+    if (docError || !doc) return json({error:'Dokument nicht zugänglich'},404);
+    const { data: order, error: orderError } = await access.caller.from('orders').select('id,customer_id,order_number,source_system').eq('id',doc.order_id).maybeSingle();
+    if (orderError || !order || order.customer_id !== customer_id || (order_id && order_id !== order.id)) return json({error:'Dokument, Auftrag und Kunde stimmen nicht überein'},403);
+    const { data: customer, error: customerError } = await access.caller.from('customers').select('id,phone,company_name,contact_name,source_system').eq('id',customer_id).maybeSingle();
+    if (customerError || !customer || customer.source_system !== order.source_system || !access.tenants.some(t => t.zoho_source_system === order.source_system)) return json({error:'Kunde nicht zugänglich'},403);
+    const { data: overridePermission } = await access.caller.rpc('security_has_permission',{_user_id:userId,_permission_key:'sms.send_alternative_phone'});
+    const canOverride = access.roles.some(r => r === 'Admin' || r === 'Super Admin') || overridePermission === true;
+    const review = smsReview(phone,[customer.phone],canOverride,body.alternative_phone_confirmed,body.alternative_phone_reason);
+    if ('error' in review) return json({error:review.error},review.status);
+    const to = review.phone;
+    // Durable server-originated intent must exist before token creation or sending.
+    const attemptId = crypto.randomUUID();
+    const { error: auditError } = await admin.from('audit_logs').insert({user_id:userId,action:'sms_send_requested',module:'sms',record_id:doc.id,details:{attempt_id:attemptId,order_id:order.id,order_number:order.order_number,customer_id:customer.id,alternative_phone:review.alternative,reason:review.reason,destination_masked:maskPhone(to)}});
+    if (auditError) return json({error:'Versandprotokoll konnte nicht gespeichert werden'},503);
 
     const cfg = await loadTwilioConfig();
     if (!cfg.sid || !cfg.token || !cfg.from) {
@@ -129,7 +136,7 @@ Deno.serve(async (req) => {
     const tk = await ensureDownloadToken(String(document_id));
     if (!tk) return json({ error: "PDF konnte nicht gefunden werden." }, 404);
 
-    const origin = (base_url && String(base_url).startsWith("http")) ? String(base_url).replace(/\/$/, "") : "https://alixwork.de";
+    const origin = "https://alixwork.de";
     const link = `${origin}/d/${tk.token}`;
 
     const finalText = String(message_text).replace(/\{\{link\}\}/g, link);
@@ -152,25 +159,25 @@ Deno.serve(async (req) => {
       });
       const data = await res.json();
       if (!res.ok) {
-        errorMessage = `Twilio ${res.status}: ${data?.message ?? JSON.stringify(data)}`;
+        errorMessage = `Twilio ${res.status}; Code ${typeof data?.code === 'number' ? data.code : 'unbekannt'}`;
         twilioStatus = "failed";
       } else {
         twilioSid = data?.sid ?? null;
         twilioStatus = data?.status ?? "sent";
       }
     } catch (e: any) {
-      errorMessage = e?.message ?? "Twilio-Verbindung nicht verfügbar";
+      errorMessage = "Twilio-Verbindung nicht bestätigt; nicht automatisch erneut senden";
       twilioStatus = "failed";
     }
 
     // Log
-    await admin.from("customer_sms_logs").insert({
+    const { error: historyError } = await admin.from("customer_sms_logs").insert({
       customer_id,
-      order_id: order_id ?? null,
+      order_id: order.id,
       document_id,
-      document_type: document_type ?? null,
-      document_number: document_number ?? null,
-      recipient_name: recipient_name ?? null,
+      document_type: doc.document_type,
+      document_number: order.order_number,
+      recipient_name: customer.contact_name ?? customer.company_name,
       phone: to,
       message_text: finalText,
       link_url: link,
@@ -179,6 +186,8 @@ Deno.serve(async (req) => {
       error_message: errorMessage,
       sent_by: userId,
     });
+    await admin.from('audit_logs').insert({user_id:userId,action:'sms_send_result',module:'sms',record_id:doc.id,details:{attempt_id:attemptId,status:twilioStatus,provider_sid:twilioSid,history_saved:!historyError,destination_masked:maskPhone(to)}});
+    if (historyError && !errorMessage) return json({ok:true,sid:twilioSid,status:twilioStatus,warning:'Versand erfolgt; Historie unvollständig. Nicht erneut senden.'});
 
     if (errorMessage) {
       const friendly = /region indicated|21408/i.test(errorMessage)

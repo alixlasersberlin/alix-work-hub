@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
+import { SmsAlternativeFields } from '@/components/SmsAlternativeFields';
+import { prepareSmsReview, smsReview, type SmsReviewState } from '@/lib/sms-review';
 import { toast } from 'sonner';
 import { GeraetesperrenTabs } from './GeraetesperrenTabs';
 import { useAuth } from '@/hooks/useAuth';
@@ -328,33 +330,29 @@ export default function Geraetesperren() {
   const [smsOpen, setSmsOpen] = useState(false);
   const [smsBusy, setSmsBusy] = useState(false);
   const [smsText, setSmsText] = useState(DEFAULT_LOCK_SMS);
-  const [smsRows, setSmsRows] = useState<{ key: string; name: string; phone: string; total: number; invoices: string[] }[]>([]);
+  const [smsRows, setSmsRows] = useState<{ key: string; name: string; phone: string; total: number; invoices: string[]; ids:string[]; review:SmsReviewState }[]>([]);
 
   async function openSms() {
     if (!selectedRows.length) return toast.error('Bitte zuerst Sperren markieren');
-    const map = new Map<string, { key: string; name: string; phone: string; total: number; invoices: string[] }>();
+    const map = new Map<string, { key: string; name: string; phone: string; total: number; invoices: string[]; ids:string[]; review:SmsReviewState }>();
     for (const r of selectedRows) {
       const key = String(r.customer_number ?? r.customer_id ?? r.customer_name ?? r.id);
-      const g = map.get(key) ?? { key, name: r.customer_name ?? '—', phone: '', total: 0, invoices: [] };
-      g.total += Number(r.amount) || 0;
+      const g = map.get(key) ?? { key, name: r.customer_name ?? '—', phone: '', total: 0, invoices: [],ids:[],review:{storedPhone:'',canOverride:false,reason:'',confirmed:false} };
+      g.total += Number(r.amount) || 0; g.ids.push(r.id);
       if (r.invoice_number) g.invoices.push(r.invoice_number);
       if (!g.phone && (r.customer_phone || r.phone)) g.phone = r.customer_phone || r.phone;
       map.set(key, g);
     }
     const list = [...map.values()];
-    await Promise.all(list.map(async (g) => {
-      if (g.phone || !g.name || g.name === '—') return;
-      const esc = `%${g.name.replace(/[%,()]/g, ' ').trim()}%`;
-      const { data } = await supabase.from('customers').select('phone')
-        .or(`company_name.ilike.${esc},contact_name.ilike.${esc}`).limit(5);
-      g.phone = (data ?? []).find((c: any) => c.phone)?.phone ?? '';
-    }));
+    try {await Promise.all(list.map(async g=>{const id=g.ids[0];if (!id) throw new Error('Vorgang fehlt');const review=await prepareSmsReview('device_lock',id);g.review=review;g.phone=review.storedPhone;}));}
+    catch(e){toast.error(e instanceof Error ? e.message : 'SMS-Vorgang nicht zugänglich');return;}
     setSmsRows(list);
     setSmsText(DEFAULT_LOCK_SMS);
     setSmsOpen(true);
   }
 
   async function sendSms() {
+    for(const g of smsRows){if(!g.phone.trim()) continue;const check=smsReview(g.phone,[g.review.storedPhone],g.review.canOverride,g.review.confirmed,g.review.reason);if('error' in check){toast.error(check.error);return;}}
     setSmsBusy(true);
     let ok = 0, fail = 0, skipped = 0;
     const errors: string[] = [];
@@ -366,7 +364,7 @@ export default function Geraetesperren() {
         .replace(/\{kunde\}/g, g.name);
       try {
         const { data, error } = await supabase.functions.invoke('op-light-send-sms', {
-          body: { to: g.phone.trim(), message },
+          body: { to: g.phone.trim(), message,record_type:'device_lock',record_id:g.ids[0],record_ids:g.ids,alternative_phone_confirmed:g.review.confirmed,alternative_phone_reason:g.review.reason },
         });
         if (error || (data as any)?.error) { fail++; errors.push(`${g.name}: ${(data as any)?.error || error?.message}`); }
         else ok++;
@@ -374,7 +372,7 @@ export default function Geraetesperren() {
     }
     setSmsBusy(false);
     setSmsOpen(false);
-    if (errors.length) console.error('Sperr-SMS Fehler', errors);
+    if (errors.length) console.error('Sperr-SMS fehlgeschlagen:',errors.length);
     toast[fail ? 'error' : 'success'](`${ok} SMS gesendet${fail ? `, ${fail} fehlgeschlagen` : ''}${skipped ? `, ${skipped} ohne Nummer übersprungen` : ''}`,
       fail ? { description: errors.slice(0, 3).join(' · '), duration: 12000 } : undefined);
   }
@@ -605,8 +603,7 @@ export default function Geraetesperren() {
                     <div className="truncate font-medium">{g.name}</div>
                     <div className="text-xs text-muted-foreground">{fmt(g.total)} · {g.invoices.join(', ')}</div>
                   </div>
-                  <Input className="w-56" placeholder="Mobilnummer fehlt" value={g.phone}
-                    onChange={(e) => setSmsRows((rs) => rs.map((x, j) => j === i ? { ...x, phone: e.target.value } : x))} />
+                  <SmsAlternativeFields phone={g.phone} review={g.review} recordNumber={g.invoices.join(', ')} onPhone={phone=>setSmsRows(rs=>rs.map((x,j)=>j===i?{...x,phone}:x))} onReview={patch=>setSmsRows(rs=>rs.map((x,j)=>j===i?{...x,review:{...x.review,...patch}}:x))} />
                 </div>
               ))}
             </div>

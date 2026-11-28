@@ -1,6 +1,7 @@
 import { requireProcessAccess } from '../_shared/process-access.ts';
 import { automationContact, trustedAutomationContext } from '../_shared/automation-contact.ts';
 import { z } from 'npm:zod@3.25.76';
+import {JourneyInput} from './input.ts';
 // ALIX CONNECT — Phase 29 Journey Orchestrator 2.0
 // Executes journey flow graphs (nodes/edges) for enrolled contacts.
 // Node kinds: trigger, action (email/sms/whatsapp/webhook/tag/notify), condition, wait, ab_split, end
@@ -172,7 +173,7 @@ Deno.serve(async (req) => {
     const access = await requireProcessAccess(req, corsHeaders, ['Admin', 'Super Admin']);
     if ('response' in access) return access.response;
     const sb = access.client;
-    const parsed = z.object({ dry_run: z.boolean().default(false), journey_id: z.string().uuid().nullish(), enroll_contact_id: z.string().uuid().nullish() }).strict().safeParse(await req.json().catch(() => ({})));
+    const parsed = JourneyInput.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return json({ error: 'Invalid journey identifiers' }, 400);
     const dryRun = parsed.data.dry_run, journeyIdFilter = parsed.data.journey_id ?? null, enrollContactId = parsed.data.enroll_contact_id ?? null;
 
