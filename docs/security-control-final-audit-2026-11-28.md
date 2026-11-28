@@ -88,3 +88,8 @@ Begleitende CSV enthält jeden ursprünglichen Befund, Klassifikation, Paket, Pr
 ## Nachkontrolle und Validierung
 
 Produkt- und Cron-Fingerprints nach Abschluss exakt unverändert (44 Produkte / 102 Jobs). Vorhandener Sicherheitsnachweis weiterhin passed=false/complete=false, kein positiver Proof geschrieben. 15 Frontend- und 8 Servertests bestanden; synthetische Tests sind keine echte angemeldete Abnahme. Live-Endpunkte mit ungültigem Token: control_overview, control_approve und ph-release-control jeweils 401. Browser auf app.alixwork.de/security-center und Preview führt unangemeldet zur AlixWork-Anmeldung, keine Laufzeitfehler. Geschützte Ansicht und Bedienung mit echtem Super Admin nicht prüfbar, da keine externe Supabase-Sitzung verfügbar ist. Veröffentlichung wird angefordert; erfolgreiche Anfrage ist kein Nachweis abgeschlossener Bereitstellung.
+
+
+## Veröffentlichungsanfrage
+
+Veröffentlichung am 28.11.2026 04:23 UTC angefordert, erwartete URL https://alix-pro-hub.lovable.app. Das Werkzeug bestätigt die Planung, nicht den Abschluss der Bereitstellung. Nutzerentscheidung 04:24 UTC: ausschließlich veröffentlichen, keine Korrekturpakete ausführen. Veröffentlichung meldet 266 offene kritische Scannerbefunde; diese Zahl ist die Scannerbewertung, nicht die Anzahl manuell bestätigter Risiken. Die angemeldete Ansicht bleibt unbestätigt. Lovable-URL kann auf Wunsch umbenannt werden; vorhandene Domains und Sichtbarkeit unverändert.
