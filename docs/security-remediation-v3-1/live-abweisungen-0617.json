@@ -1,0 +1,77 @@
+[
+  {
+    "function": "ac-journey-tick",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "ac-segment-auto-enroll",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "social-competitors-sync",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "alixdocs2-workflow-scan",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "alixdocs-hash-backfill",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "alixdocs-learn-rules",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "ac-automation-run",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "ac-webhook-dispatch",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "delivery-reminder-engine",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "follow-up-reminder-engine",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "fleet-maintenance-alerts",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "ac-sla-check",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "ac-workflow-studio",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "ac-conversation-qa",
+    "public_key_status": 401,
+    "denied": true
+  },
+  {
+    "function": "ai-center-chat",
+    "public_key_status": 401,
+    "denied": true
+  }
+]

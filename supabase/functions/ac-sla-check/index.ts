@@ -1,5 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireProcessAccess } from '../_shared/process-access.ts';
 
 /**
  * SLA Watchdog (Cron alle 10 Min).
@@ -8,8 +8,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   try {
+    const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.client;
     const { data: policies } = await sb.from('ac_sla_policies').select('*').eq('is_active', true);
     if (!policies?.length) return json({ policies: 0, breaches: 0 });
 

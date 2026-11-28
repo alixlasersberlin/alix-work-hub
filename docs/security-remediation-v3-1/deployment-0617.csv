@@ -1,0 +1,16 @@
+function,deployment,invalid_token_http,public_key_http,positive_scope
+ac-journey-tick,deployed,401,401,synthetic_only
+ac-segment-auto-enroll,deployed,401,401,synthetic_only
+social-competitors-sync,deployed,401,401,synthetic_only
+alixdocs2-workflow-scan,deployed,401,401,synthetic_only
+alixdocs-hash-backfill,deployed,401,401,synthetic_only
+alixdocs-learn-rules,deployed,401,401,synthetic_only
+ac-automation-run,deployed,401,401,synthetic_only
+ac-webhook-dispatch,deployed,401,401,synthetic_only
+delivery-reminder-engine,deployed,401,401,synthetic_only
+follow-up-reminder-engine,deployed,401,401,synthetic_only
+fleet-maintenance-alerts,deployed,401,401,synthetic_only
+ac-sla-check,deployed,401,401,synthetic_only
+ac-workflow-studio,deployed,401,401,synthetic_only
+ac-conversation-qa,deployed,401,401,synthetic_only
+ai-center-chat,deployed,401,401,synthetic_only

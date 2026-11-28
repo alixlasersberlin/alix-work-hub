@@ -3,8 +3,11 @@
 // - Lädt Datei aus Storage-Bucket 'alixdocs' (Pfad = versionierter Storage-Key aus alixdocs_versions.storage_path oder documents.original_filename-Konvention)
 // - Berechnet SHA-256 und schreibt content_hash
 // - Batch-Grösse: 25 pro Aufruf, damit die Function unter dem 60s-Timeout bleibt
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
+
+const BodySchema = z.object({ batch: z.number().int().min(1).max(100).default(25) }).strict();
 
 function json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -21,26 +24,12 @@ async function sha256Hex(buf: ArrayBuffer): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const url = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const supa = createClient(url, serviceKey);
-
-  // Auth: nur Admin/Super Admin ODER Service-Role
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const jwt = authHeader.replace("Bearer ", "");
-  if (jwt && jwt !== serviceKey) {
-    const userClient = createClient(url, anon, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    const { data: isAdmin } = await userClient.rpc("has_role", { check_role: "Admin" });
-    const { data: isSuper } = await userClient.rpc("has_role", { check_role: "Super Admin" });
-    if (!isAdmin && !isSuper) return json(403, { error: "forbidden" });
-  }
-
-  const body = await req.json().catch(() => ({}));
-  const batch = Math.min(Number(body?.batch ?? 25), 100);
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+  if ('response' in access) return access.response;
+  const supa = access.client;
+  const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return json(400, { error: 'batch must be an integer from 1 to 100' });
+  const { batch } = parsed.data;
 
   // Dokumente ohne Hash finden
   const { data: docs, error } = await supa

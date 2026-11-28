@@ -1,10 +1,10 @@
 // Competitor benchmarking: erzeugt deterministische Snapshots pro Wettbewerber.
 // TODO: Provider-APIs für echte Follower/Engagement-Daten anbinden (Meta Graph, TikTok, LinkedIn).
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const BodySchema = z.object({ client_id: z.string().uuid().optional(), competitor_id: z.string().uuid().optional() }).strict();
 
 function json(o: unknown, s = 200) {
   return new Response(JSON.stringify(o), { status: s, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -25,8 +25,15 @@ function fakeSnap(handle: string, date: string) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const svc = createClient(SUPABASE_URL, SERVICE_KEY);
-    const body = await req.json().catch(() => ({}));
+    if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+    const access = await requireCallerAccess(req, corsHeaders);
+    if ('response' in access) return access.response;
+    const svc = access.caller;
+    const { data: canWrite, error: permissionError } = await svc.rpc('can_admin_social');
+    if (permissionError || canWrite !== true) return json({ error: 'Forbidden' }, 403);
+    const parsed = BodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json({ error: 'Invalid competitor or client identifier' }, 400);
+    const body = parsed.data;
     const today = new Date().toISOString().slice(0, 10);
     const q = svc.from('social_competitors').select('id, handle, client_id');
     if (body.client_id) q.eq('client_id', body.client_id);
@@ -36,11 +43,13 @@ Deno.serve(async (req) => {
     let n = 0;
     for (const c of comps ?? []) {
       const snap = fakeSnap(c.handle, today);
-      await svc.from('social_competitor_snapshots').upsert(
+      const { error: snapshotError } = await svc.from('social_competitor_snapshots').upsert(
         { competitor_id: c.id, snapshot_date: today, ...snap },
         { onConflict: 'competitor_id,snapshot_date' },
       );
-      await svc.from('social_competitors').update({ last_snapshot_at: new Date().toISOString() }).eq('id', c.id);
+      if (snapshotError) return json({ error: snapshotError.message }, 403);
+      const { error: updateError } = await svc.from('social_competitors').update({ last_snapshot_at: new Date().toISOString() }).eq('id', c.id);
+      if (updateError) return json({ error: updateError.message }, 403);
       n++;
     }
     return json({ ok: true, updated: n });

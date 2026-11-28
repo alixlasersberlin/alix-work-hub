@@ -1,0 +1,17 @@
+[
+  {
+    "name": "ai-before.tar.gz",
+    "sha256": "864fd82ffa23becf5a766eb005780f88be4ecb437c6f8a5890ddd761ce521bf6",
+    "scope": "Quellstand, kein Datenbankbackup oder Restore"
+  },
+  {
+    "name": "automation-before.tar.gz",
+    "sha256": "bd69c74468a43bdc5a1620b71734832aecef27ab40f16cc9d21f042e2ebb1354",
+    "scope": "Quellstand, kein Datenbankbackup oder Restore"
+  },
+  {
+    "name": "source-before.tar.gz",
+    "sha256": "4cd3e212be30626ba2977500d1f76f05c6dfc7609ed70e9add56bb17bd7ca7b9",
+    "scope": "Quellstand, kein Datenbankbackup oder Restore"
+  }
+]

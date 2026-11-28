@@ -1,41 +1,47 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
-type Payload = {
-  event: 'message.received' | 'conversation.created' | 'sla.breached' | 'keyword.matched';
-  message_id?: string;
-  conversation_id?: string;
-  body?: string;
-  channel_id?: string;
-  tenant_id?: string;
-};
+const BodySchema = z.object({
+  event: z.enum(['message.received', 'conversation.created', 'sla.breached', 'keyword.matched']),
+  message_id: z.string().uuid().nullish(), conversation_id: z.string().uuid().nullish(),
+  body: z.string().max(20000).optional(), channel_id: z.string().uuid().nullish(),
+  tenant_id: z.string().uuid().nullish(),
+}).strict();
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  const admin = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  );
-
   try {
-    const payload = (await req.json()) as Payload;
-    const { event, body, conversation_id, message_id, tenant_id } = payload;
-    if (!event) {
-      return new Response(JSON.stringify({ error: 'event required' }), {
+    const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+    if ('response' in access) return access.response;
+    const admin = access.client;
+    const parsed = BodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: 'Invalid automation event or identifiers' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const { event, body, conversation_id, message_id } = parsed.data;
+    let tenant_id = parsed.data.tenant_id;
 
     // Load conversation for channel_type
     let channelType: string | null = null;
     if (conversation_id) {
-      const { data: conv } = await admin
+      const { data: conv, error: convError } = await admin
         .from('ac_conversations')
-        .select('channel_type')
+        .select('channel_type,tenant_id')
         .eq('id', conversation_id)
         .maybeSingle();
+      if (convError || !conv || (tenant_id && tenant_id !== conv.tenant_id)) {
+        return new Response(JSON.stringify({ error: 'Conversation not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      tenant_id = conv.tenant_id;
       channelType = (conv?.channel_type as string) ?? null;
+    }
+    if (message_id) {
+      const { data: message, error } = await admin.from('ac_messages').select('conversation_id').eq('id', message_id).maybeSingle();
+      if (error || !message || message.conversation_id !== conversation_id) return new Response(JSON.stringify({ error: 'Message not found in authorized conversation' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Match rules

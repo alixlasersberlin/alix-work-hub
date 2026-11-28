@@ -1,16 +1,13 @@
 // follow-up-reminder-engine — löst persönliche Wiedervorlagen zur Fälligkeit aus.
 // Läuft per Cron. Sendet ausschliesslich INTERNE Benachrichtigungen an den
 // Ersteller/Empfänger – niemals eine Nachricht an Kunden.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { createClient } from 'npm:@supabase/supabase-js@2';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const admin = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   { auth: { persistSession: false } },
 );
 
@@ -21,6 +18,8 @@ Deno.serve(async (req) => {
 
   const result = { due: 0, notified: 0, failed: 0 };
   try {
+    const denied = await requireJobAccess(req, corsHeaders);
+    if (denied) return denied;
     // Feature Flag respektieren
     const { data: flag } = await admin.from('app_settings')
       .select('value').eq('key', 'follow_up_reminders_enabled').maybeSingle();

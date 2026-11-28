@@ -1,12 +1,8 @@
 // AlixDocs 2.0 — Workflow Scanner (Phase 7)
 // Scans documents for expiry-relevant entities (Garantie/Wartung/Vertrag) and
 // creates app_notifications for Admin & Super Admin when a deadline approaches.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireProcessAccess } from '../_shared/process-access.ts';
 
 function parseDate(v: unknown): Date | null {
   if (!v) return null;
@@ -40,9 +36,9 @@ const FIELDS: { field: string; kind: Kind; label: string }[] = [
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const url = Deno.env.get('SUPABASE_URL')!;
-    const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const admin = createClient(url, service);
+    const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+    if ('response' in access) return access.response;
+    const admin = access.client;
 
     const { data: docs } = await admin
       .from('alixdocs2_documents')

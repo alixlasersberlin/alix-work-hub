@@ -2,14 +2,14 @@
 // Analysiert geschlossene Conversations (ac_conversations) via Gemini,
 // vergibt Score-Card (Begrüßung, Empathie, Lösung, Compliance, Ton) und
 // speichert Ergebnisse in public.ac_conversation_qa.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const BodySchema = z.object({ conversation_id: z.string().uuid().optional(), batch_limit: z.number().int().min(1).max(100).default(20), since_hours: z.number().int().min(1).max(8760).default(48) }).strict();
 
-const AI_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const AI_KEY = Deno.env.get('LOVABLE_API_KEY') ?? '';
 const MODEL = 'google/gemini-3-flash-preview';
 
 const SYSTEM = `Du bist QA-Auditor für Kundenservice-Conversations. Bewerte objektiv nach 5 Dimensionen (jeweils 0–100):
@@ -24,23 +24,31 @@ Antworte NUR mit JSON:
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const body = await req.json().catch(() => ({}));
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid QA scope or batch limits' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const body = parsed.data;
     const { conversation_id, batch_limit = 20, since_hours = 48 } = body ?? {};
 
     // Ziel-Conversations laden
     let convs: any[] = [];
     if (conversation_id) {
-      const { data } = await sb.from('ac_conversations')
-        .select('id, status, subject, assigned_user_id, created_at, closed_at')
+      const { data, error } = await sb.from('ac_conversations')
+        .select('id, status, subject, assigned_to, created_at, closed_at')
+        .in('tenant_id', access.tenants.map((tenant: any) => tenant.id))
         .eq('id', conversation_id).limit(1);
+      if (error || !data?.length) return new Response(JSON.stringify({ error: 'Conversation not found in authorized company' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       convs = data ?? [];
     } else {
       const sinceIso = new Date(Date.now() - since_hours * 3600_000).toISOString();
       const { data: existing } = await sb.from('ac_conversation_qa').select('conversation_id');
       const seen = new Set((existing ?? []).map((r: any) => r.conversation_id));
       const { data } = await sb.from('ac_conversations')
-        .select('id, status, subject, assigned_user_id, created_at, closed_at')
+        .select('id, status, subject, assigned_to, created_at, closed_at')
+        .in('tenant_id', access.tenants.map((tenant: any) => tenant.id))
         .in('status', ['closed', 'resolved'])
         .gte('updated_at', sinceIso)
         .order('updated_at', { ascending: false })
@@ -90,7 +98,7 @@ Deno.serve(async (req) => {
 
       const row = {
         conversation_id: conv.id,
-        agent_user_id: conv.assigned_user_id ?? null,
+        agent_user_id: conv.assigned_to ?? null,
         overall_score: Number(p.overall ?? 0),
         greeting_score: p.greeting != null ? Number(p.greeting) : null,
         empathy_score: p.empathy != null ? Number(p.empathy) : null,
@@ -104,7 +112,9 @@ Deno.serve(async (req) => {
         summary: typeof p.summary === 'string' ? p.summary : null,
         model: MODEL,
       };
-      const { error } = await sb.from('ac_conversation_qa').upsert(row, { onConflict: 'conversation_id' });
+      // Only the authorized, company-scoped conversation read above supplies this row.
+      const writer = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+      const { error } = await writer.from('ac_conversation_qa').upsert(row, { onConflict: 'conversation_id' });
       if (error) console.error('upsert', error);
       else results.push({ conversation_id: conv.id, overall: row.overall_score });
     }

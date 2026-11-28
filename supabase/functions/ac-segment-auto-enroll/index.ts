@@ -1,16 +1,13 @@
 // Enrollt neue Segment-Mitglieder automatisch in die gekoppelte Journey (falls auto_enroll_journey_id gesetzt).
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireProcessAccess } from '../_shared/process-access.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.client;
     const { data: segs } = await sb.from('ac_journey_segments')
       .select('id, name, criteria, auto_enroll_journey_id')
       .not('auto_enroll_journey_id', 'is', null);

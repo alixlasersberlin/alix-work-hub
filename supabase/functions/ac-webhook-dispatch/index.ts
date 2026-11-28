@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 /**
  * Dispatcher für ac_event_bus.
@@ -9,9 +10,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-
   try {
+    const denied = await requireJobAccess(req, corsHeaders);
+    if (denied) return denied;
+    const sb = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
 
     // Emit-Modus

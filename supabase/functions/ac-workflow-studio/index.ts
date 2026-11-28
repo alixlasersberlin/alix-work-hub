@@ -1,10 +1,10 @@
 // Workflow Automation Studio — no-code cross-channel workflow validation & AI-generation.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const NodeSchema = z.object({ id: z.string().min(1).max(100), type: z.enum(['trigger', 'condition', 'action']), kind: z.string().min(1).max(100), params: z.record(z.unknown()).optional(), next: z.string().max(100).nullish(), next_true: z.string().max(100).nullish(), next_false: z.string().max(100).nullish() });
+const BodySchema = z.object({ op: z.enum(['validate', 'generate', 'save']).default('validate'), prompt: z.string().max(12000).optional(), flow: z.object({ name: z.string().max(255).optional(), description: z.string().max(12000).optional(), nodes: z.array(NodeSchema).max(200).optional() }).optional(), is_active: z.boolean().optional(), tenant_id: z.string().uuid().optional() }).strict();
 
 type Node = { id: string; type: 'trigger' | 'condition' | 'action'; kind: string; params?: Record<string, unknown>; next?: string | null; next_true?: string | null; next_false?: string | null };
 
@@ -31,7 +31,12 @@ function validate(flow: { name?: string; nodes?: Node[] }): { ok: boolean; error
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const body = await req.json();
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const parsed = BodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid workflow request' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const body = parsed.data;
     const { op = 'validate' } = body;
 
     if (op === 'validate') {
@@ -64,15 +69,20 @@ Deno.serve(async (req) => {
     }
 
     if (op === 'save') {
-      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      const sb = access.caller;
       const v = validate(body.flow ?? {});
       if (!v.ok) return new Response(JSON.stringify({ error: 'invalid_flow', ...v }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const flow = body.flow;
+      if (!flow?.nodes || !flow.name) return new Response(JSON.stringify({ error: 'invalid_flow' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const tenantId = body.tenant_id ?? (access.tenants.length === 1 ? access.tenants[0]?.id : undefined);
+      if (!tenantId || !access.tenants.some((tenant: any) => tenant.id === tenantId)) return new Response(JSON.stringify({ error: 'Choose one of your authorized companies' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const rule = {
-        name: body.flow.name,
-        description: body.flow.description ?? null,
-        trigger_type: body.flow.nodes.find((n: Node) => n.type === 'trigger')?.kind ?? 'manual',
-        conditions: body.flow.nodes.filter((n: Node) => n.type === 'condition'),
-        actions: body.flow.nodes.filter((n: Node) => n.type === 'action'),
+        tenant_id: tenantId,
+        name: flow.name,
+        description: flow.description ?? null,
+        trigger_type: flow.nodes.find((n: Node) => n.type === 'trigger')?.kind ?? 'manual',
+        conditions: flow.nodes.filter((n: Node) => n.type === 'condition'),
+        actions: flow.nodes.filter((n: Node) => n.type === 'action'),
         is_active: body.is_active ?? false,
         metadata: { studio_version: 'phase36', full_flow: body.flow, validation: v },
       };

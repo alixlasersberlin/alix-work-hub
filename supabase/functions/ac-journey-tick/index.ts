@@ -1,11 +1,12 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 /**
  * Cron-Tick (alle 5 Minuten). Verarbeitet fällige ac_journey_runs.
  * Step-Kinds: send_email | send_sms | send_whatsapp | wait | condition
  */
-const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+const sb = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
 async function sendEmail(to: string, subject: string, body: string) {
   const { error } = await sb.functions.invoke('send-email', {
@@ -44,6 +45,8 @@ function render(tpl: string, ctx: Record<string, any>) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
+    const denied = await requireJobAccess(req, corsHeaders);
+    if (denied) return denied;
     const nowIso = new Date().toISOString();
     const { data: runs } = await sb.from('ac_journey_runs')
       .select('id,journey_id,contact_id,current_step,context')

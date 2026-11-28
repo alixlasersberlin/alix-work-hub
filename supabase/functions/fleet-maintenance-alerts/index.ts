@@ -1,22 +1,14 @@
 import "../_shared/global-bcc.ts";
 // Tägliche Fuhrpark-Wartungs-Erinnerung (Fahrzeuge: HU, Service nach Datum/km, Versicherung)
 // Sendet eine Sammel-E-Mail an das Dispositionsteam.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireProcessAccess } from '../_shared/process-access.ts';
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const BCC = "rde@alix-lasers.com";
 const FLEET_EMAIL = Deno.env.get("FLEET_NOTIFY_EMAIL") || "tour@alix-lasers.com";
 
 const esc = (s: unknown) =>
-  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] ?? c));
 
 function daysUntil(d?: string | null) {
   if (!d) return null;
@@ -26,7 +18,9 @@ function daysUntil(d?: string | null) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG']);
+  if ('response' in access) return access.response;
+  const sb = access.client;
   const rows: { plate: string; item: string; info: string; level: "overdue" | "soon" }[] = [];
 
   const { data: vehicles, error } = await sb

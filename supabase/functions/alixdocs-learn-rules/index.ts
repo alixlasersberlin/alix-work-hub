@@ -7,8 +7,11 @@
 //     Wenn >=5x → weight_bonus=50
 //  4) Bestehende Regeln: hit_count += Anzahl neuer Bestätigungen
 //  5) Regeln, die häufig in rejected_candidates auftauchen → deaktivieren
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
+
+const BodySchema = z.object({ since_days: z.number().int().min(1).max(3650).default(90), dry_run: z.boolean().default(false) }).strict();
 
 function json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -41,36 +44,13 @@ function tokenize(name: string): string[] {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const supa = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
-
-  // Auth: Service-Role (Cron/Trigger) ODER Admin/Super Admin
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const jwt = authHeader.replace("Bearer ", "");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  let uid: string | null = null;
-  if (jwt && jwt !== serviceKey) {
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: `Bearer ${jwt}` } } },
-    );
-    const { data: userRes } = await userClient.auth.getUser();
-    uid = userRes?.user?.id ?? null;
-    if (!uid) return json(401, { error: "unauthorized" });
-    const [{ data: isAdmin }, { data: isSuper }] = await Promise.all([
-      userClient.rpc("has_role", { check_role: "Admin" }),
-      userClient.rpc("has_role", { check_role: "Super Admin" }),
-    ]);
-    if (!isAdmin && !isSuper) return json(403, { error: "forbidden" });
-  }
-
-
-  const body = await req.json().catch(() => ({}));
-  const sinceDays = Number(body?.since_days ?? 90);
-  const dryRun = Boolean(body?.dry_run ?? false);
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+  if ('response' in access) return access.response;
+  const supa = access.client;
+  const uid = access.userId;
+  const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return json(400, { error: 'Invalid since_days or dry_run' });
+  const { since_days: sinceDays, dry_run: dryRun } = parsed.data;
 
   const sinceIso = new Date(Date.now() - sinceDays * 86400_000).toISOString();
 

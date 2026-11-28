@@ -1,15 +1,15 @@
 // AI Center – generischer Chat/Analyse-Endpunkt für das AI Service Center.
 // Nimmt {messages, response_format?, model?} entgegen, ruft Lovable AI Gateway
 // und liefert die Antwort als Text/JSON zurück. KEINE Tools, KEINE Auto-Decisions.
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich']);
+    if ('response' in access) return access.response;
     const body = await req.json();
     const messages = Array.isArray(body?.messages) ? body.messages : null;
     if (!messages || messages.length === 0) {
