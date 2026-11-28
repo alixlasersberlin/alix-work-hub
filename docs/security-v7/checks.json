@@ -1,0 +1,103 @@
+[
+ {
+  "id": "check:deep-scan",
+  "kind": "check",
+  "source": "Lovable Tiefenscanner",
+  "severity": "critical",
+  "priority": "P0",
+  "title": "Vollständiger Tiefenscan auf aktuellem Commit",
+  "component": "scanner",
+  "status": "BLOCKED_EXTERNAL",
+  "blocker": "Scanner endet wiederholt 'incomplete' ohne Diagnose und bindet ältere gespeicherte Commits; nicht durch App-Code steuerbar",
+  "nextStep": "Supportfall docs/security-v7/tiefenscan-supportfall.md einreichen; danach einmal auf gespeichertem aktuellen Commit scannen",
+  "evidence": "docs/security-v7/tiefenscan-supportfall.md"
+ },
+ {
+  "id": "check:authenticated-roles",
+  "kind": "check",
+  "source": "Rollenmatrix",
+  "severity": "high",
+  "priority": "P1",
+  "title": "Authentifizierte Rollen-, Tenant- und MFA-Abnahme",
+  "component": "auth",
+  "status": "BLOCKED_EXTERNAL",
+  "blocker": "Keine dedizierten Testkonten je Rolle; externe Supabase-Sitzung für den Agenten verweigert",
+  "nextStep": "Testkonten gemäß docs/security-v7/rollen-testkonten.md anlegen",
+  "evidence": "docs/security-v7/rollen-testkonten.md"
+ },
+ {
+  "id": "check:restore",
+  "kind": "check",
+  "source": "Backup 2.0",
+  "severity": "high",
+  "priority": "P1",
+  "title": "Tatsächlicher isolierter Restore-Test",
+  "component": "backup",
+  "status": "BLOCKED_EXTERNAL",
+  "blocker": "Separates Projekt ALIXWORK RESTORE TEST und Zugang fehlen",
+  "nextStep": "Projekt gemäß docs/security-v7/restore-test-anleitung.md bereitstellen",
+  "evidence": "docs/security-v7/restore-test-anleitung.md"
+ },
+ {
+  "id": "check:sms-live",
+  "kind": "check",
+  "source": "SMS",
+  "severity": "medium",
+  "priority": "P2",
+  "title": "SMS-Echtversand an freigegebene Testnummer",
+  "component": "function:sms",
+  "status": "BLOCKED_EXTERNAL",
+  "blocker": "Keine freigegebene Empfänger-Mobilnummer; ALIXLASERS ist nur die Absenderkennung",
+  "nextStep": "Mobilnummer freigeben und mit Testkonto einloggen",
+  "evidence": "Automatisierte Versand-/Limit-/Rechteprüfungen bestanden (docs/security-finalization-v5/test-summary.txt)"
+ },
+ {
+  "id": "check:meta-signature",
+  "kind": "check",
+  "source": "Meta Webhooks",
+  "severity": "medium",
+  "priority": "P2",
+  "title": "Signaturprüfung Messenger/Instagram",
+  "component": "function:meta-webhooks",
+  "status": "BLOCKED_EXTERNAL",
+  "blocker": "Secret META_APP_SECRET nicht vorhanden (Stand 28.11.2026 17:40 UTC); WHATSAPP_APP_SECRET existiert, Zugehörigkeit zur selben Meta-App unbestätigt",
+  "nextStep": "Systeminhaber bestätigt App-Secret der Messenger/Instagram-App und hinterlegt META_APP_SECRET"
+ },
+ {
+  "id": "check:zoho-incident",
+  "kind": "check",
+  "source": "Vorfall 28.11.2026",
+  "severity": "high",
+  "priority": "P1",
+  "title": "Zoho-Import 21 Rechnungen (Lauf 7012f728)",
+  "component": "function:zoho-invoices-auto-import",
+  "status": "TESTED",
+  "fix": "Import nur Maschinenzugang/berechtigte aktive Admins, Firmenprüfung, Dry-Run ohne Mail",
+  "evidence": "docs/security-v7/zoho-vorfallbericht.md; Neuprüfung 28.11.2026 17:50 UTC: keine Dubletten, keine Änderungen, kein weiterer Lauf",
+  "nextStep": "Unabhängiger Abgleich mit Zoho-Audit-Log durch Systeminhaber; Rechnungen bleiben unverändert",
+  "lastChecked": "2026-11-28T17:50:00Z"
+ },
+ {
+  "id": "check:schedulers",
+  "kind": "check",
+  "source": "pg_cron",
+  "severity": "medium",
+  "priority": "P2",
+  "title": "102 Zeitpläne / 95 aktiv: Authentifizierung je Lauf verifizieren",
+  "component": "scheduler",
+  "status": "TESTED",
+  "evidence": "docs/security-master-v6/schedule-102-auth-routing.txt; Fingerprint 752e201dcf6968bf40cf2a2fb3c58261",
+  "nextStep": "Laufprotokolle der nächsten 24 h auf 401 auswerten (zwei 14:05-Abweisungen ungeklärt)"
+ },
+ {
+  "id": "check:ticket-overload",
+  "kind": "check",
+  "source": "Datenbank",
+  "severity": "low",
+  "priority": "P3",
+  "title": "Mehrdeutige Ticket-Funktionsüberladung",
+  "component": "database:ticket",
+  "status": "OPEN",
+  "nextStep": "Überladungen inventarisieren und Aufrufer zuordnen"
+ }
+]

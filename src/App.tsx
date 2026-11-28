@@ -867,6 +867,7 @@ const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
 const SecurityCompliance = lazy(() => import("./pages/SecurityCenter/Compliance"));
 const SecuritySimulate = lazy(() => import("./pages/SecurityCenter/Simulate"));
 const SecurityPlan = lazy(() => import("./pages/SecurityCenter/Plan"));
+const SecurityContinuation = lazy(() => import("./pages/SecurityCenter/Continuation"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
 const PortalReleases = lazy(() => import("./pages/PortalReleases"));
@@ -2141,6 +2142,7 @@ function AppRoutes() {
             <Route path="compliance" element={<SecurityCompliance />} />
             <Route path="simulate" element={<SecuritySimulate />} />
             <Route path="plan" element={<SecurityPlan />} />
+            <Route path="fortsetzen" element={<SecurityContinuation />} />
           </Route>
           <Route path="/admin/rollen-freigaben" element={<ProtectedRoute requiredRoles={['Super Admin']}><RfLayout /></ProtectedRoute>}>
             <Route index element={<RfOverview />} />

@@ -1,0 +1,3729 @@
+{
+"agent_security_v2": {
+"completion_status": "incomplete",
+"scanner_name": "agent_security_v2",
+"timestamp": "2026-11-28T17:26:31.001620859Z",
+"up_to_date": false,
+"version": "1.94",
+"findings": [
+{
+"internal_id": "lov_finding_0337ac7d70faa2b2",
+"name": "Signed-in users can send SMS to arbitrary numbers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_03c63da47731a381",
+"name": "Autofiled uploads have no type or size limit",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_040f79f8da123789",
+"name": "Any signed-in user can alter your product catalog",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/import-alix-lasers-de/index.ts"
+},
+"details": "Location: supabase/functions/import-alix-lasers-de/index.ts"
+},
+{
+"internal_id": "lov_finding_050865c6574e152c",
+"name": "Social managers can alter caption instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/social-ai-generate/index.ts"
+},
+"details": "Location: supabase/functions/social-ai-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_051a4bc234829b51",
+"name": "Any signed-in user can read another user's documents",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_06eae87937d60eef",
+"name": "Anyone can inject markup into rental-request emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/rental-request-submit/index.ts"
+},
+"details": "Location: supabase/functions/rental-request-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_093cf61e30afbf30",
+"name": "Any signed-in administrator can send invites to any address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/social-onboarding-invite/index.ts"
+},
+"details": "Location: supabase/functions/social-onboarding-invite/index.ts"
+},
+{
+"internal_id": "lov_finding_0aaa95335930b95f",
+"name": "Anyone can link a new rental request to another customer",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/rental-request-submit/index.ts"
+},
+"details": "Location: supabase/functions/rental-request-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_0f32d69f370ebec9",
+"name": "Someone with the link can place formulas in package exports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "src/components/CustomerEditDialog.tsx"
+},
+"details": "Location: src/components/CustomerEditDialog.tsx"
+},
+{
+"internal_id": "lov_finding_0f377c8d465e69e6",
+"name": "Any signed-in user can search other customers' documents",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-embed/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-embed/index.ts"
+},
+{
+"internal_id": "lov_finding_103646c272dc49fb",
+"name": "Expired delivery links still expose tracking details",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-tracking/index.ts"
+},
+"details": "Location: supabase/functions/delivery-tracking/index.ts"
+},
+{
+"internal_id": "lov_finding_1203f9e582483867",
+"name": "Catalog imports scrape caller-selected external URLs",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/catalog-import-firecrawl/index.ts"
+},
+"details": "Location: supabase/functions/catalog-import-firecrawl/index.ts"
+},
+{
+"internal_id": "lov_finding_1382542329486a36",
+"name": "Catalog users can direct Firecrawl to arbitrary sites",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/catalog-import-firecrawl/index.ts"
+},
+"details": "Location: supabase/functions/catalog-import-firecrawl/index.ts"
+},
+{
+"internal_id": "lov_finding_1525b9bc406e203a",
+"name": "Import upsert lets sales users overwrite an existing lead",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsales-import/index.ts"
+},
+"details": "Location: supabase/functions/alixsales-import/index.ts"
+},
+{
+"internal_id": "lov_finding_1625707491741b2e",
+"name": "Caller-controlled invoice content is emailed to customers",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-invoice-mail/index.ts"
+},
+"details": "Location: supabase/functions/send-invoice-mail/index.ts"
+},
+{
+"internal_id": "lov_finding_16d3e37b9c8ba4ad",
+"name": "Any signed-in user can view another website's funnel analytics",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260720211642_0d5010b4-1c33-4de4-a985-051f29bfb91d.sql"
+},
+"details": "Location: supabase/migrations/20260720211642_0d5010b4-1c33-4de4-a985-051f29bfb91d.sql"
+},
+{
+"internal_id": "lov_finding_1794cebaf2967832",
+"name": "Production staff can grant their own QM approvals",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "src/pages/PLM/Aenderungsfreigabe.tsx"
+},
+"details": "Location: src/pages/PLM/Aenderungsfreigabe.tsx"
+},
+{
+"internal_id": "lov_finding_18e595aa07a561bd",
+"name": "Signing invites can be sent to a caller-chosen email address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-sign-create/index.ts"
+},
+"details": "Location: supabase/functions/alix-sign-create/index.ts"
+},
+{
+"internal_id": "lov_finding_1912d539688be633",
+"name": "Anyone can create document links",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-link-suggest/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-link-suggest/index.ts"
+},
+{
+"internal_id": "lov_finding_193e452aa8130a17",
+"name": "Anyone can send an announcement to every employee",
+"level": "error",
+"category": "leaked_secrets",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/config.toml"
+},
+"details": "Location: supabase/config.toml"
+},
+{
+"internal_id": "lov_finding_1b423c4366778754",
+"name": "Any signed-in user can inspect another website’s audience",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260720212030_9bf55c82-51cf-4ae2-b9f5-c0c3c167c120.sql"
+},
+"details": "Location: supabase/migrations/20260720212030_9bf55c82-51cf-4ae2-b9f5-c0c3c167c120.sql"
+},
+{
+"internal_id": "lov_finding_1b423c4366778754_78e6bd31",
+"name": "Any signed-in user can view another site's live visitor map",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260720212030_9bf55c82-51cf-4ae2-b9f5-c0c3c167c120.sql"
+},
+"details": "Location: supabase/migrations/20260720212030_9bf55c82-51cf-4ae2-b9f5-c0c3c167c120.sql"
+},
+{
+"internal_id": "lov_finding_1b423c4366778754_fe81bc8c",
+"name": "Any signed-in user can view another site's experiment stats",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260720212030_9bf55c82-51cf-4ae2-b9f5-c0c3c167c120.sql"
+},
+"details": "Location: supabase/migrations/20260720212030_9bf55c82-51cf-4ae2-b9f5-c0c3c167c120.sql"
+},
+{
+"internal_id": "lov_finding_1c1c62459c74e00e",
+"name": "Public GET reveals protected unsubscribe status",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mail-unsubscribe/index.ts"
+},
+"details": "Location: supabase/functions/mail-unsubscribe/index.ts"
+},
+{
+"internal_id": "lov_finding_1c474bcf3698135a",
+"name": "Finance users can view every customer's regional finances",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-ai-ask/index.ts"
+},
+"details": "Location: supabase/functions/finance-ai-ask/index.ts"
+},
+{
+"internal_id": "lov_finding_1cf985cadb57e6af",
+"name": "Anyone can place markup in rental inquiry emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/rental-request-submit/index.ts"
+},
+"details": "Location: supabase/functions/rental-request-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_1d0e79da2110a9d7",
+"name": "Any signed-in user can view other customers' website analytics",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/94aa2b752747de96437ffe31917b8acc6e44eb932b24a3162ec5a1c46c065cdb.sql"
+},
+"details": "Location: security-database-snapshot/94aa2b752747de96437ffe31917b8acc6e44eb932b24a3162ec5a1c46c065cdb.sql"
+},
+{
+"internal_id": "lov_finding_1deb9bcf8e2fe9db",
+"name": "Anyone can change another user's ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-create-appointment/index.ts"
+},
+"details": "Location: supabase/functions/ticket-create-appointment/index.ts"
+},
+{
+"internal_id": "lov_finding_1f1cf82cf52e7e61",
+"name": "Any signed-in user can query arbitrary orders",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_214081f60b07281d",
+"name": "Any signed-in user can add an internal note to any ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mobile-voice-transcribe/index.ts"
+},
+"details": "Location: supabase/functions/mobile-voice-transcribe/index.ts"
+},
+{
+"internal_id": "lov_finding_21a637de07028856",
+"name": "Public token permits unauthenticated employee-data access",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/announce-capa-cockpit/index.ts"
+},
+"details": "Location: supabase/functions/announce-capa-cockpit/index.ts"
+},
+{
+"internal_id": "lov_finding_22c0f6308817b8b5",
+"name": "Any workspace member can store files without a file-type check",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-attach-from-storage/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-attach-from-storage/index.ts"
+},
+{
+"internal_id": "lov_finding_22c6727e71c6e6db",
+"name": "Any signed-in user can inspect package progress",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/feecee6ea4b4434c71b9316c8f454cd3776694f44d3659261f0f9e72b4ca6a31.sql"
+},
+"details": "Location: security-database-snapshot/feecee6ea4b4434c71b9316c8f454cd3776694f44d3659261f0f9e72b4ca6a31.sql"
+},
+{
+"internal_id": "lov_finding_2332a1f29f9db74a",
+"name": "Any signed-in user can read pending approval tasks",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-stats/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-stats/index.ts"
+},
+{
+"internal_id": "lov_finding_24ccb1d7c124ea29_c76d1c81",
+"name": "Anyone can change ticket appointments",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-create-appointment/index.ts"
+},
+"details": "Location: supabase/functions/ticket-create-appointment/index.ts"
+},
+{
+"internal_id": "lov_finding_24ccb1d7c124ea29_cf61688c",
+"name": "Unauthenticated caller can change any ticket by ID",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-create-appointment/index.ts"
+},
+"details": "Location: supabase/functions/ticket-create-appointment/index.ts"
+},
+{
+"internal_id": "lov_finding_24ccb1d7c124ea29_e9136642",
+"name": "Anyone can change another ticket’s appointment",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-create-appointment/index.ts"
+},
+"details": "Location: supabase/functions/ticket-create-appointment/index.ts"
+},
+{
+"internal_id": "lov_finding_257a1a05a2ec345e",
+"name": "Any workspace member can search customer records across tenants",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_26ec1c8b0892a48e_3d2e13d0",
+"name": "Any sales or service user can contact any customer",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_26ec1c8b0892a48e_4ae2f503",
+"name": "Staff can send arbitrary reminder SMS text",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_26ec1c8b0892a48e_8c170482",
+"name": "Staff can send custom customer emails",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_26ec1c8b0892a48e_9482d907",
+"name": "Staff can message any selected customer",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_26ec1c8b0892a48e_99221440",
+"name": "Staff can send custom customer emails",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_26ec1c8b0892a48e_a593460a",
+"name": "Reminder role can retrieve any customer's contact details",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_118503e3",
+"name": "Any signed-in user can manipulate sales-lead searches",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_1f68da48",
+"name": "Any signed-in user can retrieve extra data through the copilot",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_283bf1ac",
+"name": "Authenticated users can supply model instruction roles",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_2cf3a0b0",
+"name": "Any workspace member can widen device searches",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_38118044",
+"name": "Any signed-in user can manipulate device searches",
+"level": "error",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_3c9af058",
+"name": "Any signed-in user can set copilot instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_4c48cf10",
+"name": "Any finance user can manipulate invoice searches",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_52f768d4",
+"name": "Any workspace member can widen production searches",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_5a6e4205",
+"name": "Any signed-in user can set copilot instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_6202407f",
+"name": "Any signed-in user can manipulate device searches",
+"level": "error",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_755f7fcf",
+"name": "Any signed-in user can send messages as the AI",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_9de4994d",
+"name": "Any signed-in user can set copilot instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_9df008c0",
+"name": "Any signed-in user can send messages as the AI",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_274746008eddd8d1_bbba6ea4",
+"name": "Authenticated users can supply model instruction roles",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_296ecccd06ebdc19",
+"name": "Any workspace member can embed formulas in cost exports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "src/pages/Dispatch/Kosten.tsx"
+},
+"details": "Location: src/pages/Dispatch/Kosten.tsx"
+},
+{
+"internal_id": "lov_finding_2a0a6ab683598d2c",
+"name": "Any signed-in user can change another user's conversation",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_2ad517073e19d7a3",
+"name": "Finance users can send and mark any customer's reminder",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-reminder-send/index.ts"
+},
+"details": "Location: supabase/functions/finance-reminder-send/index.ts"
+},
+{
+"internal_id": "lov_finding_2bc3d9f7d79e8045",
+"name": "Ordinary users can send survey invitations",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/survey-send-invites/index.ts"
+},
+"details": "Location: supabase/functions/survey-send-invites/index.ts"
+},
+{
+"internal_id": "lov_finding_2bcc48cd6b374a60",
+"name": "Dunning email recipient is caller-controlled",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/return-debit-dunning-resend/index.ts"
+},
+"details": "Location: supabase/functions/return-debit-dunning-resend/index.ts"
+},
+{
+"internal_id": "lov_finding_2c6eeae643a145a5",
+"name": "Any signed-in user can release another customer's invoices",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/pruefung-release/index.ts"
+},
+"details": "Location: supabase/functions/pruefung-release/index.ts"
+},
+{
+"internal_id": "lov_finding_2c7eff56f6c247f6",
+"name": "Any signed-in user can alter AI chat roles",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ai-center-chat/index.ts"
+},
+"details": "Location: supabase/functions/ai-center-chat/index.ts"
+},
+{
+"internal_id": "lov_finding_2cda12758b491ae3",
+"name": "Signed-in callers can send WhatsApp to arbitrary recipients",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_2d96488747bd90ab",
+"name": "Unassigned approval states can be decided by any signed-in user",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-approval-decide/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-approval-decide/index.ts"
+},
+{
+"internal_id": "lov_finding_2dd3d018aad3a1dc",
+"name": "Any workspace member can make catalog exports run formulas",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/pages/Katalog/ImportCsv.tsx"
+},
+"details": "Location: src/pages/Katalog/ImportCsv.tsx"
+},
+{
+"internal_id": "lov_finding_312fcf7bf6edca18_3be70c29",
+"name": "Any invoice manager can send caller-written email via Resend",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-invoice-mail/index.ts"
+},
+"details": "Location: supabase/functions/send-invoice-mail/index.ts"
+},
+{
+"internal_id": "lov_finding_31c72ba6cc9913bc",
+"name": "Dunning run bypasses tenant ownership checks",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/cmr-dunning-run/index.ts"
+},
+"details": "Location: supabase/functions/cmr-dunning-run/index.ts"
+},
+{
+"internal_id": "lov_finding_321b0bea0163279e",
+"name": "Any finance user can create records across tenants",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-document-generate/index.ts"
+},
+"details": "Location: supabase/functions/collect-document-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_3274dc7f2d773bec",
+"name": "Finance users can send another customer's payment reminder",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-reminder-send/index.ts"
+},
+"details": "Location: supabase/functions/finance-reminder-send/index.ts"
+},
+{
+"internal_id": "lov_finding_337968c6b05c6bb6",
+"name": "Fee-invoice email recipient is caller-controlled",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/return-debit-fee-invoice-send/index.ts"
+},
+"details": "Location: supabase/functions/return-debit-fee-invoice-send/index.ts"
+},
+{
+"internal_id": "lov_finding_350c168072380016",
+"name": "Staff can send unbounded message text to ticket customers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-customer-notify/index.ts"
+},
+"details": "Location: supabase/functions/ticket-customer-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_354aea63d3df7954",
+"name": "Any signed-in user can view all visitor chat statistics",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260721080634_37469539-701c-48d1-9036-078f76f78e43.sql"
+},
+"details": "Location: supabase/migrations/20260721080634_37469539-701c-48d1-9036-078f76f78e43.sql"
+},
+{
+"internal_id": "lov_finding_354aea63d3df7954_c76d1c81",
+"name": "Any signed-in user can see chat-service metrics",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/8832c7bbed358a93c83b292dea430d459963c3ae93e1e8f9e25516fb23b7e870.sql"
+},
+"details": "Location: security-database-snapshot/8832c7bbed358a93c83b292dea430d459963c3ae93e1e8f9e25516fb23b7e870.sql"
+},
+{
+"internal_id": "lov_finding_35f07aac3006ae6a",
+"name": "Users can access restricted knowledge-base entries via copilot",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-copilot/index.ts"
+},
+"details": "Location: supabase/functions/ac-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_367456709949d600",
+"name": "Any signed-in administrator can send invites to any address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/social-onboarding-invite/index.ts"
+},
+"details": "Location: supabase/functions/social-onboarding-invite/index.ts"
+},
+{
+"internal_id": "lov_finding_36b05dc3eae268c4",
+"name": "Any signed-in user can broaden the knowledge search",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-copilot/index.ts"
+},
+"details": "Location: supabase/functions/ac-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_37aebb1aa2b73448",
+"name": "Any signed-in user can message any WhatsApp contact",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_37d780060351d132",
+"name": "Any signed-in user can send order updates to chosen addresses",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_3945c4fc0435bfbd",
+"name": "Ordinary users can create links to arbitrary documents",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-share-create/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-share-create/index.ts"
+},
+{
+"internal_id": "lov_finding_3a84ba389632eb77_4c53d990",
+"name": "Any signed-in user can approve invoices",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-approval-action/index.ts"
+},
+"details": "Location: supabase/functions/finance-approval-action/index.ts"
+},
+{
+"internal_id": "lov_finding_3a84ba389632eb77_e50601b0",
+"name": "Any signed-in user can approve invoices",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-approval-action/index.ts"
+},
+"details": "Location: supabase/functions/finance-approval-action/index.ts"
+},
+{
+"internal_id": "lov_finding_3ac58bda196e1252",
+"name": "Anyone can place formulas in analytics exports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/components/CustomerEditDialog.tsx"
+},
+"details": "Location: src/components/CustomerEditDialog.tsx"
+},
+{
+"internal_id": "lov_finding_3b5015328924feec",
+"name": "Any signed-in customer can guess a contract signing code",
+"level": "warn",
+"category": "leaked_secrets",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/portal-contract-sign-confirm/index.ts"
+},
+"details": "Location: supabase/functions/portal-contract-sign-confirm/index.ts"
+},
+{
+"internal_id": "lov_finding_3c5d483058625bb9",
+"name": "Authorized staff can email arbitrary recipients",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-transactional-email/index.ts"
+},
+"details": "Location: supabase/functions/send-transactional-email/index.ts"
+},
+{
+"internal_id": "lov_finding_3cea0000acc26bb1",
+"name": "Any support staff member can email any customer",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_3dec4d354164ba27",
+"name": "Any signed-in user can see company-wide dashboard totals",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260804184126_b8a11bb9-a2dc-44f9-9209-14a6cef0f710.sql"
+},
+"details": "Location: supabase/migrations/20260804184126_b8a11bb9-a2dc-44f9-9209-14a6cef0f710.sql"
+},
+{
+"internal_id": "lov_finding_3defacc3a365edd2_74bf173c",
+"name": "Catalog or sales users can email chosen recipients",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/pages/Katalog/Versand.tsx"
+},
+"details": "Location: src/pages/Katalog/Versand.tsx"
+},
+{
+"internal_id": "lov_finding_3defacc3a365edd2_e669c240",
+"name": "Authorized mail senders can email anyone",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-mail/index.ts"
+},
+"details": "Location: supabase/functions/send-mail/index.ts"
+},
+{
+"internal_id": "lov_finding_3e6f3a3c10a40230",
+"name": "Any signed-in user can release held invoices",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/pruefung-release/index.ts"
+},
+"details": "Location: supabase/functions/pruefung-release/index.ts"
+},
+{
+"internal_id": "lov_finding_3e98351e84204cdc",
+"name": "Signed-in users can send arbitrary branded appointment emails",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/esc-appointment-confirmation-mail/index.ts"
+},
+"details": "Location: supabase/functions/esc-appointment-confirmation-mail/index.ts"
+},
+{
+"internal_id": "lov_finding_3ea021c1d0b82932",
+"name": "Admin SMS test can message any caller-chosen number",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sms-config-test/handler.ts"
+},
+"details": "Location: supabase/functions/sms-config-test/handler.ts"
+},
+{
+"internal_id": "lov_finding_3f531b21758d8b2f",
+"name": "Authorized mail senders can email anyone",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-mail/index.ts"
+},
+"details": "Location: supabase/functions/send-mail/index.ts"
+},
+{
+"internal_id": "lov_finding_407a2fad5d5da185",
+"name": "Anyone can create document links",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-link-suggest/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-link-suggest/index.ts"
+},
+{
+"internal_id": "lov_finding_41a6b36a5369c756",
+"name": "Any signed-in user can change another invoice's number",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/79da66bc46fb33a98ac1016738a22a3d01a9ad5fc8547ff5071871b867a0aa2f.sql"
+},
+"details": "Location: security-database-snapshot/79da66bc46fb33a98ac1016738a22a3d01a9ad5fc8547ff5071871b867a0aa2f.sql"
+},
+{
+"internal_id": "lov_finding_4329f15ed75c1d5a",
+"name": "Any signed-in administrator can send invites to any address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/social-onboarding-invite/index.ts"
+},
+"details": "Location: supabase/functions/social-onboarding-invite/index.ts"
+},
+{
+"internal_id": "lov_finding_43ed7481be92428b",
+"name": "Internal staff can view visitor sessions for any website",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20261121023006_05b41a91-172a-477d-bf9e-a0dc4343b661.sql"
+},
+"details": "Location: supabase/migrations/20261121023006_05b41a91-172a-477d-bf9e-a0dc4343b661.sql"
+},
+{
+"internal_id": "lov_finding_4407f8e2c02b90d3",
+"name": "Finance users can access collection cases across tenants",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-send-dunning/index.ts"
+},
+"details": "Location: supabase/functions/collect-send-dunning/index.ts"
+},
+{
+"internal_id": "lov_finding_44851e3d5e229a61",
+"name": "Public transcription endpoint exposes paid AI results",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-portal-transcribe/index.ts"
+},
+"details": "Location: supabase/functions/ac-portal-transcribe/index.ts"
+},
+{
+"internal_id": "lov_finding_44bb365e2d552fde",
+"name": "Anyone can create document links",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-link-suggest/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-link-suggest/index.ts"
+},
+{
+"internal_id": "lov_finding_44ddf2563f3b0bce",
+"name": "CMR role can update another tenant's document",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/cmr-send-document/index.ts"
+},
+"details": "Location: supabase/functions/cmr-send-document/index.ts"
+},
+{
+"internal_id": "lov_finding_4603653a4deab442",
+"name": "Signature requests bypass the send-role gate",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-sign-request/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-sign-request/index.ts"
+},
+{
+"internal_id": "lov_finding_47008b040e014166_521b9608",
+"name": "Share sender emails caller-written content",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/catalog-share-send/index.ts"
+},
+"details": "Location: supabase/functions/catalog-share-send/index.ts"
+},
+{
+"internal_id": "lov_finding_47008b040e014166_696ebfbe",
+"name": "Share sender sends caller-written WhatsApp text",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/catalog-share-send/index.ts"
+},
+"details": "Location: supabase/functions/catalog-share-send/index.ts"
+},
+{
+"internal_id": "lov_finding_47ae15b5e9930b79",
+"name": "Any signed-in user can send shipment emails from your app",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/carrier-shipment-send/index.ts"
+},
+"details": "Location: supabase/functions/carrier-shipment-send/index.ts"
+},
+{
+"internal_id": "lov_finding_47c516bf79325c89",
+"name": "Any workspace member can add formulas to document reports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-upload/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-upload/index.ts"
+},
+{
+"internal_id": "lov_finding_48084827c1e59520",
+"name": "System push exposes another conversation preview",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-mobile-notification/index.ts"
+},
+"details": "Location: supabase/functions/send-mobile-notification/index.ts"
+},
+{
+"internal_id": "lov_finding_4bd5ac08511c8e04",
+"name": "Caller controls reminder SMS content",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/as-send-sms-reminder/index.ts"
+},
+"details": "Location: supabase/functions/as-send-sms-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_4c0bbf2efd550541",
+"name": "Webhook test posts to any HTTPS destination",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-marketplace/index.ts"
+},
+"details": "Location: supabase/functions/ac-marketplace/index.ts"
+},
+{
+"internal_id": "lov_finding_4dae28ce19ac1dfb",
+"name": "Any workspace member can make customer exports run formulas",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/components/CustomerEditDialog.tsx"
+},
+"details": "Location: src/components/CustomerEditDialog.tsx"
+},
+{
+"internal_id": "lov_finding_51533bb728cbdfe3",
+"name": "Any signed-in user can view every site's journey analytics",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260721070425_dc139c4a-c062-4a16-8408-dbf332b8cc1f.sql"
+},
+"details": "Location: supabase/migrations/20260721070425_dc139c4a-c062-4a16-8408-dbf332b8cc1f.sql"
+},
+{
+"internal_id": "lov_finding_51533bb728cbdfe3_c76d1c81",
+"name": "Any signed-in user can see visitor trends",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/819c55952a88c8547b559b63f29b8c56521dc1fb696195ab9a7f27fa4ec65131.sql"
+},
+"details": "Location: security-database-snapshot/819c55952a88c8547b559b63f29b8c56521dc1fb696195ab9a7f27fa4ec65131.sql"
+},
+{
+"internal_id": "lov_finding_5219762f92dc1e2c",
+"name": "Any signed-in user can store unchecked files",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_532bdb465c4e30b2",
+"name": "Anyone with a link can inject HTML into staff emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mediapaket-portal/index.ts"
+},
+"details": "Location: supabase/functions/mediapaket-portal/index.ts"
+},
+{
+"internal_id": "lov_finding_535486a5042bfed2",
+"name": "Admin document search bypasses assigned tenant scope",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-ai-search/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-ai-search/index.ts"
+},
+{
+"internal_id": "lov_finding_5374119f29248b31",
+"name": "Anyone can trigger metered AI completion requests",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sales-wizard-submit/index.ts"
+},
+"details": "Location: supabase/functions/sales-wizard-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_5422295243c00d10",
+"name": "A partner can read another partner's signing request",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sig-partner-api/index.ts"
+},
+"details": "Location: supabase/functions/sig-partner-api/index.ts"
+},
+{
+"internal_id": "lov_finding_552dbb84f3b24cb8",
+"name": "Any signed-in user can view another website's visitor map",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/9dca64c6b8218f39af20139d0001026f6222e31182b6e67000d571329aaee3fa.sql"
+},
+"details": "Location: security-database-snapshot/9dca64c6b8218f39af20139d0001026f6222e31182b6e67000d571329aaee3fa.sql"
+},
+{
+"internal_id": "lov_finding_5659b14729ec391a",
+"name": "Any authenticated user can read employee scheduling settings",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/esc-ai-suggest/index.ts"
+},
+"details": "Location: supabase/functions/esc-ai-suggest/index.ts"
+},
+{
+"internal_id": "lov_finding_56d0c79c1318c3ea",
+"name": "Admin can make the canary fetch arbitrary URLs",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/product-hub-com-canary/index.ts"
+},
+"details": "Location: supabase/functions/product-hub-com-canary/index.ts"
+},
+{
+"internal_id": "lov_finding_5815675e82477a6d",
+"name": "Delivery token can be sent to a caller-chosen recipient",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-appointment-send/index.ts"
+},
+"details": "Location: supabase/functions/delivery-appointment-send/index.ts"
+},
+{
+"internal_id": "lov_finding_582b5258efdada88",
+"name": "Anyone can change another ticket’s appointment",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-create-appointment/index.ts"
+},
+"details": "Location: supabase/functions/ticket-create-appointment/index.ts"
+},
+{
+"internal_id": "lov_finding_5976c437ba1e2613_49365ac2",
+"name": "Any signed-in user can add an internal note to any ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mobile-voice-transcribe/index.ts"
+},
+"details": "Location: supabase/functions/mobile-voice-transcribe/index.ts"
+},
+{
+"internal_id": "lov_finding_5976c437ba1e2613_56745222",
+"name": "Any signed-in caller can add an internal note to any ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mobile-voice-transcribe/index.ts"
+},
+"details": "Location: supabase/functions/mobile-voice-transcribe/index.ts"
+},
+{
+"internal_id": "lov_finding_59d025243a7e5687_3be70c29",
+"name": "Any signed-in user can send survey invitations",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/survey-send-invites/index.ts"
+},
+"details": "Location: supabase/functions/survey-send-invites/index.ts"
+},
+{
+"internal_id": "lov_finding_59d6fbc797843e0f",
+"name": "Finance users can add already-approved invoice records",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260719143705_2820fec9-d902-4cd1-b273-ea0db8112696.sql"
+},
+"details": "Location: supabase/migrations/20260719143705_2820fec9-d902-4cd1-b273-ea0db8112696.sql"
+},
+{
+"internal_id": "lov_finding_5a4b77537eec8b00",
+"name": "ZIP download trusts caller-writable version storage paths",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-zip/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-zip/index.ts"
+},
+{
+"internal_id": "lov_finding_5bc0d5b650d13e8b",
+"name": "Any workspace member can modify ticket AI system instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-ai-assist/index.ts"
+},
+"details": "Location: supabase/functions/ticket-ai-assist/index.ts"
+},
+{
+"internal_id": "lov_finding_5c7be8cb8b467dc0",
+"name": "Finance users can email collection documents to any address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-document-generate/index.ts"
+},
+"details": "Location: supabase/functions/collect-document-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_5ca4124025dad7ab",
+"name": "Finance reports expose transactions beyond caller scope",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-report-run/index.ts"
+},
+"details": "Location: supabase/functions/finance-report-run/index.ts"
+},
+{
+"internal_id": "lov_finding_5d6fbfeb3491514f",
+"name": "Anyone can probe customer existence via lead submission",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sales-wizard-submit/index.ts"
+},
+"details": "Location: supabase/functions/sales-wizard-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_5df439c668b04931",
+"name": "Any planning user can see every technician’s route plan",
+"level": "warn",
+"category": "account_security",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/pages/Mobile/Home.tsx"
+},
+"details": "Location: src/pages/Mobile/Home.tsx"
+},
+{
+"internal_id": "lov_finding_5e2415c314caa5f3",
+"name": "Statistics endpoint exposes cross-tenant document data",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-stats/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-stats/index.ts"
+},
+{
+"internal_id": "lov_finding_5e865420cc71ba0c",
+"name": "Finance users can send arbitrary SMS content to customers",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-send-sms/index.ts"
+},
+"details": "Location: supabase/functions/collect-send-sms/index.ts"
+},
+{
+"internal_id": "lov_finding_5f0099b70185d10a",
+"name": "Customer details are served without caller authentication",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/customer-portal-lookup/index.ts"
+},
+"details": "Location: supabase/functions/customer-portal-lookup/index.ts"
+},
+{
+"internal_id": "lov_finding_61db72fc9101d76e",
+"name": "Any signed-in user can inject markup into offer emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/portal-offer-action/index.ts"
+},
+"details": "Location: supabase/functions/portal-offer-action/index.ts"
+},
+{
+"internal_id": "lov_finding_669414f8e21adaae",
+"name": "Anyone can change another user's ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-create-appointment/index.ts"
+},
+"details": "Location: supabase/functions/ticket-create-appointment/index.ts"
+},
+{
+"internal_id": "lov_finding_66ff4724117f7742",
+"name": "Any signed-in user can change others' document details",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-ai-process/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-ai-process/index.ts"
+},
+{
+"internal_id": "lov_finding_6708a45359831172",
+"name": "Any finance user can email payment demands to anyone",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-send-dunning/index.ts"
+},
+"details": "Location: supabase/functions/collect-send-dunning/index.ts"
+},
+{
+"internal_id": "lov_finding_6976c8d7670ec21d",
+"name": "Any workspace member can view mobile escalation rules",
+"level": "error",
+"category": "account_security",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/pages/Mobil/AdminEskalationen.tsx"
+},
+"details": "Location: src/pages/Mobil/AdminEskalationen.tsx"
+},
+{
+"internal_id": "lov_finding_6cdb90a4e4b3d4f9",
+"name": "Any super admin can email reports to anyone",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/aic-send-report/index.ts"
+},
+"details": "Location: supabase/functions/aic-send-report/index.ts"
+},
+{
+"internal_id": "lov_finding_6d52198b70eb0d66",
+"name": "Unauthenticated visitors can use the paid AI chat endpoint",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-portal-chat/index.ts"
+},
+"details": "Location: supabase/functions/ac-portal-chat/index.ts"
+},
+{
+"internal_id": "lov_finding_6ec845a722912cec_2323e474",
+"name": "Shipment assignments lack caller ownership checks",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/carrier-shipment-send/index.ts"
+},
+"details": "Location: supabase/functions/carrier-shipment-send/index.ts"
+},
+{
+"internal_id": "lov_finding_6ec845a722912cec_362111fa",
+"name": "Signed-in users can send any shipment assignment",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/carrier-shipment-send/index.ts"
+},
+"details": "Location: supabase/functions/carrier-shipment-send/index.ts"
+},
+{
+"internal_id": "lov_finding_6ec845a722912cec_a500108a",
+"name": "Signed-in users can send from arbitrary shipment assignments",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/carrier-shipment-send/index.ts"
+},
+"details": "Location: supabase/functions/carrier-shipment-send/index.ts"
+},
+{
+"internal_id": "lov_finding_6f0047eafdff148c",
+"name": "Any signed-in user can trigger recurring-payment notices",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/recurring-prenotification/index.ts"
+},
+"details": "Location: supabase/functions/recurring-prenotification/index.ts"
+},
+{
+"internal_id": "lov_finding_70c84e6ba8f516cf",
+"name": "A member can point a document to another user's file",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-signed-url/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-signed-url/index.ts"
+},
+{
+"internal_id": "lov_finding_7126e42bc894e004_d077ebde",
+"name": "Finance users can email collection documents to any address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-document-generate/index.ts"
+},
+"details": "Location: supabase/functions/collect-document-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_713401a53f02baae_403bb23a",
+"name": "Any signed-in user can attach calls to others' records",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-3cx-call/index.ts"
+},
+"details": "Location: supabase/functions/ac-3cx-call/index.ts"
+},
+{
+"internal_id": "lov_finding_713401a53f02baae_68a519e2",
+"name": "Any signed-in user can attach calls to another user's contacts",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-3cx-call/index.ts"
+},
+"details": "Location: supabase/functions/ac-3cx-call/index.ts"
+},
+{
+"internal_id": "lov_finding_7353d35057dade91",
+"name": "Any signed-in sales user can send custom texts to customers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/catalog-share-send/index.ts"
+},
+"details": "Location: supabase/functions/catalog-share-send/index.ts"
+},
+{
+"internal_id": "lov_finding_73a591d5686cae09",
+"name": "Any signed-in user can view every tenant's attribution totals",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260721082103_50fc9f30-638f-4a39-aa63-13c45b1b95b8.sql"
+},
+"details": "Location: supabase/migrations/20260721082103_50fc9f30-638f-4a39-aa63-13c45b1b95b8.sql"
+},
+{
+"internal_id": "lov_finding_7499e1c0b5b5eab0",
+"name": "Compliance export bypasses document tenant scope",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-compliance-export/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-compliance-export/index.ts"
+},
+{
+"internal_id": "lov_finding_74e13969233e5319",
+"name": "Any signed-in user can send payment reminders to customers",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/recurring-prenotification/index.ts"
+},
+"details": "Location: supabase/functions/recurring-prenotification/index.ts"
+},
+{
+"internal_id": "lov_finding_753f96e33146f59a",
+"name": "Request text is inserted into the system prompt",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-draft-reply/index.ts"
+},
+"details": "Location: supabase/functions/ac-draft-reply/index.ts"
+},
+{
+"internal_id": "lov_finding_75a833f07ddd47bb",
+"name": "Any signed-in user can add an internal note to any ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mobile-voice-transcribe/index.ts"
+},
+"details": "Location: supabase/functions/mobile-voice-transcribe/index.ts"
+},
+{
+"internal_id": "lov_finding_76945bb32b730aa5",
+"name": "Any workspace member can add formulas to audit reports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-upload/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-upload/index.ts"
+},
+{
+"internal_id": "lov_finding_773ec74739954988",
+"name": "Any signed-in user can copy any mail attachment",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-mail-import/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-mail-import/index.ts"
+},
+{
+"internal_id": "lov_finding_77810b1b4b728af7",
+"name": "Any signed-in user can view another site's goal results",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260720205540_12d9e922-2380-414e-81fd-03062eda49ac.sql"
+},
+"details": "Location: supabase/migrations/20260720205540_12d9e922-2380-414e-81fd-03062eda49ac.sql"
+},
+{
+"internal_id": "lov_finding_7a7508d7818bce20_29d2555c",
+"name": "Admins can log customer billing addresses to service logs",
+"level": "warn",
+"category": "exposed_data",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/start-zoho-import/index.ts"
+},
+"details": "Location: supabase/functions/start-zoho-import/index.ts"
+},
+{
+"internal_id": "lov_finding_7a7508d7818bce20_6e21726d",
+"name": "Admins can log customer billing addresses to service logs",
+"level": "warn",
+"category": "exposed_data",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/start-zoho-import/index.ts"
+},
+"details": "Location: supabase/functions/start-zoho-import/index.ts"
+},
+{
+"internal_id": "lov_finding_7b51bde1f564aa8d_40059d64",
+"name": "Any signed-in user can read another user's conversations",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-draft-reply/index.ts"
+},
+"details": "Location: supabase/functions/ac-draft-reply/index.ts"
+},
+{
+"internal_id": "lov_finding_7b51bde1f564aa8d_4d928319",
+"name": "Any signed-in user can change reply instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-draft-reply/index.ts"
+},
+"details": "Location: supabase/functions/ac-draft-reply/index.ts"
+},
+{
+"internal_id": "lov_finding_7b51bde1f564aa8d_ca75eab5",
+"name": "Any signed-in user can read another tenant's messages",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-draft-reply/index.ts"
+},
+"details": "Location: supabase/functions/ac-draft-reply/index.ts"
+},
+{
+"internal_id": "lov_finding_7b51bde1f564aa8d_db5bbd15",
+"name": "Any signed-in user can add instructions to reply drafts",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-draft-reply/index.ts"
+},
+"details": "Location: supabase/functions/ac-draft-reply/index.ts"
+},
+{
+"internal_id": "lov_finding_7cf31af852f86c9b",
+"name": "Any workspace member can alter order searches",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_7f3cf914eb1ff11a",
+"name": "Any signed-in user can inject markup into support emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/portal-maintenance-request/index.ts"
+},
+"details": "Location: supabase/functions/portal-maintenance-request/index.ts"
+},
+{
+"internal_id": "lov_finding_7fb9f5542d6a8734",
+"name": "Any signed-in user can alter your product catalog",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/import-alix-lasers-de/index.ts"
+},
+"details": "Location: supabase/functions/import-alix-lasers-de/index.ts"
+},
+{
+"internal_id": "lov_finding_813f30cdfce0d3a0",
+"name": "Any signed-in user can read another tenant's messages",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-draft-reply/index.ts"
+},
+"details": "Location: supabase/functions/ac-draft-reply/index.ts"
+},
+{
+"internal_id": "lov_finding_81bdd37afb94b959",
+"name": "Any product editor can mark queued changes approved",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260816070745_0ac1d1e4-b8e7-4de3-b202-c2c2fac5a368.sql"
+},
+"details": "Location: supabase/migrations/20260816070745_0ac1d1e4-b8e7-4de3-b202-c2c2fac5a368.sql"
+},
+{
+"internal_id": "lov_finding_829c1c827b03a4e8",
+"name": "Any signed-in user can send deceptive approval emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-approval-mail/index.ts"
+},
+"details": "Location: supabase/functions/delivery-approval-mail/index.ts"
+},
+{
+"internal_id": "lov_finding_82fa0f2066ce7b4b",
+"name": "System push exposes another conversation preview",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-mobile-notification/index.ts"
+},
+"details": "Location: supabase/functions/send-mobile-notification/index.ts"
+},
+{
+"internal_id": "lov_finding_834103d6b724468c",
+"name": "Any signed-in user with mail access can send email to others",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-transactional-email/index.ts"
+},
+"details": "Location: supabase/functions/send-transactional-email/index.ts"
+},
+{
+"internal_id": "lov_finding_840f31fb29294dc7",
+"name": "Admins can send arbitrary test SMS messages to any number",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sms-config-test/index.ts"
+},
+"details": "Location: supabase/functions/sms-config-test/index.ts"
+},
+{
+"internal_id": "lov_finding_860f4ef640ddf1ef",
+"name": "Anyone with access to your app can alter AI instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_86a979bd8688c2a0",
+"name": "CMR users can send arbitrary invoice emails to any address",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/cmr-send-document/index.ts"
+},
+"details": "Location: supabase/functions/cmr-send-document/index.ts"
+},
+{
+"internal_id": "lov_finding_86c2e27b97555ad5",
+"name": "Any signed-in user can view all visitor chat statistics",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260721082103_50fc9f30-638f-4a39-aa63-13c45b1b95b8.sql"
+},
+"details": "Location: supabase/migrations/20260721082103_50fc9f30-638f-4a39-aa63-13c45b1b95b8.sql"
+},
+{
+"internal_id": "lov_finding_86c2e27b97555ad5_c76d1c81",
+"name": "Any signed-in user can see chat-service metrics",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/44cec3c4570ec4ce795ae2d447cab5124284ed03a5499b1cb992f6fac79b0230.sql"
+},
+"details": "Location: security-database-snapshot/44cec3c4570ec4ce795ae2d447cab5124284ed03a5499b1cb992f6fac79b0230.sql"
+},
+{
+"internal_id": "lov_finding_86d3d8b71cfd055f",
+"name": "Any finance user can create another tenant’s payment link",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-payment-link/index.ts"
+},
+"details": "Location: supabase/functions/collect-payment-link/index.ts"
+},
+{
+"internal_id": "lov_finding_8703f96241dee35e_58c949e8",
+"name": "Any signed-in user can sync a caller-selected protected ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sync-to-alixsmart/index.ts"
+},
+"details": "Location: supabase/functions/sync-to-alixsmart/index.ts"
+},
+{
+"internal_id": "lov_finding_8703f96241dee35e_6c522b90",
+"name": "Any signed-in user can send another customer's ticket details",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sync-to-alixsmart/index.ts"
+},
+"details": "Location: supabase/functions/sync-to-alixsmart/index.ts"
+},
+{
+"internal_id": "lov_finding_88258edabeaa20ea_18e79574",
+"name": "Signed-in users can send order emails to arbitrary recipients",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_88258edabeaa20ea_d770c8e3",
+"name": "Delivery status can be sent to a caller-chosen recipient",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_88c82a38d6bfce36",
+"name": "Any workspace member can alter the copilot's searches",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_8ae04f1731d06cca",
+"name": "Regional finance users can read QR invoices outside their region",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-qr-generate/index.ts"
+},
+"details": "Location: supabase/functions/finance-qr-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_8bbd440488ec9ff0",
+"name": "Regional finance users can read QR invoices outside their region",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-qr-generate/index.ts"
+},
+"details": "Location: supabase/functions/finance-qr-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_8bdc85f5f83cc25e",
+"name": "Any signed-in user can reach factory invoicing by email",
+"level": "warn",
+"category": "account_security",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "src/App.tsx"
+},
+"details": "Location: src/App.tsx"
+},
+{
+"internal_id": "lov_finding_8cc11e86523a6a1b",
+"name": "Anyone with a repair link can alter service emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/repair-quote-decision/index.ts"
+},
+"details": "Location: supabase/functions/repair-quote-decision/index.ts"
+},
+{
+"internal_id": "lov_finding_8deae0c69b850acd",
+"name": "Any signed-in user can make your app contact any website",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/copilot-fetch-url/index.ts"
+},
+"details": "Location: supabase/functions/copilot-fetch-url/index.ts"
+},
+{
+"internal_id": "lov_finding_8e3d589187acfdc1_8393a0d4",
+"name": "Any signed-in user can see dispatch and customer details",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/dispatch-ai-assistant/index.ts"
+},
+"details": "Location: supabase/functions/dispatch-ai-assistant/index.ts"
+},
+{
+"internal_id": "lov_finding_8e3d589187acfdc1_ddb93816",
+"name": "Signed-in users can read delivery data across tenants",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/dispatch-ai-assistant/index.ts"
+},
+"details": "Location: supabase/functions/dispatch-ai-assistant/index.ts"
+},
+{
+"internal_id": "lov_finding_8e7966c77c5efbe1",
+"name": "Reminder override allows arbitrary recipients",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/rz-reminder-send/index.ts"
+},
+"details": "Location: supabase/functions/rz-reminder-send/index.ts"
+},
+{
+"internal_id": "lov_finding_8ebc1bdaa1ebf951",
+"name": "Signing endpoint stores arbitrary bytes as a PDF",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-sign-submit/index.ts"
+},
+"details": "Location: supabase/functions/alix-sign-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_90686d94d031b2cd",
+"name": "Public rental intake queries protected customer records",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/rental-request-submit/index.ts"
+},
+"details": "Location: supabase/functions/rental-request-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_9238e956e4e4062d",
+"name": "Any signed-in user can start document approvals",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-approval-start/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-approval-start/index.ts"
+},
+{
+"internal_id": "lov_finding_93b12ef31e7a012a",
+"name": "Any finance user can falsely settle collections",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260729184501_f808841f-dcc4-4e9d-9b0e-23a154c65423.sql"
+},
+"details": "Location: supabase/migrations/20260729184501_f808841f-dcc4-4e9d-9b0e-23a154c65423.sql"
+},
+{
+"internal_id": "lov_finding_94d5de7f4e719207",
+"name": "Signed-in users can send delivery SMS to arbitrary numbers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_950e4d36fbffec94",
+"name": "Any finance user can see admin-only billing records",
+"level": "error",
+"category": "account_security",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260714124023_f0525f30-7fd6-42e6-b5dd-31d80b4b7061.sql"
+},
+"details": "Location: supabase/migrations/20260714124023_f0525f30-7fd6-42e6-b5dd-31d80b4b7061.sql"
+},
+{
+"internal_id": "lov_finding_950f643578026644",
+"name": "Any signed-in user can view every tenant's visitor cohorts",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260721080634_37469539-701c-48d1-9036-078f76f78e43.sql"
+},
+"details": "Location: supabase/migrations/20260721080634_37469539-701c-48d1-9036-078f76f78e43.sql"
+},
+{
+"internal_id": "lov_finding_956310c904efe1c2",
+"name": "Finance users can generate documents for arbitrary cases",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-document-generate/index.ts"
+},
+"details": "Location: supabase/functions/collect-document-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_96a4ae412ce2a520",
+"name": "Any signed-in user can start another user's approval",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-approval-start/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-approval-start/index.ts"
+},
+{
+"internal_id": "lov_finding_96c890533366dba8",
+"name": "Anyone can trigger the staff announcement",
+"level": "error",
+"category": "leaked_secrets",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/announce-capa-cockpit/index.ts"
+},
+"details": "Location: supabase/functions/announce-capa-cockpit/index.ts"
+},
+{
+"internal_id": "lov_finding_96de51807866d281",
+"name": "Anyone can send a company-wide announcement",
+"level": "warn",
+"category": "leaked_secrets",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/announce-capa-cockpit/index.ts"
+},
+"details": "Location: supabase/functions/announce-capa-cockpit/index.ts"
+},
+{
+"internal_id": "lov_finding_97a38134b3c829cb",
+"name": "Signed-in callers can send WhatsApp to arbitrary recipients",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_98051a4a477129d7",
+"name": "Any signed-in user can request signatures on others' documents",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-sign-request/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-sign-request/index.ts"
+},
+{
+"internal_id": "lov_finding_982d4e7da963d70c",
+"name": "Any signed-in user can read another tenant's messages",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-draft-reply/index.ts"
+},
+"details": "Location: supabase/functions/ac-draft-reply/index.ts"
+},
+{
+"internal_id": "lov_finding_9a1236c1ec5aad94",
+"name": "Caller-controlled tone is embedded in the system prompt",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-ai-assist/index.ts"
+},
+"details": "Location: supabase/functions/ticket-ai-assist/index.ts"
+},
+{
+"internal_id": "lov_finding_9be076cefe3fc4a5",
+"name": "Regional finance users can send payment demands across regions",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-send-dunning/index.ts"
+},
+"details": "Location: supabase/functions/collect-send-dunning/index.ts"
+},
+{
+"internal_id": "lov_finding_9d259994222f49a7",
+"name": "Approved staff roles can read arbitrary order and bank records",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-anzahlung-mahnung/index.ts"
+},
+"details": "Location: supabase/functions/send-anzahlung-mahnung/index.ts"
+},
+{
+"internal_id": "lov_finding_9dba44d0fdbab251",
+"name": "SMS override lets callers choose an arbitrary recipient",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/op-light-send-sms/index.ts"
+},
+"details": "Location: supabase/functions/op-light-send-sms/index.ts"
+},
+{
+"internal_id": "lov_finding_9dfb838caf9db299",
+"name": "Any signed-in user can share other users’ documents",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-share-create/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-share-create/index.ts"
+},
+{
+"internal_id": "lov_finding_9ed2025a8ee01c37",
+"name": "Batch push lets writable mappings select remote records",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ph-com-lang-push/index.ts"
+},
+"details": "Location: supabase/functions/ph-com-lang-push/index.ts"
+},
+{
+"internal_id": "lov_finding_a11f999fb688bec4",
+"name": "Uploaded document can be attached to any customer or order",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_a161f65bae010e22",
+"name": "Signed-in users can email any survey’s recipients",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/survey-send-invites/index.ts"
+},
+"details": "Location: supabase/functions/survey-send-invites/index.ts"
+},
+{
+"internal_id": "lov_finding_a3a8090f87bfed95",
+"name": "Any signed-in user can read pending approval tasks",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-stats/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-stats/index.ts"
+},
+{
+"internal_id": "lov_finding_a45b5b5828593c3e",
+"name": "Regional finance users can send payment links for any customer",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-payment-link/index.ts"
+},
+"details": "Location: supabase/functions/collect-payment-link/index.ts"
+},
+{
+"internal_id": "lov_finding_a7401cb3c80f2da9",
+"name": "Any signed-in user can add internal notes to tickets",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mobile-voice-transcribe/index.ts"
+},
+"details": "Location: supabase/functions/mobile-voice-transcribe/index.ts"
+},
+{
+"internal_id": "lov_finding_a86d415b1fbe8c55",
+"name": "Any signed-in user can inject roles into copilot messages",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-copilot/index.ts"
+},
+"details": "Location: supabase/functions/collect-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_abecb1a7e574f1bd",
+"name": "Any workspace member can embed formulas in cost exports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "src/pages/Dispatch/Kosten.tsx"
+},
+"details": "Location: src/pages/Dispatch/Kosten.tsx"
+},
+{
+"internal_id": "lov_finding_aca0bf1eb36bddcc",
+"name": "Any signed-in user can access another order’s review token",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-review-invitation/index.ts"
+},
+"details": "Location: supabase/functions/send-review-invitation/index.ts"
+},
+{
+"internal_id": "lov_finding_ad6f5c1d67558ce5",
+"name": "Anyone can put markup in appointment emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/public-book-ticket/index.ts"
+},
+"details": "Location: supabase/functions/public-book-ticket/index.ts"
+},
+{
+"internal_id": "lov_finding_add1d8017d448ff5",
+"name": "Signed-in users can send arbitrary emails",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/esc-send-email/index.ts"
+},
+"details": "Location: supabase/functions/esc-send-email/index.ts"
+},
+{
+"internal_id": "lov_finding_ae041d22cd49aa24",
+"name": "Ordinary users can send survey invitations",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/survey-send-invites/index.ts"
+},
+"details": "Location: supabase/functions/survey-send-invites/index.ts"
+},
+{
+"internal_id": "lov_finding_ae18a6af4bbe5ed7",
+"name": "Order users can retrieve finance reports by ID",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-report-run/index.ts"
+},
+"details": "Location: supabase/functions/finance-report-run/index.ts"
+},
+{
+"internal_id": "lov_finding_aec58a6d456724af",
+"name": "Any signed-in user can issue calendar links for others' events",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/esc-token-issue/index.ts"
+},
+"details": "Location: supabase/functions/esc-token-issue/index.ts"
+},
+{
+"internal_id": "lov_finding_aee5ab8f4f498011",
+"name": "Any marketing user can edit finance email templates",
+"level": "error",
+"category": "account_security",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/pages/MailCenter/Vorlagen.tsx"
+},
+"details": "Location: src/pages/MailCenter/Vorlagen.tsx"
+},
+{
+"internal_id": "lov_finding_af38624053f033f3",
+"name": "Airtable attachments are stored without type or size limits",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/catalog-import-airtable/index.ts"
+},
+"details": "Location: supabase/functions/catalog-import-airtable/index.ts"
+},
+{
+"internal_id": "lov_finding_af6f5ffa498d5b44",
+"name": "Someone with a signing link can bypass the emailed code",
+"level": "error",
+"category": "leaked_secrets",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sig-otp-verify/index.ts"
+},
+"details": "Location: supabase/functions/sig-otp-verify/index.ts"
+},
+{
+"internal_id": "lov_finding_afcf8b12fd476a3a",
+"name": "Any signed-in user can query finance collection records",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-copilot/index.ts"
+},
+"details": "Location: supabase/functions/collect-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_b143826790bf7b30",
+"name": "Signed-in users can make the server POST to any HTTPS URL",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-marketplace/index.ts"
+},
+"details": "Location: supabase/functions/ac-marketplace/index.ts"
+},
+{
+"internal_id": "lov_finding_b292e0652d756fdb",
+"name": "Anyone can create document links",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-link-suggest/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-link-suggest/index.ts"
+},
+{
+"internal_id": "lov_finding_b33b8dedc96b1873_0fe11a36",
+"name": "Statistics endpoint exposes cross-tenant document data",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-stats/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-stats/index.ts"
+},
+{
+"internal_id": "lov_finding_b33b8dedc96b1873_12c232e3",
+"name": "Stats endpoint exposes unscoped private document data",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-stats/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-stats/index.ts"
+},
+{
+"internal_id": "lov_finding_b33b8dedc96b1873_ce05cae5",
+"name": "Any signed-in user can view company-wide document statistics",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-stats/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-stats/index.ts"
+},
+{
+"internal_id": "lov_finding_b4deaaa277c70ff4",
+"name": "Staff can send onboarding invitation links to any email address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/social-onboarding-invite/index.ts"
+},
+"details": "Location: supabase/functions/social-onboarding-invite/index.ts"
+},
+{
+"internal_id": "lov_finding_b5132a0a49f614f2",
+"name": "Tax export can delete another tenant’s filing",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-tax-export/index.ts"
+},
+"details": "Location: supabase/functions/finance-tax-export/index.ts"
+},
+{
+"internal_id": "lov_finding_b535dca7da1458b2",
+"name": "Signature uploads lack type and size checks",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-sign-create/index.ts"
+},
+"details": "Location: supabase/functions/alix-sign-create/index.ts"
+},
+{
+"internal_id": "lov_finding_b58065ea66d180e4",
+"name": "Anyone can mark another person's mail messages as unsubscribed",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mail-unsubscribe/index.ts"
+},
+"details": "Location: supabase/functions/mail-unsubscribe/index.ts"
+},
+{
+"internal_id": "lov_finding_b59f50206d13ea0b",
+"name": "Caller-controlled text is sent to customers by SMS",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-customer-sms/index.ts"
+},
+"details": "Location: supabase/functions/send-customer-sms/index.ts"
+},
+{
+"internal_id": "lov_finding_b68a24bb3b584223",
+"name": "Finance users can create payment links for arbitrary cases",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-payment-link/index.ts"
+},
+"details": "Location: supabase/functions/collect-payment-link/index.ts"
+},
+{
+"internal_id": "lov_finding_b81c808463388b53",
+"name": "Anyone can attach a lead to another customer's account",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sales-wizard-submit/index.ts"
+},
+"details": "Location: supabase/functions/sales-wizard-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_b86c0cca0683482a",
+"name": "Anyone can create ticket appointments",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ticket-create-appointment/index.ts"
+},
+"details": "Location: supabase/functions/ticket-create-appointment/index.ts"
+},
+{
+"internal_id": "lov_finding_b9deeea58bcd8b64",
+"name": "Any signed-in user can send another survey's invitations",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/survey-send-invites/index.ts"
+},
+"details": "Location: supabase/functions/survey-send-invites/index.ts"
+},
+{
+"internal_id": "lov_finding_bb5f669412527726",
+"name": "Any product editor can create approved release records",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260830055324_f572356b-7442-4a10-ba8a-df1eb4d5d971.sql"
+},
+"details": "Location: supabase/migrations/20260830055324_f572356b-7442-4a10-ba8a-df1eb4d5d971.sql"
+},
+{
+"internal_id": "lov_finding_bbff7a01899a3006",
+"name": "Any signed-in user can run scripts in social reports",
+"level": "error",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "src/pages/Social/Onboarding.tsx"
+},
+"details": "Location: src/pages/Social/Onboarding.tsx"
+},
+{
+"internal_id": "lov_finding_bc28dcd9d7d921bd",
+"name": "Caller-written text is sent through Messenger",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-send-message/index.ts"
+},
+"details": "Location: supabase/functions/ac-send-message/index.ts"
+},
+{
+"internal_id": "lov_finding_bca1ad19d7647c3b",
+"name": "Admins can send arbitrary SMS or WhatsApp messages",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/esc-send-message/index.ts"
+},
+"details": "Location: supabase/functions/esc-send-message/index.ts"
+},
+{
+"internal_id": "lov_finding_bcaf4da9778a3843",
+"name": "Any signed-in user can create royalty invoices",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/license-royalty-run/index.ts"
+},
+"details": "Location: supabase/functions/license-royalty-run/index.ts"
+},
+{
+"internal_id": "lov_finding_c15972a9249262e3",
+"name": "Any signed-in user can message any customer",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_c1f51fb90f414c65",
+"name": "Signed-in users can place calls to arbitrary destinations",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-3cx-call/index.ts"
+},
+"details": "Location: supabase/functions/ac-3cx-call/index.ts"
+},
+{
+"internal_id": "lov_finding_c25e424420c20c46",
+"name": "A public message can be attached to a different ticket sync",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sync-to-alixsmart/index.ts"
+},
+"details": "Location: supabase/functions/sync-to-alixsmart/index.ts"
+},
+{
+"internal_id": "lov_finding_c2b7b08dda07b414",
+"name": "Regional finance users can update QR invoices cross-region",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-qr-generate/index.ts"
+},
+"details": "Location: supabase/functions/finance-qr-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_c4bcebcef88683c2",
+"name": "Caller controls reminder email content",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/as-send-email-reminder/index.ts"
+},
+"details": "Location: supabase/functions/as-send-email-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_c4f756dedfd516d9",
+"name": "Signed-in users can read delivery data across tenants",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/dispatch-ai-assistant/index.ts"
+},
+"details": "Location: supabase/functions/dispatch-ai-assistant/index.ts"
+},
+{
+"internal_id": "lov_finding_c524f9f49c1fba6d",
+"name": "Anyone with a link can inject HTML into staff reminder emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mediapaket-portal/index.ts"
+},
+"details": "Location: supabase/functions/mediapaket-portal/index.ts"
+},
+{
+"internal_id": "lov_finding_c533abdf8099822e",
+"name": "Admins can send test email to arbitrary recipients",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/email-selftest/index.ts"
+},
+"details": "Location: supabase/functions/email-selftest/index.ts"
+},
+{
+"internal_id": "lov_finding_c7105f23a07baab8",
+"name": "Anyone can place formulas in device-detail exports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "src/components/CustomerEditDialog.tsx"
+},
+"details": "Location: src/components/CustomerEditDialog.tsx"
+},
+{
+"internal_id": "lov_finding_c94d2ebc56e8c428_74c2d8bb",
+"name": "Staff can send arbitrary SMS messages to customers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/as-send-sms-reminder/index.ts"
+},
+"details": "Location: supabase/functions/as-send-sms-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_c94d2ebc56e8c428_e7a023f2",
+"name": "Staff can send arbitrary SMS messages to customers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/as-send-sms-reminder/index.ts"
+},
+"details": "Location: supabase/functions/as-send-sms-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_c9a71b6764601e30",
+"name": "Staff can send arbitrary reminder content to customer contacts",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixsmart-send-reminder/index.ts"
+},
+"details": "Location: supabase/functions/alixsmart-send-reminder/index.ts"
+},
+{
+"internal_id": "lov_finding_cb16ccbf1b4481ee",
+"name": "Anyone can read password-protected public catalogs",
+"level": "error",
+"category": "account_security",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "src/App.tsx"
+},
+"details": "Location: src/App.tsx"
+},
+{
+"internal_id": "lov_finding_cc294c6fc858dbbb",
+"name": "Signed-in users can send any shipment assignment",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/carrier-shipment-send/index.ts"
+},
+"details": "Location: supabase/functions/carrier-shipment-send/index.ts"
+},
+{
+"internal_id": "lov_finding_cd2ce2ad522f11c1",
+"name": "Signature invitations target arbitrary recipients",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sig-create-request/index.ts"
+},
+"details": "Location: supabase/functions/sig-create-request/index.ts"
+},
+{
+"internal_id": "lov_finding_cdf16f54d9746d31",
+"name": "Anyone with the import key can store unrestricted form details",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sales-leads-import/index.ts"
+},
+"details": "Location: supabase/functions/sales-leads-import/index.ts"
+},
+{
+"internal_id": "lov_finding_cdff60b5ab5b9c10",
+"name": "Any signed-in user can see another customer's package progress",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260711144506_02704f0a-d70f-4ce8-8103-5be31df6d7f6.sql"
+},
+"details": "Location: supabase/migrations/20260711144506_02704f0a-d70f-4ce8-8103-5be31df6d7f6.sql"
+},
+{
+"internal_id": "lov_finding_cf3507ea8eab1d3c",
+"name": "Collection mail can target arbitrary recipients and content",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-send-dunning/index.ts"
+},
+"details": "Location: supabase/functions/collect-send-dunning/index.ts"
+},
+{
+"internal_id": "lov_finding_d056bd7c0021c222",
+"name": "Authorized users can set AI post instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/social-ai-generate/index.ts"
+},
+"details": "Location: supabase/functions/social-ai-generate/index.ts"
+},
+{
+"internal_id": "lov_finding_d1d0e8fe336ec6f2",
+"name": "Any workspace member can message arbitrary WhatsApp numbers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/whatsapp-cloud-send/index.ts"
+},
+"details": "Location: supabase/functions/whatsapp-cloud-send/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_380fba8f",
+"name": "Any signed-in user can message any WhatsApp contact",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_380fba8f_380fba8f",
+"name": "Any signed-in user can message any WhatsApp contact",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_380fba8f_380fba8f_1",
+"name": "Any signed-in user can message any WhatsApp contact",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_380fba8f_380fba8f_2",
+"name": "Any signed-in user can message any WhatsApp contact",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_4e525c0a",
+"name": "Any signed-in user can message another customer",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_691f92c6",
+"name": "Any signed-in user can message another customer",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_73dda500",
+"name": "Any signed-in user can post as an agent to arbitrary tickets",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_7594b180",
+"name": "Any signed-in user can message another customer",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_7c16c7ef",
+"name": "Any signed-in user can message any customer",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_901e76dc",
+"name": "Any signed-in user can add messages to protected conversations",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_b53e6ddb",
+"name": "Any signed-in user can message any WhatsApp contact",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2473feaef579f52_f453a872",
+"name": "Any signed-in user can message any WhatsApp contact",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_d2ea69a286d7ab4a",
+"name": "Any signed-in user can view every tenant's attribution totals",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260721080634_37469539-701c-48d1-9036-078f76f78e43.sql"
+},
+"details": "Location: supabase/migrations/20260721080634_37469539-701c-48d1-9036-078f76f78e43.sql"
+},
+{
+"internal_id": "lov_finding_d3df018bbbeb6743",
+"name": "Anyone can expose administrators’ phone numbers in service logs",
+"level": "warn",
+"category": "exposed_data",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sales-wizard-submit/index.ts"
+},
+"details": "Location: supabase/functions/sales-wizard-submit/index.ts"
+},
+{
+"internal_id": "lov_finding_d4eaecc88ffdf1d2",
+"name": "Webhook test posts to any HTTPS destination",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-marketplace/index.ts"
+},
+"details": "Location: supabase/functions/ac-marketplace/index.ts"
+},
+{
+"internal_id": "lov_finding_d4eaecc88ffdf1d2_2b8ae78b",
+"name": "Signed-in users can make the server POST to any HTTPS URL",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-marketplace/index.ts"
+},
+"details": "Location: supabase/functions/ac-marketplace/index.ts"
+},
+{
+"internal_id": "lov_finding_d4eaecc88ffdf1d2_2b8ae78b_2b8ae78b",
+"name": "Signed-in users can make the server POST to any HTTPS URL",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-marketplace/index.ts"
+},
+"details": "Location: supabase/functions/ac-marketplace/index.ts"
+},
+{
+"internal_id": "lov_finding_d4eaecc88ffdf1d2_38c0f85a",
+"name": "Any signed-in user can send requests to any website",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-marketplace/index.ts"
+},
+"details": "Location: supabase/functions/ac-marketplace/index.ts"
+},
+{
+"internal_id": "lov_finding_d4eaecc88ffdf1d2_c93f4c42",
+"name": "Signed-in users can make the server POST to arbitrary HTTPS URLs",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-marketplace/index.ts"
+},
+"details": "Location: supabase/functions/ac-marketplace/index.ts"
+},
+{
+"internal_id": "lov_finding_d51da742f6515a44",
+"name": "Any signed-in user can access another order’s review token",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-review-invitation/index.ts"
+},
+"details": "Location: supabase/functions/send-review-invitation/index.ts"
+},
+{
+"internal_id": "lov_finding_d5f7c5cf72674fcc",
+"name": "Anyone can check whether an email address is unsubscribed",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mail-unsubscribe/index.ts"
+},
+"details": "Location: supabase/functions/mail-unsubscribe/index.ts"
+},
+{
+"internal_id": "lov_finding_d622c4a54c5625f0",
+"name": "Any service user can widen repair-guidance searches",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ai-service-analyze/index.ts"
+},
+"details": "Location: supabase/functions/ai-service-analyze/index.ts"
+},
+{
+"internal_id": "lov_finding_d73d2342e76a806c_30da19e3",
+"name": "Ticket creation can target any customer record",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-copilot-act/index.ts"
+},
+"details": "Location: supabase/functions/ac-copilot-act/index.ts"
+},
+{
+"internal_id": "lov_finding_d73d2342e76a806c_b7f288c1",
+"name": "Notifications can be written to any user",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-copilot-act/index.ts"
+},
+"details": "Location: supabase/functions/ac-copilot-act/index.ts"
+},
+{
+"internal_id": "lov_finding_d827e70493abbc17",
+"name": "Any signed-in user can export restricted audit logs",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-compliance-report/index.ts"
+},
+"details": "Location: supabase/functions/finance-compliance-report/index.ts"
+},
+{
+"internal_id": "lov_finding_da722e431603e2f7",
+"name": "Any signed-in user can enumerate customer payment profiles",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/recurring-prenotification/index.ts"
+},
+"details": "Location: supabase/functions/recurring-prenotification/index.ts"
+},
+{
+"internal_id": "lov_finding_dc9dfcdd7cb4ab4f",
+"name": "Finance users can send payment links to any address",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-payment-link/index.ts"
+},
+"details": "Location: supabase/functions/collect-payment-link/index.ts"
+},
+{
+"internal_id": "lov_finding_dd45ce6c3f93b34a",
+"name": "Any signed-in user can post messages on any ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+"details": "Location: supabase/functions/twilio-send-whatsapp-message/index.ts"
+},
+{
+"internal_id": "lov_finding_ddd4dc7e03377db7",
+"name": "Any workspace administrator can delete documents across tenants",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260719154758_58df9663-e748-4c9c-a30a-08b22b5f82bf.sql"
+},
+"details": "Location: supabase/migrations/20260719154758_58df9663-e748-4c9c-a30a-08b22b5f82bf.sql"
+},
+{
+"internal_id": "lov_finding_de0606301f6fe61f",
+"name": "Any signed-in user can approve invoices",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/finance-approval-action/index.ts"
+},
+"details": "Location: supabase/functions/finance-approval-action/index.ts"
+},
+{
+"internal_id": "lov_finding_de2309c2d5bdcd02",
+"name": "Any signed-in campaign manager can email an unrestricted list",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/send-campaign/index.ts"
+},
+"details": "Location: supabase/functions/send-campaign/index.ts"
+},
+{
+"internal_id": "lov_finding_de6f75dacd91237b",
+"name": "Signing users can fetch PDFs by arbitrary request ID",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-sign-pdf/index.ts"
+},
+"details": "Location: supabase/functions/alix-sign-pdf/index.ts"
+},
+{
+"internal_id": "lov_finding_df6fdc9c6acda235",
+"name": "Any signed-in user can inject markup into support emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/portal-contract-sign-confirm/index.ts"
+},
+"details": "Location: supabase/functions/portal-contract-sign-confirm/index.ts"
+},
+{
+"internal_id": "lov_finding_df7b78d836f4ca84",
+"name": "Admins can send arbitrary SMS or WhatsApp messages",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/esc-send-message/index.ts"
+},
+"details": "Location: supabase/functions/esc-send-message/index.ts"
+},
+{
+"internal_id": "lov_finding_e246ce59f31d1c0e",
+"name": "Any signed-in user can send another customer's ticket details",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sync-to-alixsmart/index.ts"
+},
+"details": "Location: supabase/functions/sync-to-alixsmart/index.ts"
+},
+{
+"internal_id": "lov_finding_e2c4ff5d7611f02d",
+"name": "Unauthenticated requests read private document metadata",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-link-suggest/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-link-suggest/index.ts"
+},
+{
+"internal_id": "lov_finding_e2f71dd9ddc9da59",
+"name": "Operators can email appointment details to arbitrary recipients",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-appointment-send/index.ts"
+},
+"details": "Location: supabase/functions/delivery-appointment-send/index.ts"
+},
+{
+"internal_id": "lov_finding_e34d218037cc26e0",
+"name": "Any sender can attach documents to another customer's record",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sig-create-request/index.ts"
+},
+"details": "Location: supabase/functions/sig-create-request/index.ts"
+},
+{
+"internal_id": "lov_finding_e6fe0ba3afe294ac",
+"name": "Any signed-in user can change invoice numbering",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "security-database-snapshot/79da66bc46fb33a98ac1016738a22a3d01a9ad5fc8547ff5071871b867a0aa2f.sql"
+},
+"details": "Location: security-database-snapshot/79da66bc46fb33a98ac1016738a22a3d01a9ad5fc8547ff5071871b867a0aa2f.sql"
+},
+{
+"internal_id": "lov_finding_e72aa2d3e18e4fc9",
+"name": "Signed-in users can send SMS to arbitrary numbers",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_e75b8684adf72817",
+"name": "Any signed-in user can view other tenants' activity totals",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/migrations/20260809183724_dc4c40cb-2c27-4e43-a2b9-9aba57a7f6c5.sql"
+},
+"details": "Location: supabase/migrations/20260809183724_dc4c40cb-2c27-4e43-a2b9-9aba57a7f6c5.sql"
+},
+{
+"internal_id": "lov_finding_e7e8c924ca06a7f7",
+"name": "Signed-in users can send invites to arbitrary addresses",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sig-bulk-create/index.ts"
+},
+"details": "Location: supabase/functions/sig-bulk-create/index.ts"
+},
+{
+"internal_id": "lov_finding_e8757fcbf28dd1b6",
+"name": "Authorized CMR users can send arbitrary emails to any recipient",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/cmr-send-document/index.ts"
+},
+"details": "Location: supabase/functions/cmr-send-document/index.ts"
+},
+{
+"internal_id": "lov_finding_e95de054b03f8db0",
+"name": "Portal customers can inject markup into support emails",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "src/pages/CustomerPortal/Support.tsx"
+},
+"details": "Location: src/pages/CustomerPortal/Support.tsx"
+},
+{
+"internal_id": "lov_finding_e97ee86dc03bce4c",
+"name": "Admins can log customer billing addresses to service logs",
+"level": "warn",
+"category": "exposed_data",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/start-zoho-import/index.ts"
+},
+"details": "Location: supabase/functions/start-zoho-import/index.ts"
+},
+{
+"internal_id": "lov_finding_eb30b4530b5fe223",
+"name": "Any signed-in user can process another user's private document",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-ai-process/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-ai-process/index.ts"
+},
+{
+"internal_id": "lov_finding_edd66577e687284b",
+"name": "Any workspace member can access orders across accounting regions and tenants",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_ee272cd70c04cc65",
+"name": "Any signed-in user can expose another person's event",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/esc-token-issue/index.ts"
+},
+"details": "Location: supabase/functions/esc-token-issue/index.ts"
+},
+{
+"internal_id": "lov_finding_ee44c233b0696c8f",
+"name": "Any signed-in user can attach calls to another user's contacts",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/ac-3cx-call/index.ts"
+},
+"details": "Location: supabase/functions/ac-3cx-call/index.ts"
+},
+{
+"internal_id": "lov_finding_ef1070a22b723c41",
+"name": "Any signed-in caller can add an internal note to any ticket",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mobile-voice-transcribe/index.ts"
+},
+"details": "Location: supabase/functions/mobile-voice-transcribe/index.ts"
+},
+{
+"internal_id": "lov_finding_ef8daa497c253e85",
+"name": "Any signed-in user can copy another user's mail attachment",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-mail-import/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-mail-import/index.ts"
+},
+{
+"internal_id": "lov_finding_f26da156240a2f62",
+"name": "Any signed-in user can see dispatch and customer details",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/dispatch-ai-assistant/index.ts"
+},
+"details": "Location: supabase/functions/dispatch-ai-assistant/index.ts"
+},
+{
+"internal_id": "lov_finding_f2c4b7f10eb12867",
+"name": "Any signed-in user can query arbitrary orders",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-notify/index.ts"
+},
+"details": "Location: supabase/functions/delivery-notify/index.ts"
+},
+{
+"internal_id": "lov_finding_f5e0701cc9803015",
+"name": "Anyone with a password can bypass SMS verification",
+"level": "warn",
+"category": "leaked_secrets",
+"created_at": "2026-11-28T13:04:45.995763027Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mfa-sms-verify/index.ts"
+},
+"details": "Location: supabase/functions/mfa-sms-verify/index.ts"
+},
+{
+"internal_id": "lov_finding_f6c3654341e11009_3e1616af",
+"name": "Any signed-in user can store unchecked files",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_f6c3654341e11009_561efb0f",
+"name": "Any signed-in user can store unchecked files",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_f6c3654341e11009_77ec9202",
+"name": "Autofile accepts unbounded files of any declared type",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T06:59:58.183305857Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_f6c3654341e11009_ba88d076",
+"name": "Autofiled uploads have no type or size limit",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_f6c3654341e11009_e39e3d5b",
+"name": "Any signed-in user can store unchecked files",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:26:31.001620859Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_f6c3654341e11009_f096a7e6",
+"name": "Any signed-in user can upload unchecked files",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T14:39:56.202630836Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-autofile/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-autofile/index.ts"
+},
+{
+"internal_id": "lov_finding_f777ac281c9f0ec5",
+"name": "Anyone with a link can inject formulas into staff CSV exports",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mediapaket-portal/index.ts"
+},
+"details": "Location: supabase/functions/mediapaket-portal/index.ts"
+},
+{
+"internal_id": "lov_finding_f8d6eca79ee03fea",
+"name": "Unauthenticated callers can consume the paid mail AI service",
+"level": "warn",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/mail-ai-assistant/index.ts"
+},
+"details": "Location: supabase/functions/mail-ai-assistant/index.ts"
+},
+{
+"internal_id": "lov_finding_f925eef4435f7b1f",
+"name": "Uploaded signature PDFs have no type or size limit",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/sig-create-request/index.ts"
+},
+"details": "Location: supabase/functions/sig-create-request/index.ts"
+},
+{
+"internal_id": "lov_finding_f96755eb5792fedc",
+"name": "Any signed-in user can set copilot instructions",
+"level": "warn",
+"category": "unsafe_input",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alix-copilot/index.ts"
+},
+"details": "Location: supabase/functions/alix-copilot/index.ts"
+},
+{
+"internal_id": "lov_finding_fa76ad0c8151f87b",
+"name": "Any finance user can send demands across tenants",
+"level": "error",
+"category": "access_control",
+"created_at": "2026-11-28T04:14:20.068253158Z",
+"metadata": {
+"finding_family_key": "supabase/functions/collect-send-dunning/index.ts"
+},
+"details": "Location: supabase/functions/collect-send-dunning/index.ts"
+},
+{
+"internal_id": "lov_finding_fcc29527a32c923f",
+"name": "CMR users can send arbitrary invoice emails to any address",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T07:04:36.519497636Z",
+"metadata": {
+"finding_family_key": "supabase/functions/cmr-send-document/index.ts"
+},
+"details": "Location: supabase/functions/cmr-send-document/index.ts"
+},
+{
+"internal_id": "lov_finding_fea81c1d778cc81f",
+"name": "Any signed-in user can read pending approval tasks",
+"level": "warn",
+"category": "access_control",
+"created_at": "2026-11-28T17:16:23.046855308Z",
+"metadata": {
+"finding_family_key": "supabase/functions/alixdocs-stats/index.ts"
+},
+"details": "Location: supabase/functions/alixdocs-stats/index.ts"
+},
+{
+"internal_id": "lov_finding_ff271ba19700e47f",
+"name": "Any signed-in user can send arbitrary approval PDFs to anyone",
+"level": "error",
+"category": "abusable_endpoints",
+"created_at": "2026-11-28T02:59:34.391819842Z",
+"metadata": {
+"finding_family_key": "supabase/functions/delivery-approval-mail/index.ts"
+},
+"details": "Location: supabase/functions/delivery-approval-mail/index.ts"
+}
+]
+}
+}

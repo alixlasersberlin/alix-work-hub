@@ -1,0 +1,67 @@
+{
+ "ledgerAt": "2026-11-28T18:06:00Z",
+ "baseCommit": "fe0577e3a09ff3c592fb2335ec5d3fa0ddb80494",
+ "scanSourceCommit": "4beda073f1102ec43f6061faab3a83b25cc69449",
+ "scanCompletion": "incomplete",
+ "lastSuccessfulDeepScan": null,
+ "migrationHead": "20261128172359_cd472c03-510e-47fa-9413-3480945d104c",
+ "linterAt": "2026-11-28T17:38:04Z",
+ "linterSecurityTotal": 277,
+ "linterPerformanceTotal": 1269,
+ "buildStatus": "Build OK (letzter Eintrag vor V7)",
+ "tests": {
+  "server": {
+   "passed": 798,
+   "failed": 0,
+   "skipped": 4,
+   "at": "2026-11-28T17:10:00Z",
+   "commit": "fe0577e3a"
+  },
+  "app": {
+   "passed": 279,
+   "failed": 0,
+   "at": "2026-11-28T17:10:00Z",
+   "commit": "fe0577e3a"
+  },
+  "restoreTools": {
+   "passed": 5,
+   "realRestore": false
+  }
+ },
+ "backup": {
+  "lastFull": "2dad621c-2c25-4d21-9558-46c3fd84a249",
+  "status": "Erstellt; Hetzner-Integrität und Gesamtumfang nicht vollständig geprüft"
+ },
+ "restore": {
+  "status": "BLOCKED_EXTERNAL",
+  "reason": "Kein isoliertes Projekt ALIXWORK RESTORE TEST"
+ },
+ "release": {
+  "status": "KEINE FREIGABE",
+  "reason": "Offene kritische/hohe Befunde und fehlende Pflichtprüfungen"
+ },
+ "protected": {
+  "products": 44,
+  "productFingerprint": "8b67f41d0720374a058ab09745d27073",
+  "jobs": 102,
+  "activeJobs": 95,
+  "jobFingerprint": "752e201dcf6968bf40cf2a2fb3c58261",
+  "productHubEnabled": false,
+  "emergencyStopped": true,
+  "revision": 0,
+  "de": "blocked",
+  "com": "blocked"
+ },
+ "deployments": [
+  {
+   "function": "security-remediate",
+   "sha256": "f3904690e1f34abc341041ea52db12beffe179778424e981708c48dad07b80a8",
+   "at": "2026-11-28T17:47:00Z"
+  },
+  {
+   "function": "ticket-create-appointment",
+   "sha256": "7222e86eb37ee90731051967fd6003f304fbfeebccf5cdd8815fc7f1c7cea655",
+   "at": "2026-11-28T18:04:00Z"
+  }
+ ]
+}

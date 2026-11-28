@@ -11,6 +11,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { activeMessageAccount } from '../_shared/message-access.ts';
 import { controlInventory, correctionProposal, approvalIdentity } from './control.ts';
+import ledgerData from './ledger.json' with { type: 'json' };
+import { ledgerSummary, workPackages, lastCompletedStep, continuationPrompt, type Ledger } from './ledger.ts';
+const ledger = ledgerData as unknown as Ledger;
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -42,11 +45,22 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? '');
 
-    if (action === 'control_overview' || action === 'control_approve') {
+    if (action === 'control_overview' || action === 'control_approve' || action === 'continuation_overview') {
       if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
       const { data: profile, error: profileError } = await admin.from('user_profiles')
         .select('is_active,account_status,invitation_status,password_reset_required').eq('id', user.id).maybeSingle();
       if (profileError || !activeMessageAccount(profile)) return json({ error: 'Nur aktive freigegebene Super Admins' }, 403);
+      if (action === 'continuation_overview') {
+        const packages = workPackages(ledger);
+        return json({
+          version: ledger.version, generatedAt: ledger.generatedAt, versions: ledger.versions, scan: ledger.scan,
+          summary: ledgerSummary(ledger), nextPackage: packages[0] ?? null,
+          packages: packages.slice(0, 40).map(p => ({ id: p.id, kind: p.kind, component: p.component, priority: p.priority, count: p.items.length, inProgress: p.inProgress })),
+          packageCount: packages.length, lastStep: lastCompletedStep(ledger),
+          checks: ledger.items.filter(i => i.kind === 'check'), prompt: continuationPrompt(ledger),
+          items: ledger.items, automaticExecution: false,
+        });
+      }
       if (action === 'control_overview') {
         const { data: approvals, error } = await admin.from('security_audit_findings')
           .select('target,approved_at,approved_by').eq('category', 'scc-correction-approval')

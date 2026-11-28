@@ -1,9 +1,10 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Database, KeyRound, AlertTriangle, Users, ClipboardList, HardDrive, PlayCircle, ListChecks, ShieldCheck, Radar, ClipboardCheck } from 'lucide-react';
+import { Shield, Database, KeyRound, AlertTriangle, Users, ClipboardList, HardDrive, PlayCircle, ListChecks, ShieldCheck, Radar, ClipboardCheck, PlayCircle as ResumeIcon } from 'lucide-react';
 
 const NAV = [
   { to: '/security-center', end: true, label: 'Übersicht', icon: Shield },
+  { to: '/security-center/fortsetzen', label: 'Bereinigung fortsetzen', icon: ResumeIcon },
   { to: '/security-center/inventory', label: 'Sicherheitsprüfung', icon: Database },
   { to: '/security-center/roles', label: 'Rollen', icon: Users },
   { to: '/security-center/permissions', label: 'Berechtigungen', icon: KeyRound },
