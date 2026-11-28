@@ -119,7 +119,8 @@ Deno.serve(async (req) => {
     const { data: appt } = await sb.from("delivery_appointments").select("*").eq("id", appointmentId).maybeSingle();
     if (!appt) return Response.json({ error: "Termin nicht gefunden" }, { status: 404, headers: corsHeaders });
 
-    const to = String(testMode ? (body?.testTo || u.user.email || "") : (body?.to || appt.contact_email || "")).trim();
+    // Kundenversand nur an die gespeicherte Terminadresse; eine im Request übergebene Adresse wird ignoriert.
+    const to = String(testMode ? (body?.testTo || u.user.email || "") : (appt.contact_email || "")).trim();
     if (!to.includes("@")) {
       return Response.json(
         { error: testMode ? "Keine gültige Test-E-Mail angegeben" : "Keine gültige Kunden-E-Mail hinterlegt" },
