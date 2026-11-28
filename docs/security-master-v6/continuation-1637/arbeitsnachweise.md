@@ -76,6 +76,8 @@ Konkrete nächste Risikogruppen: Nummernvergabe mit workflowbezogener Rechtezuor
 
 Der begrenzte Schnellscan führte keine neuen aktiven Datenbankbefunde auf; die Connectorprüfung war mangels Konfiguration ausgelassen. Dies ersetzt weder die 300 Linterhinweise noch die vollständige Tiefenprüfung.
 
+Der anschließend gestartete Tiefenscan bindet laut Task-ID den **vorherigen** Speicherstand `b64d58607fbf07d3dd96534407707b9dbff97509`, nicht den Korrekturcommit `27bbe5a1898694e60d82aa635354b2c253021091`. Er läuft, ist aber ausdrücklich **keine Prüfung des aktuellen Korrekturstands**. Nach der Abschlussbenachrichtigung ist ein weiterer Start ohne zwischenzeitliche Quelländerungen mit bestätigtem Commitbezug erforderlich. Details in `deep-scan-start.json`; kein Polling und kein Abschluss behauptet.
+
 ## Unveränderte Schutzinvarianten
 
 - 44 Produkte; vorher/nachher gleicher Fingerprint `e631fcb224679573e47c42088240233e`.
