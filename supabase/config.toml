@@ -61,6 +61,22 @@ verify_jwt = false
 [functions.scheduled-order-sync]
 verify_jwt = false
 
+# These handlers verify private scheduler credentials or active permitted users.
+[functions.rz-reminder-build]
+verify_jwt = false
+
+[functions.portal-contract-reminders]
+verify_jwt = false
+
+[functions.system-health-scan]
+verify_jwt = false
+
+[functions.sig-webhook-dispatch]
+verify_jwt = false
+
+[functions.alixsmart-emit]
+verify_jwt = false
+
 [functions.send-transactional-email]
 verify_jwt = false
 

@@ -1,3 +1,4 @@
+import { requireJobAccess } from "../_shared/job-auth.ts";
 import "../_shared/global-bcc.ts";
 // Cron: versendet automatische Umfrage-Erinnerungen an noch nicht abgeschlossene Einladungen.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -17,6 +18,8 @@ const ORIGIN = 'https://alixwork.de';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  const denied = await requireJobAccess(req, cors, []);
+  if (denied) return denied;
   try {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const resendKey = Deno.env.get('RESEND_API_KEY');

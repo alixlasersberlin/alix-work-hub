@@ -1,3 +1,4 @@
+import { requireJobAccess } from "../_shared/job-auth.ts";
 // Hourly cron: sends reminder emails for contracts with pending signature.
 // Cadence (days since signature_requested_at): 3, 7, 14 — max 3 reminders.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -7,6 +8,8 @@ const CADENCE_DAYS = [3, 7, 14];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders, []);
+  if (denied) return denied;
 
   const { url, service } = envClients();
   const admin = createClient(url, service);

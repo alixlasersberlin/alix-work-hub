@@ -1,3 +1,4 @@
+import { requireJobAccess } from "../_shared/job-auth.ts";
 // ALIX – Wiederkehrende Zahler: erzeugt Zahlungserinnerungen X Kalendertage vor Fälligkeit
 // und legt sie als "pending" im Sammelversand ab. Idempotent über dedupe_key.
 // Cron-tauglich (CRON_SECRET / Service-Role) und manuell aus dem UI aufrufbar.
@@ -18,35 +19,8 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const cronSecret = Deno.env.get("CRON_SECRET");
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const apiKeyHeader = req.headers.get("apikey") ?? "";
-
-  const isCron =
-    (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
-    authHeader === `Bearer ${serviceKey}` ||
-    apiKeyHeader === serviceKey ||
-    apiKeyHeader === anonKey ||
-    authHeader === `Bearer ${anonKey}`;
-
-  // Cron via pg_net nutzt den öffentlichen Projekt-Key; die Funktion legt dabei
-  // ausschließlich interne Queue-Einträge an und versendet nichts.
-  const presentedKey = apiKeyHeader || authHeader.replace(/^Bearer\s+/i, "");
-  let cronOk = isCron;
-  if (!cronOk && presentedKey) {
-    const ping = await fetch(`${supabaseUrl}/auth/v1/settings`, {
-      headers: { apikey: presentedKey, Authorization: `Bearer ${presentedKey}` },
-    });
-    cronOk = ping.ok;
-  }
-
-  if (!cronOk) {
-    if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-    const who = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: { Authorization: authHeader, apikey: anonKey },
-    });
-    if (!who.ok) return json({ error: "Unauthorized" }, 401);
-  }
+  const denied = await requireJobAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH']);
+  if (denied) return denied;
 
   const rest = async (path: string, init?: RequestInit) =>
     fetch(`${supabaseUrl}/rest/v1/${path}`, {

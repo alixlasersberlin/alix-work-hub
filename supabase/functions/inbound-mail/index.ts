@@ -1,3 +1,4 @@
+import { verifyMailPayload, sameTicketSender } from "../_shared/provider-auth.ts";
 // Alix MailCenter – Inbound mail webhook.
 // Eingehende E-Mails landen NICHT mehr im MailCenter-Posteingang, sondern
 // werden direkt als Tickets in der CUSTOMER SERVICE / Ticketliste (/tickets)
@@ -46,7 +47,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const payload = await req.json().catch(() => ({}));
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    let payload: any;
+    try {
+      payload = verifyMailPayload(await req.text(), req.headers, Deno.env.get('RESEND_WEBHOOK_SECRET') ?? '');
+    } catch {
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+    }
     const data = (payload as any)?.data ?? payload;
 
     const fromEmail = pickEmail(data?.from);
@@ -89,11 +96,11 @@ serve(async (req) => {
       const detected = numMatch[0].toUpperCase();
       const { data: existing } = await supabase
         .from("tickets")
-        .select("id, ticket_number, status")
+        .select("id, ticket_number, status, customer_email")
         .eq("ticket_number", detected)
         .maybeSingle();
 
-      if (existing?.id) {
+      if (existing?.id && sameTicketSender(fromEmail, existing.customer_email)) {
         // Als Kunden-Antwort an bestehendes Ticket anhängen
         await supabase.from("ticket_messages").insert({
           ticket_id: existing.id,

@@ -1,3 +1,4 @@
+import { requireJobAccess } from "../_shared/job-auth.ts";
 import "../_shared/global-bcc.ts";
 // ALIXWORK System Health Scan
 // Täglicher Health-/Sicherheits-/Performance-Scan.
@@ -30,29 +31,15 @@ type Finding = {
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-async function isSuperAdmin(req: Request, admin: ReturnType<typeof createClient>) {
-  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-  if (!token) return false;
-  const asUser = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: `Bearer ${token}` } } });
-  const { data: { user } } = await asUser.auth.getUser();
-  if (!user) return false;
-  const { data } = await admin.from('user_roles').select('roles:role_id(name)').eq('user_id', user.id);
-  return (data ?? []).some((r: any) => r.roles?.name === 'Super Admin');
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
   const body = await req.json().catch(() => ({} as any));
   const trigger: string = body?.trigger === 'manual' ? 'manual' : 'cron';
-  const cronSecret = req.headers.get('x-cron-secret');
   const autoFixEnabled = body?.autofix !== false;
-
-  // Manuelle Aufrufe nur für Super Admins
-  if (trigger === 'manual' && !cronSecret) {
-    if (!(await isSuperAdmin(req, admin))) return json({ error: 'forbidden' }, 403);
-  }
+  const denied = await requireJobAccess(req, corsHeaders, ['Super Admin']);
+  if (denied) return denied;
 
   const { data: run, error: runErr } = await admin
     .from('sys_health_runs')

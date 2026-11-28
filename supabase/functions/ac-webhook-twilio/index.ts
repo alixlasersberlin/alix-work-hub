@@ -1,3 +1,4 @@
+import { validTwilioRequest } from "../_shared/provider-auth.ts";
 // Twilio SMS inbound webhook (application/x-www-form-urlencoded)
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -9,6 +10,9 @@ const admin = createClient(
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (!(await validTwilioRequest(req, 'ac-webhook-twilio'))) {
+    return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+  }
   try {
     const form = await req.formData();
     const from = String(form.get('From') ?? '');

@@ -1,3 +1,4 @@
+import { validTwilioRequest } from "../_shared/provider-auth.ts";
 // Twilio WhatsApp inbound webhook (application/x-www-form-urlencoded)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -40,6 +41,9 @@ Deno.serve(async (req) => {
   // Twilio uses GET for some health checks; just acknowledge.
   if (req.method === "GET") return new Response("ok", { headers: corsHeaders });
 
+  if (!(await validTwilioRequest(req, 'whatsapp-webhook'))) {
+    return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+  }
   try {
     const ctype = req.headers.get("content-type") ?? "";
     let params: URLSearchParams;
@@ -285,7 +289,7 @@ Deno.serve(async (req) => {
       await supabase.from("whatsapp_sync_logs").insert({
         event_type: "inbound_error",
         status: "error",
-        error_message: String(err?.message ?? err),
+        error_message: err instanceof Error ? err.message : String(err),
       });
     } catch (_) { /* ignore */ }
     // Always return 200 to Twilio so it doesn't retry forever

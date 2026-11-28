@@ -1,3 +1,4 @@
+import { requireJobAccess } from "../_shared/job-auth.ts";
 // sig-webhook-dispatch: verschickt Webhook-Events an konfigurierte sig_webhooks.
 // Aufruf: POST { event, document_id, request_id, payload }.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -19,6 +20,8 @@ async function hmacSha256Hex(secret: string, msg: string): Promise<string> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders, []);
+  if (denied) return denied;
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   let body: any;

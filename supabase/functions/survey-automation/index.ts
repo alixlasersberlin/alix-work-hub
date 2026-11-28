@@ -1,3 +1,4 @@
+import { requireJobAccess } from "../_shared/job-auth.ts";
 // Automatisierung: erzeugt Umfrage-Empfänger aus Geschäftsereignissen (Auftrag geliefert, Ticket geschlossen …)
 // und stößt den Einladungsversand an. Läuft per Cron oder manuell aus der Oberfläche.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -20,6 +21,8 @@ type Candidate = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  const denied = await requireJobAccess(req, cors, ['Super Admin', 'Admin', 'Marketing', 'Feedback']);
+  if (denied) return denied;
   try {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const body = await req.json().catch(() => ({} as Record<string, unknown>));

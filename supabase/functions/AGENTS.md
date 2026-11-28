@@ -19,3 +19,5 @@
 - product-hub-api /bundle (v1.2) mirrors list visibility and exposes sync_scope/sync_allowed from ph2_activation; receivers' periodic reconcile may only apply sync_allowed products, so the pilot gate cannot be bypassed via public reads.
 - /bundle?include_offline=1 (v1.3) adds content-free offline_products (offline/not_released; absent = missing) gated by the same sync_allowed; default response stays v1.2 for backward compatibility.
 - Internal conversation senders share message-access: active accepted accounts, explicit tenant assignment and channel membership precede caller-scoped message insertion and media signing; provider status writes remain server-only.
+- Selected automated endpoints share job-auth: exact existing private machine credentials or verified active accounts with assigned permitted roles; public keys and decoded JWT claims never authorize jobs, and cron timing/activation stays unchanged.
+- Twilio ingress uses the official validator against the fixed Supabase delivery URL; mail ingress verifies Standard Webhooks over the raw body and requires the stored ticket customer email before appending, preventing forged customer replies.

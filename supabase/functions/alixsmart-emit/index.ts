@@ -1,3 +1,4 @@
+import { requireJobAccess } from "../_shared/job-auth.ts";
 // Outbound: emit signed events to AlixSmart's inbound webhook.
 // Same envelope + HMAC scheme as our own alixsmart-webhook-inbound.
 // POST body: { event: string, data: object, event_id?: string }
@@ -25,6 +26,8 @@ async function hmacHex(msg: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: H });
   if (req.method !== "POST") return json(405, { ok: false, error: "method" });
+  const denied = await requireJobAccess(req, H);
+  if (denied) return denied;
   if (!SECRET || !BASE) return json(500, { ok: false, error: "not_configured" });
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
