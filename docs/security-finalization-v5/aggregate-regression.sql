@@ -1,0 +1,32 @@
+-- All statements are read-only except transaction-local role/claim settings.
+-- Synthetic identities are not authenticated sessions or employee acceptance.
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims','{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}',true);
+DO $$
+DECLARE v jsonb; n numeric; r record;
+BEGIN
+ v:=public.main_dashboard_kpis(false);
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Unassigned dashboard disclosure'; END IF;
+ v:=public.main_dashboard_tenant_kpis(NULL,NULL,false);
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Null tenant bypassed dashboard scope'; END IF;
+ v:=public.tickets_dashboard_counts(gen_random_uuid(),NULL::text);
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Unassigned ticket disclosure'; END IF;
+ v:=public.tickets_dashboard_counts(gen_random_uuid(),'email_inbound');
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Ticket source filter bypassed access'; END IF;
+ v:=public.order_status_counts(gen_random_uuid());
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Foreign order counts disclosed'; END IF;
+ v:=public.sidebar_lager_counts();
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Unassigned warehouse disclosure'; END IF;
+ v:=public.sidebar_production_counts(false);
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Unassigned production disclosure'; END IF;
+ v:=public.lager_overview_counts();
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE value::numeric<>0) THEN RAISE EXCEPTION 'Unassigned warehouse overview disclosure'; END IF;
+ v:=public.fc_month_close(current_date-30,current_date);
+ IF EXISTS(SELECT 1 FROM jsonb_each_text(v) WHERE key NOT IN ('from','to') AND value::numeric<>0) THEN RAISE EXCEPTION 'Unassigned closing report disclosure'; END IF;
+ SELECT * INTO r FROM public.finance_db_summary('EU',current_date-30,current_date);
+ IF r.revenue<>0 OR r.variable_cost<>0 OR r.db1<>0 OR r.fixed_cost<>0 OR r.db2<>0 THEN RAISE EXCEPTION 'Unassigned finance disclosure'; END IF;
+ BEGIN PERFORM public.fc_order_invoice_gap(gen_random_uuid()); RAISE EXCEPTION 'Inactive financial report accepted'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+RESET ROLE;
+ROLLBACK;

@@ -1,6 +1,20 @@
 import { assertEquals, assert } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 import { orderSchema, articleImportSchema, canonicalJson, keyMatches, safeDatabaseError, testOrder } from './contract.ts';
 
+// Default regression runs must never exercise deployed writes. Explicitly opted-in
+// integration runs use a separate isolated target, not a possibly leaked fixture
+// SUPABASE_URL or the connected production database.
+const deployedEnabled = Deno.env.get('ALIX_RUN_DEPLOYED_CONTRACT_TESTS') === '1';
+function isolatedContractUrl(): string {
+  const value = Deno.env.get('ALIX_ISOLATED_CONTRACT_URL');
+  assert(value, 'A separately authorized isolated contract-test target is required');
+  const url = new URL(value);
+  assert(url.protocol === 'https:' || (url.protocol === 'http:' && ['localhost','127.0.0.1'].includes(url.hostname)), 'Invalid isolated target protocol');
+  assert(!url.username && !url.password && !url.search && !url.hash, 'Target must not contain credentials or query parameters');
+  assert(url.hostname !== 'xmrmkgfgpoundfwhnxfs.supabase.co', 'Production contract-test writes are forbidden');
+  return value.replace(/\/$/, '');
+}
+
 Deno.test('Hollywood Secret: shop scope rejects another shop',()=>{assertEquals(orderSchema.safeParse({...testOrder('one'),shop_id:'other-shop'}).success,false);});
 Deno.test('Hollywood Secret: duplicate SKUs cannot bypass line uniqueness',()=>{const x=testOrder('two');assertEquals(orderSchema.safeParse({...x,items:[...x.items,...x.items]}).success,false);});
 Deno.test('Hollywood Secret: quantities and currency are bounded',()=>{const x=testOrder('three');assertEquals(orderSchema.safeParse({...x,items:[{...x.items[0],quantity:1001}]}).success,false);assertEquals(orderSchema.safeParse({...x,currency:'USD'}).success,false);});
@@ -20,9 +34,9 @@ Deno.test('Hollywood Secret articles: reject duplicate identities and more than 
   assertEquals(articleImportSchema.safeParse({shop_id:'hollywood-secret',articles:[article,{...article,external_article_id:'two'}]}).success,false);
   assertEquals(articleImportSchema.safeParse({shop_id:'hollywood-secret',articles:Array.from({length:101},(_,i)=>({...article,sku:`SKU-${i}`,external_article_id:`id-${i}`}))}).success,false);
 });
-Deno.test('Hollywood Secret articles: deployed import, replay, concurrency and atomic conflict',async()=>{
+Deno.test({name:'Hollywood Secret articles: deployed import, replay, concurrency and atomic conflict',ignore:!deployedEnabled,fn:async()=>{
   const key=Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY');
-  const url=Deno.env.get('SUPABASE_URL')??Deno.env.get('VITE_SUPABASE_URL');
+  const url=isolatedContractUrl();
   assert(key&&url,'Configured sandbox access required');
   const id=`article-${crypto.randomUUID()}`;
   const article={external_article_id:id,sku:id,name:'Isolierter Artikelimport'};
@@ -37,11 +51,11 @@ Deno.test('Hollywood Secret articles: deployed import, replay, concurrency and a
   assertEquals((await call([other,{...article,name:'Changed'}])).status,409);
   const after=await call([other]);assertEquals(after.data.created,1,'Conflicting batch must roll back earlier article');
   assertEquals((await call([{...article,price:100}])).status,400);
-});
+}});
 Deno.test('Hollywood Secret: production disabled maps to forbidden',()=>{assertEquals(safeDatabaseError('HS_PRODUCTION_DISABLED').status,403);assertEquals(safeDatabaseError('HS_IDEMPOTENCY_CONFLICT').status,409);assertEquals(safeDatabaseError('raw private provider information').code,'INTERNAL_ERROR');});
-Deno.test('Hollywood Secret: live key cannot release orders or import prices',async()=>{
+Deno.test({name:'Hollywood Secret: live key cannot release orders or import prices',ignore:!deployedEnabled,fn:async()=>{
   const key=Deno.env.get('HOLLYWOOD_SECRET_LIVE_KEY');
-  const url=Deno.env.get('SUPABASE_URL')??Deno.env.get('VITE_SUPABASE_URL');
+  const url=isolatedContractUrl();
   assert(key&&url,'Configured live access required');
   const order=testOrder('blocked-live-check');
   const send=async(endpoint:string,payload:unknown)=>{
@@ -51,11 +65,11 @@ Deno.test('Hollywood Secret: live key cannot release orders or import prices',as
   const orders=await send('orders',order);assertEquals(orders.status,403);assertEquals(orders.body.error.code,'PRODUCTION_DISABLED');
   const invalid=await send('articles/import',{shop_id:'hollywood-secret',articles:[{external_article_id:'blocked-live-check',sku:'blocked-live-check',name:'Must not create',price:1}]});
   assertEquals(invalid.status,400);assertEquals(invalid.body.error.code,'INVALID_INPUT');
-});
+}});
 
-Deno.test('Hollywood Secret: deployed sandbox roundtrip, concurrency, scope and rollback',async()=>{
+Deno.test({name:'Hollywood Secret: deployed sandbox roundtrip, concurrency, scope and rollback',ignore:!deployedEnabled,fn:async()=>{
   const key=Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY');
-  const url=Deno.env.get('SUPABASE_URL')??Deno.env.get('VITE_SUPABASE_URL');
+  const url=isolatedContractUrl();
   assert(key&&url,'Test environment needs configured sandbox access');
   const id=`deno-${crypto.randomUUID()}`;
   const base=`${url}/functions/v1/hollywood-secret-api/v1`;
@@ -74,11 +88,11 @@ Deno.test('Hollywood Secret: deployed sandbox roundtrip, concurrency, scope and 
   assertEquals((await call('orders',{...order,total_cents:2001})).status,409);
   assertEquals((await call('orders/read',{shop_id:'other-shop',external_order_id:id})).status,400);
   assertEquals((await call('orders',order,key,'production')).status>=400,true);
-});
+}});
 
-Deno.test('Hollywood Secret: deployed authenticated requests stop at rate limit',async()=>{
+Deno.test({name:'Hollywood Secret: deployed authenticated requests stop at rate limit',ignore:!deployedEnabled,fn:async()=>{
   const key=Deno.env.get('HOLLYWOOD_SECRET_TEST_KEY');
-  const url=Deno.env.get('SUPABASE_URL')??Deno.env.get('VITE_SUPABASE_URL');
+  const url=isolatedContractUrl();
   assert(key&&url,'Configured sandbox access required');
   let limited=false;
   for(let i=0;i<61;i++) {
@@ -88,4 +102,4 @@ Deno.test('Hollywood Secret: deployed authenticated requests stop at rate limit'
     assertEquals(r.status,200);
   }
   assertEquals(limited,true,'Sixty requests per minute must be enforced by the server');
-});
+}});

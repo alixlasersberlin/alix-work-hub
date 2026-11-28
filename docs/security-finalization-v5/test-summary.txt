@@ -1,0 +1,51 @@
+security-finalization-targeted.log SHA-256 bdc5daf6068022cdeac36b12e102ab7acbbee1fbc3a0b82a37e06b390dc203af
+SMS customer handlers reject foreign company sources ... ok (11ms)
+SMS document cannot be moved to another customer in the request ... ok (2ms)
+SMS customer handlers deny alternative recipients without separate permission ... ok (8ms)
+SMS customer handlers require confirmation and reason even for administrators ... ok (8ms)
+SMS customer handlers share employee and normalized recipient quota across endpoints ... ok (13ms)
+SMS customer handlers deny exhausted employee and recipient quota without sending ... ok (15ms)
+SMS customer handlers fail closed on quota outage ... ok (10ms)
+SMS customer handlers fail closed when intent cannot be recorded ... ok (7ms)
+SMS OP preview does not spend quota or send ... ok (2ms)
+
+ok | 37 passed | 0 failed (1s)
+
+
+security-finalization-all-server.log SHA-256 bd69c1c5d620cea00a55aa3a99108de97100a853861ec9f95f6db4c412ece6c8
+SMS admin test validates recipient and bounds text before configuration ... ok (5ms)
+SMS admin test cannot bypass shared recipient quota ... ok (6ms)
+SMS admin test fails closed on quota and audit outages ... ok (5ms)
+SMS admin test uses verified caller quota and logs a simulated send ... ok (1ms)
+SMS admin test never retries an uncertain provider send ... ok (5ms)
+running 3 tests from ./supabase/functions/zoho-invoices-auto-import/input_test.ts
+Zoho manual import cannot select an unassigned company ... ok (29ms)
+Zoho dry run never permits the email test branch ... ok (3ms)
+Zoho input rejects invalid dates and unbounded pagination ... ok (2ms)
+
+ok | 798 passed | 0 failed | 4 ignored (30s)
+
+
+security-finalization-app.log SHA-256 46ea07da5b1742351abe359b4375512ed246296b061794c5a73541b4d3dccd08
+ ✓ src/lib/ticketMedia.test.ts (4 tests) 5ms
+ ✓ src/lib/phAcceptance.test.ts (2 tests) 11ms
+ ✓ src/lib/commission/search.test.ts (3 tests) 5ms
+ ✓ src/lib/sales/portal-device.test.ts (1 test) 8ms
+ ✓ src/lib/finance/manual-payment.test.ts (3 tests) 6ms
+ ✓ src/test/example.test.ts (1 test) 4ms
+
+ Test Files  59 passed (59)
+      Tests  279 passed (279)
+   Start at  17:16:24
+   Duration  31.84s (transform 1.92s, setup 69.65s, collect 25.83s, tests 3.84s, environment 251.09s, prepare 41.37s)
+
+
+security-finalization-types.log SHA-256 e7581f3a27d8c25c9e6dc3a2d5d2f89a7db11f637651453b1794c37a9ccc64ab
+Check supabase/functions/alixdocs2-ai-search/index.ts
+
+Restore-Werkzeugtests (kein echter Restore) SHA-256 6273232de4d3ef7acd4ecafa5c86beeeb974f56586b21089a2990b3f72facbe6
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+OK

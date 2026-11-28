@@ -1,0 +1,1 @@
+- Deployed contract tests are explicitly opt-in and use a separately authorized isolated target; default regression runs must never write through ambient production or fixture URLs.

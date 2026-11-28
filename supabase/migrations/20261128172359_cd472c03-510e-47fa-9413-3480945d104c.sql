@@ -1,0 +1,32 @@
+BEGIN;
+DO $compatibility$
+DECLARE u uuid; invoice uuid; expected text; actual text; before_row jsonb; after_row jsonb; expected_count bigint; got jsonb; o record; f record; expected_sum numeric; saved text:=current_setting('request.jwt.claims',true);
+BEGIN
+ SELECT a.user_id,i.id,i.legal_invoice_number,to_jsonb(i) INTO u,invoice,expected,before_row FROM public.zoho_invoices i JOIN public.tenants t ON t.zoho_source_system=i.source_system AND t.is_active IS TRUE JOIN public.user_tenant_access a ON a.tenant_id=t.id JOIN public.user_profiles p ON p.id=a.user_id WHERE i.legal_invoice_number IS NOT NULL AND (i.tenant_id IS NULL OR EXISTS(SELECT 1 FROM public.user_tenant_access ia WHERE ia.user_id=a.user_id AND ia.tenant_id=i.tenant_id)) AND p.is_active IS TRUE AND p.account_status='active' AND p.invitation_status='accepted' AND p.password_reset_required IS FALSE AND EXISTS(SELECT 1 FROM public.user_roles ur JOIN public.roles r ON r.id=ur.role_id WHERE ur.user_id=p.id AND r.name IN ('Admin','Super Admin')) ORDER BY i.id LIMIT 1;
+ IF invoice IS NULL THEN RAISE EXCEPTION 'No authorized read-only compatibility fixture'; END IF;
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',u,'role','authenticated')::text,true);
+ EXECUTE 'SET LOCAL ROLE authenticated';
+ actual:=public.assign_invoice_number(invoice);
+ IF actual IS DISTINCT FROM expected THEN RAISE EXCEPTION 'Existing number changed'; END IF;
+ SELECT to_jsonb(i) INTO after_row FROM public.zoho_invoices i WHERE id=invoice;
+ IF after_row IS DISTINCT FROM before_row THEN RAISE EXCEPTION 'Number readback changed invoice'; END IF;
+ got:=public.main_dashboard_kpis(false);
+ SELECT count(*) INTO expected_count FROM public.orders WHERE order_status='offen';
+ IF (got->>'openOrders')::bigint IS DISTINCT FROM expected_count THEN RAISE EXCEPTION 'Dashboard disagrees with caller records'; END IF;
+ got:=public.tickets_dashboard_counts(u,NULL::text);
+ SELECT count(*) INTO expected_count FROM public.tickets WHERE status IN ('open','offen','in-progress','in_bearbeitung','wartet_kunde','wartet_Kunde','Neu','Zugewiesen','In Bearbeitung');
+ IF (got->>'total_offen')::bigint IS DISTINCT FROM expected_count THEN RAISE EXCEPTION 'Ticket counts disagree with caller records'; END IF;
+ PERFORM public.alixdocs2_fts_search('security-regression-no-content',1);
+ PERFORM public.ac_wfm_adherence_live();
+ SELECT * INTO o FROM public.orders WHERE source_system IS NOT NULL ORDER BY id LIMIT 1;
+ IF NOT FOUND THEN RAISE EXCEPTION 'No readable order compatibility fixture'; END IF;
+ SELECT * INTO f FROM public.fc_order_financials(o.id);
+ SELECT coalesce(sum(i.total),0) INTO expected_sum FROM public.zoho_invoices i WHERE i.source_system IS NOT DISTINCT FROM o.source_system AND lower(coalesce(i.status,'')) NOT IN ('void','draft','storniert') AND ((o.order_number IS NOT NULL AND i.reference_number=o.order_number) OR (o.internal_number IS NOT NULL AND i.reference_number=o.internal_number));
+ IF f.invoiced IS DISTINCT FROM expected_sum OR f.order_amount IS DISTINCT FROM coalesce(o.total_amount,0)::numeric THEN RAISE EXCEPTION 'Order finances disagree with caller records'; END IF;
+ BEGIN PERFORM public.set_factory_invoice_pdf(gen_random_uuid(),'unused'); RAISE EXCEPTION 'Missing factory parent accepted'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN PERFORM public.gobd_log_invoice_event(gen_random_uuid(),'INVOICE_CREATED'); RAISE EXCEPTION 'Missing invoice audit parent accepted'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN PERFORM public.create_credit_note(gen_random_uuid(),1,19,'isolated regression'); RAISE EXCEPTION 'Missing credit parent accepted'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ EXECUTE 'RESET ROLE';
+ PERFORM set_config('request.jwt.claims',coalesce(saved,''),true);
+END $compatibility$;
+ROLLBACK;

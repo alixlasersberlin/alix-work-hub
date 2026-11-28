@@ -1,0 +1,22 @@
+{
+  "completion_status": "incomplete",
+  "scanner_name": "agent_security_v2",
+  "timestamp": "2026-11-28T17:26:31.001620859Z",
+  "up_to_date": true,
+  "version": "1.94",
+  "source_commit": "4beda073f1102ec43f6061faab3a83b25cc69449",
+  "scan_is_current_acceptance": false,
+  "source_predates_this_request_corrections": true,
+  "task_finished": true,
+  "raw_finding_count": 338,
+  "levels": {
+    "warn": 217,
+    "error": 121
+  },
+  "historically_corrected_ids": [
+    "lov_finding_41a6b36a5369c756",
+    "lov_finding_7a1b3fff5a92e03c",
+    "lov_finding_e6fe0ba3afe294ac"
+  ],
+  "scanner_up_to_date_is_not_commit_acceptance": true
+}

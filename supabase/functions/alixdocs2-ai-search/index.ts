@@ -1,6 +1,6 @@
 // ALIXDocs AI 2.0 — Phase 5: AI/RAG-Suche
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
 
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -9,25 +9,20 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
-  const url = Deno.env.get("SUPABASE_URL")!;
-  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const access = await requireCallerAccess(req, corsHeaders, ["Admin", "Super Admin"]);
+  if ('response' in access) return access.response;
   const lovable = Deno.env.get("LOVABLE_API_KEY");
-  if (!lovable) return json(500, { error: "LOVABLE_API_KEY missing" });
-
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) return json(401, { error: "unauthorized" });
-  const uc = createClient(url, anon, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } });
-  const { data: a } = await uc.rpc("has_role", { check_role: "Admin" });
-  const { data: s } = await uc.rpc("has_role", { check_role: "Super Admin" });
-  if (!a && !s) return json(403, { error: "forbidden" });
+  if (!lovable) return json(503, { error: "ai_unavailable" });
 
   const body = await req.json().catch(() => ({}));
-  const question = String(body?.question ?? "").trim();
+  const question = typeof body?.question === "string" ? body.question.trim() : "";
   if (!question) return json(400, { error: "question_required" });
+  if (question.length > 4000) return json(400, { error: "question_too_long" });
 
-  const admin = createClient(url, service);
-  const { data: hits } = await admin.rpc("alixdocs2_fts_search", { _query: question, _limit: 12 });
+  // Never retrieve document context with elevated credentials: both RPC layers
+  // use invoker rights so the caller's document and company policies apply.
+  const { data: hits, error: searchError } = await access.caller.rpc("alixdocs2_fts_search", { _query: question, _limit: 12 });
+  if (searchError) return json(503, { error: "document_search_unavailable" });
   const sources = (hits ?? []).map((d: any, i: number) => ({
     idx: i + 1, id: d.id, title: d.title || d.id, snippet: d.snippet || "",
   }));
@@ -47,7 +42,7 @@ Fehlt die Info: "In den vorhandenen Dokumenten nicht gefunden." Antworte auf Deu
       messages: [{ role: "system", content: sys }, { role: "user", content: `Frage: ${question}\n\nKontext:\n${context}` }],
     }),
   });
-  if (!r.ok) return json(r.status, { error: "ai_failed", detail: (await r.text()).slice(0, 300), sources });
+  if (!r.ok) return json(502, { error: "ai_failed" });
   const j = await r.json();
   return json(200, { answer: j?.choices?.[0]?.message?.content ?? "", sources });
 });
