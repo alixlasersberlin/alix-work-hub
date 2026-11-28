@@ -1,0 +1,6 @@
+[0m[32mCheck[0m supabase/functions/mediapaket-portal/index.ts
+[0m[32mCheck[0m supabase/functions/alixdocs-delete/index.ts
+[0m[32mCheck[0m supabase/functions/alixdocs-sign-return/index.ts
+[0m[32mCheck[0m supabase/functions/sig-apply-facsimile/index.ts
+[0m[32mCheck[0m supabase/functions/cmr-portal-invite/index.ts
+[0m[32mCheck[0m supabase/functions/alixsmart-sync-poll/index.ts
