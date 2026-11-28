@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { activeMessageAccount, maySendConversation } from '../_shared/message-access.ts';
 
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -64,19 +65,23 @@ Deno.serve(async (req) => {
     const { data: claims, error: claimsErr } = await userClient.auth.getClaims(authHeader.replace('Bearer ', ''));
     if (claimsErr || !claims?.claims?.sub) return json({ error: 'Unauthorized' }, 401);
     const userId = claims.claims.sub;
+    const { data: profile } = await admin.from('user_profiles').select('is_active,account_status,invitation_status,password_reset_required').eq('id', userId).maybeSingle();
+    if (!activeMessageAccount(profile)) return json({ error: 'Benutzer nicht freigegeben' }, 403);
 
     const { conversation_id, body, internal_note } = await req.json();
     if (!conversation_id || (!body && !internal_note)) return json({ error: 'invalid input' }, 400);
 
-    const { data: conv, error: cErr } = await admin
+    const { data: conv, error: cErr } = await userClient
       .from('ac_conversations')
-      .select('id, tenant_id, channel_type, contact_id, visitor_meta, external_thread_id, external_meta')
+      .select('id, tenant_id, channel_id, channel_type, contact_id, visitor_meta, external_thread_id, external_meta')
       .eq('id', conversation_id).maybeSingle();
     if (cErr || !conv) return json({ error: 'conversation not found' }, 404);
+    if (!(await maySendConversation(userClient, userId, conv))) return json({ error: 'Keine Versandberechtigung für diesen Chat' }, 403);
 
     // Store outbound message immediately
-    const { data: inserted, error: iErr } = await admin.from('ac_messages').insert({
+    const { data: inserted, error: iErr } = await userClient.from('ac_messages').insert({
       tenant_id: conv.tenant_id,
+      channel_id: conv.channel_id,
       conversation_id: conv.id,
       direction: internal_note ? 'internal' : 'outbound',
       sender_type: 'user',

@@ -5,6 +5,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { sendOutbound, providerConfigStatus, ERROR_TEXT, type ErrorCode } from './outbound.ts';
+import { activeMessageAccount, maySendConversation } from '../_shared/message-access.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const admin = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
@@ -59,16 +60,16 @@ Deno.serve(async (req) => {
 
     // 2) Berechtigung: aktives Mitarbeiterprofil
     const { data: profile } = await admin.from('user_profiles')
-      .select('id, full_name, is_active').eq('id', user.id).maybeSingle();
-    if (!profile || profile.is_active === false) {
+      .select('id, full_name, is_active, account_status, invitation_status, password_reset_required').eq('id', user.id).maybeSingle();
+    if (!activeMessageAccount(profile)) {
       return json({ ok: false, error: 'Kein aktives Mitarbeiterprofil.' }, 403);
     }
 
     // 3) Idempotenz
     if (clientMessageId) {
-      const { data: dupe } = await admin.from('ac_messages')
+      const { data: dupe } = await userClient.from('ac_messages')
         .select('id, delivery_status, provider_message_id')
-        .eq('client_message_id', clientMessageId).maybeSingle();
+        .eq('client_message_id', clientMessageId).eq('conversation_id', conversationId).eq('sender_user_id', user.id).maybeSingle();
       if (dupe) return json({ ok: true, duplicate: true, message_id: dupe.id, status: dupe.delivery_status });
     }
 
@@ -80,10 +81,11 @@ Deno.serve(async (req) => {
     }
 
     // 4) Conversation + Kanal
-    const { data: conv } = await admin.from('ac_conversations')
+    const { data: conv } = await userClient.from('ac_conversations')
       .select('id, tenant_id, channel_id, channel_type, external_thread_id, contact_id, first_response_at, is_test, priority')
       .eq('id', conversationId).maybeSingle();
     if (!conv) return json({ ok: false, error: 'Chat nicht gefunden.' }, 404);
+    if (!(await maySendConversation(userClient, user.id, conv))) return json({ ok: false, error: 'Keine Versandberechtigung für diesen Chat.' }, 403);
 
     const { data: channel } = conv.channel_id
       ? await admin.from('ac_channels').select('id, provider, provider_phone_id, is_test, is_active').eq('id', conv.channel_id).maybeSingle()
@@ -135,7 +137,7 @@ Deno.serve(async (req) => {
       if (!storagePath) return json({ ok: false, error: 'storage_path fehlt.' }, 400);
       const size = Number(body.file_size ?? 0);
       if (size && size > (MAX_BYTES[messageType] ?? 100e6)) return fail('FILE_TOO_LARGE');
-      const { data: signed, error: sErr } = await admin.storage
+      const { data: signed, error: sErr } = await userClient.storage
         .from('inbox-media').createSignedUrl(storagePath, 900);
       if (sErr || !signed?.signedUrl) return fail('UNSUPPORTED_FILE', sErr?.message, 400);
       mediaUrl = signed.signedUrl;
@@ -159,8 +161,9 @@ Deno.serve(async (req) => {
     let replyToProviderId: string | null = null;
     const replyToId: string | null = body.reply_to_message_id ?? null;
     if (replyToId) {
-      const { data: rep } = await admin.from('ac_messages')
-        .select('external_message_id, provider_message_id').eq('id', replyToId).maybeSingle();
+      const { data: rep } = await userClient.from('ac_messages')
+        .select('external_message_id, provider_message_id').eq('id', replyToId).eq('conversation_id', conversationId).maybeSingle();
+      if (!rep) return json({ ok: false, error: 'Antwortnachricht nicht zugänglich.' }, 403);
       replyToProviderId = rep?.external_message_id ?? rep?.provider_message_id ?? null;
     }
 
@@ -168,14 +171,14 @@ Deno.serve(async (req) => {
     const previewBody = messageType === 'TEMPLATE'
       ? (text ?? `(Vorlage ${template?.name})`)
       : (text ?? `(${messageType})`);
-    const { data: inserted, error: insErr } = await admin.from('ac_messages').insert({
+    const { data: inserted, error: insErr } = await userClient.from('ac_messages').insert({
       tenant_id: conv.tenant_id,
       channel_id: conv.channel_id,
       conversation_id: conversationId,
       direction: 'outbound',
       sender_type: 'user',
       sender_user_id: user.id,
-      sender_name: profile.full_name ?? null,
+      sender_name: profile?.full_name ?? null,
       body: text,
       message_type: messageType,
       client_message_id: clientMessageId,

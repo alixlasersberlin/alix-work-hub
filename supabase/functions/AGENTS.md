@@ -18,3 +18,4 @@
 - Controlled DE/COM modes preserve all acceptance and environment gates, exact single-pilot UUID, and operating revision at capture/claim/prepare/final dispatch; block legacy writers to prevent stop bypass, retain in-flight receipts, and never replay shadow or prior-revision events.
 - product-hub-api /bundle (v1.2) mirrors list visibility and exposes sync_scope/sync_allowed from ph2_activation; receivers' periodic reconcile may only apply sync_allowed products, so the pilot gate cannot be bypassed via public reads.
 - /bundle?include_offline=1 (v1.3) adds content-free offline_products (offline/not_released; absent = missing) gated by the same sync_allowed; default response stays v1.2 for backward compatibility.
+- Internal conversation senders share message-access: active accepted accounts, explicit tenant assignment and channel membership precede caller-scoped message insertion and media signing; provider status writes remain server-only.
