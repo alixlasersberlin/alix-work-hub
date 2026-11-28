@@ -1,0 +1,35 @@
+[0m[38;5;245mrunning 21 tests from ./supabase/functions/_shared/security-continuation_test.ts[0m
+Continuation ac-outreach-engine rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(133ms)[0m
+Continuation ac-outreach-engine rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Continuation ac-journey-trigger rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Continuation ac-journey-trigger rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Continuation ac-journey-run rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Continuation ac-journey-run rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Continuation ac-playbook-run rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Continuation ac-playbook-run rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Continuation ac-segment-preview rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Continuation ac-segment-preview rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Continuation ac-compliance-governance rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Continuation ac-compliance-governance rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Journey metadata cannot replace stored contact, customer, tenant or recipient ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Journey never fabricates a contact when its authorized lookup is missing ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Segment inline filter cannot bypass the stored segment check ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+Segment failed persistence is not reported as success ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Journey trigger rejects readable contact outside assigned tenant before enrollment ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Journey trigger enrollment uses the authorized contact and retains immutable context identity ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Outreach skips cross-tenant customer before throttle history or queue writes ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Compliance aggregate reads all carry explicit assigned tenant constraints ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Compliance cannot bind a valid conversation to a different valid contact ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[0m[38;5;245mrunning 9 tests from ./supabase/functions/_shared/security-continuation-knowledge_test.ts[0m
+Knowledge ac-kb-ai-draft rejects public and forged callers before private data reads ... [0m[32mok[0m [0m[38;5;245m(141ms)[0m
+Knowledge ac-kb-ai-draft rejects inactive account before all business operations ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Knowledge ac-segment-auto-enroll rejects public and forged callers before private data reads ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Knowledge ac-segment-auto-enroll rejects inactive account before all business operations ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Knowledge drafts never read messages from a foreign tenant conversation ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Knowledge input bounds reject oversized batch before reading private data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Knowledge draft uses assigned tenant messages, remains nonpublic and records verified author ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Auto enrollment cannot process contacts outside assigned tenants ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Auto enrollment validates active journey and assigned conversation tenant without writes in dry run ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+
+[0m[32mok[0m | 30 passed | 0 failed [0m[38;5;245m(491ms)[0m
+

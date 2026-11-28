@@ -1,0 +1,14 @@
+[0m[32mCheck[0m supabase/functions/ac-outreach-engine/index.ts
+[0m[32mCheck[0m supabase/functions/ac-journey-trigger/index.ts
+[0m[32mCheck[0m supabase/functions/ac-journey-run/index.ts
+[0m[32mCheck[0m supabase/functions/ac-playbook-run/index.ts
+[0m[32mCheck[0m supabase/functions/ac-segment-preview/index.ts
+[0m[32mCheck[0m supabase/functions/ac-compliance-governance/index.ts
+[0m[32mCheck[0m supabase/functions/ac-kb-ai-draft/index.ts
+[0m[32mCheck[0m supabase/functions/ac-segment-auto-enroll/index.ts
+[0m[32mCheck[0m supabase/functions/sig-entity-sync/index.ts
+[0m[32mCheck[0m supabase/functions/ticket-user-notify/index.ts
+[0m[32mCheck[0m supabase/functions/ticket-auto-close/index.ts
+[0m[32mCheck[0m supabase/functions/esc-whatsapp-inbound/index.ts
+[0m[32mCheck[0m supabase/functions/ac-voice-analyze/index.ts
+[0m[32mCheck[0m supabase/functions/ph-com-lang-push/index.ts

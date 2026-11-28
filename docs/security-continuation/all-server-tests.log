@@ -1,0 +1,599 @@
+[0m[38;5;245mrunning 6 tests from ./supabase/functions/_shared/blocked-maintenance-endpoint_test.ts[0m
+A0 maintenance admin-reset-jerry: every execution request denied for all credential classes ... [0m[32mok[0m [0m[38;5;245m(52ms)[0m
+A0 maintenance admin-reset-jerry: never parses attacker-supplied payload ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+A0 maintenance admin-reset-jerry: preflight remains side-effect-free ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+A0 maintenance tmp-create-sobitsch: every execution request denied for all credential classes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+A0 maintenance tmp-create-sobitsch: never parses attacker-supplied payload ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+A0 maintenance tmp-create-sobitsch: preflight remains side-effect-free ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 4 tests from ./supabase/functions/_shared/caller-access_test.ts[0m
+normal administrators never inherit Super Admin authorization ... [0m[32mok[0m [0m[38;5;245m(16ms)[0m
+active assigned staff retain two explicitly assigned companies ... [0m[32mok[0m [0m[38;5;245m(24ms)[0m
+missing identity fails before database reads ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+tenant-scoped workers preserve the existing private cron identity ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 2 tests from ./supabase/functions/_shared/global-bcc_test.ts[0m
+Mahnung: gesperrte Service-Kopie wird entfernt, kein Archiv-BCC ... [0m[32mok[0m [0m[38;5;245m(37ms)[0m
+Normale Mail: nur Archiv-BCC, gesperrte Buchhaltungs-/Service-Adressen entfernt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 5 tests from ./supabase/functions/_shared/job-auth_test.ts[0m
+public keys and forged service claims cannot authorize a job ... [0m[32mok[0m [0m[38;5;245m(25ms)[0m
+empty or wrong machine credentials fail closed ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+existing private scheduler and internal service credentials remain valid ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+manual jobs require verified identity, active account and assigned permitted role ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+public callers are rejected before database access ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 1 test from ./supabase/functions/_shared/mail-signature_test.ts[0m
+reiner Text bleibt im sichtbaren HTML-Teil der Mail erhalten ... [0m[32mok[0m [0m[38;5;245m(29ms)[0m
+[0m[38;5;245mrunning 2 tests from ./supabase/functions/_shared/media-url-policy_test.ts[0m
+voicemail cannot fetch internal, arbitrary or credential-bearing hosts ... [0m[32mok[0m [0m[38;5;245m(35ms)[0m
+existing provider and project storage media remain allowed ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 6 tests from ./supabase/functions/_shared/ph-connection-test_test.ts[0m
+405 alone is reachable, never authenticated ... [0m[32mok[0m [0m[38;5;245m(19ms)[0m
+unsigned accepted is a security failure ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+wrong key ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+signature without receipt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full acceptance ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+unreachable ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 22 tests from ./supabase/functions/_shared/ph-delivery_test.ts[0m
+live gate requires explicit flag and every acceptance gate ... [0m[32mok[0m [0m[38;5;245m(41ms)[0m
+full product update: name keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: long_description keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: short_description keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: sku keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: tech_specs keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: hero_image_url keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: videos keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: documents keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: categories keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: translations keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: seo keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: warranty keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full product update: central_prices keeps a new event even when desired state is unchanged ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+image becoming private blocks publication ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+regulatory holds are never removed ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+microsecond ordering survives concurrent changes ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+initial attempt plus exactly five retries ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+connection interruption leaves a retryable error, never publication ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+redirects cannot exfiltrate signed requests ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+complete isolated signal → fetch → apply → signed receipt → confirmed display state ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+receipt rejects unsent, stale, wrong identity and missing online URL ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 1 test from ./supabase/functions/_shared/ph-http-flow_test.ts[0m
+isolated HTTP: signal, product fetch, application, receipt and confirmation ...
+[0m[38;5;245m------- post-test output -------[0m
+Isolated local HTTP round trip milliseconds: {"runs":10,"min":2.94,"max":28.88,"mean":6.02}
+[0m[38;5;245m----- post-test output end -----[0m
+isolated HTTP: signal, product fetch, application, receipt and confirmation ... [0m[32mok[0m [0m[38;5;245m(89ms)[0m
+[0m[38;5;245mrunning 8 tests from ./supabase/functions/_shared/ph-operating-mode_test.ts[0m
+pilot transmits exactly the selected device ... [0m[32mok[0m [0m[38;5;245m(29ms)[0m
+COM stays excluded when DE pilot is released ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+emergency stop overrides both modes ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+acceptance cannot release without explicit global flag ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+backup restore and communication prerequisites are not weakened ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+unknown scope and US always fail closed ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+full mode only affects its explicitly released website ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+old and unversioned events cannot resume after stop or mode change ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 11 tests from ./supabase/functions/_shared/ph-publication_test.ts[0m
+Veröffentlichung: AN + vollständige Daten → ONLINE ... [0m[32mok[0m [0m[38;5;245m(37ms)[0m
+Deaktivierung: AUS → OFFLINE ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Nicht veröffentlichtes Produkt → OFFLINE ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Regulatorische Sperre gewinnt gegen AN ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Privater signierter Bildlink blockiert ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+USA bleibt ausgeschlossen ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Mehrere Webseiten unabhängig ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Schreibweisen Dubai/AE/UAE → dubai ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Abweichung zur Live-Logik wird erkannt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+public images allow resize params but reject signed links ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+web image path only for own product images in product-hub-docs ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 10 tests from ./supabase/functions/_shared/ph-signal_test.ts[0m
+gültige Signatur ... [0m[32mok[0m [0m[38;5;245m(35ms)[0m
+manipulierter Body abgelehnt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+falsches Geheimnis abgelehnt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+abgelaufenes Signal abgelehnt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+fehlende Header abgelehnt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+doppelte Ereignisse → gleicher Schlüssel ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+veraltete Ereignisse erkannt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+schnelles AN/AUS: nur neueste Version gewinnt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Verbindungsfehler: begrenzte Wiederholungen ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Empfang ist kein Nachweis – nur passende Rückmeldung bestätigt ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 4 tests from ./supabase/functions/_shared/process-access_test.ts[0m
+public credentials cannot execute financial processes ... [0m[32mok[0m [0m[38;5;245m(26ms)[0m
+existing private automatic finance credential retains its job branch ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+EU and CH finance roles are distinct from limited open-item access ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+missing and foreign tenant identities never imply global access ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 3 tests from ./supabase/functions/_shared/provider-auth_test.ts[0m
+Twilio authenticates the fixed provider URL and rejects changed body or host ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+mail requires a signed unmodified body and fresh provider timestamp ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+a ticket number alone never authorizes another sender ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+[0m[38;5;245mrunning 9 tests from ./supabase/functions/_shared/security-continuation-knowledge_test.ts[0m
+Knowledge ac-kb-ai-draft rejects public and forged callers before private data reads ... [0m[32mok[0m [0m[38;5;245m(110ms)[0m
+Knowledge ac-kb-ai-draft rejects inactive account before all business operations ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Knowledge ac-segment-auto-enroll rejects public and forged callers before private data reads ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Knowledge ac-segment-auto-enroll rejects inactive account before all business operations ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Knowledge drafts never read messages from a foreign tenant conversation ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Knowledge input bounds reject oversized batch before reading private data ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Knowledge draft uses assigned tenant messages, remains nonpublic and records verified author ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Auto enrollment cannot process contacts outside assigned tenants ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Auto enrollment validates active journey and assigned conversation tenant without writes in dry run ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+[0m[38;5;245mrunning 13 tests from ./supabase/functions/_shared/security-continuation-machines_test.ts[0m
+Machine sig-entity-sync rejects public, forged and ordinary staff credentials before data access ... [0m[32mok[0m [0m[38;5;245m(73ms)[0m
+Machine ticket-user-notify rejects public, forged and ordinary staff credentials before data access ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Machine ticket-auto-close rejects public, forged and ordinary staff credentials before data access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Signature entity status comes only from the stored completed document ... [0m[32mok[0m [0m[38;5;245m(11ms)[0m
+Signature entity cannot fabricate a missing completion timestamp ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Signature entity cannot become signed through an incoming status override ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Signature entity reports failed database writes as failure ...
+[0m[38;5;245m------- post-test output -------[0m
+sig-entity-sync { message: "write failed" }
+[0m[38;5;245m----- post-test output end -----[0m
+Signature entity reports failed database writes as failure ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Ticket notification rejects added recipient parameters before reading the notification ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Ticket notification skips inactive stored recipient without provider calls ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Ticket notification sends only to the stored active user and treats saved HTML as text ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Automatic ticket closure uses only its existing private RPC ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Calendar WhatsApp rejects unsigned and invalidly signed input before reads or writes ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+Calendar WhatsApp accepts a genuine synthetic provider signature with its established confirmation flow ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[0m[38;5;245mrunning 8 tests from ./supabase/functions/_shared/security-continuation-scope_test.ts[0m
+Scope ac-voice-analyze rejects public or forged access before business reads or providers ... [0m[32mok[0m [0m[38;5;245m(134ms)[0m
+Scope ph-com-lang-push rejects public or forged access before business reads or providers ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+COM translation push never inherits Super Admin rights from Admin ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+COM translation push retains the controlled-mode stop for authorized Super Admin ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+COM arbitrary payload probe cannot reach the external write adapter ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+COM translation push checks caller product visibility before privileged text reads ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Voice analysis cannot process a readable call attached to a foreign tenant ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Voice private job preserves global scope without human impersonation ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+[0m[38;5;245mrunning 21 tests from ./supabase/functions/_shared/security-continuation_test.ts[0m
+Continuation ac-outreach-engine rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(162ms)[0m
+Continuation ac-outreach-engine rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Continuation ac-journey-trigger rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+Continuation ac-journey-trigger rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Continuation ac-journey-run rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Continuation ac-journey-run rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Continuation ac-playbook-run rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Continuation ac-playbook-run rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Continuation ac-segment-preview rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Continuation ac-segment-preview rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Continuation ac-compliance-governance rejects public and forged access before data or provider calls ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Continuation ac-compliance-governance rejects inactive administrators ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Journey metadata cannot replace stored contact, customer, tenant or recipient ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Journey never fabricates a contact when its authorized lookup is missing ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Segment inline filter cannot bypass the stored segment check ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+Segment failed persistence is not reported as success ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Journey trigger rejects readable contact outside assigned tenant before enrollment ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Journey trigger enrollment uses the authorized contact and retains immutable context identity ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Outreach skips cross-tenant customer before throttle history or queue writes ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Compliance aggregate reads all carry explicit assigned tenant constraints ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Compliance cannot bind a valid conversation to a different valid contact ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+[0m[38;5;245mrunning 15 tests from ./supabase/functions/_shared/security-final-next_test.ts[0m
+Final cmr-portal-invite: missing, public and forged access causes no business or provider calls ... [0m[32mok[0m [0m[38;5;245m(143ms)[0m
+Final cmr-portal-invite: inactive administrator cannot access provider or records ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Final alixsmart-sync-poll: missing, public and forged access causes no business or provider calls ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+Final alixsmart-sync-poll: inactive administrator cannot access provider or records ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final CMR rejects foreign-tenant before sending or changing the recipient ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+Final CMR rejects revoked before sending or changing the recipient ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Final CMR rejects expired before sending or changing the recipient ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Final CMR rejects recipient before sending or changing the recipient ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final CMR approved invite uses stored identity and trusted origin, with no recipient mutation ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Final ALIXSMART admin missing one active tenant cannot fetch a global export ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Final ALIXSMART rejects invalid selection {"action":"peek","table":"credentials"} before export or writes ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Final ALIXSMART rejects invalid selection {"action":"unknown"} before export or writes ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final ALIXSMART rejects invalid selection {"entities":["unknown"]} before export or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final ALIXSMART rejects invalid selection {"full":"true"} before export or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final ALIXSMART private machine can run readonly diagnostics without business writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 41 tests from ./supabase/functions/_shared/security-final_test.ts[0m
+Portal fields cannot move records or set assignment, approval, legal review and audit fields ... [0m[32mok[0m [0m[38;5;245m(22ms)[0m
+Portal file paths reject other packages, traversal and encoded path components ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Status notices require the saved status and never accept free-form customer mail text ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Document deletion requires exact Super Admin; restoration never grants wider editing ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final alixdocs-delete: public, missing and forged credentials cannot access records or signatures ... [0m[32mok[0m [0m[38;5;245m(73ms)[0m
+Final alixdocs-delete: inactive accounts cannot modify records ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Final alixdocs-sign-return: public, missing and forged credentials cannot access records or signatures ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Final alixdocs-sign-return: inactive accounts cannot modify records ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final sig-apply-facsimile: public, missing and forged credentials cannot access records or signatures ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Final sig-apply-facsimile: inactive accounts cannot modify records ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final portal issue_token: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+Final portal duplicate: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final portal notify_customer: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final portal notify_question: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal staff_message: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final portal notify_customer_status: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal send_whatsapp: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal add_watcher: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal handoff_production: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal create_from_template: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal snapshot: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal list_snapshots: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal rollback: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal toggle_showcase: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal get_showcase_config: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal gdpr_export: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal anonymize: customer token and public key cannot authorize staff actions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final portal notify_customer_status: readable foreign-company packages cannot write or send ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Final portal handoff_production: readable foreign-company packages cannot write or send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Final portal duplicate: readable foreign-company packages cannot write or send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Final portal duplication rejects a target order belonging to another customer ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Final portal status mismatch is rejected before mail, reviews or history writes ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Final customer save persists allowed fields but no supplied workflow or record identities ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final signed download rejects a foreign stored path before any storage signing ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final question reply cannot load another package or internal question ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Final delete Admin cannot inherit Super Admin deletion rights ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+Final delete readable foreign-company document cannot be restored ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Final signed return rejects an incomplete signature before file access ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Final signed return rejects a readable foreign-company document before copying ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Final facsimile cannot be used by an unrelated Read Only account ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Final facsimile authorized PDF is stamped and audit actor cannot be forged ... [0m[32mok[0m [0m[38;5;245m(40ms)[0m
+[0m[38;5;245mrunning 30 tests from ./supabase/functions/_shared/security-v3-handlers_test.ts[0m
+product-hub-import: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(122ms)[0m
+product-hub-validate: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+ph-en-batch: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+security-auto-scan: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+ac-agent-assist-live: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ac-knowledge-rag: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-revenue-forecast: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-customer-intel: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+ac-voicemail-transcribe: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+alixdocs-attach-from-storage: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(37ms)[0m
+alix-sign-resend: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(734ms)[0m
+finance-datev-export: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+finance-bank-import: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+finance-camt054-import: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+finance-sepa-export: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+finance-ch-dd-export: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+finance-automations-engine: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+bank-api-fetch: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+bank-auto-reconcile: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+cmr-bank-automatch: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+cmr-recurring-run: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+cmr-collective-run: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+bank-return-dunning-escalate: public and forged callers cannot reach business data or providers ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+ac-3cx-webhook: forged provider delivery has no side effects ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-voice-twilio-webhook: forged provider delivery has no side effects ... [0m[32mok[0m [0m[38;5;245m(192ms)[0m
+cmr-bank-automatch: active scoped manual and existing private job contracts remain executable without business actions ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+cmr-recurring-run: active scoped manual and existing private job contracts remain executable without business actions ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+cmr-collective-run: active scoped manual and existing private job contracts remain executable without business actions ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+finance-automations-engine: active scoped manual and existing private job contracts remain executable without business actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+bank-auto-reconcile: active scoped manual and existing private job contracts remain executable without business actions ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[0m[38;5;245mrunning 41 tests from ./supabase/functions/_shared/security-v31-handlers_test.ts[0m
+ac-email-autolink: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(116ms)[0m
+ac-email-autolink: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+github-status: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+github-status: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ac-router-simulate: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ac-router-simulate: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-customer-score: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-customer-score: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-translate-live: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-translate-live: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-sentiment-emotion: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-sentiment-emotion: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ai-service-analyze: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+ai-service-analyze: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+compliance-ai-assist: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+compliance-ai-assist: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+as-send-sms-reminder: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(13ms)[0m
+as-send-sms-reminder: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-ai-reply: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-ai-reply: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+as-send-email-reminder: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+as-send-email-reminder: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+as-ai-suggest: unauthenticated and forged identities never reach protected data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+as-ai-suggest: inactive accounts and missing company membership cannot execute ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+ac-email-autolink: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-router-simulate: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-customer-score: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-translate-live: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-sentiment-emotion: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ai-service-analyze: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+compliance-ai-assist: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+as-send-sms-reminder: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+as-send-email-reminder: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+as-ai-suggest: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-ai-reply: authorized empty scope preserves read flow; foreign IDs never reach AI or writes ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+SMS cannot be redirected away from the case customer even by authorized staff ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+after-sales email: authorized employee retains stored recipient and no real sending occurs ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+after-sales email: existing private workflow retains stored recipient and no real sending occurs ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+github-status: Admin cannot inherit a more privileged operation ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+as-send-sms-reminder: Vertrieb cannot inherit a more privileged operation ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+ai-service-analyze: Finance cannot inherit a more privileged operation ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 14 tests from ./supabase/functions/_shared/security-v31-jobs_test.ts[0m
+ticket-sla-check: public and forged callers cannot run automatic business operations ... [0m[32mok[0m [0m[38;5;245m(106ms)[0m
+ticket-sla-check: existing private scheduler succeeds against empty isolated data ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+ticket-escalation-engine: public and forged callers cannot run automatic business operations ... [0m[32mok[0m [0m[38;5;245m(11ms)[0m
+ticket-escalation-engine: existing private scheduler succeeds against empty isolated data ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+audit-alert-digest: public and forged callers cannot run automatic business operations ... [0m[32mok[0m [0m[38;5;245m(34ms)[0m
+audit-alert-digest: existing private scheduler succeeds against empty isolated data ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+offers-ai-autoscore: public and forged callers cannot run automatic business operations ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+offers-ai-autoscore: existing private scheduler succeeds against empty isolated data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+delivery-rating-report: public and forged callers cannot run automatic business operations ... [0m[32mok[0m [0m[38;5;245m(35ms)[0m
+delivery-rating-report: existing private scheduler succeeds against empty isolated data ... [0m[32mok[0m [0m[38;5;245m(26ms)[0m
+delivery-approval-escalation: public and forged callers cannot run automatic business operations ... [0m[32mok[0m [0m[38;5;245m(12ms)[0m
+delivery-approval-escalation: existing private scheduler succeeds against empty isolated data ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+as-workflows-run: public and forged callers cannot run automatic business operations ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+as-workflows-run: existing private scheduler succeeds against empty isolated data ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 64 tests from ./supabase/functions/_shared/security-v31-next_test.ts[0m
+ac-journey-tick: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(87ms)[0m
+ac-segment-auto-enroll: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(13ms)[0m
+alixdocs2-workflow-scan: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+alixdocs-hash-backfill: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+alixdocs-learn-rules: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ac-automation-run: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+ac-webhook-dispatch: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+delivery-reminder-engine: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+follow-up-reminder-engine: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+fleet-maintenance-alerts: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ac-sla-check: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+social-competitors-sync: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-workflow-studio: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ac-conversation-qa: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ai-center-chat: public and forged credentials cannot access business data ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+ac-journey-tick: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-segment-auto-enroll: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+alixdocs2-workflow-scan: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs-hash-backfill: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs-learn-rules: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-automation-run: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-webhook-dispatch: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+delivery-reminder-engine: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+follow-up-reminder-engine: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+fleet-maintenance-alerts: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+ac-sla-check: existing private scheduler completes isolated empty scope without sending ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-segment-auto-enroll: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ac-segment-auto-enroll: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs2-workflow-scan: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs2-workflow-scan: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs-hash-backfill: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs-hash-backfill: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs-learn-rules: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+alixdocs-learn-rules: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-automation-run: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-automation-run: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+fleet-maintenance-alerts: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+fleet-maintenance-alerts: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-sla-check: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-sla-check: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+social-competitors-sync: inactive and unassigned employees cannot run maintenance ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+social-competitors-sync: human reads retain the employee credential and existing row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs-hash-backfill: malformed scope input is rejected before data access ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs-learn-rules: malformed scope input is rejected before data access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+social-competitors-sync: malformed scope input is rejected before data access ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+social competitors: read-only role cannot run write operations ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+social competitors: authorized isolated snapshot keeps caller credential for both writes ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ac-automation-run: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-segment-auto-enroll: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+alixdocs2-workflow-scan: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+alixdocs-hash-backfill: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+alixdocs-learn-rules: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+ac-sla-check: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+fleet-maintenance-alerts: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ac-workflow-studio: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+ac-conversation-qa: Finance cannot inherit administration or planning rights ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+fleet maintenance: existing Tourenplanung planning role retains authorized read scope ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+fleet maintenance: existing Order planning role retains authorized read scope ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+fleet maintenance: existing SACHBEARBEITUNG planning role retains authorized read scope ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+automation cannot process a foreign conversation or unrelated message ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+workflow validation remains available to an authorized administrator without writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+QA rejects missing authorized conversation before any AI call or write ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+QA authorized synthetic conversation is analyzed and stores only the selected identity ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+AI center permits an authorized synthetic chat without changing its existing message contract ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[0m[38;5;245mrunning 39 tests from ./supabase/functions/_shared/security-v4-jobs_test.ts[0m
+v4 job ac-playbook-run: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(102ms)[0m
+v4 job ac-playbook-run: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4 job ac-journey-run: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4 job ac-journey-run: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job ac-alerts-check: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4 job ac-alerts-check: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job ac-recording-retention: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job ac-recording-retention: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job ac-wfm-adherence-alerts: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(25ms)[0m
+v4 job ac-wfm-adherence-alerts: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 job maintenance-reminder-daily: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job maintenance-reminder-daily: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job delivery-approval-monthly-report: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+v4 job delivery-approval-monthly-report: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job finance-asset-depreciation-run: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 job finance-asset-depreciation-run: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job offer-followup-engine: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 job offer-followup-engine: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job lager-bestand-notify: public and forged credentials cannot read, write or send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job lager-bestand-notify: original machine credential retains isolated empty execution without external actions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job ac-playbook-run: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4 job ac-playbook-run: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job ac-journey-run: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job ac-journey-run: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job ac-alerts-check: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job ac-alerts-check: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job maintenance-reminder-daily: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job maintenance-reminder-daily: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job delivery-approval-monthly-report: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job delivery-approval-monthly-report: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job finance-asset-depreciation-run: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job finance-asset-depreciation-run: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job offer-followup-engine: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job offer-followup-engine: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 job lager-bestand-notify: inactive, unassigned and unrelated human roles cannot run business operations ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 job lager-bestand-notify: human business access retains personal row permissions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 approval report cannot redirect configured recipients ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 depreciation rejects invalid months before reading financial data ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 journey dry run validates enrollment without storing or sending ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[0m[38;5;245mrunning 7 tests from ./supabase/functions/_shared/security-v42-invoice_test.ts[0m
+v4.2 invoice mail rejects forged and public credentials before provider or records ... [0m[32mok[0m [0m[38;5;245m(100ms)[0m
+v4.2 invoice mail denies an unrelated active role ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4.2 invoice mail denies an inaccessible recipient through caller-scoped company query ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+v4.2 invoice mail denies arbitrary external copies even for finance staff ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4.2 invoice attachments and mail headers reject malformed data ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 authorized invoice mail dispatch preserves stored customer and attachment without retries ...
+[0m[38;5;245m------- post-test output -------[0m
+send-invoice-mail via resend accepted
+[0m[38;5;245m----- post-test output end -----[0m
+v4.2 authorized invoice mail dispatch preserves stored customer and attachment without retries ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4.2 existing private invoice jobs retain trusted dispatch without human impersonation ...
+[0m[38;5;245m------- post-test output -------[0m
+send-invoice-mail via resend accepted
+[0m[38;5;245m----- post-test output end -----[0m
+v4.2 existing private invoice jobs retain trusted dispatch without human impersonation ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+[0m[38;5;245mrunning 15 tests from ./supabase/functions/_shared/security-v42-mail_test.ts[0m
+v4.2 send-order-confirmation: anonymous, project key and forged identity never reach records ... [0m[32mok[0m [0m[38;5;245m(732ms)[0m
+v4.2 send-order-confirmation: unrelated read-only role cannot perform business action ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4.2 catalog-share-send: anonymous, project key and forged identity never reach records ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4.2 catalog-share-send: unrelated read-only role cannot perform business action ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 convert-signed-offer-to-order: anonymous, project key and forged identity never reach records ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+v4.2 convert-signed-offer-to-order: unrelated read-only role cannot perform business action ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4.2 recipient identity cannot be redirected to an arbitrary external address ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4.2 sales share ownership does not inherit privileged catalog rights ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4.2 catalog URLs reject untrusted hosts, credentials and query parameters ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4.2 send-order-confirmation orders: inaccessible parent is read through caller without writes ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4.2 send-order-confirmation alix_sign_signatures: inaccessible parent is read through caller without writes ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 convert-signed-offer-to-order alix_sign_requests: inaccessible parent is read through caller without writes ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4.2 catalog sales user cannot dispatch another sales user link ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 catalog authorized SMS uses only stored recipient and caller-scoped item ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 order confirmation rejects cross-company order before signing or provider use ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 13 tests from ./supabase/functions/_shared/security-v42-next_test.ts[0m
+v4.2 offers-ai-score: public and forged access cannot reach records or providers ... [0m[32mok[0m [0m[38;5;245m(161ms)[0m
+v4.2 offers-ai-score: unrelated, inactive and unassigned employees are denied ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+v4.2 dispatch-eta-sms: public and forged access cannot reach records or providers ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+v4.2 dispatch-eta-sms: unrelated, inactive and unassigned employees are denied ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4.2 rz-reminder-send: public and forged access cannot reach records or providers ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+v4.2 rz-reminder-send: unrelated, inactive and unassigned employees are denied ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 offer scoring cannot write a model-invented foreign offer ID ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4.2 technician cannot text another technician route customer ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 assigned technician cannot text a foreign-company customer ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 technician ETA sends stored contact only and logs with caller rights ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4.2 finance reminder preview reads only personally authorized company rows without sending ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4.2 ordinary finance cannot override reminder recipient ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 existing private reminder jobs retain preview without identity impersonation ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 21 tests from ./supabase/functions/_shared/security-v42_test.ts[0m
+v4.2 plm-purchase-order-send: public and forged credentials cannot reach business records or providers ... [0m[32mok[0m [0m[38;5;245m(114ms)[0m
+v4.2 plm-purchase-order-send: inactive, roleless and unassigned accounts cannot reach business records ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+v4.2 send-repair-quote: public and forged credentials cannot reach business records or providers ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4.2 send-repair-quote: inactive, roleless and unassigned accounts cannot reach business records ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4.2 delivery-route-calc: public and forged credentials cannot reach business records or providers ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v4.2 delivery-route-calc: inactive, roleless and unassigned accounts cannot reach business records ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 esc-calendar-sync: public and forged credentials cannot reach business records or providers ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4.2 esc-calendar-sync: inactive, roleless and unassigned accounts cannot reach business records ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 purchase PDF validation rejects non-PDF data and malformed identifiers ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 calendar scope never defaults to all users or accepts another user ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4.2 plm-purchase-order-send: denied capability cannot read parent or send ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 send-repair-quote: denied capability cannot read parent or send ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 delivery-route-calc: denied capability cannot read parent or send ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 plm-purchase-order-send: inaccessible parent uses caller credentials and denies without writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 send-repair-quote: inaccessible parent uses caller credentials and denies without writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 delivery-route-calc: inaccessible parent uses caller credentials and denies without writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 calendar foreign user rejected before credential lookup ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 calendar without user_id reads only caller connections and caller-authorized tenant events ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4.2 repair quote rejects a foreign company before any provider or write ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4.2 repair provider failure does not mark the quote sent ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4.2 repair successful provider dispatch writes status only with caller rights ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+[0m[38;5;245mrunning 49 tests from ./supabase/functions/_shared/security-v4_test.ts[0m
+v4 ac-conv-intel-analyze: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(93ms)[0m
+v4 ac-conv-intel-analyze: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+v4 ac-qm-auto-score: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4 ac-qm-auto-score: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4 ac-compliance-governance: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-compliance-governance: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-revenue-intel-v2: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 ac-revenue-intel-v2: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-kb-embed: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-kb-embed: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-journey-optimize: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-journey-optimize: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-campaign-ab-decide: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-campaign-ab-decide: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-segment-preview: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-segment-preview: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-workflow-studio: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-workflow-studio: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ai-center-chat: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 ai-center-chat: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-voice-agent-studio: anonymous, public and forged credentials never reach protected data ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 ac-voice-agent-studio: inactive, unassigned and unrelated roles are denied before business access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 AI Center rejects caller-supplied system instructions ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 AI Center rejects caller-supplied developer instructions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4 AI Center rejects caller-supplied tool instructions ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4 AI Center preserves the server instruction while treating context and history as data ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4 Workflow saves the entire graph and cannot activate an automation ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4 call tenancy denies unknown foreign calls and preserves own internal calls ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v4 Workflow authorized draft writes actual existing columns with caller credentials ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 Workflow rejects activation and foreign company without writes ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 AI Center endpoint rejects system messages before any provider request ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 ac-conv-intel-analyze: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-qm-auto-score: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-revenue-intel-v2: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-kb-embed: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 ac-journey-optimize: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-campaign-ab-decide: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-segment-preview: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-compliance-governance: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-voice-agent-studio: malformed input never reaches business data or provider ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-conv-intel-analyze: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-qm-auto-score: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+v4 ac-revenue-intel-v2: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-kb-embed: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 ac-journey-optimize: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v4 ac-campaign-ab-decide: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v4 ac-segment-preview: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v4 ac-compliance-governance: inaccessible parent returns not found without provider or write ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v4 Voice sandbox preserves a trusted server instruction and never grants submitted script system priority ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[0m[38;5;245mrunning 19 tests from ./supabase/functions/_shared/security-v5-documents_test.ts[0m
+v5 documents alixdocs-upload: public and forged tokens never reach records or providers ... [0m[32mok[0m [0m[38;5;245m(169ms)[0m
+v5 documents return-note-send: public and forged tokens never reach records or providers ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v5 documents ph-com-registry-push: public and forged tokens never reach records or providers ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+v5 documents security-alert-notify: public and forged tokens never reach records or providers ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+v5 documents alixdocs-upload: inactive accounts cannot read or send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 documents return-note-send: inactive accounts cannot read or send ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 documents ph-com-registry-push: inactive accounts cannot read or send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 documents security-alert-notify: inactive accounts cannot read or send ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v5 ph-com-registry-push: Admin cannot inherit Super Admin authority ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 security-alert-notify: Admin cannot inherit Super Admin authority ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 COM registry remains blocked even for active Super Admin without a website call ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 COM registry rejects attacker-controlled paths before data or credentialed website access ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v5 security notification original private job handles empty findings without sending ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 upload rejects foreign-owner before writing versions or storage ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+v5 upload rejects foreign-company before writing versions or storage ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+v5 upload rejects inaccessible before writing versions or storage ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 upload rejects inaccessible order parents before creating a document ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 return mail rejects foreign-order without provider access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 return mail rejects redirected-recipient without provider access ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 2 tests from ./supabase/functions/_shared/security-v5-next_test.ts[0m
+v5 inbox customer names cannot create a compound filter expression ...
+[0m[38;5;245m------- post-test output -------[0m
+customer create failed { message: "synthetic insert unavailable" }
+[0m[38;5;245m----- post-test output end -----[0m
+v5 inbox customer names cannot create a compound filter expression ... [0m[32mok[0m [0m[38;5;245m(112ms)[0m
+v5 human offer digest reads only tasks of tenant-authorized offers ... [0m[32mok[0m [0m[38;5;245m(17ms)[0m
+[0m[38;5;245mrunning 37 tests from ./supabase/functions/_shared/security-v5_test.ts[0m
+v5 ticket-customer-reminder: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(87ms)[0m
+v5 escalation-engine: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(26ms)[0m
+v5 orders-inbox-process: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 alixdocs-expiry-scan: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+v5 delivery-escalation-engine: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(16ms)[0m
+v5 sync-zoho-to-finance: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+v5 collect-morning-report: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 ac-report-snapshot: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 license-royalty-run: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 finance-reminder-engine: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 collect-engine: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+v5 finance-management-pack: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 finance-ai-forecast: public and forged access has no business or provider effects ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 ticket-customer-reminder: human token cannot invoke a machine-only job ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v5 ticket-customer-reminder: original private credential retains isolated empty job ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 escalation-engine: human token cannot invoke a machine-only job ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v5 escalation-engine: original private credential retains isolated empty job ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v5 orders-inbox-process: human token cannot invoke a machine-only job ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v5 orders-inbox-process: original private credential retains isolated empty job ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 alixdocs-expiry-scan: human token cannot invoke a machine-only job ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v5 alixdocs-expiry-scan: original private credential retains isolated empty job ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v5 delivery-escalation-engine: human token cannot invoke a machine-only job ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+v5 delivery-escalation-engine: original private credential retains isolated empty job ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 sync-zoho-to-finance: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+v5 collect-morning-report: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 ac-report-snapshot: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 license-royalty-run: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 finance-reminder-engine: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 collect-engine: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 finance-management-pack: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 finance-ai-forecast: inactive, unrelated or unassigned staff cannot reach records ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+v5 finance input rejects malformed IDs, excessive recipients and ambiguous company writes ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 pack foreign company denied before writing ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 pack authorized write preserves caller rights and company filter ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 forecast rejects a foreign company before financial reads or AI ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+v5 forecast uses only selected company and region, then writes with caller credentials ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+v5 collection run never rebuilds other companies and scopes promises by authorized parent cases ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+
+[0m[32mok[0m | 543 passed | 0 failed [0m[38;5;245m(9s)[0m
+

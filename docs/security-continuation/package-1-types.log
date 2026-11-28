@@ -1,0 +1,7 @@
+[0m[32mCheck[0m supabase/functions/ac-outreach-engine/index.ts
+[0m[32mCheck[0m supabase/functions/ac-journey-trigger/index.ts
+[0m[32mCheck[0m supabase/functions/ac-journey-run/index.ts
+[0m[32mCheck[0m supabase/functions/ac-playbook-run/index.ts
+[0m[32mCheck[0m supabase/functions/ac-segment-preview/index.ts
+[0m[32mCheck[0m supabase/functions/ac-compliance-governance/index.ts
+[0m[32mCheck[0m supabase/functions/ac-segment-auto-enroll/index.ts

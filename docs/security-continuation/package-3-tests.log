@@ -1,0 +1,21 @@
+[0m[38;5;245mrunning 13 tests from ./supabase/functions/_shared/security-continuation-machines_test.ts[0m
+Machine sig-entity-sync rejects public, forged and ordinary staff credentials before data access ... [0m[32mok[0m [0m[38;5;245m(82ms)[0m
+Machine ticket-user-notify rejects public, forged and ordinary staff credentials before data access ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+Machine ticket-auto-close rejects public, forged and ordinary staff credentials before data access ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Signature entity status comes only from the stored completed document ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+Signature entity cannot fabricate a missing completion timestamp ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Signature entity cannot become signed through an incoming status override ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Signature entity reports failed database writes as failure ...
+[0m[38;5;245m------- output -------[0m
+sig-entity-sync { message: "write failed" }
+[0m[38;5;245m----- output end -----[0m
+Signature entity reports failed database writes as failure ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Ticket notification rejects added recipient parameters before reading the notification ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+Ticket notification skips inactive stored recipient without provider calls ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+Ticket notification sends only to the stored active user and treats saved HTML as text ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+Automatic ticket closure uses only its existing private RPC ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+Calendar WhatsApp rejects unsigned and invalidly signed input before reads or writes ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+Calendar WhatsApp accepts a genuine synthetic provider signature with its established confirmation flow ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+
+[0m[32mok[0m | 13 passed | 0 failed [0m[38;5;245m(135ms)[0m
+

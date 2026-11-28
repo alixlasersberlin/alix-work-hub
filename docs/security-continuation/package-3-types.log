@@ -1,0 +1,4 @@
+[0m[32mCheck[0m supabase/functions/sig-entity-sync/index.ts
+[0m[32mCheck[0m supabase/functions/ticket-user-notify/index.ts
+[0m[32mCheck[0m supabase/functions/ticket-auto-close/index.ts
+[0m[32mCheck[0m supabase/functions/esc-whatsapp-inbound/index.ts

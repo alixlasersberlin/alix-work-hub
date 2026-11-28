@@ -1,0 +1,27 @@
+[0m[32mCheck[0m supabase/functions/ac-voice-analyze/index.ts
+[0m[32mCheck[0m supabase/functions/ph-com-lang-push/index.ts
+[0m[1mTS2769 [0m[ERROR]: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: Request) => Promise<Response | undefined>' is not assignable to parameter of type '(ServeTcpOptions | (ServeTcpOptions & TlsCertifiedKeyPem)) & ServeInit<NetAddr>'.
+Deno.serve(async (req) => {
+[0m[31m           ~~~~~~~~~~~~~~~~[0m
+    at [0m[36mfile:///dev-server/supabase/functions/ac-voice-analyze/index.ts[0m:[0m[33m8[0m:[0m[33m12[0m
+
+[0m[1mTS2771 [0m[ERROR]:     The last overload is declared here.
+      export function serve(
+    [0m[31m                  ~~~~~[0m
+        at [0m[36masset:///lib.deno.ns.d.ts[0m:[0m[33m5910[0m:[0m[33m19[0m
+
+[0m[1m[31merror[0m: Type checking failed.
+
+Stack backtrace:
+   0: anyhow::error::<impl core::convert::From<E> for anyhow::Error>::from
+   1: deno::graph_container::MainModuleGraphContainer::check_specifiers::{{closure}}
+   2: deno::spawn_subcommand::{{closure}}
+   3: tokio::runtime::task::raw::poll
+   4: deno::main
+   5: std::sys::backtrace::__rust_begin_short_backtrace
+   6: main
+   7: __libc_start_call_main
+   8: __libc_start_main@GLIBC_2.2.5
+   9: _start
