@@ -48,15 +48,37 @@ Deno.serve(async (req) => {
     if (op === 'audit') {
       // Snapshot compliance posture: consent, recording retention, redaction coverage.
         const now = new Date();
-      const [{ count: totalCalls }, { count: recordingsWithConsent }, { count: totalConversations }, { count: piiPredictions }] = await Promise.all([
-        sb.from('ac_calls').select('*', { count: 'exact', head: true }),
-        sb.from('ac_calls').select('*', { count: 'exact', head: true }).not('recording_url', 'is', null),
-        sb.from('ac_conversations').select('*', { count: 'exact', head: true }),
-        sb.from('ac_predictions').select('*', { count: 'exact', head: true }).eq('kind', 'compliance_scan'),
-      ]);
+      const tenantIds = access.tenants.map(t => t.id);
       const retentionDays = Number(body.retention_days ?? 180);
       const cutoff = new Date(now.getTime() - retentionDays * 86400_000).toISOString();
-      const { count: overdueRecordings } = await sb.from('ac_calls').select('*', { count: 'exact', head: true }).not('recording_url', 'is', null).lt('created_at', cutoff);
+      // These tables have no declared contact FK, so PostgREST cannot embed them.
+      // Materialize authorized contact IDs in complete small pages; never invent a join.
+      const contactIds: string[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const page = await sb.from('ac_contacts').select('id').in('tenant_id', tenantIds).order('id').range(offset, offset + 499);
+        if (page.error) throw page.error;
+        contactIds.push(...(page.data ?? []).map(c => c.id));
+        if ((page.data?.length ?? 0) < 500) break;
+      }
+      let totalCalls = 0, recordingsWithConsent = 0, overdueRecordings = 0, piiPredictions = 0;
+      for (let offset = 0; offset < contactIds.length; offset += 100) {
+        const ids = contactIds.slice(offset, offset + 100);
+        const results = await Promise.all([
+          sb.from('ac_calls').select('id', { count: 'exact', head: true }).in('contact_id', ids),
+          sb.from('ac_calls').select('id', { count: 'exact', head: true }).in('contact_id', ids).not('recording_url', 'is', null),
+          sb.from('ac_calls').select('id', { count: 'exact', head: true }).in('contact_id', ids).not('recording_url', 'is', null).lt('created_at', cutoff),
+          sb.from('ac_predictions').select('id', { count: 'exact', head: true }).in('contact_id', ids).eq('kind', 'compliance_scan'),
+        ]);
+        const failedResult = results.find(r => r.error);
+        if (failedResult?.error) throw failedResult.error;
+        totalCalls += results[0]?.count ?? 0;
+        recordingsWithConsent += results[1]?.count ?? 0;
+        overdueRecordings += results[2]?.count ?? 0;
+        piiPredictions += results[3]?.count ?? 0;
+      }
+      const conversations = await sb.from('ac_conversations').select('id', { count: 'exact', head: true }).in('tenant_id', tenantIds);
+      if (conversations.error) throw conversations.error;
+      const totalConversations = conversations.count;
       return new Response(JSON.stringify({
         success: true,
         generated_at: now.toISOString(),
@@ -73,15 +95,31 @@ Deno.serve(async (req) => {
 
     if (op === 'log') {
       // A referenced contact/conversation must be readable before storing a derived audit record.
+      let resolvedContact = body.contact_id ?? null;
+      let contactTenant: string | null = null;
       for (const [table, id] of [['ac_contacts', body.contact_id], ['ac_conversations', body.conversation_id]] as const) {
         if (!id) continue;
-        const { data, error } = await sb.from(table).select('id,tenant_id').eq('id', id).in('tenant_id', access.tenants.map((t: any) => t.id)).maybeSingle();
-        if (error || !data) return new Response(JSON.stringify({ error: 'Resource not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        const result = table === 'ac_conversations'
+          ? await sb.from('ac_conversations').select('id,tenant_id,contact_id').eq('id', id).in('tenant_id', access.tenants.map(t => t.id)).maybeSingle()
+          : await sb.from('ac_contacts').select('id,tenant_id').eq('id', id).in('tenant_id', access.tenants.map(t => t.id)).maybeSingle();
+        const { data, error } = result;
+        if (error || !data || !access.tenants.some(t => t.id === data.tenant_id) || (contactTenant && contactTenant !== data.tenant_id)) return new Response(JSON.stringify({ error: 'Resource not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        contactTenant = data.tenant_id;
+        if (table === 'ac_conversations') {
+          const conversationContact = 'contact_id' in data ? data.contact_id : null;
+          if (resolvedContact && conversationContact !== resolvedContact) return new Response(JSON.stringify({ error: 'Conversation and contact do not match' }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          // Do not trust a relationship alone to authorize its contact.
+          if (!resolvedContact && typeof conversationContact === 'string') {
+            const linked = await sb.from('ac_contacts').select('id,tenant_id').eq('id', conversationContact).eq('tenant_id', data.tenant_id).maybeSingle();
+            if (linked.error || !linked.data || linked.data.tenant_id !== data.tenant_id) return new Response(JSON.stringify({ error: 'Contact not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            resolvedContact = linked.data.id;
+          }
+        }
       }
       // Log a redaction/compliance event to ac_predictions for the audit trail.
       const writer = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
       const { data, error } = await writer.from('ac_predictions').insert({
-        contact_id: body.contact_id ?? null,
+        contact_id: resolvedContact,
         kind: 'compliance_scan',
         score: Number(body.findings?.length ?? 0),
         risk_level: (body.findings?.length ?? 0) > 0 ? 'medium' : 'low',

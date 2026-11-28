@@ -2,6 +2,8 @@
 // Schreibt ausschließlich redaktionelle Felder. Technische Daten, Preise, Medien bleiben unberührt.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
 const cors = corsHeaders;
 const json = (s: number, b: unknown) =>
@@ -134,21 +136,27 @@ async function pushOne(admin: any, productId: string, locale: string, dryRun: bo
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
+    if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
+    const access = await requireCallerAccess(req, cors, ['Super Admin']);
+    if ('response' in access) return access.response;
     if (!KEY) return json(500, { error: "COM_PRODUCT_HUB_WRITE_KEY fehlt" });
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const { data: control, error: controlError } = await admin.from('ph_settings').select('value').eq('key', 'ph2_activation').maybeSingle();
     if (controlError || control?.value?.controlled_modes === true) return json(200, { ok: false, error: 'Kontrollierter PRODUCT HUB 2.0: alter COM-Versand gesperrt; keine Übertragung ausgeführt' });
-    const body = await req.json().catch(() => ({} as any));
+    const parsed = z.object({ action: z.enum(['push', 'batch', 'probe']).default('push'), dryRun: z.boolean().default(false), productId: z.string().uuid().optional(), locale: z.enum(['en', 'es', 'ru', 'ar']).optional(), locales: z.array(z.enum(['en', 'es', 'ru', 'ar'])).max(4).optional(), productIds: z.array(z.string().uuid()).max(1000).optional(), offset: z.number().int().nonnegative().optional(), limit: z.number().int().nonnegative().max(1000).optional(), payload: z.unknown().optional() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json(400, { error: 'Invalid translation push request' });
+    const body = parsed.data;
     const action = String(body.action ?? "push");
     const dryRun = body.dryRun === true;
 
-    if (action === "probe") return json(200, await comFetch(body.payload ?? {}));
+    // Raw payload probes bypass mapping, approved-text and operating controls.
+    if (action === 'probe') return json(403, { error: 'Arbitrary remote write probes are not permitted' });
 
     if (action === "batch") {
       const locales: string[] = Array.isArray(body.locales) && body.locales.length ? body.locales : LOCALES;
       let ids: string[] = Array.isArray(body.productIds) ? body.productIds : [];
       if (!ids.length) {
-        const { data: maps } = await admin.from("ph_lang_sync_map")
+        const { data: maps } = await access.caller.from("ph_lang_sync_map")
           .select("product_id").eq("site_code", "com").not("verified_at", "is", null).order("product_id");
         ids = (maps ?? []).map((m: any) => m.product_id);
       }
@@ -157,6 +165,8 @@ Deno.serve(async (req) => {
       const slice = ids.slice(offset, offset + limit);
       const results: any[] = [];
       for (const pid of slice) {
+        const authorized = await access.caller.from('ph_products').select('id').eq('id', pid).maybeSingle();
+        if (authorized.error || !authorized.data) { results.push({ productId: pid, result: 'SKIPPED', reason: 'PRODUCT_NOT_AUTHORIZED' }); continue; }
         for (const loc of locales) {
           try { results.push(await pushOne(admin, pid, loc, dryRun)); }
           catch (e) { results.push({ productId: pid, locale: loc, result: "SYNC_FAILED", error: String((e as Error).message) }); }
@@ -170,6 +180,8 @@ Deno.serve(async (req) => {
     const productId = String(body.productId ?? "");
     const locale = String(body.locale ?? "");
     if (!productId || !locale) return json(400, { error: "productId und locale erforderlich" });
+    const authorized = await access.caller.from('ph_products').select('id').eq('id', productId).maybeSingle();
+    if (authorized.error || !authorized.data) return json(404, { error: 'Product not found in authorized scope' });
     return json(200, await pushOne(admin, productId, locale, dryRun));
   } catch (e) {
     return json(500, { error: (e as Error)?.message ?? "Fehler" });

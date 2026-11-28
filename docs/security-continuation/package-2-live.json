@@ -1,0 +1,22 @@
+[
+  {
+    "function": "ac-kb-ai-draft",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-kb-ai-draft",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ac-segment-auto-enroll",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-segment-auto-enroll",
+    "credential_kind": "invalid",
+    "status": 401
+  }
+]

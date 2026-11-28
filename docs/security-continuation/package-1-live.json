@@ -1,0 +1,62 @@
+[
+  {
+    "function": "ac-outreach-engine",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-outreach-engine",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ac-journey-trigger",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-journey-trigger",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ac-journey-run",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-journey-run",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ac-playbook-run",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-playbook-run",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ac-segment-preview",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-segment-preview",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ac-compliance-governance",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-compliance-governance",
+    "credential_kind": "invalid",
+    "status": 401
+  }
+]

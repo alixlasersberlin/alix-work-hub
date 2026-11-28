@@ -20,10 +20,10 @@ Deno.serve(async (req) => {
     let filter = body.filter as Record<string, any> | undefined;
     let segmentId = body.segment_id as string | undefined;
 
-    if (segmentId && !filter) {
+    if (segmentId) {
       const { data, error } = await sb.from('ac_segments').select('filter').eq('id', segmentId).maybeSingle();
       if (error || !data) return json({ error: 'Segment not found in authorized scope' }, 404);
-      filter = (data as any)?.filter ?? {};
+      filter ??= (data as any)?.filter ?? {};
     }
     if (!filter) return json({ error: 'filter or segment_id required' }, 400);
 
@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
     let q = sb.from('ac_contacts').select('id,email,phone,country,tags', { count: 'exact' }).in('tenant_id', access.tenants.map((t: any) => t.id)).limit(500);
     if (filter.country) q = q.eq('country', filter.country);
     if (filter.has_tag) q = q.contains('tags', [filter.has_tag]);
-    const { data: contacts, count } = await q;
+    const { data: contacts, count, error: contactError } = await q;
+    if (contactError) throw contactError;
 
     let ids = (contacts ?? []).map((c: any) => c.id);
 
@@ -51,9 +52,10 @@ Deno.serve(async (req) => {
     }
 
     if (segmentId) {
-      await sb.from('ac_segments').update({
+      const { error } = await sb.from('ac_segments').update({
         contact_count: ids.length, last_computed_at: new Date().toISOString(),
       }).eq('id', segmentId);
+      if (error) throw error;
     }
     return json({ count: ids.length, sample: ids.slice(0, 20), total_scanned: count ?? contacts?.length ?? 0 });
   } catch (e: any) {

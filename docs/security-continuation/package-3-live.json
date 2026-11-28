@@ -1,0 +1,42 @@
+[
+  {
+    "function": "sig-entity-sync",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "sig-entity-sync",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ticket-user-notify",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ticket-user-notify",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ticket-auto-close",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ticket-auto-close",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "esc-whatsapp-inbound",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "esc-whatsapp-inbound",
+    "credential_kind": "invalid",
+    "status": 401
+  }
+]

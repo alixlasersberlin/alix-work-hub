@@ -1,0 +1,66 @@
+{
+  "final_acceptance": false,
+  "original_ids": 600,
+  "selected_remaining_before": 472,
+  "closed_now": 39,
+  "selected_remaining_after": 433,
+  "selected_remaining_levels": {
+    "error": 217,
+    "warn": 216
+  },
+  "native_scanner_active_after_management": 584,
+  "native_scan_basis": {
+    "completion_status": "incomplete",
+    "up_to_date": false,
+    "findings_before": 623,
+    "errors": 334,
+    "warnings": 289,
+    "runtime_diagnostics_provided": false
+  },
+  "deep_scan_started_on": "5afe333a6c3bbf5299362d907fa30aadc495fad8",
+  "deep_scan_task": "security_scan/security-scan-13914134-4b95-4f3f-a064-71f725c7d887-5afe333a6c3bbf5299362d907fa30aadc495fad8-c2f5e03c",
+  "scan_includes_this_correction": false,
+  "server_tests_passed": 543,
+  "application_tests_passed": 277,
+  "public_live_denials": 28,
+  "functions_deployed": 14,
+  "database_linter_open": 318,
+  "business_actions_exercised_live": false,
+  "authenticated_tests": {
+    "passed": false,
+    "blocker": "External user-managed Supabase cannot mint session; provided preview session variables are empty."
+  },
+  "restore_test": {
+    "performed": false,
+    "blocker": "No authorized isolated restore target, connection or complete authenticated restore inputs. No synthetic restore represented as actual."
+  },
+  "latest_backup": {
+    "id": "2dad621c-2c25-4d21-9558-46c3fd84a249",
+    "status": "success",
+    "integrity_status": "valid",
+    "completed_at": "2026-11-28T13:01:34.286Z",
+    "tables": 312,
+    "parts": 2748,
+    "indexed_storage_files": 1963,
+    "full_scope_verified": false
+  },
+  "preservation": {
+    "products": 44,
+    "cron_jobs": 102,
+    "all_schedule_times_and_activation_preserved": true,
+    "cron_changes": "Only existing private credential references added to callers 72,42,74; no credential values changed or exported.",
+    "product_data_writes_by_remediation": false,
+    "keys_changed": false,
+    "product_hub_enabled": false,
+    "emergency_stopped": true,
+    "de_mode": "blocked",
+    "com_mode": "blocked",
+    "pilot_product": null
+  },
+  "unresolved_roots_in_modified_families": [
+    "lov_finding_5f54f5d4f2f742e9",
+    "lov_finding_72a458552fb60db4"
+  ],
+  "all_600_finally_verified": false,
+  "not_a_final_security_report": true
+}

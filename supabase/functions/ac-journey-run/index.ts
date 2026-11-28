@@ -1,16 +1,11 @@
 import { requireProcessAccess } from '../_shared/process-access.ts';
+import { automationContact, trustedAutomationContext } from '../_shared/automation-contact.ts';
 import { z } from 'npm:zod@3.25.76';
 // ALIX CONNECT — Phase 29 Journey Orchestrator 2.0
 // Executes journey flow graphs (nodes/edges) for enrolled contacts.
 // Node kinds: trigger, action (email/sms/whatsapp/webhook/tag/notify), condition, wait, ab_split, end
 // Cron: every 5 minutes.
-import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 
 type Node = { id: string; kind: string; config?: any; label?: string };
@@ -26,11 +21,6 @@ function firstEdge(g: Graph, from: string, branch?: string) {
   return list.find(e => !e.branch) ?? list[0];
 }
 function nodeById(g: Graph, id: string) { return g.nodes.find(n => n.id === id); }
-
-async function loadContact(sb: any, contact_id: string) {
-  const { data: c } = await sb.from('ac_contacts').select('id,name,email,phone,customer_id,tags,attributes').eq('id', contact_id).maybeSingle();
-  return c ?? { id: contact_id };
-}
 
 function evalCondition(cfg: any, ctx: any): 'yes' | 'no' {
   try {
@@ -110,10 +100,10 @@ async function runAction(sb: any, cfg: any, ctx: any) {
   return { action: kind ?? 'noop', skipped: true };
 }
 
-async function stepRun(sb: any, journey: any, run: any) {
+async function stepRun(sb: any, journey: any, run: any, tenantIds: string[] | null) {
   const g: Graph = journey.graph ?? { nodes: [], edges: [] };
-  const contact = await loadContact(sb, run.contact_id);
-  const ctx = { ...contact, variant: run.variant, ...(run.context ?? {}) };
+  const contact = await automationContact(sb, run.contact_id, tenantIds);
+  const ctx = trustedAutomationContext(contact, { ...(run.context ?? {}), variant: run.variant });
   const path: any[] = Array.isArray(run.path) ? [...run.path] : [];
 
   let nodeId: string | null = run.current_node_id;
@@ -191,10 +181,13 @@ Deno.serve(async (req) => {
       const { data: contact, error: contactError } = await sb.from('ac_contacts').select('id,tenant_id').eq('id', enrollContactId).maybeSingle();
       const { data: journey, error: journeyError } = await sb.from('ac_journeys').select('id').eq('id', journeyIdFilter).maybeSingle();
       if (contactError || journeyError || !contact || !journey || (!access.machine && !access.tenantIds.includes(contact.tenant_id))) return json({ error: 'Enrollment not found in authorized scope' }, 404);
-      if (!dryRun) await sb.from('ac_journey_runs').insert({
-        journey_id: journeyIdFilter, contact_id: enrollContactId,
-        status: 'active', next_action_at: new Date().toISOString(),
-      });
+      if (!dryRun) {
+        const { error } = await sb.from('ac_journey_runs').insert({
+          journey_id: journeyIdFilter, contact_id: enrollContactId,
+          status: 'active', next_action_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+      }
     }
 
     let q = sb.from('ac_journey_runs').select('*')
@@ -202,7 +195,8 @@ Deno.serve(async (req) => {
       .lte('next_action_at', new Date().toISOString())
       .limit(200);
     if (journeyIdFilter) q = q.eq('journey_id', journeyIdFilter);
-    const { data: runs } = await q;
+    const { data: runs, error: runError } = await q;
+    if (runError) throw runError;
     if (!runs?.length) return json({ ok: true, runs: 0 });
 
     const jids = Array.from(new Set(runs.map(r => r.journey_id)));
@@ -217,8 +211,8 @@ Deno.serve(async (req) => {
         const { data: contact } = await sb.from('ac_contacts').select('id,tenant_id').eq('id', run.contact_id).maybeSingle();
         if (!contact || !access.tenantIds.includes(contact.tenant_id)) continue;
       }
-      if (dryRun) { processed++; continue; }
-      try { await stepRun(sb, j, run); processed++; }
+      if (dryRun) { await automationContact(sb, run.contact_id, access.machine ? null : access.tenantIds); processed++; continue; }
+      try { await stepRun(sb, j, run, access.machine ? null : access.tenantIds); processed++; }
       catch (e: any) {
         failed++;
         await sb.from('ac_journey_runs').update({ status: 'failed', last_error: e?.message ?? String(e) }).eq('id', run.id);

@@ -4,13 +4,7 @@ import { z } from 'npm:zod@3.25.76';
 // Cron: hourly. For each customer in ac_customer_health, execute enabled playbooks
 // for their current lifecycle_stage (respecting throttle + min/max score).
 // Actions supported: send_email, send_sms, send_whatsapp, create_ticket, notify_admin, wait
-import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 
 function render(tpl: string, ctx: Record<string, any>) {
@@ -20,8 +14,8 @@ function render(tpl: string, ctx: Record<string, any>) {
 async function runAction(sb: any, action: any, ctx: any) {
   const kind = action?.kind ?? action?.type;
   const cfg = action?.config ?? action ?? {};
-  const to = ctx.email ?? cfg.to;
-  const phone = ctx.phone ?? cfg.to;
+  const to = ctx.email;
+  const phone = ctx.phone;
 
   if (kind === 'send_email' && to) {
     const { error } = await sb.functions.invoke('send-transactional-email', {
@@ -90,10 +84,11 @@ Deno.serve(async (req) => {
     if (!parsed.success) return json({ error: 'Invalid playbook identifiers' }, 400);
     const dryRun = parsed.data.dry_run, playbookIdFilter = parsed.data.playbook_id ?? null, customerIdFilter = parsed.data.customer_id ?? null;
 
-    const { data: playbooks } = await sb
+    const { data: playbooks, error: playbookError } = await sb
       .from('ac_lifecycle_playbooks')
       .select('*')
       .eq('enabled', true);
+    if (playbookError) throw playbookError;
     if (!playbooks?.length) return json({ ok: true, playbooks: 0 });
 
     const activePlaybooks = playbookIdFilter ? playbooks.filter(p => p.id === playbookIdFilter) : playbooks;
@@ -113,14 +108,15 @@ Deno.serve(async (req) => {
       const cutoff = new Date(now - throttleDays * 86_400_000).toISOString();
 
       for (const h of health as any[]) {
-        const { data: recent } = await sb.from('ac_lifecycle_runs')
+        const { data: cust, error: customerError } = await sb.from('customers')
+          .select('customer_name,email,phone,contact_tenant_id').eq('id', h.customer_id).maybeSingle();
+        if (customerError) throw customerError;
+        if (!cust || (!access.machine && !access.tenantIds.includes(cust.contact_tenant_id))) { throttled++; continue; }
+        const { data: recent, error: recentError } = await sb.from('ac_lifecycle_runs')
           .select('id').eq('playbook_id', pb.id).eq('customer_id', h.customer_id)
           .gte('created_at', cutoff).limit(1);
+        if (recentError) throw recentError;
         if (recent?.length) { throttled++; continue; }
-
-        const { data: cust } = await sb.from('customers')
-          .select('customer_name,email,phone,contact_tenant_id').eq('id', h.customer_id).maybeSingle();
-        if (!cust || (!access.machine && !access.tenantIds.includes(cust.contact_tenant_id))) { throttled++; continue; }
         const ctx = {
           customer_id: h.customer_id,
           name: cust?.customer_name ?? '',
@@ -142,12 +138,13 @@ Deno.serve(async (req) => {
           results.push({ error: e?.message ?? String(e) });
           failed++;
         }
-        await sb.from('ac_lifecycle_runs').insert({
+        const { error: writeError } = await sb.from('ac_lifecycle_runs').insert({
           playbook_id: pb.id, customer_id: h.customer_id,
           stage: pb.stage, status,
           result: { actions: results, score: h.score },
           completed_at: new Date().toISOString(),
         });
+        if (writeError) throw writeError;
         executed++;
       }
     }

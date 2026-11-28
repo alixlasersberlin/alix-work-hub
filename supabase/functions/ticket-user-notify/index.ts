@@ -2,11 +2,10 @@ import "../_shared/global-bcc.ts";
 // Sendet Team-User-E-Mails bei Ticket-Ereignissen (Zuweisung, Erwähnung, neue Kundennachricht, SLA-Breach).
 // Wird von DB-Trigger auf ticket_notifications INSERT via pg_net aufgerufen.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireJobAccess } from '../_shared/job-auth.ts';
+import { activeMessageAccount } from '../_shared/message-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
 const KIND_LABEL: Record<string, string> = {
   assigned: 'Ticket zugewiesen',
@@ -21,15 +20,16 @@ const KIND_LABEL: Record<string, string> = {
 const APP_URL = Deno.env.get('APP_URL') || 'https://alix-finance.de';
 
 function htmlFor(kind: string, ctx: any) {
+  const escape = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] ?? character));
   const heading = KIND_LABEL[kind] || 'Ticket-Benachrichtigung';
   const link = `${APP_URL}/tickets/${ctx.ticket_id}`;
   return `<!doctype html><html><body style="font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px">
     <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:24px">
       <div style="display:inline-block;background:#f59e0b;color:#000;font-weight:700;font-size:11px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">${heading.toUpperCase()}</div>
-      <h2 style="margin:16px 0 8px;color:#fff">${ctx.title || heading}</h2>
-      ${ctx.message ? `<p style="color:#cbd5e1;margin:8px 0 16px">${String(ctx.message).replace(/</g,'&lt;')}</p>` : ''}
-      ${ctx.ticket_title ? `<p style="color:#94a3b8;font-size:13px;margin:0 0 4px"><b>Ticket:</b> ${ctx.ticket_title}</p>` : ''}
-      ${ctx.actor_name ? `<p style="color:#94a3b8;font-size:13px;margin:0 0 4px"><b>Von:</b> ${ctx.actor_name}</p>` : ''}
+      <h2 style="margin:16px 0 8px;color:#fff">${escape(ctx.title || heading)}</h2>
+      ${ctx.message ? `<p style="color:#cbd5e1;margin:8px 0 16px">${escape(ctx.message)}</p>` : ''}
+      ${ctx.ticket_title ? `<p style="color:#94a3b8;font-size:13px;margin:0 0 4px"><b>Ticket:</b> ${escape(ctx.ticket_title)}</p>` : ''}
+      ${ctx.actor_name ? `<p style="color:#94a3b8;font-size:13px;margin:0 0 4px"><b>Von:</b> ${escape(ctx.actor_name)}</p>` : ''}
       <a href="${link}" style="display:inline-block;margin-top:16px;background:linear-gradient(90deg,#f59e0b,#d97706);color:#000;font-weight:600;padding:10px 18px;border-radius:8px;text-decoration:none">Ticket öffnen</a>
       <p style="margin-top:24px;color:#64748b;font-size:11px">AlixWork · Automatisch generierte Benachrichtigung</p>
     </div>
@@ -40,13 +40,15 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const body = await req.json();
-    const { notification_id } = body || {};
-    if (!notification_id) {
+    const denied = await requireJobAccess(req, corsHeaders);
+    if (denied) return denied;
+    const parsed = z.object({ notification_id: z.string().uuid() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
       return new Response(JSON.stringify({ error: 'notification_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    const { notification_id } = parsed.data;
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
     const { data: n, error: nErr } = await supabase
       .from('ticket_notifications')
@@ -65,11 +67,11 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('email, full_name, is_active')
+      .select('email,full_name,is_active,account_status,invitation_status,password_reset_required')
       .eq('id', n.user_id)
       .maybeSingle();
 
-    if (!profile?.email || profile.is_active === false) {
+    if (!profile?.email || !activeMessageAccount(profile)) {
       return new Response(JSON.stringify({ skipped: 'no active user email' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -105,6 +107,7 @@ Deno.serve(async (req) => {
 
     const ok = r.ok;
     const errText = ok ? null : await r.text();
+    if (ok) await r.body?.cancel();
 
     return new Response(JSON.stringify({ ok, error: errText, to: profile.email, kind: n.kind }), {
       status: ok ? 200 : 500,

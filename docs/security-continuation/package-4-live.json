@@ -1,0 +1,22 @@
+[
+  {
+    "function": "ac-voice-analyze",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ac-voice-analyze",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "function": "ph-com-lang-push",
+    "credential_kind": "public",
+    "status": 401
+  },
+  {
+    "function": "ph-com-lang-push",
+    "credential_kind": "invalid",
+    "status": 401
+  }
+]

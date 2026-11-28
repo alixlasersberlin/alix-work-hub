@@ -1,20 +1,22 @@
 // ALIX CONNECT — Phase 26 Proactive Outreach Engine
 // Wertet aktive ac_outreach_triggers aus, prüft Bedingungen, throttlet und legt Runs an.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { automationContact } from '../_shared/automation-contact.ts';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { z } from 'npm:zod@3.25.76';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+    if ('response' in access) return access.response;
+    const parsed = z.object({ dry_run: z.boolean().default(false) }).strict().safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({ error: 'Invalid outreach request' }, 400);
+    const sb = access.client;
     const now = new Date();
 
-    const { data: triggers } = await sb.from('ac_outreach_triggers').select('*').eq('enabled', true);
+    const { data: triggers, error: triggerError } = await sb.from('ac_outreach_triggers').select('*').eq('enabled', true);
+    if (triggerError) throw triggerError;
     if (!triggers?.length) return json({ ok: true, triggers: 0 });
 
     let queued = 0, skipped = 0;
@@ -23,16 +25,30 @@ Deno.serve(async (req) => {
       const candidates = await pickCandidates(sb, t.event_type, conditions);
 
       for (const cand of candidates) {
+        if (!access.machine) {
+          if (!cand.customer_id && !cand.contact_id) { skipped++; continue; }
+          if (cand.customer_id) {
+            const { data: customer, error } = await sb.from('customers').select('id,contact_tenant_id').eq('id', cand.customer_id).maybeSingle();
+            if (error || !customer || !access.tenantIds.includes(customer.contact_tenant_id)) { skipped++; continue; }
+          }
+          if (cand.contact_id) {
+            try {
+              const contact = await automationContact(sb, cand.contact_id, access.tenantIds);
+              if (cand.customer_id && contact.customer_id !== cand.customer_id) { skipped++; continue; }
+            } catch { skipped++; continue; }
+          }
+        }
         // Throttle: skip if a run in throttle window already exists
         const throttleDays = Number(t.throttle_per_customer_days ?? 30);
         const cutoff = new Date(now.getTime() - throttleDays * 86_400_000).toISOString();
-        const { data: recent } = await sb
+        const { data: recent, error: recentError } = await sb
           .from('ac_outreach_runs')
           .select('id')
           .eq('trigger_id', t.id)
           .eq('customer_id', cand.customer_id)
           .gte('created_at', cutoff)
           .limit(1);
+        if (recentError) throw recentError;
         if (recent?.length) { skipped++; continue; }
 
         const scheduled = new Date(now);
@@ -40,7 +56,8 @@ Deno.serve(async (req) => {
         if (scheduled.getHours() > targetHour) scheduled.setDate(scheduled.getDate() + 1);
         scheduled.setHours(targetHour, 0, 0, 0);
 
-        await sb.from('ac_outreach_runs').insert({
+        if (parsed.data.dry_run) { queued++; continue; }
+        const { error: writeError } = await sb.from('ac_outreach_runs').insert({
           trigger_id: t.id,
           contact_id: cand.contact_id,
           customer_id: cand.customer_id,
@@ -49,10 +66,11 @@ Deno.serve(async (req) => {
           scheduled_for: scheduled.toISOString(),
           payload: { context: cand.context, template_id: t.template_id, message_template: t.message_template },
         });
+        if (writeError) throw writeError;
         queued++;
       }
     }
-    return json({ ok: true, triggers: triggers.length, queued, skipped });
+    return json({ ok: true, triggers: triggers.length, queued, skipped, dry_run: parsed.data.dry_run });
   } catch (e: any) {
     return json({ error: e?.message || String(e) }, 500);
   }

@@ -1,0 +1,40 @@
+internal_id,level,name,location
+lov_finding_0deefadfbd6b9067_11acff88,error,Anyone can trigger analysis of private call transcripts,supabase/functions/ac-voice-analyze/index.ts
+lov_finding_0deefadfbd6b9067_44af058d,warn,Anyone can trigger analysis of private call transcripts,supabase/functions/ac-voice-analyze/index.ts
+lov_finding_10a8d58ffb56d0e6_75b0cea6,warn,Anyone can insert compliance predictions for arbitrary contacts,supabase/functions/ac-compliance-governance/index.ts
+lov_finding_10a8d58ffb56d0e6_da6222f2,warn,Anyone can log compliance records for another customer,supabase/functions/ac-compliance-governance/index.ts
+lov_finding_1820f33971a059e3,error,Anyone can trigger customer messages,supabase/functions/ac-journey-run/index.ts
+lov_finding_1cfc25c1a72b5091,error,Anyone can trigger private ticket notifications,supabase/functions/ticket-user-notify/index.ts
+lov_finding_209ac9df0e293f49,error,Anyone can send arbitrary payloads to the remote translation API,supabase/functions/ph-com-lang-push/index.ts
+lov_finding_291229c8706e74d8,error,WhatsApp status changes accept spoofed webhook requests,supabase/functions/esc-whatsapp-inbound/index.ts
+lov_finding_2982b15a37ac400e,error,Anyone can trigger global contact enrollment,supabase/functions/ac-segment-auto-enroll/index.ts
+lov_finding_3b50bf868a4ca4dc,error,Anyone can trigger another user's ticket email,supabase/functions/ticket-user-notify/index.ts
+lov_finding_3f2d7ef9ad809206,warn,Anyone can trigger analysis of private call transcripts,supabase/functions/ac-voice-analyze/index.ts
+lov_finding_47b04bc99df1a127,warn,Anyone can change records linked to signed documents,supabase/functions/sig-entity-sync/index.ts
+lov_finding_71925ea4db5778fb,warn,Anyone can resend ticket emails,ticket-user-notify
+lov_finding_74b28216e26aa793,error,Anyone can queue outreach from private customer records,supabase/functions/ac-outreach-engine/index.ts
+lov_finding_82864068005fdec0,error,Anyone can trigger journey messages to chosen contacts,supabase/functions/ac-journey-run/index.ts
+lov_finding_8810db495c44e4dc,warn,Public log action writes against arbitrary contacts,supabase/functions/ac-compliance-governance/index.ts
+lov_finding_89bba568925256f2_166f7873,error,Anyone can trigger playbook execution accessing customer data,supabase/functions/ac-playbook-run/index.ts
+lov_finding_89bba568925256f2_d4756c15,error,Anyone can trigger customer messaging playbooks,supabase/functions/ac-playbook-run/index.ts
+lov_finding_89e78194d81713db,error,Anyone can submit private customer chats for analysis,supabase/functions/ac-kb-ai-draft/index.ts
+lov_finding_8ac8ea7d48393f28,error,Anyone can enroll another customer in a journey,supabase/functions/ac-journey-run/index.ts
+lov_finding_8d2b1ea024827279,error,Public notifier returns private notification and profile data,supabase/functions/ticket-user-notify/index.ts
+lov_finding_a0a15fd7005174ce,warn,Preview can update any segment by ID,supabase/functions/ac-segment-preview/index.ts
+lov_finding_a344cf8be2820684,error,Anyone can enroll another customer in a journey,supabase/functions/ac-journey-trigger/index.ts
+lov_finding_a58b5982f064fc83,warn,Any signed-in user can send deceptive ticket emails,ticket-user-notify team notification email
+lov_finding_a9aed7be0c362baa,warn,Anyone can trigger customer lifecycle messages,ac-playbook-run
+lov_finding_b271e3c74d949264,warn,Anyone can close customer tickets,supabase/functions/ticket-auto-close/index.ts
+lov_finding_b6bb2ca602686e62,warn,Public audit action exposes private business metrics,supabase/functions/ac-compliance-governance/index.ts
+lov_finding_c1b20729293ac269,error,Unauthenticated caller can close tickets,supabase/functions/ticket-auto-close/index.ts
+lov_finding_c763006c2aa20517,warn,Anyone can view customer segment details,supabase/functions/ac-segment-preview/index.ts
+lov_finding_ca8941ee03c63e89,error,Public draft endpoint exposes conversation-derived articles,supabase/functions/ac-kb-ai-draft/index.ts
+lov_finding_cc69b9a46e5b7c7e,warn,Anyone can trigger playbook execution accessing customer data,supabase/functions/ac-playbook-run/index.ts
+lov_finding_cd621b68583af549,error,Anyone can sync product content externally,supabase/functions/ph-com-lang-push/index.ts
+lov_finding_d676711a41a6b3f6,error,Anyone can run ticket auto-close routine,supabase/functions/ticket-auto-close/index.ts
+lov_finding_dbdb2eff982cea77,error,Anyone can trigger entity sync and mutate records,supabase/functions/sig-entity-sync/index.ts
+lov_finding_ed2ac04ffc174805,error,Anyone can send private conversation transcripts to AI,supabase/functions/ac-kb-ai-draft/index.ts
+lov_finding_ef43972ba6ab93b7_47ca5b03,error,Unauthenticated requests execute the admin-only outreach queue,supabase/functions/ac-outreach-engine/index.ts
+lov_finding_ef43972ba6ab93b7_81382866,error,Anyone can queue customer outreach,supabase/functions/ac-outreach-engine/index.ts
+lov_finding_f0aa51539dac34fe,warn,Anyone can view customer segment identifiers,supabase/functions/ac-segment-preview/index.ts
+lov_finding_fd454959ff613897,warn,Public audit action exposes private business metrics,supabase/functions/ac-compliance-governance/index.ts

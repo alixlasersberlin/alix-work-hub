@@ -1,19 +1,20 @@
 // ALIX CONNECT — Phase 27 Voice Analytics
 // Analysiert ac_calls Transcripts: Keywords, Topics, Compliance-Phrasen, Talk-Ratio, Emotion.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { callScopeAllowed } from '../_shared/call-scope.ts';
+import { z } from 'npm:zod@3.25.76';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const body = await req.json().catch(() => ({}));
-    const limit = Math.min(Number(body?.limit ?? 100), 500);
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireProcessAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response ?? new Response('Forbidden', { status: 403, headers: corsHeaders });
+    const parsed = z.object({ limit: z.number().int().min(1).max(500).default(100) }).strict().safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid voice analysis request' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { limit } = parsed.data;
+    const sb = access.client;
 
     const { data: rules } = await sb.from('ac_voice_compliance_rules').select('*').eq('enabled', true);
     const required = new Set<string>(); const forbidden = new Set<string>();
@@ -23,18 +24,25 @@ Deno.serve(async (req) => {
     });
 
     // Only calls with transcript that don't already have insights
-    const { data: existing } = await sb.from('ac_voice_insights').select('call_id').limit(5000);
-    const seen = new Set((existing ?? []).map((e: any) => e.call_id));
-
-    const { data: calls } = await sb
+    const { data: calls, error: callError } = await sb
       .from('ac_calls')
-      .select('id, agent_user_id, transcript, transcript_language, duration_seconds, sentiment, sentiment_score')
+      .select('id,contact_id,agent_user_id,transcript,transcript_language,duration_seconds,sentiment,sentiment_score')
       .not('transcript', 'is', null)
       .order('created_at', { ascending: false })
       .limit(limit);
+    if (callError) throw callError;
+    const authorizedCalls = [];
+    for (const call of calls ?? []) {
+      if (access.machine || await callScopeAllowed({ caller: sb, user: { id: access.userId ?? '' }, tenants: access.tenantIds.map(id => ({ id })) }, call)) authorizedCalls.push(call);
+    }
+    const { data: existing, error: insightError } = authorizedCalls.length
+      ? await sb.from('ac_voice_insights').select('call_id').in('call_id', authorizedCalls.map(c => c.id))
+      : { data: [], error: null };
+    if (insightError) throw insightError;
+    const seen = new Set((existing ?? []).map((e: any) => e.call_id));
 
     const inserts: any[] = [];
-    for (const c of (calls ?? [])) {
+    for (const c of authorizedCalls) {
       if (seen.has(c.id)) continue;
       const t = String(c.transcript ?? '').toLowerCase();
       if (!t) continue;
