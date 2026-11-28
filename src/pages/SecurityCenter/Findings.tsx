@@ -21,7 +21,7 @@ export default function SecurityFindings() {
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('open');
   const [scanning, setScanning] = useState(false);
   const load = async () => {
-    const { data } = await (supabase as any).from('security_findings_overview').select('*').order('severity').order('created_at', { ascending: false });
+    const { data } = await (supabase as any).from('security_findings_overview').select('*').neq('category', 'scc-correction-approval').order('severity').order('created_at', { ascending: false });
     setRows((data ?? []) as Finding[]);
   };
   useEffect(() => { load(); }, []);

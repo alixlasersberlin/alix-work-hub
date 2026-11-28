@@ -9,6 +9,8 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { activeMessageAccount } from '../_shared/message-access.ts';
+import { controlInventory, correctionProposal, approvalIdentity } from './control.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -39,6 +41,40 @@ Deno.serve(async (req) => {
     const { admin, user } = g;
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? '');
+
+    if (action === 'control_overview' || action === 'control_approve') {
+      if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
+      const { data: profile, error: profileError } = await admin.from('user_profiles')
+        .select('is_active,account_status,invitation_status,password_reset_required').eq('id', user.id).maybeSingle();
+      if (profileError || !activeMessageAccount(profile)) return json({ error: 'Nur aktive freigegebene Super Admins' }, 403);
+      if (action === 'control_overview') {
+        const { data: approvals, error } = await admin.from('security_audit_findings')
+          .select('target,approved_at,approved_by').eq('category', 'scc-correction-approval')
+          .like('target', `scc:${controlInventory.reportId}:%`).not('approved_at', 'is', null).limit(1000);
+        if (error) return json({ error: 'Freigabestand nicht lesbar' }, 503);
+        return json({ ...controlInventory, approvals: approvals ?? [] });
+      }
+      let selected;
+      try { selected = correctionProposal(body?.report_id, body?.finding_ids); }
+      catch (e) { return json({ error: e instanceof Error ? e.message : 'Ungültige Freigabe' }, 400); }
+      if (body?.confirmation !== 'KORREKTUR FREIGEBEN') return json({ error: 'Ausdrückliche Korrekturfreigabe fehlt' }, 400);
+      const at = new Date().toISOString();
+      const { error: auditError } = await admin.from('audit_logs').insert({
+        user_id: user.id, action: 'security_control:approval_requested', module: 'security',
+        details: { report_id: controlInventory.reportId, finding_ids: selected.map(f => f.id), correction_only: true, execution: false },
+      });
+      if (auditError) return json({ error: 'Freigabe nicht erfasst: Auditprotokoll nicht schreibbar' }, 503);
+      const approvals = await Promise.all(selected.map(async f => ({
+        id: await approvalIdentity(controlInventory.reportId, f.id), category: 'scc-correction-approval',
+        target: `scc:${controlInventory.reportId}:${f.id}`, severity: 'info',
+        title: `Korrekturfreigabe: ${f.title}`, detail: JSON.stringify({ finding_id: f.id, report_id: controlInventory.reportId, component: f.component, planned_change: f.plannedChange, dependencies: f.dependencies, tests: f.tests, rollback: f.rollback, execution: false }),
+        recommendation: 'Nur diese dokumentierte Korrektur ist freigegeben; Ausführung erfolgt gesondert mit Tests.',
+        status: 'planned', approved_by: user.id, approved_at: at,
+      })));
+      const { error } = await admin.from('security_audit_findings').upsert(approvals, { onConflict: 'id' });
+      if (error) return json({ error: 'Korrekturfreigabe konnte nicht gespeichert werden' }, 503);
+      return json({ ok: true, approved: selected.map(f => f.id), executed: false });
+    }
 
     const audit = async (act: string, target: string, meta: any) => {
       await admin.from('audit_logs').insert({

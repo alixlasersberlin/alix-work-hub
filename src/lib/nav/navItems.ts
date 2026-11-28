@@ -1111,7 +1111,7 @@ export const navItems: NavItem[] = [
         path: '#fort-knox', label: 'SICHERHEIT & BETRIEB', icon: Lock, roles: ['Super Admin'],
         children: [
           { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin'] },
-          { path: '/security-center', label: 'Security Center (Rechte)', icon: Shield, roles: ['Super Admin'] },
+          { path: '/security-center', label: 'Systemsicherheit', icon: Shield, roles: ['Super Admin'] },
           { path: '/operation/datensicherung', label: 'Security Base', icon: ShieldCheck, roles: ['Super Admin'] },
           { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
           { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },

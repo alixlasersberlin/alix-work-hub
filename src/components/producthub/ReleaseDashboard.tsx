@@ -8,12 +8,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RELEASE_ROWS, releaseDashboard, type Cell, type Log } from '@/lib/phReleaseDashboard';
 import { OPERATING_QUERY } from './ProductionControl';
+import { Link } from 'react-router-dom';
+import { useSecurityControl } from '@/hooks/useSecurityControl';
+import { securityTotals } from '@/lib/securityControl';
 
 const db = supabase as any;
 const tone: Record<Cell['state'], string> = { ok: 'text-success', fail: 'text-destructive', none: 'text-muted-foreground', info: 'text-foreground' };
 
 export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; products: { id: string; name: string }[] }) {
   const qc = useQueryClient();
+  const { data: securityReport } = useSecurityControl(canWrite);
   const [confirm, setConfirm] = useState('');
   const [last, setLast] = useState<any>(null);
   const { data } = useQuery({
@@ -47,12 +51,21 @@ export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; pr
   const name = (c: 'de' | 'com') => products.find(p => p.id === gate?.channels?.[c]?.pilot_product_id)?.name;
   const de = releaseDashboard('de', gate, data?.logs ?? [], name('de'));
   const com = releaseDashboard('com', gate, data?.logs ?? [], name('com'));
+  if (securityReport) {
+    const blockers = securityTotals(securityReport).confirmedBlockers.length;
+    if (blockers || securityReport.scanStatus !== 'complete' || !securityReport.deduplicationComplete) {
+      const cell: Cell = { state: 'fail', text: blockers ? `${blockers} bestätigte kritische/hohe Product-Hub-Befunde · Freigabe gesperrt` : 'Vollständige Sicherheitsabnahme ausstehend' };
+      de['Sicherheitsprüfung'] = cell;
+      com['Sicherheitsprüfung'] = cell;
+    }
+  }
   const audit = (data?.logs ?? []).filter(l => l.operation !== 'ph2_connection_test').slice(0, 15);
   const busy = run.isPending;
   return (
     <Card><CardContent className="space-y-4 p-4">
       <div><h2 className="text-lg font-semibold">Release Control v1.1</h2>
         <p className="text-sm text-muted-foreground">Nur tatsächlich ermittelte Prüfergebnisse. Keine Prüfung schaltet Pilot- oder Produktivbetrieb frei.</p></div>
+      {canWrite && <Button variant="outline" size="sm" asChild><Link to="/security-center">Systemsicherheit · Priorisierter Prüfbericht</Link></Button>}
       <Table>
         <TableHeader><TableRow><TableHead>Prüfung</TableHead><TableHead>alix-lasers.de</TableHead><TableHead>alix-lasers.com</TableHead></TableRow></TableHeader>
         <TableBody>{RELEASE_ROWS.map(r => <TableRow key={r}><TableCell className="font-medium">{r}</TableCell>
