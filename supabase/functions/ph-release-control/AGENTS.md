@@ -1,0 +1,4 @@
+- Release Control uses the exact active Super-Admin facade, not inherited has_role checks, because administrator inheritance is insufficient for release authorization.
+- In-memory restore is preliminary only; successful final evidence requires an isolated target, manifest identity, real files, schema and read-only API verification.
+- Receiver evidence absent from the unchanged connection-test contract stays incomplete; never infer Apex scope, emergency behavior or replay protection from HTTP success.
+- Protected proof logs, configuration-bound freshness and server-only recording gate modes; no test action lifts emergency stop or enables production.

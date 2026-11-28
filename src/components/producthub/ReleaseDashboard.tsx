@@ -10,7 +10,7 @@ import { RELEASE_ROWS, releaseDashboard, type Cell, type Log } from '@/lib/phRel
 import { OPERATING_QUERY } from './ProductionControl';
 
 const db = supabase as any;
-const tone: Record<Cell['state'], string> = { ok: 'text-emerald-400', fail: 'text-red-400', none: 'text-muted-foreground', info: 'text-foreground' };
+const tone: Record<Cell['state'], string> = { ok: 'text-success', fail: 'text-destructive', none: 'text-muted-foreground', info: 'text-foreground' };
 
 export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; products: { id: string; name: string }[] }) {
   const qc = useQueryClient();
@@ -51,7 +51,7 @@ export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; pr
   const busy = run.isPending;
   return (
     <Card><CardContent className="space-y-4 p-4">
-      <div><h2 className="text-lg font-semibold">Release Control</h2>
+      <div><h2 className="text-lg font-semibold">Release Control v1.1</h2>
         <p className="text-sm text-muted-foreground">Nur tatsächlich ermittelte Prüfergebnisse. Keine Prüfung schaltet Pilot- oder Produktivbetrieb frei.</p></div>
       <Table>
         <TableHeader><TableRow><TableHead>Prüfung</TableHead><TableHead>alix-lasers.de</TableHead><TableHead>alix-lasers.com</TableHead></TableRow></TableHeader>
@@ -64,8 +64,22 @@ export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; pr
         <Button variant="outline" disabled={busy} onClick={() => run.mutate({ action: 'backup_proof' })}>Vollsicherung prüfen</Button>
         <Button variant="outline" disabled={busy} onClick={() => run.mutate({ action: 'restore_test' })}>Wiederherstellungstest starten</Button>
       </div>}
+      {canWrite && <div className="grid gap-4 sm:grid-cols-2">
+        {(['de', 'com'] as const).map(channel => <div key={channel} className="space-y-2 border-t border-border pt-3">
+          <h3 className="text-sm font-semibold">alix-lasers.{channel}</h3>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" disabled={busy} onClick={() => run.mutate({ action: 'communication_proof', channel })}>Kommunikationsnachweis erstellen</Button>
+            <Button variant="outline" disabled={busy} onClick={() => run.mutate({ action: 'apex_dry_run', channel })}>Apex Pilot simulieren</Button>
+          </div>
+        </div>)}
+      </div>}
       {busy && <p className="text-sm text-muted-foreground">Prüfung läuft …</p>}
-      {last?.checks && <ul className="text-sm space-y-1">{last.checks.map((c: any) => <li key={c.name} className={c.passed ? 'text-emerald-400' : 'text-red-400'}>{c.passed ? '✓' : '✗'} {c.name}: {c.detail}</li>)}</ul>}
+      {last?.checks && <ul className="text-sm space-y-1">{last.checks.map((c: any) => <li key={c.name} className={c.passed ? 'text-success' : 'text-destructive'}>{c.passed ? '✓' : '✗'} {c.name}: {c.detail}</li>)}</ul>}
+      {last?.preview && <div className="space-y-2 border-t border-border pt-3"><h3 className="text-sm font-semibold">Apex – Vorschau ohne Übernahme</h3>
+        <p className="text-sm text-muted-foreground">{last.preview.reason}</p>
+        <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-xs">{JSON.stringify(last.preview, null, 2)}</pre>
+      </div>}
+      {last && <details className="text-sm"><summary className="cursor-pointer">Vollständiges Testprotokoll</summary><pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs">{JSON.stringify(last, null, 2)}</pre></details>}
       {canWrite && gate.emergency_stopped !== false && <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <span className="text-sm">Notstopp manuell aufheben (nur mit Vollsicherung und Wiederherstellungstest). Bestätigung: <code>NOTSTOPP AUFHEBEN</code></span>
         <Input className="max-w-xs" value={confirm} onChange={e => setConfirm(e.target.value)} aria-label="Bestätigung Notstopp" />
@@ -73,7 +87,7 @@ export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; pr
       </div>}
       <div className="border-t border-border pt-3"><h3 className="text-sm font-semibold mb-2">Audit-Log Freigabeentscheidungen</h3>
         {audit.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Einträge</p> :
-          <ul className="text-xs space-y-1">{audit.map((l, i) => <li key={i}>{new Date(l.created_at).toLocaleString('de-DE')} · {l.operation}{l.channel_code ? ` · ${l.channel_code.toUpperCase()}` : ''}{l.payload?.kind ? ` · ${l.payload.kind}` : ''} · {l.status}</li>)}</ul>}
+          <ul className="text-xs space-y-1">{audit.map((l, i) => <li key={i}><details><summary className="cursor-pointer">{new Date(l.created_at).toLocaleString('de-DE')} · {l.operation}{l.channel_code ? ` · ${l.channel_code.toUpperCase()}` : ''}{l.payload?.kind ? ` · ${l.payload.kind}` : ''} · {l.status}</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(l.payload, null, 2)}</pre></details></li>)}</ul>}
       </div>
     </CardContent></Card>
   );

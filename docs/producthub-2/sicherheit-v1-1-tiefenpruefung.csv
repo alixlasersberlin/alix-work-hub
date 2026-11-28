@@ -1,0 +1,214 @@
+Kennung,Titel,Stufe,Bereich,Product Hub,Prüfstand
+lov_finding_0005f6a20c972e5d,Sender can bypass WhatsApp channel membership,error,supabase/functions/ac-whatsapp-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_001e69a802ca9f70,Anyone can add messages to another user's ticket,error,supabase/functions/inbound-mail/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_0102a501f467e0c8,Service-role send flow updates orders without PLM authorization,warn,supabase/functions/plm-purchase-order-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_01689a0ccfff4e89,Signed-in users can read arbitrary reminder records,error,supabase/functions/rz-reminder-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_016dbf8483032e9a,Anyone can resend another customer's signing email,error,supabase/functions/alix-sign-resend/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_017d28bf009065b2,Anyone can trigger delivery approval reminders,warn,delivery-approval-escalation,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_020175bdef3ecb52,Portal section writes accept arbitrary caller fields,warn,supabase/functions/mediapaket-portal/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_03adcadb64cc1efb,Anyone can trigger configured signing webhooks,warn,supabase/functions/sig-webhook-dispatch/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_04b7323c4231ec65,Anyone can trigger the privileged Swiss order import,error,supabase/functions/import-all-orders-ch/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_06a1757d08bfe5a6,Anyone can read the configured GitHub repository history,warn,supabase/functions/github-status/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_06a1b8184d6c963c,Anyone can trigger approval emails,warn,notify-order-change-request,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_08c1beda03a5ef65,Anyone can view customer scores and routing details,error,supabase/functions/ac-router-simulate/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_09ffea0c64262705,Anyone can create the Sobitsch account and commission records,error,supabase/functions/tmp-create-sobitsch/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_0cd13b7d694189f5_8be3435d,Anyone can send private meetings to an outside service,warn,supabase/functions/ac-meeting-ai-notes/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_0cd13b7d694189f5_e734ac02,Anyone can update meeting transcripts and summaries,error,supabase/functions/ac-meeting-ai-notes/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_0d8093ef07d6af38,Anyone can retrieve another customer's private score,warn,supabase/functions/ac-customer-score/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_12f184f4fe482d12,Anyone can trigger notices for another customer's package,error,supabase/functions/mediapaket-portal/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_150543f5792e8bf6,Anyone can trigger document workflow scans,warn,supabase/functions/alixdocs2-workflow-scan/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_1774b4ac1795267a,PDF commit can attach an order to any customer,error,supabase/functions/pdf-order-commit/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_183ae0ad4cf721dc,Task IDs bypass compliance-task access policies,error,supabase/functions/compliance-ai-assist/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_1907356ca29b5e03,Anyone can resend another customer’s signed offer,warn,supabase/functions/admin-resend-sign/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_193e452aa8130a17,Anyone can send an announcement to every employee,error,announce-capa-cockpit fixed trigger token,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_1a19768baf09053c,Anyone can attach AI predictions to arbitrary contacts,warn,supabase/functions/ac-sentiment-emotion/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_1b423c4366778754,Any signed-in user can inspect another website’s audience,warn,"public.ac_web_segment_stats(uuid,jsonb,timestamptz,timestamptz)",Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_1c6e8cfec49210c7,Anyone can analyze any contact’s private conversations,error,supabase/functions/ac-revenue-intel-v2/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_1cfc25c1a72b5091,Anyone can trigger private ticket notifications,error,supabase/functions/ticket-user-notify/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_1faf96e95ce2b494,Any CMR user can send another account's portal invitation,error,supabase/functions/cmr-portal-invite/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_209ac9df0e293f49,Anyone can send arbitrary payloads to the remote translation API,error,supabase/functions/ph-com-lang-push/index.ts,Ja,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_217a6dfc717596f3_bfdcff55,Anyone can analyze private customer calls,error,supabase/functions/ac-conv-intel-analyze/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_217a6dfc717596f3_f43be5ff,Anyone can analyze private customer calls,error,supabase/functions/ac-conv-intel-analyze/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_21a637de07028856,Public token permits unauthenticated employee-data access,error,supabase/functions/announce-capa-cockpit/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_232765c9fa069fde,Any signed-in user can email another team's case details,error,supabase/functions/as-send-email-reminder/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_23a279b4a5efc05a,Anyone can trigger recalculation of customer credit limits,error,supabase/functions/collect-analytics/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_274746008eddd8d1_2cf3a0b0,Any workspace member can widen device searches,warn,alix-copilot: lager_devices search,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_274746008eddd8d1_4c48cf10,Finance staff can widen invoice searches,warn,alix-copilot: zoho_invoices search,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_274746008eddd8d1_52f768d4,Any workspace member can widen production searches,warn,alix-copilot: production_orders search,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_27ca29c2a3fedb9b,Anyone can add messages to customer SMS conversations,error,supabase/functions/ac-webhook-twilio/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_27d2250b5b8790ba,Anyone can modify delivery status without authentication,error,supabase/functions/portal-delivery-actions/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_28ad318b9fbc4915,Any signed-in user can approve supplier invoices,error,public.finance_approvals,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_28cb10380cb01816,Anyone can alter every competitor's social reports,error,supabase/functions/social-competitors-sync/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_2989a7a085c7a5ca_43adb61f,Any signed-in user can message another delivery customer,warn,supabase/functions/dispatch-eta-sms/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_2989a7a085c7a5ca_7bf9a994,Signed-in users can send ETA texts for any route plan,warn,supabase/functions/dispatch-eta-sms/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_29b6057cf3486198,Anyone can force customer dunning emails,error,supabase/functions/bank-return-dunning-escalate/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_2c6eeae643a145a5,Any signed-in user can release another contract's invoices,error,supabase/functions/pruefung-release/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_2cb579b793ccfdb4,Anyone can trigger customer survey generation and email dispatch,warn,supabase/functions/ticket-csat-dispatch/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_2fb7d1a4dd334d95,Anyone can send service emails from your app,warn,ticket-customer-notify,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_32ab3ba23bc4c3c6,Anyone can trigger changes to overdue cases,error,supabase/functions/as-workflows-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_32dd59d975d3ed9f,Unauthenticated smart-match exposes document metadata,warn,supabase/functions/alixdocs-smart-match/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_36b6dbaa78755c51,Anyone can trigger contract reminder emails,warn,portal-contract-reminders,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_374621ce0171a129,Anyone can request another agent’s QM history,error,supabase/functions/ac-qm-coaching-recommend/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_37aebb1aa2b73448,Any signed-in user can message any WhatsApp contact,warn,supabase/functions/twilio-send-whatsapp-message/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_38dc846b77303b8b,Anyone can mark QR invoices paid via bank import,error,supabase/functions/finance-bank-import/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_3b26108661a79fab,Anyone can turn signed offers into orders,error,supabase/functions/convert-signed-offer-to-order/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_3b50bf868a4ca4dc,Anyone can trigger another user's ticket email,error,supabase/functions/ticket-user-notify/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_3b55d34b73b21e9d,Public chat polling lacks caller authentication,error,supabase/functions/ac-chat/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_3e001c78892db51d,Signed-in users can access other customers’ orders,error,supabase/functions/send-order-confirmation/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_3e98351e84204cdc,Signed-in users can send arbitrary branded appointment emails,error,supabase/functions/esc-appointment-confirmation-mail/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_3f796a332f876f0e,Signed-in users can message any conversation,error,supabase/functions/ac-send-message/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_43bb2ddd0aab0e94,Anyone can expose document summaries through knowledge search,error,ac-knowledge-rag: alixdocs_documents search,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_4458550e7986720a,Anyone can send caller-chosen signed events,error,supabase/functions/alixsmart-emit/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_44ec9efee945753d_16baf99a,Signed-in user can select any return record,warn,supabase/functions/return-note-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_44ec9efee945753d_4d29d29f,Any signed-in user can email another customer's return details,warn,supabase/functions/return-note-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_47008b040e014166_4d25e559,Arbitrary email content reaches share recipients,warn,supabase/functions/catalog-share-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_47008b040e014166_817a2c19,Any signed-in user can send another user's catalog share,error,supabase/functions/catalog-share-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_47008b040e014166_cf58c780,Signed-in users can load another user's share link,warn,supabase/functions/catalog-share-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_47008b040e014166_d4c40570,Arbitrary text reaches WhatsApp and SMS recipients,warn,supabase/functions/catalog-share-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_48c15e5c018def20,No-assignment users can generate all-tenant reminders,error,supabase/functions/finance-reminder-engine/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_4bd5ac08511c8e04,Caller controls SMS recipient and message text,error,supabase/functions/as-send-sms-reminder/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_4c7152ec5de2c1bc,Anyone can change bank payment records,error,supabase/functions/cmr-bank-automatch/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_4ea4f21737ef5149,Anyone can create completed QM evaluations,error,supabase/functions/ac-qm-auto-score/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5219762f92dc1e2c,Any signed-in user can store unchecked files,warn,alixdocs-autofile,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5289cf703f8ac14d,Anyone can trigger reads of restricted sync logs,error,supabase/functions/ticket-sync-alert/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5353120018933fbe,Signed-in users can change scores on unauthorized offers,error,supabase/functions/offers-ai-score/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5422295243c00d10,A partner can read another partner's signing request,warn,supabase/functions/sig-partner-api/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_592ef954aadae794,Anyone can trigger timestamps on private signing documents,warn,supabase/functions/sig-tsa-timestamp/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_59b7e25453966dd1,OAuth callback saves attacker tokens under a chosen user,error,supabase/functions/esc-calendar-oauth/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5b76d6089c92797d,Anyone can delete stored call recordings,error,supabase/functions/ac-recording-retention/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5c7be8cb8b467dc0,Finance users can email collection documents to any address,error,supabase/functions/collect-document-generate/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5cdb47c9a3a86996_6c407d29,Anyone can trigger private reminder processing,error,supabase/functions/rz-reminder-build/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5cdb47c9a3a86996_cebdfb9b,Public anon key exposes the reminder builder to anyone,error,supabase/functions/rz-reminder-build/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5dbd6ef95ef7bd34,Anyone can trigger delivery status escalation and notifications,warn,supabase/functions/delivery-escalation-engine/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5e150bdaabc5e021,Anyone can trigger mediapaket reminders and anonymization,error,supabase/functions/mediapaket-reminders/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5e9ccda6a9cfe1b0,CMR users can send portal invites to arbitrary addresses,error,supabase/functions/cmr-portal-invite/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5f0099b70185d10a,Customer details are served without caller authentication,warn,supabase/functions/customer-portal-lookup/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_5f54f5d4f2f742e9,Anyone can change signing status on linked business records,warn,supabase/functions/sig-entity-sync/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_607c1e0633e683f5,Anyone can download another person’s direct-debit details,error,supabase/functions/finance-ch-dd-export/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_60bcf7fae14f7adb,Anyone can trigger survey invitations,error,supabase/functions/survey-automation/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_614c6cf2977338c6,Anyone can add fake customer messages to tickets,error,supabase/functions/whatsapp-webhook/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_6a796ab89ffc66d5,Anyone can send private customer records outside,error,supabase/functions/ac-customer-intel/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_6b1e7222379add62,Anyone can trigger customer synchronization,error,supabase/functions/scheduled-customer-sync/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_6bdc45abf053d23e,Anyone can create product records,error,supabase/functions/product-hub-import/index.ts,Ja,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_6ca1f9488e5d8b1f,Anyone can recalculate and overwrite customer predictions,warn,supabase/functions/ac-predict-cx/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_6cdb90a4e4b3d4f9,Any super admin can email reports to anyone,error,aic-send-report,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_6eb5a3fe59d356e3,Any signed-in user can copy another user's stored files,error,supabase/functions/alixdocs-attach-from-storage/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_6feae31e06a64cf3,Anyone can run conversation automations,error,supabase/functions/ac-automation-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_70c84e6ba8f516cf,A member can point a document to another user's file,warn,supabase/functions/alixdocs-signed-url/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_72a458552fb60db4,Ticket readers can send arbitrary email to other users,warn,supabase/functions/ticket-user-notify/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_72ade965d435cb87,Anyone can recalculate a private credit assessment,error,supabase/functions/credit-score-calculate/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_74e13969233e5319,Any signed-in user can send payment reminders to customers,error,supabase/functions/recurring-prenotification/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_75970fb38ae01b38,Anyone can write predictions onto arbitrary contacts,warn,supabase/functions/ac-omnichannel-orchestrate/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_7663c8dfc8cfd611_1e2b5c22,Anyone can create recurring customer invoices,error,supabase/functions/cmr-recurring-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_7663c8dfc8cfd611_f8f951cf,Anyone can trigger recurring billing across tenants,error,supabase/functions/cmr-recurring-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_773ec74739954988,Any signed-in user can copy another user's mail attachment,error,supabase/functions/alixdocs-mail-import/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_7845d0d7721ae86a,Anyone can send arbitrary push messages to selected users,error,supabase/functions/mobile-push-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_7c49fdc537737f7d_50ac0c04,Anyone can read the protected mapping registry,warn,supabase/functions/ph-com-registry-push/index.ts,Ja,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_7c49fdc537737f7d_d30fbb88,Anyone can register product mappings,warn,supabase/functions/ph-com-registry-push/index.ts,Ja,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_80702a087db69b7e,Anyone can read records for arbitrary contacts,error,supabase/functions/ac-omnichannel-orchestrate/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_8359c33e8e58124d_9e4c90ac,Anyone can trigger bulk actions on private customer contracts,warn,supabase/functions/portal-contract-reminders/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_8359c33e8e58124d_a32a9325,Anyone can trigger contract reminder emails,warn,supabase/functions/portal-contract-reminders/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_83babd51f71aafaf,Staff can send private inbox files via WhatsApp,error,supabase/functions/ac-whatsapp-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_860f4ef640ddf1ef,Anyone with access to your app can alter AI instructions,warn,supabase/functions/alix-copilot/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_86a979bd8688c2a0,CMR users can send arbitrary invoice emails to any address,error,supabase/functions/cmr-send-document/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_87a129784e09ef5c,Unassigned users can download invoices across Zoho tenants,error,supabase/functions/zoho-invoice-pdf/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_87f0fa502bc83a67,Anyone can change an order's delivery response,warn,supabase/functions/portal-delivery-confirm/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_8810db495c44e4dc,Public log action writes against arbitrary contacts,warn,supabase/functions/ac-compliance-governance/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_8973eaa4d23c2465,Anyone can create invoices across customer accounts,error,supabase/functions/cmr-collective-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_89bba568925256f2_166f7873,Anyone can trigger playbook execution accessing customer data,error,supabase/functions/ac-playbook-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_89bba568925256f2_d4756c15,Anyone can trigger customer messaging playbooks,error,supabase/functions/ac-playbook-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_89e0261f504376eb,Anyone can retrieve and alter another QR invoice,error,supabase/functions/finance-qr-generate/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_8a473438782bef1a,Anyone can replace another person's signed document,error,supabase/functions/sig-render-final/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_8b7a66d6300430d8,Any signed-in user can text another team's case details,error,supabase/functions/as-send-sms-reminder/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_9260563e406937fe,Bank statement import trusts any Bearer header,error,supabase/functions/finance-camt054-import/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_9328ed89c215056e,Unassigned users can access and process every tenant’s offers,error,supabase/functions/offer-followup-engine/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_94d5de7f4e719207,Signed-in users can send order emails to arbitrary recipients,warn,supabase/functions/delivery-notify/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_9760a911083892fb,Anyone can trigger automated survey reminder emails,warn,supabase/functions/survey-auto-reminders/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_98051a4a477129d7,Any signed-in user can request signatures on others' documents,error,supabase/functions/alixdocs-sign-request/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_98d1a9730f1bf438_c0935e03,Anyone can trigger dunning runs across tenant invoices,error,supabase/functions/cmr-dunning-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_98d1a9730f1bf438_c6ddf1e8,Anyone can create customer collection notices,error,supabase/functions/cmr-dunning-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_9b6babee6e0739e2,Any signed-in user can send another customer's payment reminder,error,supabase/functions/rz-reminder-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_9d9c7365b4cce7e8,Anyone can receive results from the paid AI service,error,supabase/functions/ac-revenue-intel-v2/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a0a15fd7005174ce,Preview can update any segment by ID,warn,supabase/functions/ac-segment-preview/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a11f999fb688bec4,Uploaded document can be attached to any customer or order,warn,supabase/functions/alixdocs-autofile/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a42c392d5c8dd1fd,Anyone can trigger Swiss payment reconciliation,error,supabase/functions/finance-ch-reconcile/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a499f81295846526,Anyone can trigger private customer synchronization,error,supabase/functions/scheduled-customer-sync/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a4d6dd0a251b82c0,Anyone can run the security scan and alter findings,error,supabase/functions/security-auto-scan/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a63e6a6f8b835b5d,Anyone can trigger customer shipping notices,error,supabase/functions/lager-bestand-notify/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a7401cb3c80f2da9,Any signed-in user can add internal notes to tickets,error,supabase/functions/mobile-voice-transcribe/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a75e27ec4d54559d,Public import can modify matched product records,error,supabase/functions/product-hub-import/index.ts,Ja,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a7e4d66d4bc77a28,Anyone can forge signed webhook events to configured endpoints,error,supabase/functions/sig-webhook-dispatch/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a959243f59d4a590,Anyone can send caller-written emails to arbitrary recipients,error,supabase/functions/ticket-customer-notify/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_a9aed7be0c362baa,Anyone can trigger customer lifecycle messages,warn,ac-playbook-run,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_aaa4d2aa58de11e4_56f4ee5a,Any signed-in user can change another delivery route,error,supabase/functions/delivery-route-calc/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_aaa4d2aa58de11e4_c6e24d62,Signed-in callers can recalculate any tour,error,supabase/functions/delivery-route-calc/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_aab25c4aac0c36d0_10807eba,Anyone can analyze any call recording transcript,error,supabase/functions/ac-qm-auto-score/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_aab25c4aac0c36d0_c2bf6c3e,Anyone can evaluate and access call transcripts,error,supabase/functions/ac-qm-auto-score/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ac9f74df4aa376ea,Ordinary callers can apply the stored facsimile signature,error,supabase/functions/sig-apply-facsimile/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_aca0bf1eb36bddcc,Any signed-in user can access another order’s review token,error,supabase/functions/send-review-invitation/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ad6f5c1d67558ce5,Anyone can put markup in appointment emails,warn,ticket-create-appointment,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_add1d8017d448ff5,Signed-in users can send arbitrary emails,warn,supabase/functions/esc-send-email/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ae041d22cd49aa24,Ordinary users can send survey invitations,error,supabase/functions/survey-send-invites/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ae5f39e7f20249fc,Unauthenticated requests can read push subscriptions,error,supabase/functions/mobile-push-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_af4f84c67e6034af,Anyone can trigger signing reminders and expire requests,warn,supabase/functions/sig-reminders-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b0bea2646e06d7cc,Anyone can finalize documents,error,supabase/functions/sig-render-final/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b143826790bf7b30,Webhook test posts to any HTTPS destination,warn,supabase/functions/ac-marketplace/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b25fdd69f8b74481,Any signed-in user can approve another person’s invoice,error,supabase/functions/finance-approval-action/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b271e3c74d949264,Anyone can close customer tickets,warn,supabase/functions/ticket-auto-close/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b58065ea66d180e4,Anyone can mark another person's mail messages as unsubscribed,warn,supabase/functions/mail-unsubscribe/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b6bb2ca602686e62,Public audit action exposes private business metrics,warn,supabase/functions/ac-compliance-governance/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b6ddd0c4b7e8a609,Anyone can email the approval report to arbitrary recipients,error,supabase/functions/delivery-approval-monthly-report/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b848d38a5d991643,Anyone can trigger order data imports,warn,scheduled-order-sync,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b84cf71745089f7f,Unauthenticated requests read private conversation data,error,supabase/functions/ac-agent-assist-live/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b86c0cca0683482a,Anyone can create ticket appointments,error,supabase/functions/ticket-create-appointment/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_b9ad2e8dc0cbf43e,Any user can trigger calendar writes for any other user,warn,supabase/functions/esc-calendar-sync/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ba12e323f71e0fa4,Signed-in user can send return details to any address,warn,supabase/functions/return-note-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ba7c311bb074fdc2_4edc88a2,Anyone can analyze any contact’s conversations,error,supabase/functions/ac-predictive-engagement/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ba7c311bb074fdc2_bd0ae6c3,Anyone can retrieve predictions for any contact,error,supabase/functions/ac-predictive-engagement/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_bcaf4da9778a3843,Any signed-in user can create royalty invoices,warn,license-royalty-run,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_bd3c66fffca55a42,Anyone can trigger delivery approval escalations and reminders,warn,supabase/functions/delivery-approval-escalation/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_be09aadb01290773,Any signed-in user can export direct-debit details,error,supabase/functions/finance-sepa-export/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_c1b20729293ac269,Unauthenticated caller can close tickets,error,supabase/functions/ticket-auto-close/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_c1f51fb90f414c65,Signed-in users can place calls to arbitrary destinations,error,supabase/functions/ac-3cx-call/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_c3733d2c215fc774,Smart-match updates any document by caller-supplied ID,error,supabase/functions/alixdocs-smart-match/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_c4bcebcef88683c2,Caller controls reminder recipient and email content,error,supabase/functions/as-send-email-reminder/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_c5b0e3d6a8f2e774,Anyone can download finance transactions,error,supabase/functions/finance-datev-export/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_c6e230fc92a296e5,Anyone can forge call records and trigger transcription,warn,supabase/functions/ac-3cx-webhook/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_c77c59c8e36d2de5,Anyone can inspect other users’ calendar conflicts,error,supabase/functions/esc-conflict-check/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_cc294c6fc858dbbb,Any signed-in user can send another team's shipment details,warn,supabase/functions/carrier-shipment-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_cd621b68583af549,Anyone can sync product content externally,error,supabase/functions/ph-com-lang-push/index.ts,Ja,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_cec0ac18e56d6bd7_b5f2cb8f,Any signed-in user can create other owners' follow-up tasks,warn,supabase/functions/offer-followup-engine/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_cec0ac18e56d6bd7_f40c647c,Any signed-in user can mark offers inactive,warn,supabase/functions/offer-followup-engine/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d0449b3fd945f992,Anyone can trigger customer maintenance reminders,error,supabase/functions/maintenance-reminder-daily/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d0f107bca04cd1b6,Anyone can read meeting transcripts,error,supabase/functions/ac-meeting-ai-notes/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d30e657eadd449e2,Anyone can send private calls to an outside service,error,supabase/functions/ac-conv-intel-analyze/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d3e14dca0cae4dee,Anyone can run private survey automation,error,supabase/functions/survey-automation/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d50cef29292119e8,Anyone can retrieve another customer's risk score,error,supabase/functions/ac-churn-predict/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d516be27dfccb6c8,Anyone can route customer tickets,error,supabase/functions/ticket-router/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d73d2342e76a806c_30da19e3,Ticket creation can target any customer record,warn,supabase/functions/ac-copilot-act/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d73d2342e76a806c_b7f288c1,Notifications can be written to any user,warn,supabase/functions/ac-copilot-act/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d8cefb24d8210571,Anyone can trigger the internal system health scan,warn,supabase/functions/system-health-scan/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_d9ed56cd61cd46cd,Anyone can inject messages into the Meta inbox,error,supabase/functions/ac-webhook-meta/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_da722e431603e2f7,Any signed-in user can enumerate customer payment profiles,warn,supabase/functions/recurring-prenotification/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_db22a4167bb6e8c4,Anyone can trigger ticket reminders,warn,supabase/functions/ticket-customer-reminder/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_dee2f25deaa8bfd7,Anyone can call arbitrary COM API paths with the server key,error,supabase/functions/ph-com-registry-push/index.ts,Ja,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e1bc98324f66bddf,Anyone can read and snapshot private business metrics,warn,supabase/functions/ac-report-snapshot/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e2c148fb68294c0b_0e12c928,Upload advances any selected document’s version,error,supabase/functions/alixdocs-upload/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e2c148fb68294c0b_ef5f34ce,Any signed-in user can overwrite another user's document,error,supabase/functions/alixdocs-upload/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e2d6374bd0210117,Anyone can put markup in customer reminder emails,warn,ticket-customer-reminder,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e488e3d01eba5830,Anyone can generate royalty invoices,error,supabase/functions/license-royalty-run/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e82aaa3ddb8d3869,Anyone can send unescaped email content from your app,warn,ticket-customer-notify,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e89e49121b9f1117,Signed-in users can attach arbitrary content to supplier emails,warn,supabase/functions/plm-purchase-order-send/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e9436bf2ec03c48f_2176d0bb,Anyone can resend repair quotes,error,supabase/functions/send-repair-quote/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e9436bf2ec03c48f_41eebedc,Anyone can retrieve and expose repair-quote approval links,error,supabase/functions/send-repair-quote/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e9b23515a9652ef7,Anyone can score protected collection cases,error,supabase/functions/collect-ai-score/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_e9bbf4a68ab93184,Tax export trusts a caller-selected tenant,error,supabase/functions/finance-tax-export/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_eb3640852bce3732,Anyone can trigger payment reminders,error,supabase/functions/anzahlung-mahn-engine/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ed1443693bceea66,Anyone can email private order-change details,error,supabase/functions/notify-order-change-request/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_edd66577e687284b,Any workspace member can access orders across accounting regions and tenants,warn,supabase/functions/alix-copilot/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_f14c349129b6bca9,Anyone can trigger your system maintenance,error,supabase/functions/system-health-scan/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_f4bd1fd6bf1a9511,Anyone can change existing catalog products through the import,error,supabase/functions/catalog-import-airtable/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_f52df2ed4cbca9d2,Former administrators can keep deleting quality records,warn,Super Admin offboarding,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_f54ab7127848f856,Anyone can look up customer details by device serial,error,supabase/functions/lager-bestand-notify/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_f77af877b06e48ba,Anyone can trigger delivery approval report dispatch,warn,supabase/functions/delivery-approval-monthly-report/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend
+lov_finding_ff271ba19700e47f,Any signed-in user can send arbitrary approval PDFs to anyone,error,supabase/functions/delivery-approval-mail/index.ts,Nein,Scannerbefund; manuelle Bestätigung ausstehend

@@ -17,7 +17,7 @@ DO $$ DECLARE pilot uuid; other uuid; sa uuid; old_value jsonb; got boolean; BEG
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',sa,'role','authenticated')::text,true);
   EXECUTE 'SET LOCAL ROLE authenticated';
   got:=false;
-  BEGIN PERFORM public.ph2_set_operating_mode('de','pilot',pilot,'FREIGABE DE PILOT',0); EXCEPTION WHEN OTHERS THEN IF SQLERRM NOT LIKE '%Nachweis für Vollsicherung%' THEN RAISE; END IF; got:=true; END;
+  BEGIN PERFORM public.ph2_set_operating_mode('de','pilot',pilot,'FREIGABE DE PILOT',0); EXCEPTION WHEN OTHERS THEN IF SQLERRM NOT LIKE '%Nachweis für Vollsicherung%' AND SQLERRM NOT LIKE '%Nachweis backup%' THEN RAISE; END IF; got:=true; END;
   IF NOT got THEN RAISE EXCEPTION 'Missing backup/restore accepted'; END IF;
   got:=false;
   BEGIN PERFORM public.ph2_set_operating_mode('de','blocked',null,'',0); EXCEPTION WHEN OTHERS THEN IF SQLERRM NOT LIKE '%Sicherheitsbestätigung fehlt%' THEN RAISE; END IF; got:=true; END;

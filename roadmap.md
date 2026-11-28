@@ -174,3 +174,6 @@
 - [ ] Automatischen Rechnungsversand mit dem nächsten echten Shopify-Neuauftrag bis zur Zustellbestätigung beobachten — wartet auf neuen Auftrag; 501 vorbestehende Sicherheitshinweise unverändert.
 - [x] Zweite Anzahlungsrate AB-2026-04691: Betrags-Duplikatsperre reproduziert und für eindeutig nummerierte Raten korrigiert; 5.000 + 5.000 = 10.000 serverseitig getestet und vollständig zurückgenommen, Doppelnummer und Überschreitung gesperrt. Bestehende Rechnungen/Zahlungen/Rechte unverändert.
 - [ ] Zweite Anzahlungsrate angemeldet speichern und Versand abnehmen — externe Supabase stellt hier keine Nutzersitzung bereit; kein Kundenversand zu Testzwecken.
+- [ ] Release Control v1.1: isolierten Restore gegen Manifest vorbereiten; ohne getrennte Umgebung ausdrücklich unvollständig.
+- [ ] Release Control v1.1: Kommunikationsnachweis und Apex-Dry-Run je DE/COM, serverseitige frische Nachweismatrix; keine Aktivierung.
+- [ ] Release Control v1.1: bestehende Sicherheitshinweise ausschließlich lesend klassifizieren, Sicherheits-/Abschlussbericht und Regressionen.

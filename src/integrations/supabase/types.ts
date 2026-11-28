@@ -58973,6 +58973,8 @@ export type Database = {
         }
         Returns: Json
       }
+      ph2_release_admin: { Args: never; Returns: boolean }
+      ph2_release_context: { Args: { _channel?: string }; Returns: string }
       ph2_retry: { Args: { _event_id: string }; Returns: boolean }
       ph2_set_operating_mode: {
         Args: {
