@@ -1,0 +1,23 @@
+internal_id,level,name,location,status
+lov_finding_10a8d58ffb56d0e6_75b0cea6,warn,Anyone can insert compliance predictions for arbitrary contacts,supabase/functions/ac-compliance-governance/index.ts,open_not_finally_verified
+lov_finding_10a8d58ffb56d0e6_da6222f2,warn,Anyone can log compliance records for another customer,supabase/functions/ac-compliance-governance/index.ts,open_not_finally_verified
+lov_finding_1c6e8cfec49210c7,error,Anyone can analyze any contact’s private conversations,supabase/functions/ac-revenue-intel-v2/index.ts,open_not_finally_verified
+lov_finding_28bb477650901ea0_03257293,warn,Anyone can trigger delivery approval report dispatch,supabase/functions/delivery-approval-monthly-report/index.ts,open_not_finally_verified
+lov_finding_28bb477650901ea0_1800031f,warn,Anyone can email approval reports to arbitrary addresses,supabase/functions/delivery-approval-monthly-report/index.ts,open_not_finally_verified
+lov_finding_28bb477650901ea0_a86be467,warn,Anyone can email the approval metrics to arbitrary recipients,supabase/functions/delivery-approval-monthly-report/index.ts,open_not_finally_verified
+lov_finding_4ea4f21737ef5149,error,Anyone can create completed QM evaluations,supabase/functions/ac-qm-auto-score/index.ts,open_not_finally_verified
+lov_finding_7e3a3c1a9ceb0554,warn,Public handler reads staff-only approval data,supabase/functions/delivery-approval-monthly-report/index.ts,open_not_finally_verified
+lov_finding_7ec2ee3a75ac0671,warn,Anyone can send call transcripts to an outside AI service,supabase/functions/ac-qm-auto-score/index.ts,open_not_finally_verified
+lov_finding_8810db495c44e4dc,warn,Public log action writes against arbitrary contacts,supabase/functions/ac-compliance-governance/index.ts,open_not_finally_verified
+lov_finding_9d9c7365b4cce7e8,error,Anyone can receive results from the paid AI service,supabase/functions/ac-revenue-intel-v2/index.ts,open_not_finally_verified
+lov_finding_9da4d4a28cc4af43,error,Anyone can evaluate and access call transcripts,supabase/functions/ac-qm-auto-score/index.ts,open_not_finally_verified
+lov_finding_aab25c4aac0c36d0_10807eba,error,Anyone can analyze any call recording transcript,supabase/functions/ac-qm-auto-score/index.ts,open_not_finally_verified
+lov_finding_aab25c4aac0c36d0_c2bf6c3e,error,Anyone can evaluate and access call transcripts,supabase/functions/ac-qm-auto-score/index.ts,open_not_finally_verified
+lov_finding_ad6b240e0e441ee2,warn,Anyone can read the approval metrics report,supabase/functions/delivery-approval-monthly-report/index.ts,open_not_finally_verified
+lov_finding_b6ddd0c4b7e8a609,warn,Anyone can email the approval report to arbitrary recipients,supabase/functions/delivery-approval-monthly-report/index.ts,open_not_finally_verified
+lov_finding_c763006c2aa20517,warn,Anyone can view customer segment details,supabase/functions/ac-segment-preview/index.ts,open_not_finally_verified
+lov_finding_dc3f7ef58c7d89ad_534cf0f9,error,Anyone can view another contact’s private history,supabase/functions/ac-revenue-intel-v2/index.ts,open_not_finally_verified
+lov_finding_dc3f7ef58c7d89ad_d8f65404,error,Anyone can analyze any contact’s private conversations,supabase/functions/ac-revenue-intel-v2/index.ts,open_not_finally_verified
+lov_finding_e978e08c6097bc2f,error,Anyone can evaluate and access call transcripts,supabase/functions/ac-qm-auto-score/index.ts,open_not_finally_verified
+lov_finding_f0aa51539dac34fe,warn,Anyone can view customer segment identifiers,supabase/functions/ac-segment-preview/index.ts,open_not_finally_verified
+lov_finding_f77af877b06e48ba,warn,Anyone can trigger delivery approval report dispatch,supabase/functions/delivery-approval-monthly-report/index.ts,open_not_finally_verified

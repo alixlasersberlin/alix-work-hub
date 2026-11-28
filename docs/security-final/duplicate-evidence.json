@@ -1,0 +1,10 @@
+[
+  {
+    "group_id": "7af7eebb042c0970",
+    "basis": "identical attack-path description, not a resolved finding",
+    "internal_ids": [
+      "lov_finding_2fb7d1a4dd334d95",
+      "lov_finding_8c93d10e96fc9f48"
+    ]
+  }
+]

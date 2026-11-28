@@ -1,0 +1,38 @@
+internal_id,level,name,location,status
+lov_finding_020175bdef3ecb52,warn,Portal section writes accept arbitrary caller fields,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_05e6253b189dea4a_972f673c,warn,Any signed-in user can delete or restore others’ documents,supabase/functions/alixdocs-delete/index.ts,fixed_tests_and_live_denial
+lov_finding_05e6253b189dea4a_f15088f9,warn,Any signed-in user can soft-delete or restore any document,supabase/functions/alixdocs-delete/index.ts,fixed_tests_and_live_denial
+lov_finding_05e6253b189dea4a_fc9b23b0,warn,Any signed-in user can delete another user's document,supabase/functions/alixdocs-delete/index.ts,fixed_tests_and_live_denial
+lov_finding_12f184f4fe482d12,error,Anyone can trigger notices for another customer's package,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_139d86bdd6250556,error,Anyone can add your company’s signature to a file,supabase/functions/sig-apply-facsimile/index.ts,fixed_tests_and_live_denial
+lov_finding_1faf96e95ce2b494,error,Any CMR user can send another account's portal invitation,supabase/functions/cmr-portal-invite/index.ts,fixed_tests_and_live_denial
+lov_finding_2c0ac051191a5962,error,Anyone can trigger production handoffs,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_2f496f49c8a0776a,error,Anyone can add your official signature to documents,supabase/functions/sig-apply-facsimile/index.ts,fixed_tests_and_live_denial
+lov_finding_385b23139d1d11e0_3019476f,warn,Portal section writes accept arbitrary caller fields,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_385b23139d1d11e0_66a9bc2b,error,Portal section writes accept arbitrary record fields,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_385b23139d1d11e0_96840789,warn,Anyone can probe media package existence via handoff action,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_385b23139d1d11e0_c76d1c81,error,Anyone can trigger notices for another customer's package,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_385b23139d1d11e0_d4835457,warn,Anyone can trigger production handoffs for private packages,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_3d80d0bf4e587b07,warn,Any signed-in user can put customer details in service logs,mediapaket-portal: customer notification lookup log (line 261),fixed_tests_and_live_denial
+lov_finding_458bdc3a87e515fe,error,Anyone can send caller-chosen status emails to customers,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_5bcd024cc576fce0,error,Anyone can send customers arbitrary status emails,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_5e9ccda6a9cfe1b0,error,CMR users can send portal invites to arbitrary addresses,supabase/functions/cmr-portal-invite/index.ts,fixed_tests_and_live_denial
+lov_finding_711bc451536bf93d_1a0a3c55,warn,Unauthenticated peek returns credentialed export data,supabase/functions/alixsmart-sync-poll/index.ts,fixed_tests_and_live_denial
+lov_finding_711bc451536bf93d_1ca6a8f2,warn,Anyone can change customer and device links,supabase/functions/alixsmart-sync-poll/index.ts,fixed_tests_and_live_denial
+lov_finding_711bc451536bf93d_35d4d429,warn,Unauthenticated requests can retrieve sync export data,supabase/functions/alixsmart-sync-poll/index.ts,fixed_tests_and_live_denial
+lov_finding_711bc451536bf93d_46ce8f4b,warn,Public sync endpoint exposes authenticated export data,supabase/functions/alixsmart-sync-poll/index.ts,fixed_tests_and_live_denial
+lov_finding_76ee271b1bf7f473,error,Unauthenticated caller can trigger a signed-document import,supabase/functions/alixdocs-sign-return/index.ts,fixed_tests_and_live_denial
+lov_finding_78b069b5018b9a04,warn,Any signed-in user can delete another user's document,supabase/functions/alixdocs-delete/index.ts,fixed_tests_and_live_denial
+lov_finding_a034e837726129aa_3be70c29,error,Anyone can add signing files to protected records,supabase/functions/alixdocs-sign-return/index.ts,fixed_tests_and_live_denial
+lov_finding_a574df6e3ed94f0e,error,Anyone can change customer and device links,supabase/functions/alixsmart-sync-poll/index.ts,fixed_tests_and_live_denial
+lov_finding_ac9f74df4aa376ea,error,Ordinary callers can apply the stored facsimile signature,supabase/functions/sig-apply-facsimile/index.ts,fixed_tests_and_live_denial
+lov_finding_ad68a76e0a7dba39,error,Anyone can put your company signature on their documents,supabase/functions/sig-apply-facsimile/index.ts,fixed_tests_and_live_denial
+lov_finding_b98203874ed68dbf,error,Public sign-return invocation can approve any linked document,supabase/functions/alixdocs-sign-return/index.ts,fixed_tests_and_live_denial
+lov_finding_c45c9cbb478d7312,error,Anyone can trigger status notification emails to customers,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_d68a245f6f9b43be,error,Anyone can mark a linked document as signed and released,supabase/functions/alixdocs-sign-return/index.ts,fixed_tests_and_live_denial
+lov_finding_e01e085ef63936d2,error,Anyone can mark a document as approved through signing,supabase/functions/alixdocs-sign-return/index.ts,fixed_tests_and_live_denial
+lov_finding_e0d1b10592e160ea,warn,Any signed-in user can attach a copied package to another order,supabase/functions/mediapaket-portal/index.ts,fixed_tests_and_live_denial
+lov_finding_e0f5db0abd0fbc9a,error,CMR users can send any customer's portal token,supabase/functions/cmr-portal-invite/index.ts,fixed_tests_and_live_denial
+lov_finding_f2f5450dfb210c9a,error,Any CMR staff member can redirect a portal invitation,supabase/functions/cmr-portal-invite/index.ts,fixed_tests_and_live_denial
+lov_finding_f2f5450dfb210c9a_e0c1bfeb,error,CMR users can send any customer's portal token,supabase/functions/cmr-portal-invite/index.ts,fixed_tests_and_live_denial
+lov_finding_f2f5450dfb210c9a_f11e5b48,error,Any CMR user can send another account's portal invitation,supabase/functions/cmr-portal-invite/index.ts,fixed_tests_and_live_denial

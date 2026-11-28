@@ -1,0 +1,134 @@
+[
+  {
+    "function": "mediapaket-portal",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1444
+  },
+  {
+    "function": "mediapaket-portal",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 1639
+  },
+  {
+    "function": "alixdocs-delete",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1575
+  },
+  {
+    "function": "alixdocs-delete",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 134
+  },
+  {
+    "function": "alixdocs-sign-return",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1336
+  },
+  {
+    "function": "alixdocs-sign-return",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 115
+  },
+  {
+    "function": "sig-apply-facsimile",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1559
+  },
+  {
+    "function": "sig-apply-facsimile",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 148
+  },
+  {
+    "function": "cmr-portal-invite",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1341
+  },
+  {
+    "function": "cmr-portal-invite",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 140
+  },
+  {
+    "function": "alixsmart-sync-poll",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1229
+  },
+  {
+    "function": "alixsmart-sync-poll",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 89
+  },
+  {
+    "function": "ac-qm-auto-score",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1240
+  },
+  {
+    "function": "ac-qm-auto-score",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 93
+  },
+  {
+    "function": "ac-revenue-intel-v2",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1326
+  },
+  {
+    "function": "ac-revenue-intel-v2",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 127
+  },
+  {
+    "function": "ac-compliance-governance",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1363
+  },
+  {
+    "function": "ac-compliance-governance",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 100
+  },
+  {
+    "function": "delivery-approval-monthly-report",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1554
+  },
+  {
+    "function": "delivery-approval-monthly-report",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 115
+  },
+  {
+    "function": "ac-segment-preview",
+    "credential": "public_key",
+    "status": 401,
+    "duration_ms": 1244
+  },
+  {
+    "function": "ac-segment-preview",
+    "credential": "invalid_token",
+    "status": 401,
+    "duration_ms": 108
+  }
+]

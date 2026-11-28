@@ -1,0 +1,35 @@
+{
+  "initial_ids": 509,
+  "closed_ids": 37,
+  "closed_levels": {
+    "warn": 14,
+    "error": 23
+  },
+  "remaining_ids": 472,
+  "remaining_levels": {
+    "error": 240,
+    "warn": 232
+  },
+  "changed_functions": 6,
+  "server_tests_passed": 492,
+  "new_server_tests_passed": 56,
+  "application_tests_passed": 277,
+  "live_http_denials": 22,
+  "restore_tool_tests": 5,
+  "isolated_actual_restore_passed": false,
+  "full_backup_coverage_verified": false,
+  "source_read_not_individual_acceptance": true,
+  "public_tables_with_rls": 942,
+  "private_buckets": 31,
+  "linter_hints": 318,
+  "backup_config_tables": 312,
+  "backup_public_tables_missing": 631,
+  "backup_config_views": 1,
+  "backup_config_buckets": 11,
+  "other_buckets_not_in_worker": 20,
+  "products_unchanged": true,
+  "scheduler_unchanged": true,
+  "emergency_stopped": true,
+  "de_com_modes": "blocked",
+  "production_enabled": false
+}
