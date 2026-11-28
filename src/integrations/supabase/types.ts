@@ -58182,6 +58182,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      finance_qr_candidates: {
+        Args: { _refs: string[]; _tenant: string }
+        Returns: {
+          amount: number
+          customer_id: string
+          id: string
+          reference: string
+          status: string
+        }[]
+      }
       finance_segment_report: {
         Args: {
           p_from: string

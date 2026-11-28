@@ -2,6 +2,7 @@
 // Reine Prüfung: es wird NICHTS am Produktbestand geändert, nichts gelöscht, nichts überschrieben.
 // Ergebnis wird in ph_validation_runs protokolliert.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -75,6 +76,9 @@ async function pool<T, R>(items: T[], size: number, fn: (i: T) => Promise<R>): P
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
+  const access = await requireCallerAccess(req, cors, ['Super Admin']);
+  if ('response' in access) return access.response;
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
@@ -207,7 +211,7 @@ Deno.serve(async (req) => {
     if (compareLive) {
       try {
         const key = Deno.env.get("DE_EXPORT_API_KEY") || "";
-        const r = await fetch(DE_ENDPOINT, { headers: { "x-api-key": key } });
+        const r = await fetch(DE_ENDPOINT, { redirect: 'error', signal: AbortSignal.timeout(15000), headers: { "x-api-key": key } });
         if (!r.ok) throw new Error(`DE Export HTTP ${r.status}`);
         const payload = await r.json();
         const liveList: any[] = payload.products || payload.data || [];

@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireProcessAccess, financeRoles, tenantObjectAllowed } from '../_shared/process-access.ts';
 
 /**
  * Holt Kontoumsätze über eine Bank-API / einen EBICS-Gateway ab.
@@ -30,8 +31,9 @@ interface Conn {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+  const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
+  const supabase = access.client;
   const out = { fetched: 0, files: [] as string[], errors: [] as string[] };
 
   try {
@@ -56,14 +58,20 @@ Deno.serve(async (req) => {
 
     for (const c of targets) {
       try {
+        const { data: account, error: accountError } = await supabase.from('bank_accounts').select('tenant_id').eq('id', c.bank_account_id).maybeSingle();
+        if (accountError || !account?.tenant_id || (!access.machine && !tenantObjectAllowed(access.tenantIds, account.tenant_id))) { out.errors.push(`${c.label}: Bankmandant nicht freigegeben`); continue; }
         const to = new Date();
         const from = new Date(); from.setDate(from.getDate() - (c.days_back || 7));
         const url = new URL(c.endpoint_url);
+        // A stored configuration is not proof that a host is safe for provider credentials.
+        const configuredHosts = (Deno.env.get('BANK_API_ALLOWED_HOSTS') ?? '').split(',').map((h) => h.trim()).filter(Boolean);
+        if (url.protocol !== 'https:' || url.username || url.password || !configuredHosts.includes(url.hostname)) { out.errors.push(`${c.label}: API-Quellhost nicht bestätigt`); continue; }
         url.searchParams.set('from', from.toISOString().slice(0, 10));
         url.searchParams.set('to', to.toISOString().slice(0, 10));
         url.searchParams.set('format', c.format);
 
         const res = await fetch(url.toString(), {
+          redirect: 'error', signal: AbortSignal.timeout(20000),
           headers: { Authorization: `Bearer ${BANK_API_TOKEN}`, Accept: '*/*' },
         });
         if (!res.ok) {
@@ -87,6 +95,7 @@ Deno.serve(async (req) => {
           file_format: c.format,
           status: 'abgerufen',
           source: 'bank_api',
+          tenant_id: account.tenant_id,
           notes: `Automatischer Abruf über ${c.label} (${from.toISOString().slice(0, 10)} – ${to.toISOString().slice(0, 10)})`,
         } as any);
 

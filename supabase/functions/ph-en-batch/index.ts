@@ -2,6 +2,7 @@
 // Läuft mit Service Role, speichert ausschließlich KI-Entwürfe (ai_draft) + Quality Check.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { qaCheck } from "../_shared/ph-qa.ts";
+import { requireProcessAccess } from '../_shared/process-access.ts';
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -194,6 +195,8 @@ async function runBatch(admin: any, locale: string, offset: number, limit: numbe
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const access = await requireProcessAccess(req, cors, ['Super Admin']);
+  if ('response' in access) return access.response;
   try {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const body = await req.json().catch(() => ({}));

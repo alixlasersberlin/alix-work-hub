@@ -1,6 +1,8 @@
 // pain.008.001.02.ch.03 – Swiss LSV+/BDD Direct Debit export
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { financeRoles, financeRegionAllowed } from '../_shared/process-access.ts';
 
 const xe = (s: string) => (s ?? '').replace(/[<>&'"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;' }[c]!));
 const amt = (n: number) => (Math.round(n * 100) / 100).toFixed(2);
@@ -8,21 +10,23 @@ const iban = (s: string) => (s ?? '').replace(/\s+/g, '').toUpperCase();
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const auth = req.headers.get('Authorization') ?? '';
-  if (!auth.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
+  if (!financeRegionAllowed(access.roles, 'CH')) return new Response('Forbidden accounting region', { status: 403, headers: corsHeaders });
   try {
     const { run_id } = await req.json();
-    if (!run_id) throw new Error('run_id erforderlich');
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    if (typeof run_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(run_id)) return new Response('Invalid run_id', { status: 400, headers: corsHeaders });
+    const admin = access.caller;
     const { data: run } = await admin.from('finance_ch_dd_runs').select('*').eq('id', run_id).maybeSingle();
     if (!run) throw new Error('Lauf nicht gefunden');
     const { data: items } = await admin
       .from('finance_ch_dd_run_items')
-      .select('*, mandate:mandate_id(*), customer:customer_id(company_name, contact_name)')
+      .select('*, mandate:mandate_id(*), customer:customer_id(company_name, contact_name, source_system)')
       .eq('run_id', run_id);
     if (!items?.length) throw new Error('Keine Positionen im Lauf');
+    const allowedSources = access.tenants.map((t: any) => t.zoho_source_system).filter(Boolean);
+    if (items.some((it: any) => !it.customer_id || !it.mandate || it.mandate.customer_id !== it.customer_id || !allowedSources.includes(it.customer?.source_system))) return new Response('Run item ownership unconfirmed', { status: 403, headers: corsHeaders });
 
     const total = items.reduce((s: number, it: any) => s + Number(it.amount), 0);
     const msgId = `MSG-${run.run_number}-${Date.now()}`;

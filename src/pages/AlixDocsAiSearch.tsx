@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Sparkles, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 type Source = { idx: number; id: string; title: string; snippet: string };
 
@@ -138,7 +139,7 @@ export default function AlixDocsAiSearch() {
                 </div>
                 <div
                   className="text-xs text-muted-foreground [&_b]:bg-yellow-500/20 [&_b]:px-0.5 [&_b]:text-foreground"
-                  dangerouslySetInnerHTML={{ __html: s.snippet || "" }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(s.snippet) }}
                 />
               </div>
             ))}

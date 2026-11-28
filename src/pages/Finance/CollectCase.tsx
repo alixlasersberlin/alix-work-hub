@@ -17,6 +17,7 @@ import { SkeletonTable } from '@/components/infinity/Skeleton';
 import CollectCaseActions from '@/components/collect/CollectCaseActions';
 import { generateMahnungPdf } from '@/lib/finance/mahnung-pdf';
 import { stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 const fmt = (n: any, cur = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n ?? 0));
@@ -455,7 +456,7 @@ export default function FinanceCollectCase() {
               <Input value={mailSubject} onChange={(e) => setMailSubject(e.target.value)} />
             </div>
             <div className="max-h-72 overflow-auto rounded-lg border border-border mail-paper p-4">
-              <div dangerouslySetInnerHTML={{ __html: mailHtml }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(mailHtml) }} />
             </div>
             <p className="text-xs text-muted-foreground">
               Anhang: <span className="text-foreground">Mahnung als PDF</span> auf der Alix-Briefvorlage – inhaltsgleich mit dieser E-Mail.

@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -45,8 +46,9 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+  const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
+  const supabase = access.client;
   const today = new Date();
   const result = { processed: 0, sent: 0, skipped: 0, errors: [] as string[] };
 
@@ -59,7 +61,10 @@ Deno.serve(async (req) => {
     try {
       const body = await req.json();
       dryRun = !!body?.dryRun;
-      if (body?.force) cfg.enabled = true;
+      if (body?.force) {
+        if (access.machine || !access.roles.some((r) => ['Super Admin', 'Admin', 'Buchhaltung Admin'].includes(r))) return new Response('Force execution forbidden', { status: 403, headers: corsHeaders });
+        cfg.enabled = true;
+      }
     } catch { /* cron sendet evtl. keinen Body */ }
 
     if (!cfg.enabled) {
@@ -68,18 +73,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: rds, error } = await supabase
+    let debitQuery = supabase
       .from('bank_return_debits')
       .select('*')
       .in('status', ['bestaetigt', 'mahnprozess'])
       .eq('dunning_paused', false)
       .lt('dunning_level', cfg.maxLevel)
       .limit(500);
+    if (!access.machine) debitQuery = debitQuery.in('tenant_id', access.tenantIds);
+    const { data: rds, error } = await debitQuery;
     if (error) throw error;
 
     const gap = [cfg.level1AfterDays, cfg.level2AfterDays, cfg.level3AfterDays];
 
     for (const rd of rds ?? []) {
+      if (!rd.tenant_id) { result.skipped++; continue; }
       result.processed++;
       const level = Number(rd.dunning_level || 0);
       const base = rd.next_dunning_due

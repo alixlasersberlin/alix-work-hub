@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireProcessAccess, tenantObjectAllowed } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -10,19 +11,24 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'CMR']);
+  if ('response' in access) return access.response;
 
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const tenantId: string | null = body?.tenantId ?? null;
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+    if (!access.machine && tenantId && !tenantObjectAllowed(access.tenantIds, tenantId)) return Response.json({ error: 'Forbidden tenant' }, { status: 403, headers: corsHeaders });
+    const sb = access.client;
 
     let lq = sb.from("cmr_bank_lines").select("*").eq("status", "offen").limit(1000);
     if (tenantId) lq = lq.eq("tenant_id", tenantId);
+    if (!access.machine) lq = lq.in('tenant_id', access.tenantIds);
     const { data: lines, error: lErr } = await lq;
     if (lErr) throw lErr;
 
     let dq = sb.from("cmr_documents").select("*").neq("status", "storniert").limit(5000);
     if (tenantId) dq = dq.eq("tenant_id", tenantId);
+    if (!access.machine) dq = dq.in('tenant_id', access.tenantIds);
     const { data: docs, error: dErr } = await dq;
     if (dErr) throw dErr;
 
@@ -35,9 +41,9 @@ Deno.serve(async (req) => {
 
     for (const l of lines ?? []) {
       const amount = Number(l.amount || 0);
-      if (amount <= 0) continue;
+      if (amount <= 0 || !l.tenant_id) continue;
       const purpose = String(l.purpose ?? "").toUpperCase();
-      const candidates = openDocs.filter((d: any) => d.tenant_id === l.tenant_id);
+      const candidates = openDocs.filter((d: any) => d.tenant_id === l.tenant_id && d.currency === l.currency);
 
       let hit = candidates.find(
         (d: any) => d.doc_number && purpose.includes(String(d.doc_number).toUpperCase()),

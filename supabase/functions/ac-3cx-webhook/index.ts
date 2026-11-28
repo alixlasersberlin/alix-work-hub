@@ -13,10 +13,12 @@ function normalizeNumber(n?: string) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   try {
     const secret = Deno.env.get('PBX_3CX_WEBHOOK_SECRET');
+    if (!secret) return new Response(JSON.stringify({ error: 'provider_auth_unconfigured' }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     const provided = req.headers.get('x-3cx-signature') || new URL(req.url).searchParams.get('secret');
-    if (secret && provided !== secret) {
+    if (provided !== secret) {
       return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const body = await req.json();

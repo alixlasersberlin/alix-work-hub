@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireProcessAccess, tenantObjectAllowed } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -20,30 +21,37 @@ function nextDate(from: string, unit: string): string {
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'CMR']);
+  if ('response' in access) return access.response;
 
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const planId: string | null = body?.planId ?? null;
     const tenantId: string | null = body?.tenantId ?? null;
+    if (!access.machine && tenantId && !tenantObjectAllowed(access.tenantIds, tenantId)) return Response.json({ error: 'Forbidden tenant' }, { status: 403, headers: corsHeaders });
     const force: boolean = !!body?.force;
     const today = new Date().toISOString().slice(0, 10);
 
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const sb = access.client;
 
     let q = sb.from("cmr_collective_plans").select("*").eq("is_active", true);
     if (planId) q = q.eq("id", planId);
     else q = q.lte("next_run_date", today);
     if (tenantId) q = q.eq("tenant_id", tenantId);
+    if (!access.machine) q = q.in('tenant_id', access.tenantIds);
     const { data: plans, error } = await q;
     if (error) throw error;
 
-    const { data: projects } = await sb.from("cmr_projects").select("id,name,code,tenant_id");
+    let projectQuery = sb.from('cmr_projects').select('id,name,code,tenant_id');
+    if (!access.machine) projectQuery = projectQuery.in('tenant_id', access.tenantIds);
+    const { data: projects } = await projectQuery;
     const projectById = new Map((projects ?? []).map((p: any) => [p.id, p]));
 
     let created = 0;
     const results: any[] = [];
 
     for (const plan of plans ?? []) {
+      if (!plan.tenant_id) continue;
       // Offene, abrechenbare Zeiten des Kunden (optional auf Projekte eingeschränkt)
       let tq = sb.from("cmr_time_entries").select("*")
         .eq("tenant_id", plan.tenant_id)

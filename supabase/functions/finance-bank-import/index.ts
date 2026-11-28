@@ -3,6 +3,8 @@
 // Belegnummer; Betrag exakt). Bei Treffer: line.status=zugeordnet, matched_transaction_id gesetzt.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { financeRoles, financeRegionAllowed } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -30,38 +32,33 @@ interface Parsed {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const authHeader = req.headers.get('Authorization') ?? '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
   try {
     const { filename, content, accounting_region } = await req.json();
     const region: 'EU' | 'CH' = accounting_region === 'CH' ? 'CH' : 'EU';
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== 'string' || content.length > 10_000_000) {
       return new Response(JSON.stringify({ error: 'content (string) erforderlich' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    if (!financeRegionAllowed(access.roles, region)) return new Response('Forbidden accounting region', { status: 403, headers: corsHeaders });
+    const admin = access.caller;
+    const format = detectFormat(content);
+    const parsed = format === 'CAMT.053' ? parseCamt053(content) : parseMt940(content);
+    const { data: account, error: accountError } = await admin.from('bank_accounts').select('id,tenant_id').eq('iban', parsed.iban ?? '').in('tenant_id', access.tenants.map((t: any) => t.id)).maybeSingle();
+    if (accountError || !account?.tenant_id) return new Response('Bank account ownership unconfirmed', { status: 403, headers: corsHeaders });
 
     // File hash for dedupe
     const buf = new TextEncoder().encode(content);
     const hashBuf = await crypto.subtle.digest('SHA-256', buf);
     const file_hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-    const { data: existing } = await admin.from('finance_bank_statements').select('id, line_count, matched_count').eq('file_hash', file_hash).maybeSingle();
+    const { data: existing } = await admin.from('finance_bank_statements').select('id, line_count, matched_count').eq('file_hash', file_hash).eq('tenant_id', account.tenant_id).maybeSingle();
     if (existing) {
       return new Response(JSON.stringify({ ok: true, duplicate: true, statement_id: existing.id, lines: existing.line_count, matched: existing.matched_count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const format = detectFormat(content);
-    const parsed = format === 'CAMT.053' ? parseCamt053(content) : parseMt940(content);
-
-    // Get caller user_id (best effort)
-    let uploaded_by: string | null = null;
-    try {
-      const a = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } });
-      const { data } = await a.auth.getUser(authHeader.replace('Bearer ', ''));
-      uploaded_by = data?.user?.id ?? null;
-    } catch { /* ignore */ }
+    const uploaded_by = access.user.id;
 
     const stmtCurrency = region === 'CH'
       ? (parsed.currency === 'EUR' ? 'CHF' : parsed.currency)
@@ -73,6 +70,7 @@ Deno.serve(async (req) => {
       opening_balance: parsed.opening_balance, closing_balance: parsed.closing_balance,
       currency: stmtCurrency, line_count: parsed.lines.length, file_hash, uploaded_by,
       accounting_region: region,
+      tenant_id: account.tenant_id,
     }).select('id').single();
     if (sErr || !stmt) throw new Error(sErr?.message ?? 'Statement insert failed');
 
@@ -86,6 +84,7 @@ Deno.serve(async (req) => {
       status: 'offen',
       line_hash: hashLine(l),
       accounting_region: region,
+      tenant_id: account.tenant_id,
     }));
     if (lineRows.length) await admin.from('finance_bank_lines').insert(lineRows);
 
@@ -99,12 +98,8 @@ Deno.serve(async (req) => {
         if (Number(l.amount) <= 0) continue;
         const qrRefs = extractQrRefs(`${l.purpose ?? ''} ${l.end_to_end_id ?? ''}`);
         if (qrRefs.length === 0) continue;
-        const { data: invs } = await admin
-          .from('finance_qr_invoices')
-          .select('id, amount, customer_id, reference, status')
-          .eq('accounting_region', 'CH')
-          .in('reference', qrRefs)
-          .limit(10);
+        const { data: invs, error: qrError } = await admin.rpc('finance_qr_candidates', { _refs: qrRefs, _tenant: account.tenant_id });
+        if (qrError) throw qrError;
         const hit = (invs ?? []).find((c: any) => Math.abs(Number(c.amount) - Number(l.amount)) < 0.05);
         if (!hit) continue;
         await admin.from('finance_bank_lines').update({
@@ -132,6 +127,7 @@ Deno.serve(async (req) => {
         .select('id, amount, customer_id, reference, notes')
         .eq('transaction_type', 'Rechnung')
         .eq('accounting_region', region)
+        .eq('tenant_id', account.tenant_id)
         .or(refs.map(r => `notes.ilike.%${r}%,reference.ilike.%${r}%`).join(','))
         .limit(20);
       const hit = (candidates ?? []).find((c: any) => Math.abs(Number(c.amount) - Number(l.amount)) < 0.01);

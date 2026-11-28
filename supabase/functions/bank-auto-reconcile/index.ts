@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -29,6 +30,7 @@ function scoreInvoices(tx: any, invoices: any[], learnedCustomerId?: string | nu
   const results: { invoice: any; score: number; reasons: string[] }[] = [];
 
   for (const inv of invoices) {
+    if (!tx.tenant_id || !inv.tenant_id || tx.tenant_id !== inv.tenant_id) continue;
     if (inv.currency && tx.currency && String(inv.currency).toUpperCase() !== String(tx.currency).toUpperCase()) continue;
     let score = 0;
     const reasons: string[] = [];
@@ -74,15 +76,17 @@ function scoreInvoices(tx: any, invoices: any[], learnedCustomerId?: string | nu
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+  const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
+  const sb = access.client;
   const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+  if (body?.area && !['EU', 'CH'].includes(body.area)) return new Response('Invalid area', { status: 400, headers: corsHeaders });
   const areas: ("EU" | "CH")[] = body?.area ? [body.area] : ["EU", "CH"];
   const summary: Record<string, unknown>[] = [];
 
   try {
     for (const area of areas) {
-      const { data: txs } = await sb
+      let txQuery = sb
         .from("bank_transactions")
         .select("*")
         .eq("accounting_area", area)
@@ -91,18 +95,25 @@ Deno.serve(async (req) => {
         .eq("is_return_debit", false)
         .order("booking_date", { ascending: false })
         .limit(500);
+      if (!access.machine) txQuery = txQuery.in('tenant_id', access.tenantIds);
+      const { data: txs, error: txError } = await txQuery;
+      if (txError) throw txError;
 
       const list = txs ?? [];
       if (!list.length) { summary.push({ area, geprueft: 0, vorschlaege: 0, verbucht: 0 }); continue; }
 
       const invCols =
-        "id,invoice_number,reference_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status";
+        "id,tenant_id,invoice_number,reference_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status";
+      const scopedTenants = [...new Set(list.map((tx: any) => tx.tenant_id).filter(Boolean))];
       const [stdRes, recRes] = await Promise.all([
         sb.from("zoho_invoices").select(invCols).eq("accounting_region", area).gt("balance", 0)
+          .in('tenant_id', scopedTenants)
           .order("invoice_date", { ascending: false }).limit(3000),
         sb.from("zoho_recurring_invoices").select(invCols).eq("accounting_region", area).gt("balance", 0)
+          .in('tenant_id', scopedTenants)
           .order("invoice_date", { ascending: false }).limit(3000),
       ]);
+      if (stdRes.error || recRes.error) throw stdRes.error ?? recRes.error;
 
       const invoices = [
         ...((stdRes.data ?? []) as any[]).map((i) => ({ ...i, __table: "zoho_invoices" })),
@@ -118,7 +129,7 @@ Deno.serve(async (req) => {
       const rules = new Map<string, any>();
       for (const r of rulesRows ?? []) rules.set((r as any).payer_key, r);
 
-      const { data: accounts } = await sb.from("bank_accounts").select("*").eq("accounting_area", area);
+      const { data: accounts } = await sb.from("bank_accounts").select("*").eq("accounting_area", area).in('tenant_id', scopedTenants);
       const accMap = new Map<string, any>();
       for (const a of accounts ?? []) accMap.set((a as any).id, a);
 

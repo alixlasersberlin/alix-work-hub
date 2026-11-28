@@ -3,10 +3,9 @@
 // deshalb muss der Mandanten-Scope hier explizit geprüft werden.
 
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { requireCallerAccess } from './caller-access.ts';
+import { machineAuthorized } from './job-auth.ts';
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 export interface TenantScope {
   /** true = Service-Role / Cron: kein Scope-Limit */
@@ -22,7 +21,7 @@ export interface TenantScope {
   restricted: boolean;
 }
 
-export const adminClient = (): SupabaseClient => createClient(SUPABASE_URL, SERVICE_KEY);
+export const adminClient = (): SupabaseClient => createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
 /**
  * Ermittelt den Data Scope des Aufrufers aus dem Authorization-Header.
@@ -34,57 +33,43 @@ export async function getTenantScope(req: Request): Promise<TenantScope> {
   const none: TenantScope = {
     serviceRole: false, userId: null, codes: [], sourceSystems: [], tenantIds: [], restricted: true,
   };
-  if (!bearer) return none;
-  if (bearer === SERVICE_KEY) {
+  if (machineAuthorized(req, Deno.env.get('CRON_SECRET') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')) {
     return { serviceRole: true, userId: null, codes: [], sourceSystems: [], tenantIds: [], restricted: false };
   }
+  if (!bearer) return none;
 
-  const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${bearer}` } },
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  const { data: u } = await userClient.auth.getUser(bearer);
-  if (!u?.user) return none;
-
-  const admin = adminClient();
-  const [{ data: tenants }, { data: access }] = await Promise.all([
-    admin.from("tenants").select("id, code, zoho_source_system").eq("is_active", true),
-    admin.from("user_tenant_access").select("tenant_id").eq("user_id", u.user.id),
-  ]);
-
-  const all = (tenants ?? []) as any[];
-  const ids = new Set(((access ?? []) as any[]).map((r) => r.tenant_id));
-  // Keine Zuweisung = keine Einschränkung (entspricht tenant_scope_restricted() in der DB)
-  const restricted = ids.size > 0;
-  const allowed = restricted ? all.filter((t) => ids.has(t.id)) : all;
+  const access = await requireCallerAccess(req, {});
+  if ('response' in access) return none;
+  const allowed = access.tenants;
 
   return {
     serviceRole: false,
-    userId: u.user.id,
+    userId: access.user.id,
     codes: allowed.map((t) => t.code),
     sourceSystems: allowed.map((t) => t.zoho_source_system).filter(Boolean),
     tenantIds: allowed.map((t) => t.id),
-    restricted,
+    restricted: true,
   };
 }
 
 /** Prüft, ob ein source_system im Scope liegt. */
 export function sourceInScope(scope: TenantScope, source?: string | null): boolean {
   if (scope.serviceRole || !scope.restricted) return true;
-  if (!source) return true; // mandantenneutrale Datensätze
+  if (!scope.userId || !scope.tenantIds.length || !source) return false;
   return scope.sourceSystems.includes(source);
 }
 
 /** Prüft, ob eine tenant_id im Scope liegt. */
 export function tenantInScope(scope: TenantScope, tenantId?: string | null): boolean {
   if (scope.serviceRole || !scope.restricted) return true;
-  if (!tenantId) return true;
+  if (!scope.userId || !scope.tenantIds.length || !tenantId) return false;
   return scope.tenantIds.includes(tenantId);
 }
 
 /** Prüft einen Kunden gegen den Scope (source_system + tenant_id). */
 export async function customerInScope(scope: TenantScope, customerId: string): Promise<boolean> {
   if (scope.serviceRole || !scope.restricted) return true;
+  if (!scope.userId || !scope.tenantIds.length) return false;
   const { data } = await adminClient()
     .from("customers").select("source_system").eq("id", customerId).maybeSingle();
   if (!data) return false;
@@ -94,6 +79,7 @@ export async function customerInScope(scope: TenantScope, customerId: string): P
 /** Prüft einen Auftrag gegen den Scope. */
 export async function orderInScope(scope: TenantScope, orderId: string): Promise<boolean> {
   if (scope.serviceRole || !scope.restricted) return true;
+  if (!scope.userId || !scope.tenantIds.length) return false;
   const { data } = await adminClient()
     .from("orders").select("source_system").eq("id", orderId).maybeSingle();
   if (!data) return false;

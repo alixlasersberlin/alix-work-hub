@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DiffMatchPatch from 'diff-match-patch';
 import { History } from 'lucide-react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 export function VersionDiff({ documentId, versions }: { documentId: string; versions: any[] }) {
   const sorted = useMemo(() => [...versions].sort((a, b) => a.version - b.version), [versions]);
@@ -63,7 +64,7 @@ export function VersionDiff({ documentId, versions }: { documentId: string; vers
         </div>
         <div
           className="text-sm max-h-96 overflow-auto p-3 border rounded bg-muted/30 whitespace-pre-wrap [&_ins]:bg-green-500/20 [&_ins]:no-underline [&_del]:bg-red-500/20 [&_del]:line-through"
-          dangerouslySetInnerHTML={{ __html: html || '<span class="text-muted-foreground text-xs">Kein Unterschied.</span>' }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(html || '<span class="text-muted-foreground text-xs">Kein Unterschied.</span>') }}
         />
       </CardContent>
     </Card>

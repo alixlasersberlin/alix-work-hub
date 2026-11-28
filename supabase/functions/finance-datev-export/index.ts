@@ -1,10 +1,8 @@
 // Phase 4: DATEV CSV-Export (Format "EXTF Buchungsstapel 700") aus finance_transactions.
 // Konfig liegt in app_settings.key='finance.datev.config' (Beraternr., Mandantennr., SKR, Sachkonten-Mapping).
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { financeRoles, financeRegionAllowed } from '../_shared/process-access.ts';
 
 const DEFAULT_CFG = {
   berater: '0000000',
@@ -18,17 +16,17 @@ const DEFAULT_CFG = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const authHeader = req.headers.get('Authorization') ?? '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
   try {
     const { date_from, date_to, accounting_region } = await req.json();
-    if (!date_from || !date_to) {
+    if (typeof date_from !== 'string' || typeof date_to !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date_from) || !/^\d{4}-\d{2}-\d{2}$/.test(date_to) || date_from > date_to) {
       return new Response(JSON.stringify({ error: 'date_from und date_to erforderlich' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const region = accounting_region === 'CH' ? 'CH' : 'EU';
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    if (!financeRegionAllowed(access.roles, region)) return new Response('Forbidden accounting region', { status: 403, headers: corsHeaders });
+    const admin = access.caller;
 
     const { data: cfgRow } = await admin.from('app_settings').select('value').eq('key', 'finance.datev.config').maybeSingle();
     let cfg = { ...DEFAULT_CFG };
@@ -40,6 +38,7 @@ Deno.serve(async (req) => {
       .gte('booking_date', date_from)
       .lte('booking_date', date_to)
       .eq('accounting_region', region)
+      .in('tenant_id', access.tenants.map((t: any) => t.id))
       .order('booking_date', { ascending: true });
     if (error) throw error;
 

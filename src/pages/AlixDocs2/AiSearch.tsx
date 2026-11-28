@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles } from 'lucide-react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 type Source = { idx: number; id: string; title: string; snippet?: string };
 
@@ -45,7 +46,7 @@ export default function AlixDocs2AiSearch() {
                 {sources.map(s => (
                   <div key={s.idx} className="text-xs mb-1">
                     <span className="font-mono text-primary">[{s.idx}]</span> <span className="font-medium">{s.title}</span>
-                    {s.snippet && <span className="text-muted-foreground ml-2" dangerouslySetInnerHTML={{ __html: s.snippet }} />}
+                    {s.snippet && <span className="text-muted-foreground ml-2" dangerouslySetInnerHTML={{ __html: sanitizeHtml(s.snippet) }} />}
                   </div>
                 ))}
               </div>

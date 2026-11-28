@@ -1,31 +1,32 @@
 // Agent Assist Live 2.0 — real-time next-best-action for an active conversation.
 // Reads recent ac_messages + contact context, returns next reply, KB snippet, sentiment
 // and persists into ac_copilot_suggestions.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { maySendConversation } from '../_shared/message-access.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders);
+  if ('response' in access) return access.response;
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const sb = access.caller;
     const { conversation_id, agent_user_id } = await req.json();
-    if (!conversation_id) throw new Error('conversation_id required');
-
-    const [{ data: conv }, { data: messages }] = await Promise.all([
-      sb.from('ac_conversations').select('*').eq('id', conversation_id).single(),
-      sb.from('ac_messages').select('direction, body, created_at').eq('conversation_id', conversation_id).order('created_at', { ascending: false }).limit(20),
-    ]);
-    if (!conv) throw new Error('conversation not found');
+    if (typeof conversation_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(conversation_id)) return new Response('Invalid conversation_id', { status: 400, headers: corsHeaders });
+    if (agent_user_id && agent_user_id !== access.user.id) return new Response('Forbidden agent identity', { status: 403, headers: corsHeaders });
+    const { data: conv, error: convError } = await sb.from('ac_conversations').select('*').eq('id', conversation_id).single();
+    if (convError || !conv || !conv.tenant_id || !access.tenants.some((t: any) => t.id === conv.tenant_id) || !(await maySendConversation(sb, access.user.id, conv))) {
+      return new Response('Forbidden conversation', { status: 403, headers: corsHeaders });
+    }
+    const { data: messages, error: messageError } = await sb.from('ac_messages').select('direction, body, created_at').eq('conversation_id', conversation_id).order('created_at', { ascending: false }).limit(20);
+    if (messageError) throw messageError;
 
     const history = (messages ?? []).reverse().map((m: any) => `[${m.direction}] ${m.body ?? ''}`).join('\n');
 
     // Simple KB retrieval via keywords from last inbound message
     const lastCustomer = (messages ?? []).find((m: any) => m.direction === 'inbound')?.body ?? '';
-    const words = String(lastCustomer).split(/\s+/).filter((w) => w.length > 4).slice(0, 3);
+    const words = String(lastCustomer).split(/\s+/).filter((w) => /^[\p{L}\p{N}]{5,40}$/u.test(w)).slice(0, 3);
     let kb: any[] = [];
     if (words.length) {
       const { data } = await sb.from('service_knowledge_base').select('title, content')
@@ -52,15 +53,16 @@ Deno.serve(async (req) => {
     const j = await r.json();
     const parsed = (() => { try { return JSON.parse(j.choices?.[0]?.message?.content || '{}'); } catch { return {}; } })();
 
-    if (agent_user_id && parsed.next_reply) {
-      await sb.from('ac_copilot_suggestions').insert({
-        user_id: agent_user_id,
+    if (parsed.next_reply) {
+      const { error: writeError } = await sb.from('ac_copilot_suggestions').insert({
+        user_id: access.user.id,
         context_type: 'chat',
         context_id: conversation_id,
         suggestion_type: 'next_reply',
         content: parsed.next_reply,
         model: 'google/gemini-3-flash-preview',
       });
+      if (writeError) throw writeError;
     }
 
     return new Response(JSON.stringify({ success: true, ...parsed, kb_count: kb.length }),

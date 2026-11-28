@@ -3,6 +3,7 @@
 // URL: https://<project>.functions.supabase.co/ac-voice-twilio-webhook
 // Konfiguration: Twilio Number → Voice → Webhook (POST) → obige URL.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { validTwilioRequest } from '../_shared/provider-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,7 @@ function twiml(xml: string, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (!(await validTwilioRequest(req, 'ac-voice-twilio-webhook'))) return twiml('<Hangup/>', 401);
   try {
     const url = new URL(req.url);
     const step = url.searchParams.get('step') ?? 'welcome';
@@ -42,10 +44,11 @@ Deno.serve(async (req) => {
     const inHours = berlinHour >= 8 && berlinHour < 18;
 
     // Log every call step
-    await sb.from('ac_calls').insert({
+    const { data: storedCall } = await sb.from('ac_calls').insert({
       external_id: CallSid, provider: 'twilio', direction: 'inbound',
       from_number: From, to_number: To, status: step,
       metadata: { step, digits: Digits, recording: RecordingUrl },
+      ...(RecordingUrl ? { voicemail_url: RecordingUrl } : {}),
     }).select('id').maybeSingle().catch(() => {});
 
     if (step === 'welcome') {
@@ -79,7 +82,7 @@ Deno.serve(async (req) => {
 
     if (step === 'voicemail') {
       // Voicemail asynchron transkribieren (bestehende Funktion nutzen)
-      await sb.functions.invoke('ac-voicemail-transcribe', { body: { recording_url: RecordingUrl, call_sid: CallSid, from: From } }).catch(() => {});
+      if (storedCall?.id) await sb.functions.invoke('ac-voicemail-transcribe', { body: { call_id: storedCall.id } }).catch(() => {});
       return twiml(`<Say language="de-DE" voice="Polly.Vicki">Vielen Dank. Wir melden uns zeitnah.</Say><Hangup/>`);
     }
 

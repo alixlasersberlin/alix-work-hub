@@ -1,6 +1,8 @@
 // CAMT.054 (Bank-to-Customer Debit/Credit Notification) parser + auto-match against finance_qr_invoices
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { financeRoles, financeRegionAllowed } from '../_shared/process-access.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -20,19 +22,22 @@ function amtOf(x: string, name = 'Amt'): number {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const auth = req.headers.get('Authorization') ?? '';
-  if (!auth.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
   try {
     const { filename, content } = await req.json();
-    if (!content) throw new Error('content erforderlich');
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    if (typeof content !== 'string' || !content.length || content.length > 10_000_000) return new Response('Invalid content', { status: 400, headers: corsHeaders });
+    if (!financeRegionAllowed(access.roles, 'CH')) return new Response('Forbidden accounting region', { status: 403, headers: corsHeaders });
+    const admin = access.caller;
+    const acctIban = tag(content, 'IBAN');
+    const { data: account, error: accountError } = await admin.from('bank_accounts').select('id,tenant_id').eq('iban', acctIban).in('tenant_id', access.tenants.map((t: any) => t.id)).maybeSingle();
+    if (accountError || !account?.tenant_id) return new Response('Bank account ownership unconfirmed', { status: 403, headers: corsHeaders });
 
     const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
     const file_hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-    const { data: existing } = await admin.from('finance_camt054_notifications').select('id, entry_count, matched_count').eq('file_hash', file_hash).maybeSingle();
+    const { data: existing } = await admin.from('finance_camt054_notifications').select('id, entry_count, matched_count').eq('file_hash', file_hash).eq('account_iban', acctIban).maybeSingle();
     if (existing) {
       return new Response(JSON.stringify({ notification_id: existing.id, duplicate: true, ...existing }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -40,7 +45,6 @@ Deno.serve(async (req) => {
     }
 
     const messageId = tag(content, 'MsgId');
-    const acctIban = tag(content, 'IBAN');
     const currency = (content.match(/Ccy="([A-Z]{3})"/)?.[1]) || 'CHF';
     const bookingDate = (tag(content, 'CreDtTm') || '').slice(0, 10) || null;
 
@@ -54,6 +58,7 @@ Deno.serve(async (req) => {
       booking_date: bookingDate,
       raw_xml: content,
       status: 'importiert',
+      created_by: access.user.id,
     }).select().single();
     if (nErr) throw nErr;
 

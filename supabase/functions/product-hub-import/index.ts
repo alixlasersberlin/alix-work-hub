@@ -2,11 +2,11 @@
 // Modi: test (Verbindungstest), preview (Vorschau ohne Schreiben), import (schreibend, additiv)
 // Additiv: es wird niemals gelöscht; Dubletten werden über Mapping vermieden.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { approvedSource, allowedImportMode } from './source-policy.ts';
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-alix-key",
-};
+const cors = corsHeaders;
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -117,9 +117,10 @@ function matchProduct(p: any, ex: any[]) {
 }
 
 async function fetchSource(endpoint: string) {
+  if (!approvedSource(endpoint)) return { ok: false, error: 'source_not_allowed' as const };
   const key = Deno.env.get("DE_EXPORT_API_KEY") || Deno.env.get("PRODUCT_HUB_SOURCE_KEY");
   if (!key) return { ok: false, error: "missing_secret_DE_EXPORT_API_KEY" as const };
-  const res = await fetch(endpoint, { headers: { Accept: "application/json", "x-api-key": key } });
+  const res = await fetch(endpoint, { redirect: 'error', signal: AbortSignal.timeout(15000), headers: { Accept: "application/json", "x-api-key": key } });
   if (!res.ok) return { ok: false, error: `source_fetch_failed_${res.status}` as const };
   const data = await res.json();
   const list = Array.isArray(data) ? data : (data.products || data.data || []);
@@ -128,6 +129,9 @@ async function fetchSource(endpoint: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
+  const access = await requireCallerAccess(req, cors, ['Super Admin']);
+  if ('response' in access) return access.response;
   const started = Date.now();
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   try {
@@ -135,6 +139,10 @@ Deno.serve(async (req) => {
     const mode: string = body.mode || (body.products || body.source_url ? "import" : "test");
     const channel = body.channel || DEFAULT_SOURCE.channel;
     const endpoint = body.endpoint || body.source_url || DEFAULT_SOURCE.endpoint;
+    if (!allowedImportMode(mode)) return json(423, { error: 'import_isolated_pending_restore_and_migration_acceptance' });
+    if (channel !== 'de' || !approvedSource(endpoint) || (body.products !== undefined && (!Array.isArray(body.products) || body.products.length > 1000))) {
+      return json(400, { error: 'invalid_source_channel_or_products' });
+    }
 
     // ---------- Quelle laden ----------
     let list: any[] = body.products || [];
@@ -227,7 +235,7 @@ Deno.serve(async (req) => {
     let created = 0, merged = 0, duplicates = 0, mediaCount = 0, videoCount = 0, docCount = 0, errors = 0;
     const conflicts: any[] = [];
     const errorList: string[] = [];
-    const importedBy = body.user_id || null;
+    const importedBy = access.user.id;
 
     for (const { raw, p } of mapped) {
       try {

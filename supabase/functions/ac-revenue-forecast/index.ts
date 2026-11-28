@@ -1,27 +1,39 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+  if ('response' in access) return access.response;
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
+    const supabase = access.caller;
     const body = await req.json().catch(() => ({}));
     const model = body.model ?? 'linear';
     const days = Number(body.days ?? 90);
+    if (!Number.isInteger(days) || days < 1 || days > 366 || typeof model !== 'string' || !/^[a-z_]{1,30}$/.test(model)) return new Response('Invalid forecast input', { status: 400, headers: corsHeaders });
+    const customerIds: string[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data: customers, error: customerError } = await supabase.from('customers').select('id').in('source_system', access.tenants.map((t: any) => t.zoho_source_system).filter(Boolean)).order('id').range(offset, offset + 499);
+      if (customerError) throw customerError;
+      customerIds.push(...(customers ?? []).map((c: any) => c.id));
+      if (!customers || customers.length < 500) break;
+    }
 
     const since = new Date(Date.now() - days * 86_400_000).toISOString();
-    const { data, error } = await supabase.from('ac_revenue_attributions')
-      .select('order_date, attributed_amount').eq('model', model)
-      .gte('order_date', since).order('order_date', { ascending: true }).limit(10000);
-    if (error) throw error;
+    const data: any[] = [];
+    for (let start = 0; start < customerIds.length; start += 100) {
+      for (let offset = 0; ; offset += 500) {
+        const { data: rows, error } = await supabase.from('ac_revenue_attributions')
+          .select('id, order_date, attributed_amount').eq('model', model).in('customer_id', customerIds.slice(start, start + 100))
+          .gte('order_date', since).order('id').range(offset, offset + 499);
+        if (error) throw error;
+        data.push(...(rows ?? []));
+        if (!rows || rows.length < 500) break;
+      }
+    }
+    data.sort((a, b) => String(a.order_date).localeCompare(String(b.order_date)));
 
     // Daily bucket
     const buckets = new Map<string, number>();

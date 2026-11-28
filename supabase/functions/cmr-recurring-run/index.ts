@@ -3,6 +3,7 @@ import "../_shared/global-bcc.ts";
 // Rein additiv: betrifft ausschließlich den Mandanten CMR.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireProcessAccess, tenantObjectAllowed } from '../_shared/process-access.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,31 +25,39 @@ function advance(dateStr: string, unit: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'CMR']);
+  if ('response' in access) return access.response;
 
   try {
     const body = await req.json().catch(() => ({}));
     const planId: string | null = body?.planId ?? null;
     const tenantId: string | null = body?.tenantId ?? null;
+    if (!access.machine && tenantId && !tenantObjectAllowed(access.tenantIds, tenantId)) return Response.json({ error: 'Forbidden tenant' }, { status: 403, headers: corsHeaders });
 
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const sb = access.client;
     const today = new Date().toISOString().slice(0, 10);
 
     let q = sb.from("cmr_recurring_plans").select("*").eq("is_active", true);
     if (planId) q = q.eq("id", planId);
     else q = q.lte("next_run_date", today);
     if (tenantId) q = q.eq("tenant_id", tenantId);
+    if (!access.machine) q = q.in('tenant_id', access.tenantIds);
 
     const { data: plans, error } = await q;
     if (error) throw error;
 
     // --- Zahlungsavis: Kunden vor der nächsten Abrechnung vorab informieren ---
-    const { data: settingsRows } = await sb.from("cmr_settings").select("*");
+    let settingsQuery = sb.from('cmr_settings').select('*');
+    if (!access.machine) settingsQuery = settingsQuery.in('tenant_id', access.tenantIds);
+    const { data: settingsRows } = await settingsQuery;
     const settingsByTenant = new Map<string, any>();
     for (const st of settingsRows ?? []) settingsByTenant.set(st.tenant_id, st);
 
-    const { data: noticeRows } = await sb
+    let noticeQuery = sb
       .from("cmr_customer_dunning")
       .select("tenant_id,customer_id,advance_notice_active,advance_notice_days");
+    if (!access.machine) noticeQuery = noticeQuery.in('tenant_id', access.tenantIds);
+    const { data: noticeRows } = await noticeQuery;
     const noticeOverrides = new Map<string, any>();
     for (const n of noticeRows ?? []) noticeOverrides.set(`${n.tenant_id}:${n.customer_id}`, n);
 
@@ -56,8 +65,10 @@ Deno.serve(async (req) => {
     if (!planId && RESEND_API_KEY) {
       let nq = sb.from("cmr_recurring_plans").select("*").eq("is_active", true).gt("next_run_date", today);
       if (tenantId) nq = nq.eq("tenant_id", tenantId);
+      if (!access.machine) nq = nq.in('tenant_id', access.tenantIds);
       const { data: upcoming } = await nq;
       for (const p of upcoming ?? []) {
+        if (!p.tenant_id) continue;
         const st = settingsByTenant.get(p.tenant_id);
         if (!p.customer_email) continue;
 
@@ -114,6 +125,7 @@ Deno.serve(async (req) => {
     const results: unknown[] = [];
 
     for (const p of plans ?? []) {
+      if (!p.tenant_id) continue;
       const lines = Array.isArray(p.lines) ? p.lines : [];
       if (!lines.length) continue;
 

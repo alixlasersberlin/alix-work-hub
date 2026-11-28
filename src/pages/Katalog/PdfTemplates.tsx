@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { FileText, Save, Trash2, Eye, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 const DEFAULT_BODY = `<h1>{{name}}</h1>
 <p><strong>SKU:</strong> {{sku}}<br/><strong>Marke:</strong> {{brand}}<br/><strong>Modell:</strong> {{model}}</p>
@@ -78,7 +79,7 @@ export default function KatalogPdfTemplates() {
     const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
     const container = document.createElement('div');
     container.style.width = '540px'; container.style.padding = '20px'; container.style.fontFamily = 'sans-serif';
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHtml(html);
     document.body.appendChild(container);
     await pdf.html(container, {
       x: 20, y: 20, width: 555, windowWidth: 580,
@@ -150,7 +151,7 @@ export default function KatalogPdfTemplates() {
             <Card className="mt-3">
               <CardHeader><CardTitle className="text-xs flex items-center gap-2"><Eye className="h-3 w-3" />Vorschau</CardTitle></CardHeader>
               <CardContent>
-                <div className="bg-white text-black p-4 rounded border" dangerouslySetInnerHTML={{ __html: [sel.header_html, sel.body_html, sel.footer_html].join('<hr/>') }} />
+                <div className="bg-white text-black p-4 rounded border" dangerouslySetInnerHTML={{ __html: sanitizeHtml([sel.header_html, sel.body_html, sel.footer_html].join('<hr/>')) }} />
               </CardContent>
             </Card>
           </>}

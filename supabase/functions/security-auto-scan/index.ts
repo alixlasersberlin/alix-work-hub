@@ -1,8 +1,11 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireProcessAccess } from '../_shared/process-access.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin']);
+  if ('response' in access) return access.response;
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,

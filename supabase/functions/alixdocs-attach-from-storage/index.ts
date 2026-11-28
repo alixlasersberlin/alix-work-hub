@@ -2,6 +2,7 @@
 // Input JSON: { source_bucket, source_path, order_id?, customer_id?, category_code?, title?,
 //               confidentiality_level?, source? ('mail_attachment' | 'auto_pdf' | 'zoho' | 'signature') }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,15 +34,20 @@ Deno.serve(async (req) => {
 
   // Auth: either a signed-in user OR a valid x-alix-key (server-to-server from other edge fns)
   let userId: string | null = null;
+  let caller: any = null;
+  let allowedTenants: any[] = [];
   const authHeader = req.headers.get('Authorization') ?? '';
   const alixKey = req.headers.get('x-alix-key') ?? '';
   if (alixKey && sharedKey && alixKey === sharedKey) {
     userId = null; // system
   } else if (authHeader) {
-    const uc = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
-    const { data } = await uc.auth.getUser();
-    if (!data?.user) return json(401, { error: 'unauthorized' });
-    userId = data.user.id;
+    const access = await requireCallerAccess(req, corsHeaders);
+    if ('response' in access) return access.response;
+    const { data: staff, error: staffError } = await access.caller.rpc('is_internal_staff');
+    if (staffError || staff !== true) return json(403, { error: 'document_access_denied' });
+    userId = access.user.id;
+    caller = access.caller;
+    allowedTenants = access.tenants;
   } else {
     return json(401, { error: 'missing_auth' });
   }
@@ -57,9 +63,23 @@ Deno.serve(async (req) => {
   const confidentiality_level = (body.confidentiality_level as string) || 'normal';
   const source = (body.source as string) || 'mail_attachment';
 
-  if (!source_bucket || !source_path) return json(400, { error: 'source_bucket_and_path_required' });
+  if (typeof source_bucket !== 'string' || !/^[a-z0-9-]{1,100}$/.test(source_bucket) || typeof source_path !== 'string' || !source_path.length || source_path.length > 1024 || source_path.startsWith('/') || source_path.split('/').includes('..')) return json(400, { error: 'invalid_source_bucket_or_path' });
+  if (!['normal', 'vertraulich', 'streng_vertraulich'].includes(confidentiality_level)) return json(400, { error: 'invalid_confidentiality' });
 
-  const admin = createClient(supabaseUrl, serviceKey);
+  const admin = caller ?? createClient(supabaseUrl, serviceKey);
+  let tenantId: string | null = null;
+  if (caller && order_id) {
+    const { data: order, error } = await caller.from('orders').select('id,customer_id,source_system').eq('id', order_id).maybeSingle();
+    const tenant = allowedTenants.find((t) => t.zoho_source_system === order?.source_system);
+    if (error || !order || !tenant || (customer_id && customer_id !== order.customer_id)) return json(403, { error: 'order_scope_denied' });
+    tenantId = tenant.id;
+  }
+  if (caller && customer_id) {
+    const { data: customer, error } = await caller.from('customers').select('id,source_system').eq('id', customer_id).maybeSingle();
+    const tenant = allowedTenants.find((t) => t.zoho_source_system === customer?.source_system);
+    if (error || !customer || !tenant || (tenantId && tenantId !== tenant.id)) return json(403, { error: 'customer_scope_denied' });
+    tenantId = tenant.id;
+  }
 
   // Download source file
   const { data: blob, error: dlErr } = await admin.storage.from(source_bucket).download(source_path);
@@ -68,6 +88,7 @@ Deno.serve(async (req) => {
   const buf = await blob.arrayBuffer();
   const mime = blob.type || 'application/octet-stream';
   const size = buf.byteLength;
+  if (size > 50_000_000) return json(413, { error: 'source_file_too_large' });
   const hash = await sha256(buf);
   const origName = source_path.split('/').pop() ?? 'datei';
   const safe = sanitizeName(origName);
@@ -97,6 +118,7 @@ Deno.serve(async (req) => {
     confidentiality_level,
     uploaded_by: userId,
     source,
+    ...(caller ? { tenant_id: tenantId } : {}),
   }).select('id').single();
   if (insErr) return json(500, { error: 'insert_failed', details: insErr.message });
 

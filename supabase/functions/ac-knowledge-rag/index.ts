@@ -1,25 +1,32 @@
 // Knowledge Graph & RAG 2.0 — semantic search over conversations, tickets, docs with cited answers.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders);
+  if ('response' in access) return access.response;
+  const { data: staff, error: staffError } = await access.caller.rpc('is_internal_staff');
+  if (staffError || staff !== true) return new Response('Internal search permission required', { status: 403, headers: corsHeaders });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const sb = access.caller;
     const { query, contact_id } = await req.json();
-    if (!query) throw new Error('query required');
+    if (typeof query !== 'string' || query.length < 1 || query.length > 1000) return new Response('Invalid query', { status: 400, headers: corsHeaders });
+    // No current UI uses optional prediction persistence; isolate until its narrow write policy is verified.
+    if (contact_id) return new Response('Prediction persistence not authorized', { status: 403, headers: corsHeaders });
 
     // Gather candidate sources (lightweight retrieval; embeddings pipeline TBD).
-    const like = `%${String(query).slice(0, 80)}%`;
-    const [{ data: msgs }, { data: tickets }, { data: docs }] = await Promise.all([
-      sb.from('ac_messages').select('id, body, channel, created_at, contact_id').ilike('body', like).order('created_at', { ascending: false }).limit(15),
+    const like = `%${query.slice(0, 80).replace(/[%_(),.\\]/g, ' ')}%`;
+    const tenantIds = access.tenants.map((t: any) => t.id);
+    const results = await Promise.all([
+      sb.from('ac_messages').select('id, body, channel, created_at, contact_id').in('tenant_id', tenantIds).ilike('body', like).order('created_at', { ascending: false }).limit(15),
       sb.from('tickets').select('id, subject, description, status, created_at').or(`subject.ilike.${like},description.ilike.${like}`).order('created_at', { ascending: false }).limit(10),
-      sb.from('alixdocs_documents').select('id, title, summary, doc_type, created_at').or(`title.ilike.${like},summary.ilike.${like}`).eq('is_deleted', false).order('created_at', { ascending: false }).limit(10),
+      sb.from('alixdocs_documents').select('id, title, summary, doc_type, created_at').in('tenant_id', tenantIds).or(`title.ilike.${like},summary.ilike.${like}`).eq('is_deleted', false).order('created_at', { ascending: false }).limit(10),
     ]);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw failed.error;
+    const [{ data: msgs }, { data: tickets }, { data: docs }] = results;
 
     const sources = [
       ...(msgs ?? []).map((m) => ({ kind: 'message', id: m.id, snippet: (m.body ?? '').slice(0, 400), ref: `msg:${m.id}` })),

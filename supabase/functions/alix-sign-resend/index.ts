@@ -4,6 +4,7 @@ import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { requireCallerAccess } from '../_shared/caller-access.ts'
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
 const SENDER_DOMAIN = 'alixwork.de'
@@ -18,10 +19,13 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders })
+  const access = await requireCallerAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Order'])
+  if ('response' in access) return access.response
   const body = await req.json().catch(() => ({}))
   const signatureId: string | undefined = body?.signature_id
   const overrideEmail: string | undefined = body?.email
-  if (!signatureId) {
+  if (typeof signatureId !== 'string' || !/^[0-9a-f-]{36}$/i.test(signatureId)) {
     return new Response(JSON.stringify({ error: 'signature_id required' }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
@@ -29,7 +33,11 @@ Deno.serve(async (req) => {
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
-  const { data: sig, error: sigErr } = await admin
+  const { data: authorizedSignature, error: authorizedError } = await access.caller.from('alix_sign_signatures').select('id,sign_request_id,customer_id').eq('id', signatureId).maybeSingle()
+  if (authorizedError || !authorizedSignature?.customer_id) return new Response(JSON.stringify({ error: 'signature_scope_unconfirmed' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const { data: customer, error: customerError } = await access.caller.from('customers').select('id,source_system').eq('id', authorizedSignature.customer_id).maybeSingle()
+  if (customerError || !customer || !access.tenants.some((t: any) => t.zoho_source_system === customer.source_system)) return new Response(JSON.stringify({ error: 'customer_scope_denied' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const { data: sig, error: sigErr } = await access.caller
     .from('alix_sign_signatures')
     .select('id, sign_request_id, signer_name, signer_email, pdf_data, pdf_hash, created_at')
     .eq('id', signatureId).maybeSingle()
@@ -38,15 +46,16 @@ Deno.serve(async (req) => {
       status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-  const { data: r } = await admin
+  const { data: r } = await access.caller
     .from('alix_sign_requests')
-    .select('id, offer_number, customer_name, customer_email, offer_payload')
+    .select('id, customer_id, offer_number, customer_name, customer_email, offer_payload')
     .eq('id', sig.sign_request_id).maybeSingle()
   if (!r) {
     return new Response(JSON.stringify({ error: 'request not found' }), {
       status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+  if (r.customer_id !== authorizedSignature.customer_id || (overrideEmail && overrideEmail.trim().toLowerCase() !== sig.signer_email?.trim().toLowerCase())) return new Response(JSON.stringify({ error: 'signature_recipient_or_customer_mismatch' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
   // Convert pdf_data (bytea -> hex string via PostgREST) into bytes
   let pdfBytes: Uint8Array | null = null
@@ -64,13 +73,12 @@ Deno.serve(async (req) => {
   let downloadUrl: string | undefined
   if (pdfBytes && pdfBytes.length) {
     try {
-      try { await admin.storage.createBucket('alix-sign-pdfs', { public: false }) } catch {}
       const objectPath = `${r.id}/${sig.id}.pdf`
       const { error: upErr } = await admin.storage
         .from('alix-sign-pdfs')
         .upload(objectPath, pdfBytes, { contentType: 'application/pdf', upsert: true })
       if (upErr) throw upErr
-      const { data: requestRow } = await admin
+      const { data: requestRow } = await access.caller
         .from('alix_sign_requests')
         .select('token')
         .eq('id', r.id)
@@ -107,7 +115,7 @@ Deno.serve(async (req) => {
   const subject = typeof tpl.subject === 'function' ? tpl.subject(data) : tpl.subject
   const tokenBytes = new Uint8Array(32); crypto.getRandomValues(tokenBytes)
   const unsub = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('')
-  const recipient = overrideEmail || sig.signer_email
+  const recipient = sig.signer_email
   try {
     await sendLovableEmail({
       to: recipient,

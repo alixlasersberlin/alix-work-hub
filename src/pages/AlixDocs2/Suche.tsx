@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, Sparkles } from 'lucide-react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 type Hit = { id: string; title: string; doc_type?: string; snippet?: string; rank?: number; source?: 'fts' | 'semantic'; similarity?: number };
 
@@ -80,7 +81,7 @@ export default function AlixDocs2Suche() {
                   {h.source === 'semantic' ? `KI ${Math.round((h.similarity ?? 0) * 100)}%` : 'Text'}
                 </Badge>
               </div>
-              {h.snippet && <p className="text-xs text-muted-foreground mt-1" dangerouslySetInnerHTML={{ __html: h.snippet }} />}
+              {h.snippet && <p className="text-xs text-muted-foreground mt-1" dangerouslySetInnerHTML={{ __html: sanitizeHtml(h.snippet) }} />}
             </Link>
           ))}
           {!loading && hits.length === 0 && <p className="italic text-xs text-muted-foreground text-center py-4">Keine Ergebnisse.</p>}
