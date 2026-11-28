@@ -12,6 +12,7 @@ interface Creds {
   order_number: string;
   zip: string;
   email: string;
+  portal_token?: string;
 }
 
 interface Props {

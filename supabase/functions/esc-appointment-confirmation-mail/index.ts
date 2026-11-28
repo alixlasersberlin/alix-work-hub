@@ -3,6 +3,7 @@ import "../_shared/global-bcc.ts";
 // Kopie (CC) immer an support@alix-lasers.com.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { maskEmail } from '../_shared/security-core.ts';
 
 const COPY_TO = "support@alix-lasers.com";
 const PUBLIC_BASE = "https://alixwork.de";
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
       status: "sent",
     }).then(() => {}, () => {});
 
-    console.log(`Appointment confirmation sent: ${appointment_id ?? "new"} -> ${normalizedRecipient}; cc=${COPY_TO}`);
+    console.log(`Appointment confirmation sent: ${appointment_id ?? "new"} -> ${maskEmail(normalizedRecipient)}`);
     return json({ ok: true, cc: COPY_TO });
   } catch (e) {
     return json({ error: String((e as Error).message ?? e) }, 500);

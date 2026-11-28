@@ -2,6 +2,18 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+/** Meta signs every webhook POST with X-Hub-Signature-256 = HMAC-SHA256(app secret, raw body). */
+async function validMetaSignature(raw: string, header: string | null, secret: string): Promise<boolean> {
+  if (!secret || !header?.startsWith('sha256=')) return false;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = Array.from(new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(raw)))).map((b) => b.toString(16).padStart(2, '0')).join('');
+  const given = header.slice(7);
+  if (given.length !== mac.length) return false;
+  let diff = 0;
+  for (let i = 0; i < mac.length; i++) diff |= mac.charCodeAt(i) ^ given.charCodeAt(i);
+  return diff === 0;
+}
+
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -41,8 +53,14 @@ Deno.serve(async (req) => {
     }
     return new Response('forbidden', { status: 403 });
   }
+  const appSecret = Deno.env.get('META_APP_SECRET') ?? Deno.env.get('WHATSAPP_APP_SECRET') ?? '';
+  if (!appSecret) return new Response('provider_auth_unconfigured', { status: 503 });
+  const raw = await req.text();
+  if (!(await validMetaSignature(raw, req.headers.get('x-hub-signature-256'), appSecret))) {
+    return new Response('invalid signature', { status: 401 });
+  }
   try {
-    const body = await req.json();
+    const body = JSON.parse(raw);
     const object = body.object; // 'page' or 'instagram'
     const channel = object === 'instagram' ? 'instagram' : 'messenger';
     for (const entry of body.entry ?? []) {

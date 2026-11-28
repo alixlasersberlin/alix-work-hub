@@ -11,6 +11,7 @@ import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTr
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { csvCell } from '@/lib/csvSafe';
 
 const STATUS_OPTIONS = [
   'Importiert - Angebot offen',
@@ -250,10 +251,7 @@ export default function SalesLeadsList() {
     const list = filtered.filter((r) => selected.has(r.id));
     if (!list.length) { toast.error('Keine Anfragen ausgewählt'); return; }
     const headers = ['Datum','Lead-Nr.','Score','Kategorie','Firma','Vorname','Nachname','E-Mail','Telefon','Geräteklasse','Produkte','Zeitraum','Bewertung','Quelle','Status','Zugewiesen an'];
-    const esc = (v: any) => {
-      const s = v == null ? '' : String(v);
-      return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
+    const esc = (v: any) => csvCell(v, ';');
     const lines = [headers.join(';')];
     for (const r of list) {
       lines.push([

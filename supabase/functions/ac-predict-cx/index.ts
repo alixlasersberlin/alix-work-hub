@@ -1,6 +1,7 @@
 // ALIX CONNECT — Phase 26 Predictive CX
 // Berechnet Churn/Eskalation/NBA-Predictions je Kontakt und schreibt sie nach ac_predictions.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,7 @@ function daysSince(iso: string | null): number {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "QM", "Order"]); if (denied) return denied; }
   try {
     const body = await req.json().catch(() => ({}));
     const limit = Math.min(Number(body?.limit ?? 200), 1000);

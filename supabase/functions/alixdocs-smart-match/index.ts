@@ -4,6 +4,7 @@
 // zurück auf alixdocs_documents.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
@@ -201,6 +202,7 @@ async function applyRules(supabase: any, filename: string, ocrText: string, extr
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ['Super Admin', 'Admin']); if (denied) return denied; }
   if (req.method !== "POST") return json(405, { error: "method not allowed" });
 
   const supabase = createClient(

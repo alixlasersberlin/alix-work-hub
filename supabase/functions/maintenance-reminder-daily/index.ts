@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
       const resp = await supa.functions.invoke('ticket-customer-notify', {
         body: {
           event: 'maintenance_reminder',
+          device_maintenance_id: r.id,
           recipient_email: r.customer_email,
           customer_name: r.customer_name,
           message: `${message}\n\nGerät: ${r.device_name ?? ''}\nSeriennummer: ${r.serial_number ?? ''}`,

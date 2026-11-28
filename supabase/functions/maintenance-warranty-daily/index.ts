@@ -1,5 +1,6 @@
 // Phase 10 daily refresh: warranty + maintenance statuses and reminder events
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
 
   const url = Deno.env.get('SUPABASE_URL')!;
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

@@ -1,6 +1,7 @@
 // ALIX CONNECT — Phase 27 Customer Health Scoring & Lifecycle
 // Berechnet Health (0-100) aus Nutzung/Zahlung/Support/Sentiment und mappt Lifecycle-Stage.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +17,7 @@ function daysSince(iso: string | null | undefined): number {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "QM", "Order"]); if (denied) return denied; }
   try {
     const body = await req.json().catch(() => ({}));
     const limit = Math.min(Number(body?.limit ?? 500), 5000);

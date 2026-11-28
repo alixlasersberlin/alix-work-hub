@@ -90,7 +90,12 @@ Deno.serve(async (req) => {
     let customerId: string | null = null;
     let createdCustomer = false;
     if (body.customer_choice.mode === "existing") {
-      customerId = body.customer_choice.id;
+      // The chosen customer must be visible to the caller under existing row-level/tenant rules.
+      const chosen = String(body.customer_choice.id ?? "");
+      if (!/^[0-9a-f-]{36}$/i.test(chosen)) return j({ error: "Ungültiger Kunde" }, 400);
+      const { data: visibleCustomer } = await user.from("customers").select("id").eq("id", chosen).maybeSingle();
+      if (!visibleCustomer) return j({ error: "Kunde nicht gefunden oder kein Zugriff" }, 403);
+      customerId = chosen;
     } else {
       // Neu anlegen
       const billing = {
@@ -313,8 +318,8 @@ Deno.serve(async (req) => {
 
     return j({
       ok: true,
-      order_id: newOrder.id,
-      order_number: newOrder.order_number,
+      order_id: newOrderId,
+      order_number: newOrderNumber,
       customer_id: customerId,
       created_customer: createdCustomer,
     });

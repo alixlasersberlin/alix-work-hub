@@ -11,6 +11,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { maskEmail } from '../_shared/security-core.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -158,7 +159,7 @@ Deno.serve(async (req) => {
       text,
     })
 
-    console.log('Auth email sent', { emailType, recipient })
+    console.log('Auth email sent', { emailType, recipient: maskEmail(recipient) })
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

@@ -4,6 +4,7 @@ import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
 const SENDER_DOMAIN = 'alixwork.de'
@@ -18,6 +19,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

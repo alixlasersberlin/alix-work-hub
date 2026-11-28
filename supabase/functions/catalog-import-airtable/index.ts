@@ -1,5 +1,6 @@
 // Airtable-Import via Connector Gateway → catalog_items
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,7 @@ const GATEWAY = 'https://connector-gateway.lovable.dev/airtable';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Katalog"]); if (denied) return denied; }
   try {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const AIRTABLE_API_KEY = Deno.env.get('AIRTABLE_API_KEY');

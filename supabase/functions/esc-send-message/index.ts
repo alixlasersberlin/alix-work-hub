@@ -1,5 +1,6 @@
 // ESC unified message dispatcher: email | sms | whatsapp
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -45,6 +46,7 @@ async function sendTwilio(kind: "sms" | "whatsapp", to: string, text: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  { const denied = await requireJobAccess(req, cors, ["Super Admin", "Admin"]); if (denied) return denied; }
   try {
     const { event_id, channel, recipient, subject, body, template_key } = await req.json();
     if (!channel || !recipient || !body) {

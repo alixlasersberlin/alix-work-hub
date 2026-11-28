@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +8,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
 
   try {
     const supabase = createClient(

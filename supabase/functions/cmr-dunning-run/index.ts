@@ -4,6 +4,7 @@ import "../_shared/global-bcc.ts";
 // Rein additiv: betrifft ausschließlich den Mandanten CMR.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +34,7 @@ const days = (ms: number) => Math.floor(ms / 86400000);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "CMR"]); if (denied) return denied; }
 
   try {
     const body = await req.json().catch(() => ({}));

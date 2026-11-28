@@ -1,5 +1,6 @@
 // Phase 10 – Anomalie-Erkennung (statistisch, ohne KI). Cron 04:00 UTC.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,7 @@ function mad(arr: number[], med: number) { return median(arr.map(v => Math.abs(v
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"]); if (denied) return denied; }
   const supa = createClient(SUPABASE_URL, SERVICE_ROLE);
   const since = new Date(); since.setDate(since.getDate() - 90);
   const sinceIso = since.toISOString().slice(0, 10);

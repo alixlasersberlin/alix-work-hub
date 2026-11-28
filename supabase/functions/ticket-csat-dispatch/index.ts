@@ -1,6 +1,7 @@
 // Cron: stündlich. Findet Tickets die > 24 h geschlossen sind und noch keine CSAT-Umfrage haben,
 // legt Survey an und sendet Mail via send-transactional-email.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
 const SITE = 'https://alixwork.de';
 
@@ -16,6 +17,7 @@ function cleanTicketNumber(raw?: string | null): string {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await requireJobAccess(req, cors, []); if (denied) return denied; }
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const sb = createClient(SUPABASE_URL, SERVICE);

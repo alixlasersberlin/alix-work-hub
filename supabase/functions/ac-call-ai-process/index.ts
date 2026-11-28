@@ -1,5 +1,6 @@
 // Voice-AI: Transcribes an ac_calls recording and produces sentiment + summary + action items.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,6 +48,7 @@ async function analyze(transcript: string) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
   try {
     const { call_id } = await req.json();
     if (!call_id) return new Response(JSON.stringify({ error: 'call_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

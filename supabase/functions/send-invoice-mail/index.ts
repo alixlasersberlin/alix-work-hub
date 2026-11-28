@@ -5,6 +5,7 @@ import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import { requireProcessAccess } from '../_shared/process-access.ts'
 import { InvoiceMailBody, INVOICE_SEND_ROLES, approvedInvoiceCopies } from '../_shared/security-v42-invoice.ts'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { maskEmail } from '../_shared/security-core.ts';
 
 const SITE_NAME = 'Alix Lasers I Finance'
 const SENDER_DOMAIN = 'alixwork.de'
@@ -141,7 +142,7 @@ Deno.serve(async (req) => {
       } as any, { apiKey })
       results.push({ to: rec.email, status: 'sent' })
     } catch (e: any) {
-      console.error('send-invoice-mail failed for', rec.email, e)
+      console.error('send-invoice-mail failed for', maskEmail(rec.email), (e as Error)?.message ?? 'error')
       results.push({ to: rec.email, status: 'failed', error: e?.message })
     }
   }

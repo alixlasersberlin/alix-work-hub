@@ -14,6 +14,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import webpush from 'https://esm.sh/web-push@3.6.7';
 import { z } from 'https://esm.sh/zod@3.23.8';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,6 +34,7 @@ const BodySchema = z.object({
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
   try {
     const VAPID_PUBLIC = Deno.env.get('VAPID_PUBLIC_KEY');
     const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY');

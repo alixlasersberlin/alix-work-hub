@@ -1,5 +1,6 @@
 // Katalog: KI-Übersetzung von Artikelbeschreibungen via Lovable AI Gateway
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 interface Payload {
   text: string;
@@ -10,6 +11,7 @@ interface Payload {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Katalog", "Katalog Preise", "Marketing"]); if (denied) return denied; }
 
   try {
     const body = (await req.json()) as Payload;

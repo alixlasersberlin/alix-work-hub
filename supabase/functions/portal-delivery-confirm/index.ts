@@ -3,6 +3,7 @@
 // über Auftragsnummer + PLZ + E-Mail. Kein Auth erforderlich.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
+import { verifyPortalToken } from '../_shared/portal-session.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,7 @@ const BodySchema = z.object({
   order_number: z.string().trim().min(1).max(64),
   zip: z.string().trim().min(2).max(16),
   email: z.string().trim().email().max(255),
+  portal_token: z.string().max(200),
   response: z.enum(["confirmed", "change_requested"]),
   note: z.string().trim().max(500).optional(),
   alternative_date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -68,6 +70,8 @@ Deno.serve(async (req) => {
     const zipOk = zip === normZip((order as any).billing_address?.zip) || zip === normZip((order as any).shipping_address?.zip);
     const emailOk = email === normEmail((customer as any)?.email);
     if (!zipOk || !emailOk) return json({ ok: false, error: "not_found" });
+    // Knowledge of order data alone is not a credential: require the server-signed lookup capability.
+    if (!(await verifyPortalToken(parsed.data.portal_token, (order as any).id))) return json({ ok: false, error: "session_expired" }, 401);
 
     const confirmed = parsed.data.response === "confirmed";
     const { error: upErr } = await supabase.from("order_delivery_status").upsert({

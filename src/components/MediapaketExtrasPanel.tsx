@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, History as HistoryIcon, GitBranch, Send, Package, CheckCircle2, PlayCircle, Eye, Download, MessageCircle, Upload, Mail, Copy as CopyIcon, PenTool, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { FileDownloadButton } from '@/components/FileDownloadButton';
+import { csvQuoted } from '@/lib/csvSafe';
 
 interface Props {
   mpId: string;
@@ -299,9 +300,9 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
       if (e.kind === 'download') detail = (e.data as any).media_package_files?.original_filename || '';
       else if (e.kind === 'comment') detail = ((e.data as any).subject || (e.data as any).comment || '').slice(0, 200);
       else if (e.kind === 'history') detail = JSON.stringify((e.data as any).new_value || {}).slice(0, 200);
-      return [new Date(e.at).toISOString(), e.action, meta.label, detail.replace(/"/g, '""')];
+      return [new Date(e.at).toISOString(), e.action, meta.label, detail];
     });
-    const csv = ['Zeitpunkt,Aktion,Label,Details', ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+    const csv = ['Zeitpunkt,Aktion,Label,Details', ...rows.map(r => r.map(c => csvQuoted(c)).join(','))].join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `mediapaket-audit-${mpId}.csv`;

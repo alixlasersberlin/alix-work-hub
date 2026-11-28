@@ -6,6 +6,7 @@ import { verifyMailPayload, sameTicketSender } from "../_shared/provider-auth.ts
 // externen Mailboxen erhalten.
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { maskEmail } from '../_shared/security-core.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -189,7 +190,7 @@ serve(async (req) => {
     }
 
 
-    console.log("inbound-mail: ticket created", { ticket_id: ticket?.id, to: toEmail, from: fromEmail });
+    console.log("inbound-mail: ticket created", { ticket_id: ticket?.id, to: maskEmail(toEmail), from: maskEmail(fromEmail) });
 
     return new Response(
       JSON.stringify({ success: true, ticket_id: ticket?.id, ticket_number: ticket?.ticket_number }),

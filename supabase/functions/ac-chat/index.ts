@@ -17,11 +17,34 @@ async function getWebsite(api_key: string) {
   return data;
 }
 
-async function loadConversation(conversation_id: string, website_id: string) {
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function newSessionToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** A visitor may only access a conversation with the secret session token issued when it was started. */
+async function loadConversation(conversation_id: unknown, website_id: string, session_token: unknown) {
+  if (typeof conversation_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(conversation_id)) return null;
+  if (typeof session_token !== 'string' || !/^[0-9a-f]{64}$/.test(session_token)) return null;
   const { data } = await supabase
-    .from('ac_conversations').select('id, tenant_id, website_id, status, assigned_to')
+    .from('ac_conversations').select('id, tenant_id, website_id, status, assigned_to, visitor_meta')
     .eq('id', conversation_id).eq('website_id', website_id).maybeSingle();
+  const stored = (data?.visitor_meta as any)?.session_hash;
+  if (!data || typeof stored !== 'string') return null;
+  if (stored !== await sha256Hex(session_token)) return null;
   return data;
+}
+
+async function visitorRateLimited(conversation_id: string): Promise<boolean> {
+  const since = new Date(Date.now() - 10 * 60_000).toISOString();
+  const { count } = await supabase.from('ac_messages').select('id', { count: 'exact', head: true })
+    .eq('conversation_id', conversation_id).eq('direction', 'inbound').gte('created_at', since);
+  return (count ?? 0) >= 20;
 }
 
 // Business hours check: returns { open: boolean, message?: string }
@@ -197,7 +220,10 @@ Deno.serve(async (req) => {
           contact_id = newC?.id ?? null;
         }
       }
+      if (typeof initial_message === 'string' && initial_message.length > 4000) return json({ error: 'message too long' }, 400);
       const bh = isWithinBusinessHours(site.business_hours);
+      const session_token = newSessionToken();
+      const session_hash = await sha256Hex(session_token);
       const { data: conv, error } = await supabase.from('ac_conversations').insert({
         tenant_id: site.tenant_id,
         website_id: site.id,
@@ -206,7 +232,7 @@ Deno.serve(async (req) => {
         subject: subject ?? 'Website Chat',
         contact_id,
         priority: 'normal',
-        visitor_meta: { name, email, page_url, visitor_hash, after_hours: !bh.open },
+        visitor_meta: { name, email, page_url, visitor_hash, after_hours: !bh.open, session_hash },
         last_message_preview: initial_message ?? null,
       }).select('id').single();
       if (error) throw error;
@@ -226,13 +252,14 @@ Deno.serve(async (req) => {
           message: String(initial_message), is_after_hours: !bh.open,
         }));
       }
-      return json({ conversation_id: conv?.id, online: bh.open });
+      return json({ conversation_id: conv?.id, session_token, online: bh.open });
     }
 
     if (action === 'send') {
-      const { conversation_id, message, name, visitor_hash } = body;
-      const conv = await loadConversation(conversation_id, site.id);
+      const { conversation_id, message, name, visitor_hash, session_token } = body;
+      const conv = await loadConversation(conversation_id, site.id, session_token);
       if (!conv) return json({ error: 'conversation not found' }, 404);
+      if (await visitorRateLimited(conv.id)) return json({ error: 'too many messages' }, 429);
       const bh = isWithinBusinessHours(site.business_hours);
       const { data, error } = await supabase.from('ac_messages').insert({
         tenant_id: conv.tenant_id,
@@ -252,8 +279,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'poll') {
-      const { conversation_id, since } = body;
-      const conv = await loadConversation(conversation_id, site.id);
+      const { conversation_id, since, session_token } = body;
+      const conv = await loadConversation(conversation_id, site.id, session_token);
       if (!conv) return json({ error: 'conversation not found' }, 404);
       let q = supabase.from('ac_messages')
         .select('id, direction, sender_name, sender_type, body, created_at')
@@ -269,6 +296,6 @@ Deno.serve(async (req) => {
     return json({ error: 'unknown action' }, 400);
   } catch (e) {
     console.error('ac-chat error', e);
-    return json({ error: String((e as Error)?.message ?? e) }, 500);
+    return json({ error: 'internal error' }, 500);
   }
 });

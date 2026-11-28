@@ -1,4 +1,5 @@
 import { AwsClient } from "https://esm.sh/aws4fetch@1.0.20";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin"]); if (denied) return denied; }
   const endpoint = Deno.env.get("HETZNER_S3_ENDPOINT");
   const region = Deno.env.get("HETZNER_S3_REGION") ?? "eu-central";
   const bucket = Deno.env.get("HETZNER_S3_BUCKET");

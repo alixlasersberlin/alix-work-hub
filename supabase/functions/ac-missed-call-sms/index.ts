@@ -1,6 +1,7 @@
 // ac-missed-call-sms
 // Sendet eine SMS an eingehende Anrufer, deren Anruf verpasst wurde.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,6 +61,7 @@ async function isInBusinessHours(): Promise<boolean> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
 
   try {
     const body = await req.json().catch(() => ({}));

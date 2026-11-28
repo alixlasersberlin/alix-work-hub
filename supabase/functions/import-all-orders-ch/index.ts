@@ -2,6 +2,7 @@
 // (branch_id = 598077000000065075). Reuses ZOHO_EU_1_* credentials.
 // Runs in background via EdgeRuntime.waitUntil.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +64,7 @@ async function zohoFetch(url: string, attempt = 0): Promise<Response> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Auftragsverwaltung", "Order"]); if (denied) return denied; }
 
   const auth = req.headers.get("Authorization") ?? "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();

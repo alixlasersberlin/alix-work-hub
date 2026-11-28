@@ -10,6 +10,7 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { requireCallerAccess } from '../_shared/caller-access.ts'
 import { OrderConfirmationBody, ORDER_CONFIRMATION_ROLES, sameMailRecipient } from '../_shared/security-v42-mail.ts'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { maskEmail } from '../_shared/security-core.ts';
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
 const SENDER_DOMAIN = 'alixwork.de'
@@ -199,7 +200,7 @@ Deno.serve(async (req) => {
       results.push({ to: rec.email, status: 'sent' })
     } catch (e: any) {
       const detail = e?.message || String(e)
-      console.error('order-confirmation send failed', { to: rec.email, key: rec.key, error: detail, raw: JSON.stringify(e?.response ?? e?.body ?? null) })
+      console.error('order-confirmation send failed', { to: maskEmail(rec.email), key: rec.key, error: detail })
       results.push({ to: rec.email, status: 'failed', error: detail })
     }
   }

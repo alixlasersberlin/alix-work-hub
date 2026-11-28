@@ -259,7 +259,7 @@
   function chatSess() {
     try { return getCookie(COOKIE_NAME) || "anon"; } catch (_) { return "anon"; }
   }
-  try { conv = JSON.parse(localStorage.getItem(LS_CONV) || "null"); } catch (_) {}
+  try { conv = JSON.parse(localStorage.getItem(LS_CONV) || "null"); if (conv && !conv.token) conv = null; } catch (_) {}
 
   function el(tag, style, text) {
     var e = document.createElement(tag);
@@ -334,7 +334,7 @@
         body: JSON.stringify({ api_key: KEY, name: name.value, email: email.value, initial_message: msg.value, page_url: location.href, visitor_hash: chatSess() }),
       }).then(function (r) { return r.json(); }).then(function (d) {
         if (!d || !d.conversation_id) { submit.disabled = false; submit.textContent = "Chat starten"; return; }
-        conv = { id: d.conversation_id, name: name.value };
+        conv = { id: d.conversation_id, name: name.value, token: d.session_token };
         try { localStorage.setItem(LS_CONV, JSON.stringify(conv)); } catch (_) {}
         enqueue("chat_lead", { email: safe(email.value, 160), name: safe(name.value, 120) });
         bodyEl.innerHTML = ""; bubble(msg.value, true); renderChat();
@@ -357,7 +357,7 @@
       input.value = ""; bubble(t, true);
       fetch(CHAT + "?action=send", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: KEY, conversation_id: conv.id, message: t, name: conv.name, visitor_hash: chatSess() }),
+        body: JSON.stringify({ api_key: KEY, conversation_id: conv.id, session_token: conv.token, message: t, name: conv.name, visitor_hash: chatSess() }),
       }).catch(function () {});
     }
     btn.onclick = sendMsg;
@@ -372,7 +372,7 @@
       if (!conv || !conv.id) return;
       fetch(CHAT + "?action=poll", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: KEY, conversation_id: conv.id, since: sinceIso }),
+        body: JSON.stringify({ api_key: KEY, conversation_id: conv.id, session_token: conv.token, since: sinceIso }),
       }).then(function (r) { return r.json(); }).then(function (d) {
         (d && d.messages ? d.messages : []).forEach(function (m) {
           if (seen[m.id]) return; seen[m.id] = true;

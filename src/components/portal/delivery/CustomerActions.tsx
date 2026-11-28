@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import type { DeliveryJourneyPayload } from '@/lib/portal/delivery-types';
 
-interface Creds { order_number: string; zip: string; email: string }
+interface Creds { order_number: string; zip: string; email: string; portal_token?: string }
 
 interface Props {
   creds: Creds | null;

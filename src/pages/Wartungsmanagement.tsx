@@ -102,6 +102,7 @@ export default function Wartungsmanagement() {
       const { error } = await supabase.functions.invoke("ticket-customer-notify", {
         body: {
           event: "maintenance_reminder",
+          device_maintenance_id: r.id,
           recipient_email: r.customer_email,
           customer_name: r.customer_name,
           message: `Wartungserinnerung für Ihr Gerät ${r.device_name ?? ""} (SN ${r.serial_number}). Geplanter Termin: ${due}.`,

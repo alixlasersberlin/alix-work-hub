@@ -10,6 +10,7 @@
 // OAuth-Tokens verfügbar sind, wird `publishToProvider()` erweitert.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -93,6 +94,7 @@ async function processJob(svc: any, jobId: string) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Marketing", "Grafiker"]); if (denied) return denied; }
   try {
     const svc = createClient(SUPABASE_URL, SERVICE_KEY);
     const body = await req.json().catch(() => ({}));

@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 /**
  * Weekly Exec Report (Cron Montags 07:00).
@@ -7,6 +8,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   try {
     const since = new Date(Date.now() - 7 * 86400 * 1000).toISOString();

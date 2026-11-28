@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Download, FileJson, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { FeedbackHeader, Section } from './_shared';
+import { csvCell } from '@/lib/csvSafe';
 
 type SurveyRow = { id: string; name: string | null; status: string | null };
 type ExportRow = {
@@ -19,8 +20,7 @@ type ExportRow = {
 };
 
 function csvEscape(v: unknown) {
-  const s = v === null || v === undefined ? '' : String(v);
-  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  return csvCell(v, ';');
 }
 
 function download(filename: string, content: string, mime: string) {

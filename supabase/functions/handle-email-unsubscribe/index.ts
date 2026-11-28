@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { maskEmail } from '../_shared/security-core.ts';
 
 function jsonResponse(data: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -95,7 +96,7 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   if (updateError) {
-    console.error('Failed to mark token as used', { error: updateError, token })
+    console.error('Failed to mark token as used', { error: updateError?.message })
     return jsonResponse({ error: 'Failed to process unsubscribe' }, 500)
   }
 
@@ -113,13 +114,13 @@ Deno.serve(async (req) => {
 
   if (suppressError) {
     console.error('Failed to suppress email', {
-      error: suppressError,
-      email: tokenRecord.email,
+      error: suppressError?.message,
+      email: maskEmail(tokenRecord.email),
     })
     return jsonResponse({ error: 'Failed to process unsubscribe' }, 500)
   }
 
-  console.log('Email unsubscribed', { email: tokenRecord.email })
+  console.log('Email unsubscribed', { email: maskEmail(tokenRecord.email) })
 
   return jsonResponse({ success: true })
 })

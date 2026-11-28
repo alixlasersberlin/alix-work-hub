@@ -3,6 +3,7 @@
 // sendet sie an die konfigurierte TSA (application/timestamp-query) und
 // speichert das TimeStampToken (base64) im sig_audit_log.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,6 +62,7 @@ function b64(bytes: Uint8Array): string {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   let body: any = {};

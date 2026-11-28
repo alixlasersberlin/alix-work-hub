@@ -4,6 +4,8 @@
 // Ansprechpartner am Liefertag, Terminänderungswunsch mit Präferenzen.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
+import { verifyPortalToken } from '../_shared/portal-session.ts';
+import { escapeHtml } from '../_shared/security-core.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +17,7 @@ const BodySchema = z.object({
   order_number: z.string().trim().min(1).max(64),
   zip: z.string().trim().min(2).max(16),
   email: z.string().trim().email().max(255),
+  portal_token: z.string().max(200),
   action: z.enum(["confirm_address", "address_change", "conditions", "contact", "reschedule"]),
   note: z.string().trim().max(1000).optional(),
   address: z.object({
@@ -97,6 +100,8 @@ Deno.serve(async (req) => {
     const zipOk = zip === normZip((order as any).billing_address?.zip) || zip === normZip((order as any).shipping_address?.zip);
     const emailOk = email === normEmail((customer as any)?.email);
     if (!zipOk || !emailOk) return json({ ok: false, error: "not_found" });
+    // Knowledge of order data alone is not a credential: require the server-signed lookup capability.
+    if (!(await verifyPortalToken(parsed.data.portal_token, (order as any).id))) return json({ ok: false, error: "session_expired" }, 401);
 
     const orderId = (order as any).id as string;
     const name = (customer as any)?.contact_name || (customer as any)?.company_name || "Kunde";
@@ -192,7 +197,7 @@ Deno.serve(async (req) => {
           body: {
             to: ["k.trinh@alix-operation.de", "jh@alix-operation.de"],
             subject: title,
-            html: `<p>${message}</p><p><a href="https://app.alixwork.de/dispatch/control-tower">Delivery Control Tower öffnen</a></p>`,
+            html: `<p>${escapeHtml(message)}</p><p><a href="https://app.alixwork.de/dispatch/control-tower">Delivery Control Tower öffnen</a></p>`,
             category: "delivery_customer_action",
           },
         });

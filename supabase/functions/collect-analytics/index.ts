@@ -3,6 +3,7 @@
 // bewertet Verkäufer nach Zahlungsqualität und erstellt die Liquiditätsprognose.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -18,6 +19,7 @@ const gradeFor = (s: number) => (s >= 85 ? 'A' : s >= 70 ? 'B' : s >= 55 ? 'C' :
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"]); if (denied) return denied; }
   const started = Date.now();
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);

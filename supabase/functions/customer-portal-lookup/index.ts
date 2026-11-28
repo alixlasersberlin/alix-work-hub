@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { buildJourney } from "../_shared/delivery-journey.ts";
+import { issuePortalToken } from '../_shared/portal-session.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -323,6 +324,7 @@ Deno.serve(async (req) => {
 
     const payload = {
       ok: true,
+      portal_token: await issuePortalToken(order.id),
       order_number: order.order_number,
       status_code: status.code,
       status_label: status.label,

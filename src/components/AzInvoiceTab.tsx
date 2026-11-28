@@ -888,7 +888,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
           if (up.error) throw up.error;
 
-          const token = (crypto.randomUUID().replace(/-/g, '').slice(0, 10));
+          const token = (crypto.randomUUID().replace(/-/g, ''));
 
           const { data: userData } = await supabase.auth.getUser();
           const { error: docErr } = await supabase.from('order_documents').insert({

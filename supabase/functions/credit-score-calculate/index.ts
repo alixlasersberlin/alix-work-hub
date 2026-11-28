@@ -2,9 +2,11 @@
 // Berechnet Score 0–1000 aus 8 Kategorien und speichert Faktoren + Ergebnis.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Gesch\u00e4ftsf\u00fchrung", "Vertriebsleitung", "Vertrieb", "Finance"]); if (denied) return denied; }
   try {
     const { assessment_id, run_ai = true } = await req.json();
     if (!assessment_id) return json({ error: 'assessment_id required' }, 400);

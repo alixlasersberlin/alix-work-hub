@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 interface CheckPayload {
   id?: string;
@@ -11,6 +12,7 @@ interface CheckPayload {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
 
   try {
     const body = (await req.json()) as CheckPayload;

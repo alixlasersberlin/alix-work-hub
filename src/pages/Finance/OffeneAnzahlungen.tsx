@@ -289,7 +289,7 @@ export default function OffeneAnzahlungen() {
 
       let token: string | null = (doc as any).download_token ?? null;
       if (!token) {
-        token = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+        token = crypto.randomUUID().replace(/-/g, '');
         const { error: uErr } = await supabase.from('order_documents')
           .update({ download_token: token } as any).eq('id', doc.id);
         if (uErr) throw uErr;

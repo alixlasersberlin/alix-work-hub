@@ -1,3 +1,4 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 // Transcribes a single WAV chunk uploaded from the browser (used by MeetingRoom live transcript).
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,7 @@ const AI_KEY = Deno.env.get('LOVABLE_API_KEY')!;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const access = await requireCallerAccess(req, corsHeaders, []); if ('response' in access) return access.response; }
   try {
     const form = await req.formData();
     const file = form.get('file');

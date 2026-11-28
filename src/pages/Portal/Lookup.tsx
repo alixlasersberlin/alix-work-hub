@@ -67,7 +67,7 @@ export default function PortalLookup() {
       return;
     }
     sessionStorage.setItem('alix_portal_status', JSON.stringify(data));
-    sessionStorage.setItem('alix_portal_creds', JSON.stringify({ order_number: orderNumber, zip, email }));
+    sessionStorage.setItem('alix_portal_creds', JSON.stringify({ order_number: orderNumber, zip, email, portal_token: data.portal_token }));
     navigate('/portal/status');
   }, [navigate, orderNumber, zip, email]);
 

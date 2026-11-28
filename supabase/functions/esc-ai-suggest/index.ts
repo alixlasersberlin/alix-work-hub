@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -24,6 +25,7 @@ function daysAhead(n: number) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const access = await requireCallerAccess(req, corsHeaders, []); if ('response' in access) return access.response; }
   try {
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY missing');
     const body: Body = await req.json();

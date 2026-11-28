@@ -3,6 +3,7 @@
 // Match-Kriterien: gleiche E-Mail ODER gleiche normalisierte Telefonnummer (E.164, letzte 8 Ziffern).
 // Kopiert alle ac_messages der Duplikat-Kontakte auf den Master und löscht die Duplikate.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,7 @@ function normEmail(e?: string | null): string | null {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin"]); if (denied) return denied; }
   try {
     const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const body = await req.json().catch(() => ({}));

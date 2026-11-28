@@ -1,6 +1,7 @@
 // Swiss QR-Rechnung: builds SIX QR-payload string and QR reference (Mod-10 recursive check digit)
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -61,6 +62,7 @@ function buildQrPayload(inv: any): string {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"]); if (denied) return denied; }
   const auth = req.headers.get('Authorization') ?? '';
   if (!auth.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

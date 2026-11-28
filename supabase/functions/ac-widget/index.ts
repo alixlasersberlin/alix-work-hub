@@ -30,7 +30,7 @@ const script = (apiKey: string) => `
 
   // Chat widget
   var cfg = null, conv = null, sinceIso = null;
-  try { conv = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch(e){}
+  try { conv = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (conv && !conv.token) conv = null; } catch(e){}
 
   fetch(CHAT + '?action=config&api_key=' + encodeURIComponent(API_KEY))
     .then(function(r){return r.json();}).then(function(c){
@@ -77,7 +77,7 @@ const script = (apiKey: string) => `
         fetch(CHAT+'?action=start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,name:name.value,email:email.value,initial_message:msg.value,page_url:location.href,visitor_hash:sess()})})
           .then(function(r){return r.json();}).then(function(d){
             if(!d.conversation_id){submit.disabled=false;submit.textContent='Chat starten';return;}
-            conv = {id:d.conversation_id, name:name.value};
+            conv = {id:d.conversation_id, name:name.value, token:d.session_token};
             try{localStorage.setItem(LS_KEY,JSON.stringify(conv));}catch(e){}
             body.innerHTML=''; bubble(msg.value, true); renderChat();
           }).catch(function(){submit.disabled=false;submit.textContent='Erneut versuchen';});
@@ -118,7 +118,7 @@ const script = (apiKey: string) => `
                   var t = (d && d.text ? String(d.text).trim() : '');
                   if (!t) return;
                   input.value=''; bubble('🎤 '+t,true);
-                  fetch(CHAT+'?action=send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,message:t,name:conv.name,visitor_hash:sess()})}).catch(function(){});
+                  fetch(CHAT+'?action=send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,session_token:conv.token,message:t,name:conv.name,visitor_hash:sess()})}).catch(function(){});
                 }).catch(function(){ input.disabled=false; input.placeholder='Nachricht schreiben...'; });
             };
             rec.start();
@@ -129,7 +129,7 @@ const script = (apiKey: string) => `
       var btn = h('button','padding:8px 12px;background:'+primary+';color:'+accent+';border:none;border-radius:8px;font-weight:600;cursor:pointer;','Senden');
       row.appendChild(input); if(micBtn) row.appendChild(micBtn); row.appendChild(btn); footer.appendChild(row);
       function send(){var t=input.value.trim(); if(!t) return; input.value=''; bubble(t,true);
-        fetch(CHAT+'?action=send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,message:t,name:conv.name,visitor_hash:sess()})}).catch(function(){});
+        fetch(CHAT+'?action=send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,session_token:conv.token,message:t,name:conv.name,visitor_hash:sess()})}).catch(function(){});
       }
       btn.onclick = send;
       input.addEventListener('keydown', function(e){if(e.key==='Enter'){e.preventDefault();send();}});
@@ -142,7 +142,7 @@ const script = (apiKey: string) => `
       var seenIds = {};
       function tick(){
         if (!conv) return;
-        fetch(CHAT+'?action=poll',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,since:sinceIso})})
+        fetch(CHAT+'?action=poll',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,session_token:conv.token,since:sinceIso})})
           .then(function(r){return r.json();}).then(function(d){
             (d.messages||[]).forEach(function(m){
               if (seenIds[m.id]) return; seenIds[m.id]=true;

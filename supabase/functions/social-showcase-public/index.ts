@@ -7,6 +7,9 @@
 
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+
+const SHOWCASE_ADMIN_ROLES = ['Super Admin', 'Admin', 'Marketing'];
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -69,6 +72,15 @@ Deno.serve(async (req) => {
     const action = String(body.action ?? '');
 
     // --- Admin actions --------------------------------------------------
+    if (action === 'get_showcase_config' || action === 'toggle_showcase') {
+      const access = await requireCallerAccess(req, corsHeaders, SHOWCASE_ADMIN_ROLES);
+      if ('response' in access) return access.response;
+      const requested = String(body.client_id ?? '');
+      if (!/^[0-9a-f-]{36}$/i.test(requested)) return json({ error: 'client_id required' }, 400);
+      // The client record must be visible to the caller under existing row-level rules.
+      const { data: visible } = await access.caller.from('social_clients').select('id').eq('id', requested).maybeSingle();
+      if (!visible) return json({ error: 'Forbidden' }, 403);
+    }
     if (action === 'get_showcase_config') {
       const clientId = String(body.client_id ?? '');
       if (!clientId) return json({ error: 'client_id required' }, 400);

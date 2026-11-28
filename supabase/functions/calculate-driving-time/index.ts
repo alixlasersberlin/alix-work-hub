@@ -43,7 +43,7 @@ async function geocodeOnce(address: string): Promise<[number, number] | null | "
     if (!r.ok) {
       // 5xx → retry, 4xx → permanent fail
       if (r.status >= 500) return "retry";
-      console.error("Geocode failed", address, r.status);
+      console.error("Geocode failed", r.status);
       return null;
     }
     const j = await r.json();
@@ -53,7 +53,7 @@ async function geocodeOnce(address: string): Promise<[number, number] | null | "
     }
     return null;
   } catch (e) {
-    console.warn("Geocode exception (will retry)", address, (e as Error).message);
+    console.warn("Geocode exception (will retry)", (e as Error).message);
     return "retry";
   }
 }
@@ -72,7 +72,7 @@ async function geocode(_apiKey: string, address: string): Promise<[number, numbe
     }
     await sleep(500 * (attempt + 1));
   }
-  console.error("Geocode failed after retries", address);
+  console.error("Geocode failed after retries");
   geoCache.set(key, null);
   return null;
 }

@@ -3,6 +3,7 @@
 // Wird nach dem letzten Signieren durch sig-submit aufgerufen (oder per REST).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { PDFDocument, StandardFonts, rgb } from 'npm:pdf-lib@1.17.1';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,7 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   let body: any;

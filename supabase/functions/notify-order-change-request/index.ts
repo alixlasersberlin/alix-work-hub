@@ -1,5 +1,6 @@
 import "../_shared/global-bcc.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +9,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
   try {
     const { id } = await req.json();
     if (!id) return json({ error: "id required" }, 400);

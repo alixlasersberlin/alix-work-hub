@@ -29,21 +29,24 @@ export function CalendarConnectionsCard() {
   }
   useEffect(() => { load(); }, []);
 
-  function connect(provider: 'google' | 'microsoft') {
+  async function connect(provider: 'google' | 'microsoft') {
     if (!userId) return;
+    const { data: issued, error: stateError } = await supabase.functions.invoke('esc-calendar-oauth', { body: { action: 'issue_state' } });
+    const state = (issued as { state?: string } | null)?.state;
+    if (stateError || !state) return toast.error('Kalenderverbindung konnte nicht vorbereitet werden');
     const redirectUri = `${SUPABASE_URL}/functions/v1/esc-calendar-oauth?provider=${provider}`;
     let authUrl = '';
     if (provider === 'google') {
       const clientId = (import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID as string) ?? '';
       if (!clientId) return toast.error('VITE_GOOGLE_OAUTH_CLIENT_ID nicht konfiguriert');
       const scope = encodeURIComponent('https://www.googleapis.com/auth/calendar.events email profile');
-      authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${userId}`;
+      authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${encodeURIComponent(state)}`;
     } else {
       const clientId = (import.meta.env.VITE_MS_OAUTH_CLIENT_ID as string) ?? '';
       const tenant = (import.meta.env.VITE_MS_OAUTH_TENANT as string) ?? 'common';
       if (!clientId) return toast.error('VITE_MS_OAUTH_CLIENT_ID nicht konfiguriert');
       const scope = encodeURIComponent('offline_access Calendars.ReadWrite User.Read');
-      authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=query&scope=${scope}&state=${userId}`;
+      authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=query&scope=${scope}&state=${encodeURIComponent(state)}`;
     }
     window.location.href = authUrl;
   }

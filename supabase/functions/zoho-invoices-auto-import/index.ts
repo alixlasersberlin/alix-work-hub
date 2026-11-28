@@ -1,5 +1,6 @@
 import "../_shared/global-bcc.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { machineAuthorized, requireJobAccess } from "../_shared/job-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -236,33 +237,24 @@ Deno.serve(async (req) => {
 
   let runId: string | null = null;
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const isService = authHeader === `Bearer ${serviceKey}`;
+    // Only private job credentials or active Admin/Super Admin accounts may start an import.
+    const denied = await requireJobAccess(req, corsHeaders, ["Admin", "Super Admin"]);
+    if (denied) return denied;
+    const isService = machineAuthorized(req, Deno.env.get("CRON_SECRET") ?? "", serviceKey);
     let userId: string | null = null;
-
     if (!isService) {
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
+      const { data: { user } } = await createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
         auth: { autoRefreshToken: false, persistSession: false },
-      });
-      const { data: { user } } = authHeader.startsWith("Bearer ")
-        ? await userClient.auth.getUser()
-        : { data: { user: null } } as any;
-      if (user) {
-        // Angemeldeter Aufruf (manueller Start): nur Admin / Super Admin
-        userId = user.id;
-        const { data: roleRows } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
-        const names = (roleRows ?? []).map((r: any) => r.roles?.name);
-        if (!names.includes("Admin") && !names.includes("Super Admin")) return json({ error: "Forbidden" }, 403);
-      }
-      // Ohne Benutzer-Session = geplanter Cron-Aufruf (pg_cron mit apikey), wie bei den übrigen Job-Funktionen
+      }).auth.getUser();
+      userId = user?.id ?? null;
     }
-
 
     const body = (await req.json().catch(() => ({}))) as Payload;
     const triggerType = body.trigger_type ?? (isService ? "cron" : "manual");
-    const to = body.to ?? MAIL_TO;
-    const cc = body.cc ?? MAIL_CC;
+    // Report recipients are fixed server-side; callers cannot redirect financial reports.
+    const to = MAIL_TO;
+    const cc = MAIL_CC;
 
     // ---- Testmail: Beispielinhalt, kein Import ----
     if (body.test_email) {

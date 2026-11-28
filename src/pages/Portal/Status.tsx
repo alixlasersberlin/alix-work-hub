@@ -36,7 +36,7 @@ const STEPS = [
 export default function PortalStatus() {
   const navigate = useNavigate();
   const [data, setData] = useState<StatusPayload | null>(null);
-  const [creds, setCreds] = useState<{ order_number: string; zip: string; email: string } | null>(null);
+  const [creds, setCreds] = useState<{ order_number: string; zip: string; email: string; portal_token?: string } | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem('alix_portal_status');

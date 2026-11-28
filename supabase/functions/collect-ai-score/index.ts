@@ -1,6 +1,7 @@
 // ALIX COLLECT – KI-Risikobewertung (Zahlungswahrscheinlichkeit & Empfehlung)
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -26,6 +27,7 @@ function baseRisk(c: any, history: { paid: number; total: number; avgDelay: numb
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"]); if (denied) return denied; }
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const body = await req.json().catch(() => ({}));

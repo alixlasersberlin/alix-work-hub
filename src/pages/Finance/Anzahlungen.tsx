@@ -298,7 +298,7 @@ export default function FinanceAnzahlungen() {
         .upload(filePath, blob, { contentType: 'application/pdf', upsert: true });
       if (upload.error) throw upload.error;
 
-      const token = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+      const token = crypto.randomUUID().replace(/-/g, '');
       const { data: userData } = await supabase.auth.getUser();
       const { data: inserted, error: docErr } = await supabase
         .from('order_documents')

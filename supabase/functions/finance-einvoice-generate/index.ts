@@ -2,6 +2,7 @@
 // Optional: archives the XML in finance-documents storage + finance_documents table
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const xmlEscape = (s: unknown) =>
   String(s ?? '')
@@ -146,6 +147,7 @@ function buildCII(p: InvoicePayload): { xml: string; totals: { net: number; tax:
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
   try {
     const payload = (await req.json()) as InvoicePayload;
     if (!payload?.invoice_number || !payload?.invoice_date || !Array.isArray(payload?.items) || payload.items.length === 0) {

@@ -1,6 +1,7 @@
 // Async bulk creator: stores CSV/recipient batch as sig_bulk_jobs and creates
 // one sig_requests entry per row via sig-create-request. Progress via Realtime.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { maskEmail } from '../_shared/security-core.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,7 +104,7 @@ Deno.serve(async (req) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         ok++;
       } catch (e) {
-        console.error('bulk row failed', r.email, e);
+        console.error('bulk row failed', maskEmail(r.email), (e as Error)?.message ?? 'error');
         failed++;
       }
       // Progress-Update alle 1 Zeile → triggert Realtime

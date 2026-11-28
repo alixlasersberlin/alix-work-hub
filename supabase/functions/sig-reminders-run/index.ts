@@ -1,6 +1,7 @@
 // sig-reminders-run: läuft per Cron; verschickt Erinnerungen an offene Unterzeichner
 // gemäß sig_reminder_rules (offsets_hours seit sent_at) und markiert abgelaufene Anfragen.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const admin = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   const ANON = Deno.env.get('SUPABASE_ANON_KEY')!;

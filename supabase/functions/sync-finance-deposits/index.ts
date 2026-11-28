@@ -2,9 +2,11 @@
 // Does NOT modify any existing tables. Only upserts into finance_deposits.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH"]); if (denied) return denied; }
 
   try {
     const supabase = createClient(

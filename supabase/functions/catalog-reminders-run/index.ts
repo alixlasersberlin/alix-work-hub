@@ -1,5 +1,6 @@
 // Katalog-Reminders: scannt Katalog auf fehlende Übersetzungen, veraltete Preise, fehlende Bilder
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin", "Katalog", "Katalog Preise"]); if (denied) return denied; }
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const { data: rules } = await supabase.from('catalog_reminder_rules').select('*').eq('enabled', true);

@@ -22,6 +22,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
+    if (token.length > 128 || !/^[0-9a-zA-Z_-]+$/.test(token)) {
+      return new Response('Ungültiger Link', { status: 400, headers: corsHeaders })
+    }
+    // Throttle per client address so short legacy tokens cannot be enumerated.
+    const ip = req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const { data: limited, error: limitError } = await admin.rpc('check_rate_limit', { _bucket: `od-download:${ip}`, _max: 30, _window_seconds: 600 })
+    if (limitError || limited === true) {
+      return new Response('Zu viele Anfragen. Bitte später erneut versuchen.', { status: 429, headers: corsHeaders })
+    }
 
     const { data: doc, error } = await admin
       .from('order_documents')

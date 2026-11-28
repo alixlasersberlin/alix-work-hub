@@ -1,5 +1,6 @@
 // Omnichannel Router — picks the best rule + agent for an incoming interaction.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,7 @@ type RouteReq = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
   try {
     const body = await req.json() as RouteReq;
     if (!body.channel) return new Response(JSON.stringify({ error: 'channel required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

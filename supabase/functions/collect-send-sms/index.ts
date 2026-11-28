@@ -1,6 +1,7 @@
 // ALIX COLLECT – SMS/WhatsApp-Eskalation über Twilio
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { storedPhone } from '../_shared/security-core.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -40,6 +41,7 @@ Deno.serve(async (req) => {
           || cronSecret === (Deno.env.get('CRON_SECRET') ?? '\u0000')))
       || (!!bearer && bearer === SERVICE_KEY);
     let actor: string | null = null;
+    let callerClient: any = null;
 
     if (!isCron) {
       const authHeader = req.headers.get('Authorization') ?? '';
@@ -48,6 +50,7 @@ Deno.serve(async (req) => {
       const { data: { user } } = await userClient.auth.getUser();
       if (!user) return json({ error: 'Unauthorized' }, 401);
       actor = user.id;
+      callerClient = userClient;
       const { data: rolesRows } = await admin.from('user_roles').select('roles(name)').eq('user_id', user.id);
       const roleNames = (rolesRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
       if (!roleNames.some((n: string) => ALLOWED.includes(n))) return json({ error: 'Keine Berechtigung' }, 403);
@@ -60,11 +63,18 @@ Deno.serve(async (req) => {
     const channel: 'sms' | 'whatsapp' = body?.channel === 'whatsapp' ? 'whatsapp' : 'sms';
     if (!caseId) return json({ error: 'case_id erforderlich' }, 400);
 
-    const { data: c } = await admin.from('collect_cases').select('*').eq('id', caseId).maybeSingle();
+    // Staff read the case through their own row-level permissions (tenant scope); jobs use the service client.
+    const { data: c } = await (callerClient ?? admin).from('collect_cases').select('*').eq('id', caseId).maybeSingle();
     if (!c) return json({ error: 'Fall nicht gefunden' }, 404);
 
     const phone = normalizePhone(body?.to || c.customer_phone || '');
     if (!phone) return json({ error: 'Keine gültige Telefonnummer hinterlegt' }, 400);
+    if (body?.to) {
+      const { data: cust } = c.customer_id ? await admin.from('customers').select('phone').eq('id', c.customer_id).maybeSingle() : { data: null };
+      if (!storedPhone(phone, c.customer_phone, (cust as any)?.phone)) {
+        return json({ error: 'Empfänger entspricht nicht der gespeicherten Kundennummer' }, 403);
+      }
+    }
 
     const amount = money(c.open_amount, c.currency ?? 'EUR');
     const text: string = String(

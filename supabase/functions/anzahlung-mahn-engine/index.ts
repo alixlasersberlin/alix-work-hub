@@ -3,6 +3,7 @@
 // Mahnstufe aus app_settings.key='anzahlung_mahnung_config' und versendet je Stufe genau
 // eine E-Mail. Doppelversand wird über customer_communication_log verhindert.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,6 +48,7 @@ function daysOverdue(due: string | null): number {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
   try {
     const body = await req.json().catch(() => ({}));
     const dryRun = body?.dry_run === true;

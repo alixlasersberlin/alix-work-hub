@@ -5,6 +5,7 @@
 
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -48,6 +49,7 @@ async function getSetting(key: string, def: string): Promise<string> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await requireJobAccess(req, corsHeaders, []); if (denied) return denied; }
   const baseUrl = new URL(req.url).searchParams.get('base_url') || 'https://alixwork.de';
 
   const reminderDaysBefore = parseInt(await getSetting('mediapaket.reminder_days_before', '3')) || 3;

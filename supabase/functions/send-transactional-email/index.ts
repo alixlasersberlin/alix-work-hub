@@ -4,6 +4,7 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { maskEmail } from '../_shared/security-core.ts';
 
 
 
@@ -444,7 +445,7 @@ Deno.serve(async (req) => {
 
     if (failures.length > 0) {
       console.error('Some email sends failed', failures.map((f) => ({
-        recipient: f.recipient,
+        recipient: maskEmail(f.recipient),
         error: (f.res as PromiseRejectedResult).reason?.message,
       })))
     }
@@ -490,10 +491,10 @@ Deno.serve(async (req) => {
     const primaryOk = results[0].status === 'fulfilled'
     console.log('Transactional email sent', {
       templateName,
-      effectiveRecipient,
+      effectiveRecipient: maskEmail(effectiveRecipient),
       primaryOk,
       copiesSent: results.slice(1).filter((r) => r.status === 'fulfilled').length,
-      copyRecipients: recipients.slice(1).map((r) => r.email),
+      copyRecipients: recipients.slice(1).map((r) => maskEmail(r.email)),
     })
 
     if (!primaryOk) {
@@ -515,7 +516,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error: any) {
-    console.error('Failed to send email', { error: error?.message || error, templateName, effectiveRecipient })
+    console.error('Failed to send email', { error: error?.message || error, templateName, effectiveRecipient: maskEmail(effectiveRecipient) })
     return new Response(
       JSON.stringify({ error: error?.message || 'Failed to send email' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

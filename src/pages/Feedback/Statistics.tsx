@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FeedbackHeader } from './_shared';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Download } from 'lucide-react';
+import { csvQuoted } from '@/lib/csvSafe';
 
 type Q = { id: string; label: string; type: string; position: number };
 
@@ -87,7 +88,7 @@ export default function FeedbackStatistics() {
     const lines = [['Frage', 'Antwort', 'Anzahl'].join(';')];
     for (const q of questions) {
       const s = statsFor(q);
-      s.chart.forEach(c => lines.push([q.label, c.name, c.value].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')));
+      s.chart.forEach(c => lines.push([q.label, c.name, c.value].map(v => csvQuoted(v)).join(';')));
     }
     const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');

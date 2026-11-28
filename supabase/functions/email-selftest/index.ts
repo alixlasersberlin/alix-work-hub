@@ -1,5 +1,6 @@
 import "../_shared/global-bcc.ts";
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  { const denied = await requireJobAccess(req, corsHeaders, ["Super Admin", "Admin"]); if (denied) return denied; }
 
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
   if (!apiKey) {
