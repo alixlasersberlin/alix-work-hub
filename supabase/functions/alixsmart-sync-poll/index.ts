@@ -4,10 +4,12 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { toE164 } from "../_shared/phone-e164.ts";
+import { requireProcessAccess } from "../_shared/process-access.ts";
+import { z } from "npm:zod@3";
 
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "");
+const SERVICE_ROLE = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 const API_BASE = (Deno.env.get("ALIXSMART_API_BASE_URL") ?? "").replace(/\/$/, "");
 const API_KEY = Deno.env.get("ALIXSMART_API_KEY") ?? "";
 const EXPORT_KEY = Deno.env.get("ALIXSMART_EXPORT_KEY") ?? "";
@@ -77,7 +79,7 @@ async function fetchAllItems(entity: Entity, since: string | null): Promise<any[
     const text = await res.text();
     if (!res.ok) {
       throw new Error(
-        `AlixSmart ${entity} (${TABLE_MAP[entity]}) ${res.status}: ${text.slice(0, 300)} — Endpunkt: ${url.pathname}${url.search}`,
+        `AlixSmart ${entity} upstream HTTP ${res.status}`,
       );
     }
     let json: any;
@@ -265,6 +267,8 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
     error = (e as Error).message;
   }
 
+  if (failed > 0 && !error) error = `${failed} sync rows failed; cursor preserved`;
+  if (!run?.id) throw new Error("Sync audit record missing");
   await supabase.from("alixsmart_sync_runs").update({
     status: error ? "failed" : "success",
     items_processed: processed,
@@ -290,27 +294,37 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin']);
+  if ('response' in access) return access.response;
+  if (!access.machine) {
+    // This export is global and has no confirmed per-tenant contract. Preserve the
+    // existing admin operation only when every active tenant is explicitly assigned.
+    const checker = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: allTenants, error } = await checker.from('tenants').select('id').eq('is_active', true);
+    if (error || !allTenants?.length || allTenants.some(t => !access.tenantIds.includes(t.id))) return new Response(JSON.stringify({ error: 'Global export requires all active tenant assignments' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
   if ((!API_BASE && !EXPORT_URL) || (!EXPORT_KEY && !API_KEY)) {
     return new Response(JSON.stringify({ error: "ALIXSMART_API_BASE_URL / ALIXSMART_EXPORT_KEY not configured" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
+  const parsed = z.object({ action: z.enum(['sync', 'list_counts', 'dry_run', 'peek']).optional(), trigger: z.string().max(40).optional(), entities: z.array(z.enum(ENTITIES)).min(1).max(4).optional(), full: z.boolean().optional(), table: z.enum(['profiles', 'devices', 'academy_bookings', 'academy_sessions']).optional() }).strict().safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid sync request' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const body = parsed.data;
+  const action = body.action ?? new URL(req.url).searchParams.get('action') ?? 'sync';
+  if (!['sync', 'list_counts', 'dry_run', 'peek'].includes(action)) return new Response(JSON.stringify({ error: 'Invalid sync action' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const trigger = access.machine ? 'cron' : 'manual';
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
-  let body: any = {};
-  try { body = req.method === "POST" ? await req.json() : {}; } catch {}
-  const trigger = body.trigger ?? "manual";
-  const action = body.action ?? new URL(req.url).searchParams.get("action");
   if (action === "list_counts" || action === "dry_run" || action === "peek") {
     const url = new URL(exportBase());
     url.searchParams.set("action", action === "peek" ? "export" : action);
     if (action === "peek") { url.searchParams.set("table", body.table ?? "devices"); url.searchParams.set("limit", "1"); }
     const res = await fetch(url.toString(), { headers: exportHeaders() });
+    if (!res.ok) return new Response(JSON.stringify({ error: `AlixSmart upstream HTTP ${res.status}` }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const text = await res.text();
     return new Response(text, { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-  const entities: Entity[] = Array.isArray(body.entities) && body.entities.length
-    ? body.entities.filter((e: string) => ENTITIES.includes(e as Entity))
-    : [...ENTITIES];
+  const entities: Entity[] = body.entities ?? [...ENTITIES];
 
   const results = [];
   for (const e of entities) results.push(await runEntity(supabase, e, trigger, !!body.full));

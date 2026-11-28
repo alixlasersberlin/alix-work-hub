@@ -3,6 +3,9 @@
 // Input:  { pdf_base64: string, doc_type: 'invoice'|'offer'|'order_confirmation'|'service_report', document_ref?: string }
 // Output: { pdf_base64: string, applied: boolean, signer_name?: string }
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { machineAuthorized, requireJobAccess } from '../_shared/job-auth.ts';
+import { facsimileRoles } from '../_shared/document-operation.ts';
 import { PDFDocument, StandardFonts, rgb } from 'npm:pdf-lib@1.17.1';
 
 const corsHeaders = {
@@ -32,17 +35,27 @@ function bytesToB64(bytes: Uint8Array): string {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  let actor: string | null = null;
+  if (machineAuthorized(req, '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')) {
+    const denied = await requireJobAccess(req, corsHeaders);
+    if (denied) return denied;
+  } else {
+    const access = await requireCallerAccess(req, corsHeaders, facsimileRoles);
+    if ('response' in access) return access.response;
+    actor = access.user.id;
+  }
   const admin = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    (Deno.env.get('SUPABASE_URL') ?? ''),
+    (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''),
   );
 
   let body: any;
   try { body = await req.json(); } catch {
     return json({ error: 'Invalid JSON' }, 400);
   }
-  const { pdf_base64, doc_type, document_ref, applied_by } = body || {};
-  if (!pdf_base64 || !doc_type || !ALLOWED_TYPES.has(doc_type)) {
+  const { pdf_base64, doc_type, document_ref } = body || {};
+  if (typeof pdf_base64 !== 'string' || !pdf_base64 || pdf_base64.length > 28000000 || typeof doc_type !== 'string' || !ALLOWED_TYPES.has(doc_type) || (document_ref != null && (typeof document_ref !== 'string' || document_ref.length > 200))) {
     return json({ error: 'pdf_base64 and valid doc_type required' }, 400);
   }
 
@@ -63,8 +76,8 @@ Deno.serve(async (req) => {
   const imgBytes = new Uint8Array(await imgFile.arrayBuffer());
 
   // Load PDF
-  const pdfBytes = b64ToBytes(pdf_base64);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  let pdfDoc: PDFDocument;
+  try { pdfDoc = await PDFDocument.load(b64ToBytes(pdf_base64)); } catch { return json({ error: 'Invalid PDF' }, 400); }
   let sigImage;
   try {
     sigImage = cfg.image_path.toLowerCase().endsWith('.jpg') || cfg.image_path.toLowerCase().endsWith('.jpeg')
@@ -76,6 +89,7 @@ Deno.serve(async (req) => {
 
   const pages = pdfDoc.getPages();
   const page = pages[pages.length - 1];
+  if (!page) return json({ error: 'PDF has no pages' }, 400);
   const { width: pw } = page.getSize();
 
   const w = Number(cfg.width) || 160;
@@ -110,7 +124,7 @@ Deno.serve(async (req) => {
   await admin.from('sig_facsimile_log').insert({
     doc_type,
     document_ref: document_ref ?? null,
-    applied_by: applied_by ?? null,
+    applied_by: actor,
     settings_id: cfg.id,
   });
 

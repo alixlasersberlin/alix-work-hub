@@ -2,7 +2,8 @@ import "../_shared/global-bcc.ts";
 // CMR – Portal-Zugangslink per E-Mail an den Kunden senden (Resend).
 // Rein additiv: betrifft ausschließlich den Mandanten CMR.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireCallerAccess } from "../_shared/caller-access.ts";
+import { z } from "npm:zod@3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,50 +11,40 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 
 function esc(s: unknown) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] ?? c));
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    const userSb = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: authHeader } } });
-    const { data: u } = await userSb.auth.getUser();
-    if (!u?.user) return Response.json({ error: "Not authenticated" }, { status: 401, headers: corsHeaders });
-
-    const roleChecks = await Promise.all(
-      ["Super Admin", "Admin", "Geschäftsführung", "CMR"].map((r) => userSb.rpc("has_role", { check_role: r })),
-    );
-    if (!roleChecks.some((r) => !!r.data)) {
-      return Response.json({ error: "Forbidden" }, { status: 403, headers: corsHeaders });
-    }
-
-    const body = await req.json().catch(() => ({}));
-    const tokenId: string = body?.tokenId;
-    const portalUrl: string = body?.portalUrl;
-    const toIn: string | undefined = body?.to;
-    if (!tokenId || !portalUrl) {
-      return Response.json({ error: "tokenId und portalUrl erforderlich" }, { status: 400, headers: corsHeaders });
-    }
+    if (req.method !== 'POST') return Response.json({ error: 'Method not allowed' }, { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR']);
+    if ('response' in access) return access.response;
+    const parsed = z.object({ tokenId: z.string().uuid(), portalUrl: z.string().max(2000).optional(), to: z.string().trim().email().optional() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return Response.json({ error: 'Invalid invitation' }, { status: 400, headers: corsHeaders });
+    const { tokenId, to: toIn } = parsed.data;
     if (!RESEND_API_KEY) {
       return Response.json({ error: "RESEND_API_KEY fehlt" }, { status: 400, headers: corsHeaders });
     }
 
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { data: tok } = await sb.from("cmr_portal_tokens").select("*").eq("id", tokenId).maybeSingle();
-    if (!tok) return Response.json({ error: "Zugang nicht gefunden" }, { status: 404, headers: corsHeaders });
+    const sb = access.caller;
+    const { data: tok, error: tokenError } = await sb.from("cmr_portal_tokens").select("*").eq("id", tokenId).in("tenant_id", access.tenants.map(t => t.id)).maybeSingle();
+    if (tokenError || !tok) return Response.json({ error: "Zugang nicht gefunden" }, { status: 404, headers: corsHeaders });
 
-    const to = (toIn || tok.customer_email || "").trim();
-    if (!to.includes("@")) return Response.json({ error: "Keine gültige E-Mail-Adresse" }, { status: 400, headers: corsHeaders });
+    if (!access.tenants.some(t => t.id === tok.tenant_id)) return Response.json({ error: 'Invitation tenant denied' }, { status: 403, headers: corsHeaders });
+    if (tok.is_active !== true || (tok.expires_at && (!Number.isFinite(Date.parse(tok.expires_at)) || Date.parse(tok.expires_at) <= Date.now()))) return Response.json({ error: 'Portal access inactive or expired' }, { status: 409, headers: corsHeaders });
+    const storedEmail = z.string().trim().email().safeParse(tok.customer_email);
+    if (!storedEmail.success || typeof tok.token !== 'string' || !tok.token) return Response.json({ error: 'Stored portal identity missing' }, { status: 400, headers: corsHeaders });
+    const to = storedEmail.data;
+    if (toIn && toIn.toLowerCase() !== to.toLowerCase()) return Response.json({ error: 'Recipient must match stored portal customer' }, { status: 403, headers: corsHeaders });
+    const portalUrl = new URL(`/cmr-portal/${encodeURIComponent(tok.token)}`, 'https://app.alixwork.de').href;
 
-    const { data: settings } = await sb.from("cmr_settings").select("*").eq("tenant_id", tok.tenant_id).maybeSingle();
+    const { data: settings, error: settingsError } = await sb.from("cmr_settings").select("*").eq("tenant_id", tok.tenant_id).maybeSingle();
+    if (settingsError) return Response.json({ error: "Invitation settings inaccessible" }, { status: 403, headers: corsHeaders });
     const company = settings?.company_name || "CMR";
     const from = `${settings?.email_from_name || company} <${settings?.email_from_address || "onboarding@resend.dev"}>`;
 
@@ -82,7 +73,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: out?.message || "Versand fehlgeschlagen" }, { status: 502, headers: corsHeaders });
     }
 
-    await sb.from("cmr_portal_tokens").update({ customer_email: to, updated_at: new Date().toISOString() }).eq("id", tokenId);
+    // Sending an invitation never changes the customer or future portal recipient.
 
     return Response.json({ ok: true, id: out?.id ?? null }, { headers: corsHeaders });
   } catch (e) {

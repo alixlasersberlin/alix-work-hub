@@ -11,10 +11,12 @@
 
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { customerSectionPatch, mediaPackagePrefix, packageFilePathAllowed, safeUploadCategory, statusNoticeAllowed } from '../_shared/mediapaket-input.ts';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const TOKEN_SECRET = Deno.env.get('MEDIAPAKET_TOKEN_SECRET')!;
+const SUPABASE_URL = (Deno.env.get('SUPABASE_URL') ?? '');
+const SERVICE_ROLE = (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+const TOKEN_SECRET = (Deno.env.get('MEDIAPAKET_TOKEN_SECRET') ?? '');
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
@@ -44,12 +46,16 @@ async function signToken(mpId: string): Promise<string> {
 
 async function verifyToken(token: string): Promise<string | null> {
   try {
-    const [encId, sig] = token.split('.');
+    if (!TOKEN_SECRET || typeof token !== 'string') return null;
+    const parts = token.split('.');
+    if (parts.length !== 2) return null;
+    const [encId, sig] = parts;
     if (!encId || !sig) return null;
     const mpId = b64urlDecode(encId);
     if (!/^[0-9a-f-]{36}$/i.test(mpId)) return null;
-    const expected = await hmac(mpId);
-    if (expected !== sig) return null;
+    const key = await crypto.subtle.importKey('raw', enc.encode(TOKEN_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+    const signature = Uint8Array.from(b64urlDecode(sig), c => c.charCodeAt(0));
+    if (!await crypto.subtle.verify('HMAC', key, signature, enc.encode(mpId))) return null;
     return mpId;
   } catch { return null; }
 }
@@ -80,7 +86,7 @@ async function notifyStaff(opts: {
     }
     if (recipients.size === 0) recipients.add(staffInbox);
     const studioLabel = (mp as any)?.studio_name || cust?.name || 'Kunde';
-    const base = (opts.base_url || 'https://alixwork.de').replace(/\/$/, '');
+    const base = 'https://alixwork.de';
     const orderLink = mp?.order_id ? `${base}/auftraege/${mp.order_id}?tab=mediapaket` : `${base}/`;
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
@@ -167,17 +173,45 @@ Deno.serve(async (req) => {
       : {};
     const action = url.searchParams.get('action') || parsedBody?.action || null;
 
+    // Staff actions never accept a customer token or privileged-key impersonation.
+    const staffActions = new Set(['issue_token', 'duplicate', 'notify_customer', 'notify_question', 'staff_message', 'notify_customer_status', 'send_whatsapp', 'add_watcher', 'handoff_production', 'create_from_template', 'snapshot', 'list_snapshots', 'rollback', 'toggle_showcase', 'get_showcase_config', 'gdpr_export', 'anonymize']);
+    let staffAccess: Exclude<Awaited<ReturnType<typeof requireCallerAccess>>, { response: Response }> | undefined;
+    if (typeof action === 'string' && staffActions.has(action)) {
+      if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
+      const access = await requireCallerAccess(req, corsHeaders);
+      if ('response' in access) return access.response;
+      staffAccess = access;
+      if (['rollback', 'anonymize'].includes(action) && !access.roles.includes('Super Admin')) return json({ error: 'Super Admin required' }, 403);
+      if (!['list_snapshots', 'get_showcase_config', 'gdpr_export'].includes(action)) {
+        const { data: allowed, error } = await access.caller.rpc('can_manage_media_packages');
+        if (error || allowed !== true) return json({ error: 'media_package_write_denied' }, 403);
+      }
+      let customerId: string | null = parsedBody.customer_id ?? null;
+      if (parsedBody.mp_id) {
+        const { data: parent, error } = await access.caller.from('media_packages').select('id,customer_id,tenant_id').eq('id', parsedBody.mp_id).maybeSingle();
+        if (error || !parent || (parent.tenant_id && !access.tenants.some(t => t.id === parent.tenant_id))) return json({ error: 'media_package_scope_denied' }, 403);
+        customerId = parent.customer_id;
+      }
+      if (customerId) {
+        const { data: customer, error } = await access.caller.from('customers').select('id,source_system').eq('id', customerId).maybeSingle();
+        if (error || !customer || !access.tenants.some(t => t.zoho_source_system === customer.source_system)) return json({ error: 'customer_scope_denied' }, 403);
+      }
+      const orderId = parsedBody.target_order_id ?? parsedBody.order_id;
+      if (orderId) {
+        const { data: order, error } = await access.caller.from('orders').select('id,customer_id,source_system').eq('id', orderId).maybeSingle();
+        if (error || !order || order.customer_id !== customerId || !access.tenants.some(t => t.zoho_source_system === order.source_system)) return json({ error: 'order_scope_denied' }, 403);
+      }
+    }
+
     // Staff issue-token endpoint (requires authenticated staff)
     if (action === 'issue_token') {
       const auth = req.headers.get('Authorization');
       if (!auth) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), {
         global: { headers: { Authorization: auth } }, auth: { persistSession: false }
       });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const { data: canManage } = await admin.rpc('can_manage_media_packages').single().then(r => r).catch(() => ({ data: null }));
-      // fallback: check via user client (RLS)
       const body = parsedBody;
       const mpId = body.mp_id;
       if (!mpId) return json({ error: 'mp_id required' }, 400);
@@ -192,7 +226,7 @@ Deno.serve(async (req) => {
     if (action === 'duplicate') {
       const auth = req.headers.get('Authorization');
       if (!auth) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), {
         global: { headers: { Authorization: auth } }, auth: { persistSession: false }
       });
       const { data: userData } = await userClient.auth.getUser();
@@ -242,7 +276,7 @@ Deno.serve(async (req) => {
     if (action === 'notify_customer') {
       const auth = req.headers.get('Authorization');
       if (!auth) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), {
         global: { headers: { Authorization: auth } }, auth: { persistSession: false }
       });
       const { data: userData } = await userClient.auth.getUser();
@@ -258,8 +292,7 @@ Deno.serve(async (req) => {
       if (!mp) return json({ error: 'forbidden' }, 403);
       const { data: cust, error: custErr } = await admin.from('customers')
         .select('email, company_name, contact_name').eq('id', mp.customer_id).maybeSingle();
-      console.log('notify_customer lookup', { mp_id: mpId, customer_id: mp.customer_id, cust, custErr });
-      if (!cust?.email) return json({ error: 'customer has no email', debug: { customer_id: mp.customer_id, custErr: custErr?.message ?? null, cust } }, 400);
+      if (custErr || !cust?.email) return json({ error: 'customer has no email' }, 400);
       const token = await signToken(mpId);
       const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
       const html = `
@@ -304,7 +337,7 @@ Deno.serve(async (req) => {
     if (action === 'notify_question') {
       const auth = req.headers.get('Authorization');
       if (!auth) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), {
         global: { headers: { Authorization: auth } }, auth: { persistSession: false }
       });
       const { data: userData } = await userClient.auth.getUser();
@@ -364,7 +397,7 @@ Deno.serve(async (req) => {
     if (action === 'staff_message') {
       const auth = req.headers.get('Authorization');
       if (!auth) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), {
         global: { headers: { Authorization: auth } }, auth: { persistSession: false }
       });
       const { data: userData } = await userClient.auth.getUser();
@@ -425,14 +458,15 @@ Deno.serve(async (req) => {
       const newStatus = body.new_status;
       const baseUrl = 'https://alixwork.de';
       if (!mpId || !newStatus) return json({ error: 'required' }, 400);
-      const { data: mp } = await admin.from('media_packages').select('customer_id').eq('id', mpId).maybeSingle();
+      const { data: mp } = await staffAccess?.caller.from('media_packages').select('customer_id,status').eq('id', mpId).maybeSingle() ?? { data: null };
+      if (!statusNoticeAllowed(newStatus, mp?.status)) return json({ error: 'status_does_not_match_saved_package' }, 409);
       if (!mp?.customer_id) return json({ ok: true, skipped: 'no customer' });
       const { data: cust } = await admin.from('customers').select('email, company_name, contact_name').eq('id', mp.customer_id).maybeSingle();
       if (!cust?.email) return json({ ok: true, skipped: 'no email' });
       const LABELS: Record<string, string> = {
         in_review: 'wird geprüft', in_production: 'ist in Produktion', completed: 'ist abgeschlossen',
       };
-      const label = LABELS[newStatus] || newStatus;
+      const label = LABELS[newStatus];
       const token = await signToken(mpId);
       const link = `${baseUrl}/preview/mediapaket?token=${encodeURIComponent(token)}`;
       const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
@@ -441,11 +475,8 @@ Deno.serve(async (req) => {
         <p>Statusaktualisierung: Ihr Mediapaket <strong>${label}</strong>.</p>
         <p style="margin:24px 0"><a href="${link}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Vorschau öffnen</a></p>
       </div>`;
-      await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
-        body: JSON.stringify({ to: cust.email, subject: `Media Paket: ${label}`, html, from: 'vertrieb@alixwork.de' }),
-      });
+      const notice = await staffAccess?.caller.functions.invoke('send-mail', { body: { to_email: cust.email, customer_id: mp.customer_id, subject: `Media Paket: ${label}`, body_html: html, from_email: 'vertrieb@alixwork.de' } });
+      if (!notice || notice.error || notice.data?.error || notice.data?.ok === false || notice.data?.success === false) return json({ error: 'customer_notice_not_confirmed' }, 502);
       await admin.from('media_package_history').insert({
         media_package_id: mpId, action: 'status_customer_notified',
         new_value: { email: cust.email, status: newStatus } as any,
@@ -474,11 +505,8 @@ Deno.serve(async (req) => {
               <p>Ihr Mediapaket ist fertiggestellt. Wir würden uns über eine kurze Rückmeldung freuen.</p>
               <p style="margin:24px 0"><a href="${baseUrl}/portal" style="background:#d4af37;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Feedback geben</a></p>
             </div>`;
-            await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
-              body: JSON.stringify({ to: cust.email, subject: 'Ihr Feedback zum Mediapaket', html: reviewHtml, from: 'vertrieb@alixwork.de' }),
-            });
+            const reviewNotice = await staffAccess?.caller.functions.invoke('send-mail', { body: { to_email: cust.email, customer_id: mp.customer_id, subject: 'Ihr Feedback zum Mediapaket', body_html: reviewHtml, from_email: 'vertrieb@alixwork.de' } });
+            if (!reviewNotice || reviewNotice.error || reviewNotice.data?.error || reviewNotice.data?.ok === false || reviewNotice.data?.success === false) return json({ error: 'review_notice_not_confirmed' }, 502);
             await admin.from('media_package_history').insert({
               media_package_id: mpId, action: 'review_requested',
               new_value: { email: cust.email } as any,
@@ -493,7 +521,7 @@ Deno.serve(async (req) => {
     if (action === 'send_whatsapp') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const body = parsedBody;
@@ -518,7 +546,7 @@ Deno.serve(async (req) => {
     if (action === 'add_watcher') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const body = parsedBody;
@@ -532,7 +560,7 @@ Deno.serve(async (req) => {
         recipient_id: watcher_user_id, type: 'mediapaket_watcher',
         title: 'Sie beobachten jetzt ein Mediapaket',
         message: `Mediapaket-ID: ${mp_id}`, entity_id: mp_id,
-      } as any).catch(() => {});
+      } as any).then(() => {}, () => {});
       return json({ ok: true });
     }
 
@@ -565,7 +593,7 @@ Deno.serve(async (req) => {
     if (action === 'create_from_template') {
       const auth = req.headers.get('Authorization');
       if (!auth) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), {
         global: { headers: { Authorization: auth } }, auth: { persistSession: false }
       });
       const { data: userData } = await userClient.auth.getUser();
@@ -597,7 +625,7 @@ Deno.serve(async (req) => {
       if (tmpl.defaults?.branding_notes) {
         await admin.from('media_package_branding').insert({
           media_package_id: newId, brand_story: tmpl.defaults.branding_notes,
-        }).catch(() => {});
+        }).then(() => {}, () => {});
       }
       await admin.from('media_package_history').insert({
         media_package_id: newId, user_id: userData.user.id, action: 'created_from_template',
@@ -610,7 +638,7 @@ Deno.serve(async (req) => {
     if (action === 'snapshot') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const body = parsedBody;
@@ -630,7 +658,7 @@ Deno.serve(async (req) => {
     if (action === 'list_snapshots') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const body = parsedBody;
@@ -654,11 +682,10 @@ Deno.serve(async (req) => {
     if (action === 'rollback') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const { data: roleRow } = await admin.from('user_roles').select('role').eq('user_id', userData.user.id).eq('role', 'Super Admin').maybeSingle();
-      if (!roleRow) return json({ error: 'Super Admin required' }, 403);
+      if (!staffAccess?.roles.includes('Super Admin')) return json({ error: 'Super Admin required' }, 403);
       const body = parsedBody;
       const { mp_id, snapshot_id } = body;
       if (!mp_id || !snapshot_id) return json({ error: 'mp_id & snapshot_id required' }, 400);
@@ -718,7 +745,7 @@ Deno.serve(async (req) => {
     if (action === 'toggle_showcase') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const body = parsedBody;
@@ -747,7 +774,7 @@ Deno.serve(async (req) => {
     if (action === 'get_showcase_config') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const body = parsedBody;
@@ -765,7 +792,7 @@ Deno.serve(async (req) => {
     if (action === 'gdpr_export') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const body = parsedBody;
@@ -825,11 +852,10 @@ Deno.serve(async (req) => {
     if (action === 'anonymize') {
       const authH = req.headers.get('Authorization');
       if (!authH) return json({ error: 'unauthorized' }, 401);
-      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const userClient = createClient(SUPABASE_URL, (Deno.env.get('SUPABASE_ANON_KEY') ?? ''), { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const { data: roleRow } = await admin.from('user_roles').select('role').eq('user_id', userData.user.id).eq('role', 'Super Admin').maybeSingle();
-      if (!roleRow) return json({ error: 'Super Admin required' }, 403);
+      if (!staffAccess?.roles.includes('Super Admin')) return json({ error: 'Super Admin required' }, 403);
       const body = parsedBody;
       const { mp_id } = body;
       if (!mp_id) return json({ error: 'mp_id required' }, 400);
@@ -887,20 +913,23 @@ Deno.serve(async (req) => {
       case 'save_section': {
         const { section, values, row_id } = body;
         const cfg = SECTIONS[section];
-        if (!cfg) return json({ error: 'unknown section' }, 400);
+        if (!cfg || !Object.hasOwn(SECTIONS, section)) return json({ error: 'unknown section' }, 400);
+        const patch = customerSectionPatch(section, values);
+        if (!patch) return json({ error: 'invalid_section_values' }, 400);
 
         if (section === 'root') {
           // Customer can only update limited fields
-          const allowed = ['studio_name'];
-          const patch: any = {};
-          for (const k of allowed) if (k in (values || {})) patch[k] = values[k];
           if (Object.keys(patch).length) {
             await admin.from('media_packages').update(patch).eq('id', mpId);
           }
           return json({ ok: true });
         }
 
-        const payload = { ...(values || {}), media_package_id: mpId };
+        const payload: Record<string, unknown> = { ...patch, media_package_id: mpId };
+        if (section === 'consents' && 'accepted' in patch) {
+          payload.accepted_at = patch.accepted === true ? new Date().toISOString() : null;
+          payload.accepted_by = 'customer_portal';
+        }
         if (cfg.single) {
           // upsert on media_package_id
           const { data: existing } = await admin.from(cfg.table).select('id').eq('media_package_id', mpId).maybeSingle();
@@ -940,10 +969,12 @@ Deno.serve(async (req) => {
 
       case 'sign_upload': {
         const { filename, category = 'Sonstiges' } = body;
-        if (!filename) return json({ error: 'filename required' }, 400);
+        const safeCategory = safeUploadCategory(category);
+        if (typeof filename !== 'string' || !filename || filename.length > 180 || !safeCategory) return json({ error: 'invalid_upload_name_or_category' }, 400);
         const safeName = String(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
         const { data: mp } = await admin.from('media_packages').select('customer_id, order_id').eq('id', mpId).single();
-        const path = `customers/${mp.customer_id}/orders/${mp.order_id ?? 'none'}/media-package/${mpId}/${category}/${Date.now()}_${safeName}`;
+        if (!mp) return json({ error: 'package_not_found' }, 404);
+        const path = `customers/${mp.customer_id}/orders/${mp.order_id ?? 'none'}/media-package/${mpId}/${safeCategory}/${crypto.randomUUID()}_${safeName}`;
         const { data, error } = await admin.storage.from('mediapaket-files').createSignedUploadUrl(path);
         if (error) return json({ error: error.message }, 400);
         return json({ path, token: data.token, signedUrl: data.signedUrl });
@@ -952,11 +983,17 @@ Deno.serve(async (req) => {
       case 'register_file': {
         const { path, category, original_filename, mime_type, file_size, description } = body;
         const { data: mp } = await admin.from('media_packages').select('customer_id, order_id').eq('id', mpId).single();
+        if (!mp || !packageFilePathAllowed(path, mediaPackagePrefix(mp, mpId)) || !safeUploadCategory(category) || path.split('/').at(-2) !== category) return json({ error: 'file_scope_denied' }, 403);
+        const { data: objectInfo, error: objectError } = await admin.storage.from('mediapaket-files').info(path);
+        if (objectError || !objectInfo) return json({ error: 'uploaded_file_not_found' }, 400);
+        const actualSize = objectInfo.size;
+        const actualType = objectInfo.contentType;
+        if (!Number.isFinite(actualSize) || typeof actualType !== 'string') return json({ error: 'uploaded_file_metadata_missing' }, 400);
         const { data: row, error } = await admin.from('media_package_files').insert({
           media_package_id: mpId,
           customer_id: mp.customer_id,
           order_id: mp.order_id,
-          category, original_filename, storage_path: path, mime_type, file_size, description,
+          category, original_filename, storage_path: path, mime_type: actualType, file_size: actualSize, description,
         }).select('*').single();
         if (error) return json({ error: error.message }, 400);
         return json({ file: row });
@@ -964,6 +1001,10 @@ Deno.serve(async (req) => {
 
       case 'signed_download': {
         const { path } = body;
+        const { data: mp } = await admin.from('media_packages').select('customer_id,order_id').eq('id', mpId).maybeSingle();
+        if (!mp || !packageFilePathAllowed(path, mediaPackagePrefix(mp, mpId))) return json({ error: 'file_scope_denied' }, 403);
+        const { data: file, error: fileError } = await admin.from('media_package_files').select('id').eq('media_package_id', mpId).eq('storage_path', path).maybeSingle();
+        if (fileError || !file) return json({ error: 'file_scope_denied' }, 403);
         const { data, error } = await admin.storage.from('mediapaket-files').createSignedUrl(path, 3600);
         if (error) return json({ error: error.message }, 400);
         return json({ url: data.signedUrl });
@@ -1015,13 +1056,14 @@ Deno.serve(async (req) => {
       case 'answer_question': {
         const { question_id, answer } = body;
         if (!question_id || !answer?.trim()) return json({ error: 'question_id and answer required' }, 400);
+        const { data: parent, error: parentError } = await admin.from('media_package_comments')
+          .select('subject,related_field,author_id').eq('id', question_id).eq('media_package_id', mpId).eq('internal_only', false).eq('recipient_type', 'customer').maybeSingle();
+        if (parentError || !parent) return json({ error: 'question_scope_denied' }, 403);
         // Mark original as answered
         await admin.from('media_package_comments')
           .update({ answered_at: new Date().toISOString() })
           .eq('id', question_id).eq('media_package_id', mpId);
         // Insert customer reply
-        const { data: parent } = await admin.from('media_package_comments')
-          .select('subject, related_field, author_id').eq('id', question_id).maybeSingle();
         const answerText = String(answer).trim();
         await admin.from('media_package_comments').insert({
           media_package_id: mpId,
@@ -1065,6 +1107,6 @@ Deno.serve(async (req) => {
         return json({ error: 'unknown action' }, 400);
     }
   } catch (e) {
-    return json({ error: String(e?.message || e) }, 500);
+    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
