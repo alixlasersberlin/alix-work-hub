@@ -9,6 +9,7 @@
 // Jede Aktion wird in as_timeline_events + as_reminders protokolliert.
 // Doppel-Versand am gleichen Tag wird vermieden (Idempotenz-Check).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireJobAccess } from '../_shared/job-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,6 +65,8 @@ async function sendEmail(case_id: string, kind: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   try {
     const summary = { processed: 0, emails: 0, escalations: 0, skipped: 0, errors: [] as string[] };

@@ -1,5 +1,5 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 // Routing Simulator — trace which rule/agent WOULD be chosen without persisting a real decision.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,19 +20,22 @@ type Req = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders);
+  if ('response' in access) return access.response;
   try {
-    const auth = req.headers.get('Authorization') ?? '';
     const body = await req.json() as Req;
-    if (!body.channel) {
+    if (!['call', 'chat', 'email', 'whatsapp', 'sms', 'ticket'].includes(body.channel) || (body.customer_id !== undefined && (typeof body.customer_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.customer_id)))) {
       return new Response(JSON.stringify({ error: 'channel required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const sbUser = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: auth } },
-    });
-    const { data: { user } } = await sbUser.auth.getUser();
+    const sb = access.caller;
+    const user = access.user;
 
+    if (body.customer_id) {
+      const { data, error } = await sb.from('ac_contacts').select('id').eq('id', body.customer_id).maybeSingle();
+      if (error || !data) return new Response(JSON.stringify({ error: 'Contact unavailable' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     let score = body.customer_score ?? 0;
     if (!body.customer_score && body.customer_id) {
       const { data: s } = await sb.from('ac_customer_scores').select('score').eq('customer_id', body.customer_id).maybeSingle();

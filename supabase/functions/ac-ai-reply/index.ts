@@ -1,3 +1,4 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -5,9 +6,12 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders);
+  if ('response' in access) return access.response;
   try {
     const { message, tone = "professional-friendly", locale = "de" } = await req.json();
-    if (!message || typeof message !== "string") {
+    if (!message || typeof message !== "string" || message.length > 20000 || !["de", "en"].includes(locale) || !["professional-friendly", "professional", "friendly", "formal"].includes(tone)) {
       return new Response(JSON.stringify({ error: "message required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

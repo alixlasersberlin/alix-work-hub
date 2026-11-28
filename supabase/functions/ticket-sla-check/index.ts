@@ -1,9 +1,12 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 // Cron: alle 15 Min. Markiert überfällige Tickets & eskaliert.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  const denied = await requireJobAccess(req, cors);
+  if (denied) return denied;
   try {
     const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const { data, error } = await sb.rpc('ticket_sla_check_and_escalate');

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "after-sales-source-before.tar.gz",
+    "sha256": "e2b945653802d8ce9b4c94844f237da1b6acd0ef8a2c35e01519e738b8497181"
+  },
+  {
+    "name": "job-source-before.tar.gz",
+    "sha256": "b0cb496774c620b93ce0a381d0295e495a55f1be65685a207dc14073a487b325"
+  },
+  {
+    "name": "print-source-before.tar.gz",
+    "sha256": "6c65dd7f8f9514cdac7e1b7c4d7acac761dcd6de8635c97e2fa1dc03e6b9fc51"
+  },
+  {
+    "name": "service-source-before.tar.gz",
+    "sha256": "fbce01d97fe60c08c1d7d4952427e4698486137a471c448a7505b6111977c996"
+  },
+  {
+    "name": "source-before.tar.gz",
+    "sha256": "fb7c26e9672c4ef4506d6484bb065ca3dbc8c3f84a4e2bdc9bcd8ce4a7380870"
+  },
+  {
+    "name": "workflow-source-before.tar.gz",
+    "sha256": "935ec7d475a5d69f983a543c7a4e15fcfe1c758952401b382fcdfe74b2bb0fb2"
+  }
+]

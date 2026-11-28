@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { escapeHtml } from '@/lib/sanitize-html';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -184,11 +185,11 @@ export default function Analytics() {
     </div>
     <h2>Rollenverteilung (Top 12)</h2>
     <table><thead><tr><th>Rolle</th><th>Benutzer</th><th>Kritisch</th></tr></thead><tbody>
-    ${roleDistribution.map(r => `<tr><td>${r.name}</td><td>${r.count}</td><td>${r.critical ? 'Ja' : '—'}</td></tr>`).join('')}
+    ${roleDistribution.map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.count}</td><td>${r.critical ? 'Ja' : '—'}</td></tr>`).join('')}
     </tbody></table>
     <h2>Risiko-Heatmap</h2>
     <table><thead><tr><th>Rolle</th><th>Benutzer</th><th>Stufe</th></tr></thead><tbody>
-    ${riskHeatmap.slice(0, 20).map(r => `<tr><td>${r.name}</td><td>${r.users}</td><td>${levelLabel(r.level)}</td></tr>`).join('')}
+    ${riskHeatmap.slice(0, 20).map(r => `<tr><td>${escapeHtml(r.name)}</td><td>${r.users}</td><td>${levelLabel(r.level)}</td></tr>`).join('')}
     </tbody></table>
     </body></html>`);
     w.document.close();

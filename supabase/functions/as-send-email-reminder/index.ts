@@ -1,3 +1,4 @@
+import { requireProcessAccess } from '../_shared/process-access.ts';
 // as-send-email-reminder
 // Sendet eine After-Sales-Erinnerung per Email an den Kunden eines Falls
 // und protokolliert die Aktion in as_reminders + as_timeline_events.
@@ -28,32 +29,29 @@ const KIND_TO_REMINDER: Record<Kind, string> = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'After Sales']);
+  if ('response' in access) return access.response;
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    const isService = authHeader?.includes(SERVICE_ROLE);
-    let userId: string | null = null;
-    if (!isService) {
-      if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-      const userClient = createClient(SUPABASE_URL, ANON, {
-        global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
-      });
-      const token = authHeader.replace("Bearer ", "");
-      const { data: claims, error: cErr } = await userClient.auth.getClaims(token);
-      if (cErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
-      userId = claims.claims.sub as string;
-    }
+    const userId = access.userId;
 
     const body = await req.json().catch(() => ({}));
     const { case_id, kind = "generic", recipient_email, custom_message, cta_url, cta_label } = body ?? {};
     if (!case_id) return json({ error: "case_id fehlt" }, 400);
+    if (typeof case_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(case_id)) return json({ error: 'Invalid case_id' }, 400);
+    let parentQuery = access.client.from('as_cases').select('id,tenant_id').eq('id', case_id);
+    if (!access.machine) parentQuery = parentQuery.in('tenant_id', access.tenantIds);
+    const { data: parent, error: parentError } = await parentQuery.maybeSingle();
+    if (parentError || !parent || !parent.tenant_id) return json({ error: 'Fall nicht verfügbar' }, 404);
 
     // Load case + customer + order context
     const { data: c, error: caseErr } = await admin
       .from("as_cases_list_v" as any).select("*").eq("id", case_id).maybeSingle();
     if (caseErr || !c) return json({ error: "Fall nicht gefunden" }, 404);
 
-    const to = recipient_email ?? (c as any).customer_email;
+    const to = (c as any).customer_email;
+    if (recipient_email != null && String(recipient_email).trim().toLowerCase() !== String(to ?? '').trim().toLowerCase()) return json({ error: 'Empfänger stimmt nicht mit der Kundenakte überein' }, 400);
+    if (!Object.hasOwn(KIND_TO_REMINDER, kind) || (custom_message != null && (typeof custom_message !== 'string' || custom_message.length > 10000))) return json({ error: 'Invalid reminder input' }, 400);
     if (!to) return json({ error: "Keine Empfänger-Email gefunden" }, 400);
 
     const templateData = {
@@ -87,7 +85,7 @@ Deno.serve(async (req) => {
     try { sendInfo = await resp.json(); } catch { /* noop */ }
 
     // Log reminder + timeline
-    await admin.from("as_reminders" as any).insert({
+    await access.client.from("as_reminders" as any).insert({
       case_id,
       kind: KIND_TO_REMINDER[kind as Kind] ?? "callback",
       scheduled_at: new Date().toISOString(),
@@ -95,7 +93,7 @@ Deno.serve(async (req) => {
       channel: "email",
     });
 
-    await admin.from("as_timeline_events" as any).insert({
+    await access.client.from("as_timeline_events" as any).insert({
       case_id,
       event_type: "email_reminder",
       title: sendOk ? `Email gesendet (${kind}) → ${to}` : `Email-Versand fehlgeschlagen (${kind})`,

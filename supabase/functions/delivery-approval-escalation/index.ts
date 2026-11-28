@@ -1,3 +1,4 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 import "../_shared/global-bcc.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
@@ -218,6 +219,8 @@ async function usersForRoles(supabase: any, roles: string[]): Promise<string[]> 
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,

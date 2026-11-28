@@ -1,3 +1,4 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 // compliance-ai-assist
 // KI-Unterstützung für Eingabefelder im Software-&-Compliance-Workspace (IEC 62304 / ISO 13485 / MDR).
 // Modi: draft (Vorschlag erzeugen), improve (Text verbessern), shorten (kürzen), expand (ausführlicher), check (Prüfhinweise).
@@ -15,7 +16,6 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const MODEL = "google/gemini-3-flash-preview";
 
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 const json = (d: unknown, s = 200) =>
   new Response(JSON.stringify(d), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -35,15 +35,12 @@ Du hilfst beim Ausfüllen von Compliance-Aufgaben. Regeln:
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders);
+  if ('response' in access) return access.response;
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
-    });
-    const { data: claims, error: cErr } = await userClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (cErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
+    const admin = access.caller;
 
     const body = await req.json().catch(() => ({}));
     const mode: string = body?.mode ?? "draft";
@@ -61,6 +58,7 @@ Deno.serve(async (req) => {
     if (taskId) {
       const { data: task } = await admin.from("compliance_tasks" as any)
         .select("title, purpose, category, ref_codes, project_id").eq("id", taskId).maybeSingle();
+      if (!task) return json({ error: 'Task unavailable' }, 404);
       if (task) {
         const { data: project } = await admin.from("compliance_projects" as any)
           .select("code, name, description, safety_class").eq("id", (task as any).project_id).maybeSingle();

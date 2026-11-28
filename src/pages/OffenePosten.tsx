@@ -1,4 +1,5 @@
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { escapeHtml } from '@/lib/sanitize-html';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink, Users, Download, FileSpreadsheet, FileJson, ArrowLeftRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -123,12 +124,12 @@ export default function OffenePosten() {
     const key = `${item.source}-${item.id}`;
     const win = window.open('', '_blank');
     if (win) {
-      win.document.write(`<!doctype html><html><head><title>Rechnung ${item.invoice_number ?? ''} wird geladen…</title><style>
+      win.document.write(`<!doctype html><html><head><title>Rechnung ${escapeHtml(item.invoice_number ?? '')} wird geladen…</title><style>
         body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a0a;color:#e5e5e5;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px}
         .spinner{width:42px;height:42px;border:3px solid #333;border-top-color:#d4af37;border-radius:50%;animation:spin 0.8s linear infinite}
         .lbl{font-size:14px;opacity:.75}
         @keyframes spin{to{transform:rotate(360deg)}}
-      </style></head><body><div class="spinner"></div><div class="lbl">Rechnung ${item.invoice_number ?? ''} wird von Zoho geladen…</div></body></html>`);
+      </style></head><body><div class="spinner"></div><div class="lbl">Rechnung ${escapeHtml(item.invoice_number ?? '')} wird von Zoho geladen…</div></body></html>`);
       win.document.close();
     }
 

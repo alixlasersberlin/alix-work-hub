@@ -1,3 +1,4 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 // as-send-sms-reminder
 // Sendet eine kurze After-Sales-SMS via Twilio + protokolliert die Aktion.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -58,29 +59,26 @@ async function loadTwilio() {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, ['Super Admin', 'Admin', 'After Sales']);
+  if ('response' in access) return access.response;
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    const isService = authHeader?.includes(SERVICE_ROLE);
-    let userId: string | null = null;
-    if (!isService) {
-      if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-      const userClient = createClient(SUPABASE_URL, ANON, {
-        global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
-      });
-      const { data: claims, error } = await userClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-      if (error || !claims?.claims) return json({ error: "Unauthorized" }, 401);
-      userId = claims.claims.sub as string;
-    }
+    const userId = access.user.id;
 
     const body = await req.json().catch(() => ({}));
     const { case_id, kind = "generic", recipient_phone, custom_text } = body ?? {};
     if (!case_id) return json({ error: "case_id fehlt" }, 400);
+    if (typeof case_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(case_id) || !Object.hasOwn(SMS_TEMPLATES, kind) || (custom_text != null && (typeof custom_text !== 'string' || !custom_text.trim() || custom_text.length > 1600))) return json({ error: 'Invalid reminder input' }, 400);
+    const { data: parent, error: parentError } = await access.caller.from('as_cases').select('id,tenant_id').eq('id', case_id).in('tenant_id', access.tenants.map((t: any) => t.id)).maybeSingle();
+    if (parentError || !parent) return json({ error: 'Fall nicht verfügbar' }, 404);
 
     const { data: c } = await admin.from("as_cases_list_v" as any).select("*").eq("id", case_id).maybeSingle();
     if (!c) return json({ error: "Fall nicht gefunden" }, 404);
 
-    const rawPhone = recipient_phone ?? (c as any).customer_phone;
+    const savedPhone = normalizeE164(String((c as any).customer_phone ?? ''));
+    if (recipient_phone != null && normalizeE164(String(recipient_phone)) !== savedPhone) return json({ error: 'SMS-Empfänger stimmt nicht mit der Kundenakte überein' }, 400);
+    const rawPhone = savedPhone;
     const to = rawPhone ? normalizeE164(String(rawPhone)) : null;
     if (!to) return json({ error: "Keine gültige Mobilnummer" }, 400);
 
@@ -107,13 +105,13 @@ Deno.serve(async (req) => {
       errMsg = e?.message ?? "Twilio Fehler";
     }
 
-    await admin.from("as_reminders" as any).insert({
+    await access.caller.from("as_reminders" as any).insert({
       case_id, kind: KIND_TO_REMINDER[kind as Kind] ?? "callback",
       scheduled_at: new Date().toISOString(),
       sent_at: ok ? new Date().toISOString() : null,
       channel: "sms",
     });
-    await admin.from("as_timeline_events" as any).insert({
+    await access.caller.from("as_timeline_events" as any).insert({
       case_id,
       event_type: "sms_reminder",
       title: ok ? `SMS gesendet (${kind}) → ${to}` : `SMS-Versand fehlgeschlagen (${kind})`,

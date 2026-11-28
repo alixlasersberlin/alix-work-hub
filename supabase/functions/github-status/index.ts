@@ -1,3 +1,4 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -28,6 +29,9 @@ async function readGithubError(response: Response) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, ['Super Admin']);
+  if ('response' in access) return access.response;
   const token = Deno.env.get("GITHUB_TOKEN");
 
   // Prefer DB-stored repo (app_settings.github_repo), fall back to env

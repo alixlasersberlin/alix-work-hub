@@ -1,3 +1,4 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 import "../_shared/global-bcc.ts";
 // Monatlicher Bewertungs-Report: Kundenbewertungen der Auslieferungen des Vormonats
 // als Sammel-E-Mail an das Dispositionsteam.
@@ -24,6 +25,8 @@ const f1 = (n: number) => (n ? n.toFixed(1) : "–");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
 

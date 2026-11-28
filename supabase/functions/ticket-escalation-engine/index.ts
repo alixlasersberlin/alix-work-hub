@@ -1,3 +1,4 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 // Ticket-Eskalations-Engine (Stufe 2)
 // Läuft als Cron (z.B. alle 15 Min) und:
 //  1. Eskaliert überfällige Tickets (due_at < now, nicht geschlossen)
@@ -7,7 +8,6 @@
 //  3. Markiert Termin-Bestätigungen als überfällig, wenn Kunde nicht reagiert
 //     (esc_events.requires_confirmation, confirmation_status='pending',
 //      start_at < now + 24h und confirmation_token_expires_at < now)
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -25,8 +25,10 @@ function bumpPriority(p: string | null | undefined): string {
   return PRIO_ORDER[Math.min(idx + 1, PRIO_ORDER.length - 1)];
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,

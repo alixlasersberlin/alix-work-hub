@@ -1,3 +1,4 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 import "../_shared/global-bcc.ts";
 // ALIX Audit Center — hourly security alert digest
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -10,6 +11,8 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

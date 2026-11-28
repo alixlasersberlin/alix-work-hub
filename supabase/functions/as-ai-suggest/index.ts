@@ -1,3 +1,4 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 // as-ai-suggest
 // KI-Auswertung eines After-Sales-Falls via Lovable AI Gateway.
 // Liefert: health_score (0-100), risk, recommended_next_contact, summary,
@@ -39,20 +40,21 @@ Antwort AUSSCHLIESSLICH als JSON, ohne Markdown, ohne Erklärung.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, ['Super Admin', 'Admin', 'After Sales', 'Vertrieb']);
+  if ('response' in access) return access.response;
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
-    });
-    const { data: claims, error: cErr } = await userClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (cErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
-    const userId = claims.claims.sub as string;
+    const userId = access.user.id;
 
     const body = await req.json().catch(() => ({}));
     const { case_id } = body ?? {};
     if (!case_id) return json({ error: "case_id fehlt" }, 400);
+    if (typeof case_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(case_id)) return json({ error: 'Invalid case_id' }, 400);
+    let parentQuery = access.caller.from('as_cases').select('id,tenant_id').eq('id', case_id);
+    parentQuery = parentQuery.in('tenant_id', access.tenants.map((t: any) => t.id));
+    const { data: parent, error: parentError } = await parentQuery.maybeSingle();
+    if (parentError || !parent || !parent.tenant_id) return json({ error: 'Fall nicht verfügbar' }, 404);
 
     // Load full context
     const [caseRes, checks, timeline, callbacks, media] = await Promise.all([
@@ -132,7 +134,7 @@ Deno.serve(async (req) => {
     const nextDate = new Date(Date.now() + nextDays * 86400000).toISOString();
 
     // Persist insights
-    await admin.from("as_cases" as any).update({
+    await access.caller.from("as_cases" as any).update({
       health_score: health,
     }).eq("id", case_id);
 
@@ -140,16 +142,16 @@ Deno.serve(async (req) => {
     const upsells: Array<{ product_key: string; label: string }> = Array.isArray(parsed.upsell_suggestions) ? parsed.upsell_suggestions.slice(0, 3) : [];
     for (const u of upsells) {
       if (!u?.product_key) continue;
-      const { data: existing } = await admin.from("as_upsell_suggestions" as any)
+      const { data: existing } = await access.caller.from("as_upsell_suggestions" as any)
         .select("id").eq("case_id", case_id).eq("product_key", u.product_key).maybeSingle();
       if (!existing) {
-        await admin.from("as_upsell_suggestions" as any).insert({
+        await access.caller.from("as_upsell_suggestions" as any).insert({
           case_id, product_key: u.product_key, label: u.label ?? u.product_key,
         });
       }
     }
 
-    await admin.from("as_timeline_events" as any).insert({
+    await access.caller.from("as_timeline_events" as any).insert({
       case_id,
       event_type: "ai_analysis",
       title: `KI-Analyse: Health ${health} · Risiko ${parsed.risk_level ?? "?"} · nächster Kontakt in ${nextDays}T`,

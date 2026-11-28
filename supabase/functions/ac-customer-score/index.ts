@@ -1,13 +1,16 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders);
+  if ('response' in access) return access.response;
   try {
     const { contact_id } = await req.json();
-    if (!contact_id) return json({ error: 'contact_id required' }, 400);
+    if (typeof contact_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contact_id)) return json({ error: 'Invalid contact_id' }, 400);
 
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const sb = access.caller;
 
     const [contact, msgs, calls, tickets] = await Promise.all([
       sb.from('ac_contacts').select('display_name,phone,email,lifetime_value,last_interaction_at,created_at').eq('id', contact_id).maybeSingle(),

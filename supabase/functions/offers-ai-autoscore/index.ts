@@ -1,3 +1,4 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 // Automatisches KI-Scoring für offene Angebote (Cron, täglich).
 // Wählt offene, ungescorte oder veraltete Angebote und bewertet sie in Batches.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -63,6 +64,8 @@ async function scoreBatch(admin: any, offers: any[]) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   try {

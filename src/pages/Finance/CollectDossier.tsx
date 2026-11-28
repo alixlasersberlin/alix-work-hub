@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { escapeHtml } from '@/lib/sanitize-html';
 import { Download, FileArchive, FileText, FolderOpen, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
@@ -136,10 +137,10 @@ export default function FinanceCollectDossier() {
   const printDossier = (row: any) => {
     const c = row.content ?? {};
     const inv = (c.invoices ?? []).map((i: any) =>
-      `<tr><td>${i.invoice_number ?? '—'}</td><td>${i.due_date ?? '—'}</td><td style="text-align:right">${fmt(i.balance)}</td><td style="text-align:right">${i.days_overdue ?? 0}</td></tr>`
+      `<tr><td>${escapeHtml(i.invoice_number ?? '—')}</td><td>${escapeHtml(i.due_date ?? '—')}</td><td style="text-align:right">${fmt(i.balance)}</td><td style="text-align:right">${escapeHtml(i.days_overdue ?? 0)}</td></tr>`
     ).join('');
     const ev = [...(c.events ?? []), ...(c.calls ?? [])].slice(0, 100).map((e: any) =>
-      `<tr><td>${dt(e.created_at)}</td><td>${e.event_type ?? e.outcome ?? 'Kontakt'}</td><td>${(e.note ?? e.description ?? '').toString().slice(0, 200)}</td></tr>`
+      `<tr><td>${dt(e.created_at)}</td><td>${escapeHtml(e.event_type ?? e.outcome ?? 'Kontakt')}</td><td>${escapeHtml((e.note ?? e.description ?? '').toString().slice(0, 200))}</td></tr>`
     ).join('');
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Digitale Akte</title>
       <style>body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#111;padding:24px}
@@ -147,13 +148,13 @@ export default function FinanceCollectDossier() {
       table{width:100%;border-collapse:collapse;margin-top:6px}
       th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:left}
       th{background:#f4f4f4}</style></head><body>
-      <h1>Digitale Akte – ${c.case?.customer_name ?? '—'}</h1>
-      <p>Zweck: ${PURPOSES.find((p) => p.value === c.purpose)?.label ?? c.purpose ?? '—'}<br/>
+      <h1>Digitale Akte – ${escapeHtml(c.case?.customer_name ?? '—')}</h1>
+      <p>Zweck: ${escapeHtml(PURPOSES.find((p) => p.value === c.purpose)?.label ?? c.purpose ?? '—')}<br/>
       Erstellt: ${dt(c.generated_at)}</p>
       <h2>Zusammenfassung</h2>
       <p>Offen: <b>${fmt(c.summary?.open_amount)}</b> · Überfällig: <b>${fmt(c.summary?.overdue_amount)}</b> ·
-      Max. Verzug: <b>${c.summary?.max_days_overdue ?? 0} Tage</b> · Rechnungen: ${c.summary?.invoice_count ?? 0} ·
-      Kontakte: ${c.summary?.contact_count ?? 0}</p>
+      Max. Verzug: <b>${escapeHtml(c.summary?.max_days_overdue ?? 0)} Tage</b> · Rechnungen: ${escapeHtml(c.summary?.invoice_count ?? 0)} ·
+      Kontakte: ${escapeHtml(c.summary?.contact_count ?? 0)}</p>
       <h2>Offene Rechnungen</h2>
       <table><thead><tr><th>Nr.</th><th>Fällig</th><th style="text-align:right">Saldo</th><th style="text-align:right">Verzug</th></tr></thead><tbody>${inv || '<tr><td colspan="4">—</td></tr>'}</tbody></table>
       <h2>Kommunikationsverlauf</h2>

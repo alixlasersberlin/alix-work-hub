@@ -1,3 +1,4 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -32,31 +33,19 @@ async function log(admin: any, action: string, status: string, payload: any, res
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  const access = await requireCallerAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Österreich']);
+  if ('response' in access) return access.response;
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const admin = access.caller;
+  const userId = access.user.id;
 
-  // Authenticate
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const jwt = authHeader.replace("Bearer ", "");
-  const { data: userData, error: userErr } = await admin.auth.getUser(jwt);
-  if (userErr || !userData.user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const userId = userData.user.id;
 
-  if (!LOVABLE_API_KEY) {
-    await log(admin, "ai-service-analyze", "error", {}, null, "LOVABLE_API_KEY missing", userId);
-    return new Response(JSON.stringify({ error: "AI Gateway nicht konfiguriert" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
 
   let body: Body;
   try { body = await req.json(); } catch {
@@ -67,6 +56,18 @@ Deno.serve(async (req) => {
 
   const { ticket_id, repair_id, attachments } = body;
   let { serial_number, device_name, error_description } = body;
+  for (const [table, id] of [['tickets', ticket_id], ['repair_orders', repair_id]] as const) {
+    if (id == null) continue;
+    if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return new Response(JSON.stringify({ error: 'Invalid identifier' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { data, error } = await admin.from(table).select('id').eq('id', id).maybeSingle();
+    if (error || !data) return new Response(JSON.stringify({ error: 'Record unavailable' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+  if (!LOVABLE_API_KEY) {
+    await log(admin, "ai-service-analyze", "error", {}, null, "LOVABLE_API_KEY missing", userId);
+    return new Response(JSON.stringify({ error: "AI Gateway nicht konfiguriert" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     // Enrich from ticket / repair
