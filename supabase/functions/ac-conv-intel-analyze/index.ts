@@ -1,23 +1,28 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { callScopeAllowed } from '../_shared/call-scope.ts';
+import { createClient } from 'npm:@supabase/supabase-js@2';
+import { z } from 'npm:zod@3.25.76';
 // Conversational Intelligence 2.0 — deep speech analytics for one call.
 // Computes talk/listen ratio, silence share, topic detection, and DSGVO/recording
 // compliance checks. Persists into ac_voice_insights.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { call_id } = await req.json();
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsedBody = z.object({ call_id: z.string().uuid() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) return new Response(JSON.stringify({ error: 'Invalid call_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { call_id } = parsedBody.data;
     if (!call_id) throw new Error('call_id required');
 
     const { data: call, error: callErr } = await sb.from('ac_calls')
-      .select('id, transcript, duration_sec, agent_user_id, direction').eq('id', call_id).single();
-    if (callErr || !call) throw new Error('call not found');
+      .select('id, contact_id, transcript, duration_sec, agent_user_id, direction').eq('id', call_id).single();
+    if (callErr || !call || !await callScopeAllowed(access, call)) return new Response(JSON.stringify({ error: 'Call not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     if (!call.transcript) throw new Error('call has no transcript — run STT first');
 
     const { data: rules } = await sb.from('ac_voice_compliance_rules').select('*').eq('active', true);
@@ -56,7 +61,8 @@ Deno.serve(async (req) => {
       ai_generated: true,
     };
 
-    const { data: row, error } = await sb.from('ac_voice_insights').insert(insight).select().single();
+    const writer = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const { data: row, error } = await writer.from('ac_voice_insights').insert(insight).select().single();
     if (error) throw error;
 
     return new Response(JSON.stringify({ success: true, insight: row }), {

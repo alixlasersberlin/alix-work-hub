@@ -1,3 +1,5 @@
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 // Phase 7 – AfA monthly depreciation run
 // Computes monthly depreciation for all active assets for a given period (YYYY-MM)
 // - linear: AHK / Nutzungsdauer
@@ -6,28 +8,18 @@
 // - degressiv: book_value * (degressive_rate/100) / 12 (with linear floor)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-    // Authenticate caller (cron uses anon, but we still allow it)
-    const userClient = createClient(supabaseUrl, anon, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const admin = createClient(supabaseUrl, serviceKey);
-
-    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
-    const dryRun: boolean = body.dry_run ?? false;
-    const periodInput: string = body.period ?? new Date().toISOString().slice(0, 7); // YYYY-MM
+    const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+    if ('response' in access) return access.response;
+    const admin = access.client;
+    const parsed = z.object({ dry_run: z.boolean().default(false), period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional() }).strict().safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid period; expected YYYY-MM' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const dryRun = parsed.data.dry_run;
+    const periodInput = parsed.data.period ?? new Date().toISOString().slice(0, 7);
     const [py, pm] = periodInput.split('-').map(Number);
     const period = new Date(Date.UTC(py, pm - 1, 1)).toISOString().slice(0, 10);
 

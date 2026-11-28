@@ -1,3 +1,5 @@
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 // ALIX CONNECT — Phase 29 Journey Orchestrator 2.0
 // Executes journey flow graphs (nodes/edges) for enrolled contacts.
 // Node kinds: trigger, action (email/sms/whatsapp/webhook/tag/notify), condition, wait, ab_split, end
@@ -10,7 +12,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
 type Node = { id: string; kind: string; config?: any; label?: string };
 type Edge = { from: string; to: string; branch?: string };
@@ -26,7 +27,7 @@ function firstEdge(g: Graph, from: string, branch?: string) {
 }
 function nodeById(g: Graph, id: string) { return g.nodes.find(n => n.id === id); }
 
-async function loadContact(contact_id: string) {
+async function loadContact(sb: any, contact_id: string) {
   const { data: c } = await sb.from('ac_contacts').select('id,name,email,phone,customer_id,tags,attributes').eq('id', contact_id).maybeSingle();
   return c ?? { id: contact_id };
 }
@@ -47,7 +48,7 @@ function evalCondition(cfg: any, ctx: any): 'yes' | 'no' {
   } catch { return 'no'; }
 }
 
-async function runAction(cfg: any, ctx: any) {
+async function runAction(sb: any, cfg: any, ctx: any) {
   const kind = cfg?.action ?? cfg?.kind;
   if (kind === 'email' && ctx.email) {
     const { error } = await sb.functions.invoke('send-transactional-email', {
@@ -109,9 +110,9 @@ async function runAction(cfg: any, ctx: any) {
   return { action: kind ?? 'noop', skipped: true };
 }
 
-async function stepRun(journey: any, run: any) {
+async function stepRun(sb: any, journey: any, run: any) {
   const g: Graph = journey.graph ?? { nodes: [], edges: [] };
-  const contact = await loadContact(run.contact_id);
+  const contact = await loadContact(sb, run.contact_id);
   const ctx = { ...contact, variant: run.variant, ...(run.context ?? {}) };
   const path: any[] = Array.isArray(run.path) ? [...run.path] : [];
 
@@ -124,7 +125,8 @@ async function stepRun(journey: any, run: any) {
 
   // Execute up to 20 nodes per tick; a `wait` node schedules next_action_at and exits.
   for (let i = 0; i < 20; i++) {
-    const node = nodeById(g, nodeId!);
+    if (!nodeId) return;
+    const node = nodeById(g, nodeId);
     if (!node) throw new Error(`Node ${nodeId} not found`);
     path.push({ node: node.id, at: new Date().toISOString() });
 
@@ -160,7 +162,7 @@ async function stepRun(journey: any, run: any) {
       nodeId = edge.to; continue;
     }
     if (node.kind === 'action') {
-      await runAction(node.config ?? {}, ctx);
+      await runAction(sb, node.config ?? {}, ctx);
     }
     // trigger or action -> continue to next edge
     const nextEdge = firstEdge(g, node.id);
@@ -177,17 +179,19 @@ async function stepRun(journey: any, run: any) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    let dryRun = false, journeyIdFilter: string | null = null, enrollContactId: string | null = null;
-    try {
-      const body = await req.json();
-      dryRun = !!body?.dry_run;
-      journeyIdFilter = body?.journey_id ?? null;
-      enrollContactId = body?.enroll_contact_id ?? null;
-    } catch { /* no body */ }
+    const access = await requireProcessAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.client;
+    const parsed = z.object({ dry_run: z.boolean().default(false), journey_id: z.string().uuid().nullish(), enroll_contact_id: z.string().uuid().nullish() }).strict().safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({ error: 'Invalid journey identifiers' }, 400);
+    const dryRun = parsed.data.dry_run, journeyIdFilter = parsed.data.journey_id ?? null, enrollContactId = parsed.data.enroll_contact_id ?? null;
 
     // Optional enrollment
     if (journeyIdFilter && enrollContactId) {
-      await sb.from('ac_journey_runs').insert({
+      const { data: contact, error: contactError } = await sb.from('ac_contacts').select('id,tenant_id').eq('id', enrollContactId).maybeSingle();
+      const { data: journey, error: journeyError } = await sb.from('ac_journeys').select('id').eq('id', journeyIdFilter).maybeSingle();
+      if (contactError || journeyError || !contact || !journey || (!access.machine && !access.tenantIds.includes(contact.tenant_id))) return json({ error: 'Enrollment not found in authorized scope' }, 404);
+      if (!dryRun) await sb.from('ac_journey_runs').insert({
         journey_id: journeyIdFilter, contact_id: enrollContactId,
         status: 'active', next_action_at: new Date().toISOString(),
       });
@@ -209,8 +213,12 @@ Deno.serve(async (req) => {
     for (const run of runs) {
       const j = jmap.get(run.journey_id);
       if (!j || j.status !== 'active') continue;
+      if (!access.machine) {
+        const { data: contact } = await sb.from('ac_contacts').select('id,tenant_id').eq('id', run.contact_id).maybeSingle();
+        if (!contact || !access.tenantIds.includes(contact.tenant_id)) continue;
+      }
       if (dryRun) { processed++; continue; }
-      try { await stepRun(j, run); processed++; }
+      try { await stepRun(sb, j, run); processed++; }
       catch (e: any) {
         failed++;
         await sb.from('ac_journey_runs').update({ status: 'failed', last_error: e?.message ?? String(e) }).eq('id', run.id);

@@ -1,11 +1,10 @@
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 // Phase 13 – ALIX CONNECT Web Suite Alerts (cron every 15 min)
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4';
 
-const admin = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-);
+
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +36,11 @@ async function notify(to: string, subject: string, text: string) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+  const access = await requireProcessAccess(req, cors, ['Admin', 'Super Admin']);
+  if ('response' in access) return access.response;
+  const admin = access.client;
+  const parsed = z.object({}).strict().safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return json({ error: 'Invalid alert request' }, 400);
 
   const now = new Date();
   const { data: alerts } = await admin

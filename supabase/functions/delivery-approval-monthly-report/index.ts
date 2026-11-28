@@ -1,10 +1,9 @@
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 import "../_shared/global-bcc.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 type Stage = "warehouse" | "accounting" | "dispatch";
 const STAGES: Stage[] = ["warehouse", "accounting", "dispatch"];
@@ -21,10 +20,9 @@ const fmtH = (v: number | null) => (v == null ? "—" : `${v.toFixed(1)} h`);
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const access = await requireProcessAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+  if ('response' in access) return access.response;
+  const supabase = access.client;
 
   try {
     const { data: setting } = await supabase
@@ -32,7 +30,9 @@ Deno.serve(async (req) => {
     let cfg: any = setting?.value ?? {};
     if (typeof cfg === "string") { try { cfg = JSON.parse(cfg); } catch { cfg = {}; } }
 
-    const body = await req.json().catch(() => ({}));
+    const parsed = z.object({ force: z.boolean().optional(), recipients: z.array(z.string().email()).max(50).optional() }).strict().safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid report request' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const body = parsed.data;
     const force = body?.force === true;
     const recipients: string[] = Array.isArray(cfg?.monthlyReport?.recipients) ? cfg.monthlyReport.recipients : [];
     if (!force && (!cfg?.monthlyReport?.enabled || !recipients.length)) {
@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const to = (body?.recipients as string[] | undefined)?.length ? body.recipients : recipients;
+    const to = body.recipients?.length ? body.recipients : recipients;
+    if (to.some((address: string) => !recipients.some((allowed: string) => allowed.toLowerCase() === address.toLowerCase()))) return new Response(JSON.stringify({ error: 'Only configured report recipients are permitted' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     if (!to?.length) {
       return new Response(JSON.stringify({ ok: true, skipped: "no recipients" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

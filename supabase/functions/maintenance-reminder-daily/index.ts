@@ -1,3 +1,4 @@
+import { requireProcessAccess } from '../_shared/process-access.ts';
 import "../_shared/global-bcc.ts";
 // Phase 8: Tägliche Wartungs-Erinnerungen
 // - berechnet 30d/14d/0d/overdue je Datensatz in device_maintenance
@@ -5,23 +6,24 @@ import "../_shared/global-bcc.ts";
 // - keine doppelten Erinnerungen am gleichen Tag (Unique-Index)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 function fmt(d: Date) { return d.toISOString().slice(0, 10); }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Order', 'SACHBEARBEITUNG', 'Reparaturannahme', 'Österreich']);
+  if ('response' in access) return access.response;
 
-  const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const supa = access.client;
   const today = new Date();
   const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
   const in14 = new Date(today); in14.setDate(in14.getDate() + 14);
 
   // Statuswerte aktualisieren
-  await supa.rpc('refresh_warranty_and_maintenance_status').catch(() => {});
+  if (access.machine) {
+    try { await supa.rpc('refresh_warranty_and_maintenance_status'); } catch { /* existing refresh remains best-effort */ }
+  }
 
   const { data: rows, error } = await supa
     .from('device_maintenance')

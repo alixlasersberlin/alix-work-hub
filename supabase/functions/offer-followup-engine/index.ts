@@ -2,7 +2,8 @@
 // Trigger: pg_cron hourly. May also be invoked manually.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { getTenantScope } from '../_shared/tenant-scope.ts';
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -27,14 +28,13 @@ function priorityFor(dueAt: string, stage: number): 'gruen' | 'gelb' | 'orange' 
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-  const reqBody = req.method === 'POST' ? await req.json().catch(() => ({} as any)) : {};
-  const dryRun = reqBody?.dryRun === true;
-  const scope = await getTenantScope(req);
-  const scopedIds = scope.restricted ? scope.tenantIds : null;
-  if (scopedIds && scopedIds.length === 0) {
-    return new Response(JSON.stringify({ ok: false, error: 'kein Mandanten-Zugriff' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
+  const access = await requireProcessAccess(req, corsHeaders, ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG']);
+  if ('response' in access) return access.response;
+  const admin = access.client;
+  const parsed = z.object({ dryRun: z.boolean().default(false) }).strict().safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid follow-up request' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const dryRun = parsed.data.dryRun;
+  const scopedIds = access.machine ? null : access.tenantIds;
 
   try {
     const { data: settings } = await admin

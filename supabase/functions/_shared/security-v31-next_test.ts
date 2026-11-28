@@ -236,7 +236,7 @@ Deno.test('AI center permits an authorized synthetic chat without changing its e
   globalThis.fetch = async (input, init) => {
     const url = new URL(String(input instanceof Request ? input.url : input));
     if (url.hostname === 'ai.gateway.lovable.dev') {
-      const body = JSON.parse(String(init?.body)); assertEquals(body.messages[0].content, 'Synthetic question');
+      const body = JSON.parse(String(init?.body)); assertEquals(body.messages[0].role, 'system'); assertEquals(body.messages[1].content, 'Synthetic question');
       ai++; return Response.json({ choices: [{ message: { content: 'Synthetic answer' } }] });
     }
     assertEquals(url.hostname, 'isolated-next.example.test');

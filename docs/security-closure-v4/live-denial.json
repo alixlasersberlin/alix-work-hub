@@ -1,0 +1,275 @@
+[
+  {
+    "function": "ac-workflow-studio",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ai-center-chat",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-conv-intel-analyze",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-qm-auto-score",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-compliance-governance",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-revenue-intel-v2",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-kb-embed",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-journey-optimize",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-campaign-ab-decide",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-segment-preview",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-voice-agent-studio",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-playbook-run",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-journey-run",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-alerts-check",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-recording-retention",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "ac-wfm-adherence-alerts",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "maintenance-reminder-daily",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "delivery-approval-monthly-report",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "finance-asset-depreciation-run",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "offer-followup-engine",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "function": "lager-bestand-notify",
+    "checks": [
+      {
+        "credential_class": "forged",
+        "status": 401
+      },
+      {
+        "credential_class": "public_project_key",
+        "status": 401
+      }
+    ]
+  }
+]

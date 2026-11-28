@@ -1,20 +1,25 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { createClient } from 'npm:@supabase/supabase-js@2';
+import { z } from 'npm:zod@3.25.76';
 // Revenue Intelligence 2.0 — deal scoring, forecast, coaching insights, win/loss analysis.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { contact_id } = await req.json();
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsedBody = z.object({ contact_id: z.string().uuid() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) return new Response(JSON.stringify({ error: 'Invalid contact_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { contact_id } = parsedBody.data;
     if (!contact_id) throw new Error('contact_id required');
 
-    const [{ data: contact }, { data: msgs }, { data: calls }] = await Promise.all([
-      sb.from('ac_contacts').select('*').eq('id', contact_id).single(),
+    const { data: contact, error: contactError } = await sb.from('ac_contacts').select('*').eq('id', contact_id).in('tenant_id', access.tenants.map((t: any) => t.id)).maybeSingle();
+    if (contactError || !contact) return new Response(JSON.stringify({ error: 'Contact not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const [{ data: msgs }, { data: calls }] = await Promise.all([
       sb.from('ac_messages').select('direction, body, channel, created_at').eq('contact_id', contact_id).order('created_at', { ascending: false }).limit(30),
       sb.from('ac_calls').select('direction, sentiment, sentiment_score, duration_sec, created_at').eq('contact_id', contact_id).order('created_at', { ascending: false }).limit(20),
     ]);
@@ -40,7 +45,8 @@ Deno.serve(async (req) => {
     const p = (() => { try { return JSON.parse(j.choices?.[0]?.message?.content || '{}'); } catch { return {}; } })();
     const winProb = Number(p.win_probability ?? 0);
 
-    await sb.from('ac_predictions').insert({
+    const writer = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const { error: predictionError } = await writer.from('ac_predictions').insert({
       contact_id,
       kind: 'revenue_intelligence_v2',
       score: winProb,
@@ -48,6 +54,7 @@ Deno.serve(async (req) => {
       suggested_action: p.recommended_next_action ?? null,
       payload: { ...p, model: 'google/gemini-3-flash-preview' },
     });
+    if (predictionError) throw predictionError;
 
     return new Response(JSON.stringify({ success: true, ...p }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

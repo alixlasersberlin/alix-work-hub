@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useTenant } from '@/contexts/TenantContext';
 import { Workflow, Loader2, Save, Wand2, CheckCircle2, XCircle } from "lucide-react";
 
 const EXAMPLE = {
@@ -21,6 +22,7 @@ const EXAMPLE = {
 };
 
 export default function WorkflowStudio() {
+  const { current } = useTenant();
   const [prompt, setPrompt] = useState("");
   const [flowJson, setFlowJson] = useState(JSON.stringify(EXAMPLE, null, 2));
   const [validation, setValidation] = useState<any>(null);
@@ -53,7 +55,7 @@ export default function WorkflowStudio() {
     const flow = parseFlow(); if (!flow) return;
     setLoading("save");
     try {
-      const { data, error } = await supabase.functions.invoke("ac-workflow-studio", { body: { op: "save", flow, is_active: false } });
+      const { data, error } = await supabase.functions.invoke("ac-workflow-studio", { body: { op: "save", flow, is_active: false, ...(current ? { tenant_id: current.id } : {}) } });
       if (error) throw error;
       setValidation(data.validation);
       toast.success("Workflow als Entwurf gespeichert");

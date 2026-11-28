@@ -1,0 +1,1 @@
+- Studio saves full graphs only as disabled, channel-less drafts in existing bot flows; the database identity guard prevents accidental flattening or activation.

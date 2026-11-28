@@ -17,9 +17,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHeader } from "@/components/infinity/PageHeader";
 
-type ChatMsg = { role: "user" | "assistant" | "system"; content: string };
+type ChatMsg = { role: "user" | "assistant"; content: string };
 
-async function callAi(messages: ChatMsg[], opts?: { response_format?: any; model?: string }) {
+async function callAi(messages: ChatMsg[], opts?: { response_format?: { type: "text" | "json_object" }; context?: string }) {
   const { data, error } = await supabase.functions.invoke("ai-center-chat", {
     body: { messages, ...opts },
   });
@@ -160,15 +160,7 @@ function Copilot() {
 
     try {
       const context = await buildContext();
-      const system: ChatMsg = {
-        role: "system",
-        content:
-          "Du bist der AlixWork Service Copilot. Antworte ausschließlich auf Basis der bereitgestellten Daten (JSON unten). " +
-          "Wenn etwas nicht in den Daten steht, sage das ehrlich. Gib jede Empfehlung mit Begründung, Datenquelle und (sofern vorhanden) Score und Vertrauensniveau (niedrig/mittel/hoch) an. " +
-          "Treffe niemals automatische Entscheidungen – formuliere alles als Vorschlag. Antworte auf Deutsch, präzise, mit Aufzählungen.\n\nDATEN:\n" +
-          context,
-      };
-      const reply = await callAi([system, ...next]);
+      const reply = await callAi(next, { context });
       setMessages([...next, { role: "assistant", content: reply }]);
     } catch (e: any) {
       toast.error(e.message ?? "Fehler beim AI-Aufruf");
@@ -234,10 +226,7 @@ function useAiSummary() {
   async function run(prompt: string, system?: string) {
     setLoading(true);
     try {
-      const reply = await callAi([
-        { role: "system", content: system ?? "Du bist AlixWork AI. Antworte auf Deutsch, kurz, mit Aufzählungen und Begründungen." },
-        { role: "user", content: prompt },
-      ]);
+      const reply = await callAi([{ role: "user", content: prompt }], system ? { context: system } : undefined);
       setText(reply);
     } catch (e: any) {
       toast.error(e.message ?? "AI-Fehler");

@@ -1,0 +1,2 @@
+- Accept only user/assistant history; construct trusted instructions server-side and send context as untrusted data so clients cannot replace system policy.
+- Preserve the existing model through the Gateway SDK with explicit no-replay behavior because uncertain inference must not be repeated automatically.

@@ -1,3 +1,5 @@
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -13,21 +15,25 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   try {
-    const body = await req.json().catch(() => ({}))
-    const serials: string[] = Array.isArray(body?.serials) ? body.serials.filter((s: unknown) => typeof s === 'string') : []
+    const access = await requireProcessAccess(req, corsHeaders, ['Super Admin', 'Admin', 'Order', 'SACHBEARBEITUNG', 'Bereitstellung', 'Produktion']);
+    if ('response' in access) return access.response;
+    const parsed = z.object({ serials: z.array(z.string().trim().min(1).max(255)).min(1).max(200) }).strict().safeParse(await req.json().catch(() => null))
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid device serial numbers' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const serials = [...new Set(parsed.data.serials)]
     if (serials.length === 0) {
       return new Response(JSON.stringify({ error: 'serials required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE)
+    const admin = access.client
 
     const { data: devices, error } = await admin
       .from('lager_devices')
       .select('serial_number, model_name, reserved_order_id')
       .in('serial_number', serials)
     if (error) throw error
+    if (!devices?.length || devices.length !== serials.length) return new Response(JSON.stringify({ error: 'Device not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
     const orderIds = [...new Set((devices ?? []).map(d => d.reserved_order_id).filter(Boolean))] as string[]
     const { data: orders } = orderIds.length

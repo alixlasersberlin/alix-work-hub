@@ -1,27 +1,30 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { callScopeAllowed } from '../_shared/call-scope.ts';
+import { z } from 'npm:zod@3.25.76';
 // QM AI Auto-Score — scores a call transcript against an active scorecard.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 const AI_KEY = Deno.env.get('LOVABLE_API_KEY')!;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const { call_id, scorecard_id } = await req.json();
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsedBody = z.object({ call_id: z.string().uuid(), scorecard_id: z.string().uuid() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) return new Response(JSON.stringify({ error: 'Invalid call or scorecard identifier' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { call_id, scorecard_id } = parsedBody.data;
     if (!call_id || !scorecard_id) return new Response(JSON.stringify({ error: 'call_id + scorecard_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
     const [{ data: call }, { data: sc }] = await Promise.all([
-      sb.from('ac_calls').select('id, transcript, agent_user_id, summary, sentiment').eq('id', call_id).single(),
+      sb.from('ac_calls').select('id, contact_id, transcript, agent_user_id, summary, sentiment').eq('id', call_id).single(),
       sb.from('ac_qm_scorecards').select('*').eq('id', scorecard_id).single(),
     ]);
-    if (!call?.transcript) throw new Error('call has no transcript — run ac-call-ai-process first');
-    if (!sc) throw new Error('scorecard not found');
+    if (!call || !sc || !await callScopeAllowed(access, call)) return new Response(JSON.stringify({ error: 'Call or scorecard not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!call.transcript) throw new Error('call has no transcript — run ac-call-ai-process first');
 
     const criteria = Array.isArray(sc.criteria) ? sc.criteria : [];
     if (criteria.length === 0) throw new Error('scorecard has no criteria');
@@ -75,7 +78,7 @@ Deno.serve(async (req) => {
         .eq('agent_user_id', call.agent_user_id)
         .order('created_at', { ascending: false })
         .limit(2);
-      const bothBad = (recent ?? []).length >= 2 && recent!.every((r: any) => Number(r.percent) < 70);
+      const bothBad = (recent ?? []).length >= 2 && (recent ?? []).every((r: any) => Number(r.percent) < 70);
       if (bothBad) {
         const { data: existing } = await sb
           .from('ac_qm_coaching_sessions')

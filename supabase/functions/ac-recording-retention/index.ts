@@ -1,9 +1,12 @@
+import { requireJobAccess } from '../_shared/job-auth.ts';
 // Cron: löscht Aufzeichnungen deren Retention-Frist abgelaufen ist
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const denied = await requireJobAccess(req, corsHeaders);
+  if (denied) return denied;
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,

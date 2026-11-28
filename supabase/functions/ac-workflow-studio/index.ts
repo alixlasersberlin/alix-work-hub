@@ -2,6 +2,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { requireCallerAccess } from '../_shared/caller-access.ts';
 import { z } from 'npm:zod@3.25.76';
+import { studioDraft } from './draft.ts';
 
 const NodeSchema = z.object({ id: z.string().min(1).max(100), type: z.enum(['trigger', 'condition', 'action']), kind: z.string().min(1).max(100), params: z.record(z.unknown()).optional(), next: z.string().max(100).nullish(), next_true: z.string().max(100).nullish(), next_false: z.string().max(100).nullish() });
 const BodySchema = z.object({ op: z.enum(['validate', 'generate', 'save']).default('validate'), prompt: z.string().max(12000).optional(), flow: z.object({ name: z.string().max(255).optional(), description: z.string().max(12000).optional(), nodes: z.array(NodeSchema).max(200).optional() }).optional(), is_active: z.boolean().optional(), tenant_id: z.string().uuid().optional() }).strict();
@@ -15,6 +16,7 @@ function validate(flow: { name?: string; nodes?: Node[] }): { ok: boolean; error
   if (!flow.name) errors.push('name required');
   if (nodes.length === 0) errors.push('at least one node required');
   const ids = new Set(nodes.map((n) => n.id));
+  if (ids.size !== nodes.length) errors.push('duplicate node identifiers');
   const triggers = nodes.filter((n) => n.type === 'trigger');
   if (triggers.length === 0) errors.push('at least one trigger required');
   if (triggers.length > 1) warnings.push('multiple triggers detected');
@@ -70,23 +72,15 @@ Deno.serve(async (req) => {
 
     if (op === 'save') {
       const sb = access.caller;
+      if (body.is_active === true) return new Response(JSON.stringify({ error: 'Studio workflows can only be saved as disabled drafts' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const v = validate(body.flow ?? {});
       if (!v.ok) return new Response(JSON.stringify({ error: 'invalid_flow', ...v }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const flow = body.flow;
       if (!flow?.nodes || !flow.name) return new Response(JSON.stringify({ error: 'invalid_flow' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const tenantId = body.tenant_id ?? (access.tenants.length === 1 ? access.tenants[0]?.id : undefined);
       if (!tenantId || !access.tenants.some((tenant: any) => tenant.id === tenantId)) return new Response(JSON.stringify({ error: 'Choose one of your authorized companies' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      const rule = {
-        tenant_id: tenantId,
-        name: flow.name,
-        description: flow.description ?? null,
-        trigger_type: flow.nodes.find((n: Node) => n.type === 'trigger')?.kind ?? 'manual',
-        conditions: flow.nodes.filter((n: Node) => n.type === 'condition'),
-        actions: flow.nodes.filter((n: Node) => n.type === 'action'),
-        is_active: body.is_active ?? false,
-        metadata: { studio_version: 'phase36', full_flow: body.flow, validation: v },
-      };
-      const { data, error } = await sb.from('ac_automation_rules').insert(rule).select().single();
+      const draft = studioDraft({ name: flow.name, description: flow.description, nodes: flow.nodes }, tenantId, access.user.id);
+      const { data, error } = await sb.from('ac_bot_flows').insert(draft).select().single();
       if (error) throw error;
       return new Response(JSON.stringify({ success: true, rule: data, validation: v }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

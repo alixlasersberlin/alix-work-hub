@@ -1,17 +1,20 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 // Customer Journey AI-Optimizer — analyzes drop-offs and suggests
 // next-best-step or A/B variants for a given journey.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { journey_id } = await req.json();
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsedBody = z.object({ journey_id: z.string().uuid() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) return new Response(JSON.stringify({ error: 'Invalid journey_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { journey_id } = parsedBody.data;
     if (!journey_id) throw new Error('journey_id required');
 
     const [{ data: journey }, { data: steps }, { data: runs }] = await Promise.all([
@@ -19,7 +22,7 @@ Deno.serve(async (req) => {
       sb.from('ac_journey_steps').select('*').eq('journey_id', journey_id).order('step_order', { ascending: true }),
       sb.from('ac_journey_runs').select('current_step, status').eq('journey_id', journey_id).limit(5000),
     ]);
-    if (!journey) throw new Error('journey not found');
+    if (!journey) return new Response(JSON.stringify({ error: 'Journey not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const byStep = new Map<any, { total: number; completed: number; failed: number }>();
     for (const r of runs ?? []) {

@@ -1,5 +1,6 @@
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
 
 /**
  * POST { filter } | { segment_id }
@@ -8,20 +9,26 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   try {
-    const body = await req.json();
+    if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsed = z.object({ segment_id: z.string().uuid().optional(), filter: z.object({ min_engagement: z.number().finite().optional(), max_churn: z.number().finite().optional(), segment_label: z.string().max(100).optional(), has_tag: z.string().max(100).optional(), country: z.string().max(100).optional() }).strict().optional() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json({ error: 'Invalid segment filter' }, 400);
+    const body = parsed.data;
     let filter = body.filter as Record<string, any> | undefined;
     let segmentId = body.segment_id as string | undefined;
 
     if (segmentId && !filter) {
-      const { data } = await sb.from('ac_segments').select('filter').eq('id', segmentId).maybeSingle();
+      const { data, error } = await sb.from('ac_segments').select('filter').eq('id', segmentId).maybeSingle();
+      if (error || !data) return json({ error: 'Segment not found in authorized scope' }, 404);
       filter = (data as any)?.filter ?? {};
     }
     if (!filter) return json({ error: 'filter or segment_id required' }, 400);
 
     // Basis: ac_contacts joined mit customer_scores (LEFT via zwei Queries)
-    let q = sb.from('ac_contacts').select('id,email,phone,country,tags', { count: 'exact' }).limit(500);
+    let q = sb.from('ac_contacts').select('id,email,phone,country,tags', { count: 'exact' }).in('tenant_id', access.tenants.map((t: any) => t.id)).limit(500);
     if (filter.country) q = q.eq('country', filter.country);
     if (filter.has_tag) q = q.contains('tags', [filter.has_tag]);
     const { data: contacts, count } = await q;
@@ -36,9 +43,9 @@ Deno.serve(async (req) => {
       const scoreMap = new Map((scores ?? []).map((s: any) => [s.contact_id, s]));
       ids = ids.filter((id: string) => {
         const s = scoreMap.get(id);
-        if (filter!.min_engagement != null && (!s || s.engagement_score < filter!.min_engagement)) return false;
-        if (filter!.max_churn != null && (!s || s.churn_score > filter!.max_churn)) return false;
-        if (filter!.segment_label && (!s || s.segment !== filter!.segment_label)) return false;
+        if (filter.min_engagement != null && (!s || s.engagement_score < filter.min_engagement)) return false;
+        if (filter.max_churn != null && (!s || s.churn_score > filter.max_churn)) return false;
+        if (filter.segment_label && (!s || s.segment !== filter.segment_label)) return false;
         return true;
       });
     }

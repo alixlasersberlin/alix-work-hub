@@ -1,24 +1,25 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-    const { campaign_id } = await req.json();
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const supabase = sb;
+    const parsedBody = z.object({ campaign_id: z.string().uuid() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) return new Response(JSON.stringify({ error: 'Invalid campaign_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { campaign_id } = parsedBody.data;
     if (!campaign_id) throw new Error('campaign_id required');
 
     const { data: camp, error: e1 } = await supabase.from('ac_campaigns')
       .select('*').eq('id', campaign_id).single();
-    if (e1) throw e1;
+    if (e1 || !camp) return new Response(JSON.stringify({ error: 'Campaign not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     if (!camp?.is_ab_test) throw new Error('Not an A/B test');
 
     const metric = (camp.winner_metric ?? 'open_rate') as string;

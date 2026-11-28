@@ -1,10 +1,9 @@
+import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3.25.76';
 // Compliance & Governance Cockpit — PII redaction, consent audit, retention checks.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 // Deterministic PII regex-based redactor (fast, no AI cost) with optional AI review.
 function redactPii(text: string) {
@@ -31,7 +30,13 @@ function redactPii(text: string) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const body = await req.json();
+    if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    const access = await requireCallerAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsed = z.object({ op: z.enum(['redact', 'audit', 'log']).default('redact'), text: z.string().max(50000).optional(), retention_days: z.number().int().min(1).max(3650).optional(), contact_id: z.string().uuid().nullish(), conversation_id: z.string().uuid().nullish(), findings: z.array(z.object({ type: z.string().max(100), match: z.string().max(1000), start: z.number().int().nonnegative() })).max(1000).optional(), source: z.string().max(100).optional() }).strict().safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid compliance request' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const body = parsed.data;
     const { op = 'redact' } = body;
 
     if (op === 'redact') {
@@ -42,8 +47,7 @@ Deno.serve(async (req) => {
 
     if (op === 'audit') {
       // Snapshot compliance posture: consent, recording retention, redaction coverage.
-      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-      const now = new Date();
+        const now = new Date();
       const [{ count: totalCalls }, { count: recordingsWithConsent }, { count: totalConversations }, { count: piiPredictions }] = await Promise.all([
         sb.from('ac_calls').select('*', { count: 'exact', head: true }),
         sb.from('ac_calls').select('*', { count: 'exact', head: true }).not('recording_url', 'is', null),
@@ -68,15 +72,21 @@ Deno.serve(async (req) => {
     }
 
     if (op === 'log') {
+      // A referenced contact/conversation must be readable before storing a derived audit record.
+      for (const [table, id] of [['ac_contacts', body.contact_id], ['ac_conversations', body.conversation_id]] as const) {
+        if (!id) continue;
+        const { data, error } = await sb.from(table).select('id,tenant_id').eq('id', id).in('tenant_id', access.tenants.map((t: any) => t.id)).maybeSingle();
+        if (error || !data) return new Response(JSON.stringify({ error: 'Resource not found in authorized scope' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       // Log a redaction/compliance event to ac_predictions for the audit trail.
-      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-      const { data, error } = await sb.from('ac_predictions').insert({
+      const writer = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+      const { data, error } = await writer.from('ac_predictions').insert({
         contact_id: body.contact_id ?? null,
         kind: 'compliance_scan',
         score: Number(body.findings?.length ?? 0),
         risk_level: (body.findings?.length ?? 0) > 0 ? 'medium' : 'low',
         suggested_action: 'PII redaction applied',
-        payload: { findings: body.findings ?? [], source: body.source ?? 'manual', conversation_id: body.conversation_id ?? null },
+        payload: { actor_id: access.user.id, manual_unverified: true, findings: body.findings ?? [], source: body.source ?? 'manual', conversation_id: body.conversation_id ?? null },
       }).select().single();
       if (error) throw error;
       return new Response(JSON.stringify({ success: true, log: data }),

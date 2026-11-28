@@ -1,3 +1,5 @@
+import { requireProcessAccess } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3.25.76';
 // ALIX CONNECT — Phase 28 Playbook Automation Engine
 // Cron: hourly. For each customer in ac_customer_health, execute enabled playbooks
 // for their current lifecycle_stage (respecting throttle + min/max score).
@@ -10,13 +12,12 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
 function render(tpl: string, ctx: Record<string, any>) {
   return (tpl ?? '').replace(/\{\{(\w+)\}\}/g, (_, k) => String(ctx[k] ?? ''));
 }
 
-async function runAction(action: any, ctx: any) {
+async function runAction(sb: any, action: any, ctx: any) {
   const kind = action?.kind ?? action?.type;
   const cfg = action?.config ?? action ?? {};
   const to = ctx.email ?? cfg.to;
@@ -82,13 +83,12 @@ async function runAction(action: any, ctx: any) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    let dryRun = false, playbookIdFilter: string | null = null, customerIdFilter: string | null = null;
-    try {
-      const body = await req.json();
-      dryRun = !!body?.dry_run;
-      playbookIdFilter = body?.playbook_id ?? null;
-      customerIdFilter = body?.customer_id ?? null;
-    } catch { /* no body */ }
+    const access = await requireProcessAccess(req, corsHeaders, ['Admin', 'Super Admin']);
+    if ('response' in access) return access.response;
+    const sb = access.client;
+    const parsed = z.object({ dry_run: z.boolean().default(false), playbook_id: z.string().uuid().nullish(), customer_id: z.string().uuid().nullish() }).strict().safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({ error: 'Invalid playbook identifiers' }, 400);
+    const dryRun = parsed.data.dry_run, playbookIdFilter = parsed.data.playbook_id ?? null, customerIdFilter = parsed.data.customer_id ?? null;
 
     const { data: playbooks } = await sb
       .from('ac_lifecycle_playbooks')
@@ -119,7 +119,8 @@ Deno.serve(async (req) => {
         if (recent?.length) { throttled++; continue; }
 
         const { data: cust } = await sb.from('customers')
-          .select('customer_name,email,phone').eq('id', h.customer_id).maybeSingle();
+          .select('customer_name,email,phone,contact_tenant_id').eq('id', h.customer_id).maybeSingle();
+        if (!cust || (!access.machine && !access.tenantIds.includes(cust.contact_tenant_id))) { throttled++; continue; }
         const ctx = {
           customer_id: h.customer_id,
           name: cust?.customer_name ?? '',
@@ -135,7 +136,7 @@ Deno.serve(async (req) => {
         const results: any[] = [];
         let status: 'completed' | 'failed' = 'completed';
         try {
-          for (const a of actions) results.push(await runAction(a, ctx));
+          for (const a of actions) results.push(await runAction(sb, a, ctx));
         } catch (e: any) {
           status = 'failed';
           results.push({ error: e?.message ?? String(e) });
