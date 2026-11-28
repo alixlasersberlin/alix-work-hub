@@ -3,13 +3,14 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { requireCallerAccess } from '../_shared/caller-access.ts';
 import { smsReview } from '../_shared/sms-policy.ts';
+import { reserveSmsSend, smsLimitWithCors } from '../_shared/sms-limit.ts';
 import { resolveSmsContext } from '../_shared/sms-context.ts';
 import { maskPhone } from '../_shared/security-core.ts';
 import { z } from 'npm:zod@3';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
 const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
 const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') ?? '';
@@ -71,6 +72,10 @@ Deno.serve(async (req) => {
     const attemptId = crypto.randomUUID();
     const {error:auditError} = await admin.from('audit_logs').insert({user_id:access.user.id,action:'sms_send_requested',module:'sms',record_id:context.recordId,details:{attempt_id:attemptId,record_type:body.record_type,record_ids:body.record_ids ?? [body.record_id],record_number:context.recordNumber,customer_id:context.customerId,alternative_phone:review.alternative,reason:review.reason,destination_masked:maskPhone(to)}});
     if (auditError) return json({error:'Versandprotokoll konnte nicht gespeichert werden'},503);
+
+    if (!(LOVABLE_API_KEY && TWILIO_API_KEY) && !(TWILIO_SID && TWILIO_TOKEN)) return json({error:'Twilio ist nicht konfiguriert'},200);
+    const limit = await reserveSmsSend(admin,access.user.id,to);
+    if (limit) return smsLimitWithCors(limit,corsHeaders);
 
     const params = new URLSearchParams({ To: to, From: TWILIO_FROM, Body: text });
 

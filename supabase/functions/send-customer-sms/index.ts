@@ -2,6 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCallerAccess } from "../_shared/caller-access.ts";
 import { smsReview } from "../_shared/sms-policy.ts";
+import { reserveSmsSend, smsLimitWithCors } from "../_shared/sms-limit.ts";
 import { maskPhone } from "../_shared/security-core.ts";
 import { z } from "npm:zod@3";
 
@@ -11,9 +12,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? '';
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '';
+const ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? '';
 
 const ENV_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const ENV_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
@@ -141,6 +142,9 @@ Deno.serve(async (req) => {
 
     const finalText = String(message_text).replace(/\{\{link\}\}/g, link);
     if (finalText.length > 1500) return json({ error: "SMS-Text zu lang." }, 400);
+
+    const limit = await reserveSmsSend(admin,userId,to);
+    if (limit) return smsLimitWithCors(limit,corsHeaders);
 
     // Send via Twilio
     const url = `https://api.twilio.com/2010-04-01/Accounts/${cfg.sid}/Messages.json`;
