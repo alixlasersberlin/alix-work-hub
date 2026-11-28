@@ -69,3 +69,9 @@ Stand: 28.11.2026. Zwischenbericht, **keine vollständige Sicherheitsabnahme**.
 - `lov_finding_cd056d21e44e9a75_1649b39e` (warn): Anyone can trigger document workflow scans
 - `lov_finding_deaeb897a2c94b91` (warn): Anyone can trigger fleet maintenance alerts
 - `lov_finding_fceaf8f0efb47bf5` (warn): Anyone can trigger SLA notifications
+
+## Erneute Scans und gespeicherter Stand
+
+- Korrekturcommit: `faae9db23`.
+- Schnellscan 28.11.2026 06:34 UTC abgeschlossen: keine neuen aktiven Befunde im begrenzten Prüfumfang. Eine nicht konfigurierte Connectorprüfung wurde übersprungen. Kein vollständiger Sicherheitsnachweis.
+- Tiefenscan gestartet: `security_scan/security-scan-13914134-4b95-4f3f-a064-71f725c7d887-cbb54a7fcfa75a3be5c1f7fd7615d5dfe9bd2394-c2f5e03c`. Der Scanner bindet ausdrücklich den Vorgängercommit `cbb54a7fc`, **nicht** den neuen Korrekturcommit `faae9db23`. Somit keine aktuelle Gesamtabnahme; nach Abschluss muss der aktuelle gespeicherte Quellstand nochmals geprüft werden. Es wird nicht gepollt.
