@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Search, Plus, Pencil, RefreshCw, ExternalLink, Lock, CircleHelp, Power, Globe, Boxes, ScrollText, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { ACTIVE_COLUMN, normalizeChannel, newestLogs, previewState, type QueueLog } from '@/lib/producthub/v2Preview';
+import { ReleaseDashboard } from '@/components/producthub/ReleaseDashboard';
 const db = supabase as any;
 type Site = { code: string; name: string; base_url: string | null; is_active: boolean };
 const TONES: Record<string, string> = { online: 'text-success', offline: 'text-muted-foreground', pending: 'text-warning', error: 'text-destructive', locked: 'text-muted-foreground', unknown: 'text-muted-foreground' };
@@ -148,6 +149,7 @@ export default function ProductHubV2Preview() {
         </div>
       </TabsContent>
       <TabsContent value="sites" className="mt-5 space-y-4">
+        <ReleaseDashboard canWrite={superAdmin} products={products} />
         <div className="flex justify-end"><Button variant="outline" disabled={!superAdmin} onClick={() => setSiteOpen(true)}><Plus className="w-4 h-4 mr-2" />Webseite hinzufügen</Button></div>
         <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-muted-foreground border-b"><tr>{['Webseite','Domain','Verbindung','Online bestätigt','Letzter Abgleich',''].map((h,i) => <th className="p-3" key={i}>{h}</th>)}</tr></thead><tbody>{sites.map(s => {
           const online = products.filter(p => stateFor(p,s.code).state === 'online').length;
