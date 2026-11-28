@@ -36,7 +36,7 @@ export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; pr
       return r;
     },
     onSuccess: async r => { setLast(r); await refresh(); r?.passed ? toast.success('Prüfung bestanden') : toast.error(`Prüfung nicht bestanden: ${r?.result ?? r?.error ?? 'siehe Protokoll'}`); },
-    onError: (e: any) => toast.error(e.message || 'Prüfung fehlgeschlagen'),
+    onError: async (e: any) => { await refresh(); toast.error(e.message || 'Prüfung fehlgeschlagen'); },
   });
   const lift = useMutation({
     mutationFn: async () => { const { error } = await db.rpc('ph2_lift_emergency_stop', { _confirmation: confirm, _revision: data?.gate?.revision ?? 0 }); if (error) throw error; },

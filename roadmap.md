@@ -174,6 +174,10 @@
 - [ ] Automatischen Rechnungsversand mit dem nächsten echten Shopify-Neuauftrag bis zur Zustellbestätigung beobachten — wartet auf neuen Auftrag; 501 vorbestehende Sicherheitshinweise unverändert.
 - [x] Zweite Anzahlungsrate AB-2026-04691: Betrags-Duplikatsperre reproduziert und für eindeutig nummerierte Raten korrigiert; 5.000 + 5.000 = 10.000 serverseitig getestet und vollständig zurückgenommen, Doppelnummer und Überschreitung gesperrt. Bestehende Rechnungen/Zahlungen/Rechte unverändert.
 - [ ] Zweite Anzahlungsrate angemeldet speichern und Versand abnehmen — externe Supabase stellt hier keine Nutzersitzung bereit; kein Kundenversand zu Testzwecken.
-- [ ] Release Control v1.1: isolierten Restore gegen Manifest vorbereiten; ohne getrennte Umgebung ausdrücklich unvollständig.
-- [ ] Release Control v1.1: Kommunikationsnachweis und Apex-Dry-Run je DE/COM, serverseitige frische Nachweismatrix; keine Aktivierung.
-- [ ] Release Control v1.1: bestehende Sicherheitshinweise ausschließlich lesend klassifizieren, Sicherheits-/Abschlussbericht und Regressionen.
+- [x] Release Control v1.1: isoliertes lokales Restore-Werkzeug, Manifest-Vorprüfung und Einrichtungsanleitung vorbereitet; Arbeitsspeicherprüfung kein endgültiger Nachweis.
+- [x] Release Control v1.1: Kommunikations-/Apex-Schaltflächen je DE/COM, Vorschau ohne Übernahme und serverseitige frische kanalbezogene Nachweismatrix; keine Aktivierung. 266 UI-, 93 Server-, fünf Isolations- und zurückgerollte DB-/Rollenprüfungen bestanden.
+- [x] Release Control v1.1: 493 bestehende Hinweise vorläufig einzeln klassifiziert, zusätzliche 213 Scannerbefunde ausgewertet, Sicherheits-/Abschlussbericht erstellt; bestätigte Product-Hub-Risiken blockieren, keine alten Richtlinien geändert.
+- [ ] Release Control v1.1: echten isolierten Restore abnehmen — Administrator bestätigt fehlendes ALIXWORK RESTORE TEST; authentifizierter historischer Schema-Snapshot, echte Dateiprüfsummen und getrennte lesende API fehlen.
+- [ ] Release Control v1.1: signierte Apex-/Notstopp-/Änderungsnachweise der Webseiten — unveränderter Testvertrag liefert diese Informationen nicht; vertrauenswürdiger Empfängernachweis benötigt gesonderte Freigabe.
+- [ ] Release Control v1.1: bestätigte Import-/Super-Admin-Risiken korrigieren und vollständige Sicherheitsabnahme — ausdrückliche Freigabe für bestehende Sicherheitskorrekturen erforderlich; aktuelle Sichtung bleibt rein lesend.
+- [ ] Release Control v1.1: neue Aktionen angemeldet Ende-zu-Ende abnehmen — externe Supabase stellt hier keine Mitarbeiter-Sitzung bereit; UI nur isoliert geprüft, echter unangemeldeter Zugriff mit 401 gesperrt.

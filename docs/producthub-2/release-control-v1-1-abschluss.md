@@ -23,12 +23,16 @@
 
 ## Tests
 
-- Alle bestehenden Frontend-Regressionen: 56 Testdateien / 265 Tests vor der abschließenden Frische-Ergänzung bestanden; abschließender Lauf wird gesondert protokolliert.
+- Alle bestehenden Frontend-Regressionen abschließend: 56 Testdateien / 266 Tests bestanden.
 - Shared-Server-/Bundle-/Release-Control-Regressionen: 93 Tests bestanden.
 - Isolationswerkzeug: fünf Sicherheits-/Vergleichstests bestanden; kein echter Produktiv-/Restore-Import durchgeführt.
 - Datenbank: bisherige zehn Betriebsmoduschecks und zusätzliche Matrix-/Kanal-/Frische-/Identitäts-/Fälschungstests vollständig zurückgenommen. Ein erster Test scheiterte an einer zu engen erwarteten Fehlermeldung; der bestehende Schutz hatte bereits korrekt blockiert. Mit korrekter Erwartung bestanden.
+- Drei zusätzliche echte Rollenprüfungen bestanden: Admin ohne Super Admin abgewiesen, aktiver exakter Super Admin zugelassen, unbekanntes Konto abgewiesen; keine Rollenänderungen.
+- Browser: echte geschützte Seite führt ohne Sitzung zur Anmeldung; isolierte Desktop-/Mobilprüfung bestätigt je zwei Kommunikations-/Apex-Schaltflächen und eine angeklickte Vorschau ohne Übernahme, keine Laufzeitfehler. Das ist ausdrücklich keine angemeldete Ende-zu-Ende-Abnahme.
 - Funktionen geprüft und bereitgestellt; Build-Protokoll ohne Fehler.
 
 ## Entscheidung
 
 **DE und COM sind nicht zur Pilot- oder Produktivfreigabe abgenommen.** Beide Modi bleiben gesperrt, kein Pilotgerät gewählt, Notstopp aktiv. Alle 44 Geräte und bestehenden API-Schlüssel bleiben unverändert. Erst nach Bereitstellung der isolierten Umgebung, vertrauenswürdigen Empfängernachweisen und gesondert freigegebener Sicherheitskorrektur ist eine erneute Abnahme möglich.
+
+Die separat beauftragte neue Vollsicherung vom 28.11.2026 wurde um 02:58:32 UTC erfolgreich abgeschlossen: 312 Tabellen, 2.742 von 2.742 Teilen mit SHA-256, 1.963 Speicherdateien indexiert, 1.447,8 MB. Dies ist ein Sicherungsstatus, **kein** vollständiger isolierter Restore- oder Hetzner-Integritätsnachweis.

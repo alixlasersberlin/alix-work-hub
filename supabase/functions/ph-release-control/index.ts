@@ -51,12 +51,18 @@ Deno.serve(async req => {
     if (body.data.action === 'communication_proof') return json(200, await communicationProof(url, anon, body.data.channel, user.id, record));
     if (body.data.action === 'apex_dry_run') return json(200, await apexDryRun(sb, url, anon, body.data.channel, record));
     return json(200, await backupOrRestore(sb, body.data.action, user.id, record));
-  } catch (e) { return json(500, { error: e instanceof Error ? e.message : String(e) }); }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const kinds = { backup_proof: 'backup', restore_test: 'restore', bundle_check: 'bundle', communication_proof: 'communication', apex_dry_run: 'pilot_dry_run' };
+    try { await record(kinds[body.data.action], 'channel' in body.data ? body.data.channel : null, false, { result: message, complete: false }); }
+    catch { /* A changed configuration must never be recorded as valid evidence. */ }
+    return json(500, { error: message });
+  }
 });
 
 async function bundleCheck(url: string, anon: string, channel: 'de' | 'com', record: (...a: any[]) => Promise<void>) {
   const key = Deno.env.get('PRODUCT_HUB_API_KEY');
-  if (!key) return { passed: false, error: 'API-Schlüssel nicht hinterlegt' };
+  if (!key) { await record('bundle', channel, false, { result: 'API-Schlüssel nicht hinterlegt' }); return { passed: false, error: 'API-Schlüssel nicht hinterlegt' }; }
   const get = async (q: string) => {
     const t = performance.now();
     const r = await fetch(`${url}/functions/v1/product-hub-api/bundle?channel=${channel}${q}`, { headers: { 'x-api-key': key, apikey: anon }, signal: AbortSignal.timeout(20000) });
