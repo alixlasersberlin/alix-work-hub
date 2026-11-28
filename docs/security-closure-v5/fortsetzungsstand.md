@@ -2,6 +2,8 @@
 
 28.11.2026. Gesamtfreigabe umgesetzt, nicht vollständig ausgeschöpft: die Ausführungsgrenze dieser Sitzung wurde erreicht. Keine Hintergrundbereinigung. Keine Veröffentlichung der Anwendung.
 
+Exakter gespeicherter Korrekturcommit: `e28dced8452dc719ee48b1481d1bf9921aa8f282`. Nachfolgende Berichtsergänzungen verändern diesen geprüften Funktionsstand nicht.
+
 ## Tatsächlich ausgeführt
 
 18 vorhandene Edge Functions korrigiert und bereitgestellt. 91 eindeutige native IDs (41 kritisch, 50 Warnungen) nach Tests und echter öffentlicher HTTP-Abweisung über die Befundverwaltung als behoben gemeldet; keine Ignorierungen. IDs und Quellen: native-closed.csv. Gemeinsame Ursachen: fehlende Maschinen-/Mitarbeiteranmeldung, unzureichende Rollen-/Firmenprüfung, globale Forderungssynchronisierung, ungeschützte Dokumentversionen, freie Retourenempfänger, unsicherer alter COM-Registryzugang und zusammengesetzte Suchfilter.
