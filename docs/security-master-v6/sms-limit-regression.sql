@@ -6,6 +6,13 @@ BEGIN
  IF has_function_privilege('anon','public.sms_reserve_send(uuid,text)','EXECUTE') OR has_function_privilege('authenticated','public.sms_reserve_send(uuid,text)','EXECUTE') THEN RAISE EXCEPTION 'Limiter exposed to client'; END IF;
  IF NOT has_function_privilege('service_role','public.sms_reserve_send(uuid,text)','EXECUTE') THEN RAISE EXCEPTION 'Service cannot reserve'; END IF;
 
+ -- Authenticated legacy limiter must not delete or add dedicated SMS reservations.
+ u := gen_random_uuid();
+ INSERT INTO public.api_rate_limits(bucket_key,request_at) VALUES ('sms:v1:user:'||u,clock_timestamp()-interval '2 hours');
+ IF NOT public.check_rate_limit('sms:v1:user:'||u,100,60) THEN RAISE EXCEPTION 'Legacy limiter accepted SMS namespace'; END IF;
+ SELECT count(*) INTO n FROM public.api_rate_limits WHERE bucket_key='sms:v1:user:'||u;
+ IF n<>1 THEN RAISE EXCEPTION 'Legacy limiter changed SMS quota'; END IF;
+
  -- Rule: employee 20/minute, twenty-first denied; failed reservation inserts nothing.
  u := gen_random_uuid(); h := repeat('a',64);
  INSERT INTO public.api_rate_limits(bucket_key,request_at) SELECT 'sms:v1:user:'||u,clock_timestamp()-interval '10 seconds' FROM generate_series(1,19);
