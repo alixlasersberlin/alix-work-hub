@@ -7,17 +7,14 @@ import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { requireCallerAccess } from '../_shared/caller-access.ts'
+import { OrderConfirmationBody, ORDER_CONFIRMATION_ROLES, sameMailRecipient } from '../_shared/security-v42-mail.ts'
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
 const SENDER_DOMAIN = 'alixwork.de'
 const FROM_DOMAIN = 'alixwork.de'
 const PUBLIC_BASE = 'https://alixwork.de'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
 
 async function signOrderToken(orderId: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -30,26 +27,18 @@ async function signOrderToken(orderId: string, secret: string): Promise<string> 
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders })
+  const access = await requireCallerAccess(req, corsHeaders, ORDER_CONFIRMATION_ROLES)
+  if ('response' in access) return access.response
 
-  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const apiKey = Deno.env.get('LOVABLE_API_KEY')!
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  const apiKey = Deno.env.get('LOVABLE_API_KEY') ?? ''
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-  const auth = req.headers.get('Authorization') ?? ''
-  if (!auth.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-  }
-  const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
-    global: { headers: { Authorization: auth } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-  const { data: ud } = await userClient.auth.getUser(auth.replace('Bearer ', ''))
-  if (!ud?.user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-  }
-
-  const body = await req.json().catch(() => ({}))
+  const userClient = access.caller
+  const parsed = OrderConfirmationBody.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const body = parsed.data
   const signatureId: string | undefined = body.signature_id
   const orderId: string | undefined = body.order_id
   const recipientEmailOverride: string | undefined = body.recipient_email
@@ -71,17 +60,20 @@ Deno.serve(async (req) => {
   const fmt = (n: number, c = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: c }).format(n)
 
   if (signatureId) {
-    const { data: sig } = await admin
+    const { data: sig } = await userClient
       .from('alix_sign_signatures')
       .select('id, sign_request_id, signer_email, signer_name, offer_number, created_at')
       .eq('id', signatureId).maybeSingle()
     if (!sig) return new Response(JSON.stringify({ error: 'Signature not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    const { data: r } = await admin
+    const { data: r } = await userClient
       .from('alix_sign_requests')
-      .select('id, offer_number, offer_payload, customer_name, customer_email, token, created_by, signed_at')
+      .select('id, customer_id, offer_number, offer_payload, customer_name, customer_email, token, created_by, signed_at')
       .eq('id', sig.sign_request_id).maybeSingle()
     if (!r) return new Response(JSON.stringify({ error: 'Sign request not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const { data: signatureCustomer } = await userClient.from('customers').select('id, source_system').eq('id', r.customer_id).maybeSingle()
+    const source = signatureCustomer?.source_system
+    if (!source || !access.tenants.some((tenant: { zoho_source_system: string | null }) => tenant.zoho_source_system === source)) return new Response('Forbidden', { status: 403, headers: corsHeaders })
 
     customer_name = r.customer_name || undefined
     customer_email_fallback = r.customer_email || sig.signer_email || undefined
@@ -92,7 +84,12 @@ Deno.serve(async (req) => {
     createdBy = r.created_by || undefined
 
     if (orderId) {
-      const { data: ord } = await admin.from('orders').select('order_number, internal_number, salesperson_name, vat_display_mode').eq('id', orderId).maybeSingle()
+      const { data: ord } = await userClient.from('orders').select('customer_id, order_number, internal_number, salesperson_name, vat_display_mode, source_system').eq('id', orderId).maybeSingle()
+      const baseOffer = String(r.offer_number ?? '').replace(/^(ANG-|AB-)/i, '')
+      const matchingNumber = [ord?.order_number, ord?.internal_number].some(number => typeof number === 'string' && !!baseOffer && number.replace(/^(ANG-|AB-)/i, '') === baseOffer)
+      if (!ord || ord.customer_id !== r.customer_id || ord.source_system !== source || !matchingNumber) {
+        return new Response('Auftrag und Signaturzuordnung nicht bestätigt', { status: 403, headers: corsHeaders })
+      }
       orderNumber = ord?.internal_number || ord?.order_number || undefined
       salespersonName = (ord as any)?.salesperson_name || undefined
       const m = (ord as any)?.vat_display_mode
@@ -103,17 +100,19 @@ Deno.serve(async (req) => {
 
   } else {
     // Fallback: PDF from order data
-    const { data: ord } = await admin.from('orders')
-      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address, salesperson_name, vat_display_mode')
-      .eq('id', orderId!).maybeSingle()
+    if (!orderId) return new Response('order_id required', { status: 400, headers: corsHeaders })
+    const { data: ord } = await userClient.from('orders')
+      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address, salesperson_name, vat_display_mode, source_system')
+      .eq('id', orderId).maybeSingle()
     if (!ord) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    if (!ord.source_system || !access.tenants.some((tenant: { zoho_source_system: string | null }) => tenant.zoho_source_system === ord.source_system)) return new Response('Forbidden', { status: 403, headers: corsHeaders })
     salespersonName = (ord as any).salesperson_name || undefined
     const m = (ord as any).vat_display_mode
     if (m === 'netto' || m === 'brutto') vatMode = m
 
 
     const { data: cust } = ord.customer_id
-      ? await admin.from('customers').select('company_name, contact_name, email').eq('id', ord.customer_id).maybeSingle()
+      ? await userClient.from('customers').select('company_name, contact_name, email').eq('id', ord.customer_id).eq('source_system', ord.source_system).maybeSingle()
       : { data: null as any }
     const token = await signOrderToken(ord.id, SUPABASE_SERVICE_ROLE_KEY)
     const modeQs = vatMode ? `&mode=${vatMode}` : ''
@@ -126,6 +125,7 @@ Deno.serve(async (req) => {
     signedAt = new Date().toLocaleString('de-DE')
   }
 
+  if (!sameMailRecipient(recipientEmailOverride, customer_email_fallback)) return new Response(JSON.stringify({ error: 'Empfänger stimmt nicht mit gespeichertem Kunden überein' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   const tpl = TEMPLATES['order-confirmation']
   const data = {
     customer_name,

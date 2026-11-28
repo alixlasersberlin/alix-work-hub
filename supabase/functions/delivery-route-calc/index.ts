@@ -1,9 +1,6 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { DeliveryRouteBody, DELIVERY_ROUTE_ROLES } from '../_shared/security-v42-scope.ts';
 
 const DEFAULT_START = "Zeppelinstraße 3, 12529 Schönefeld, Germany";
 const DEFAULT_START_COORDS: [number, number] = [13.5236, 52.3705];
@@ -35,7 +32,7 @@ async function geocode(address: string): Promise<[number, number] | null> {
         const c = f?.geometry?.coordinates;
         const type = String(f?.properties?.type ?? "");
         if (COARSE_TYPES.has(type)) {
-          console.warn("geocode too coarse", address, type);
+          console.warn("geocode too coarse", type);
           return null;
         }
         if (Array.isArray(c) && c.length >= 2) return [c[0], c[1]];
@@ -97,7 +94,7 @@ async function buildMatrix(locations: [number, number][], apiKey: string | undef
           };
         }
       } else {
-        console.warn("ORS matrix failed", resp.status, await resp.text());
+        console.warn("ORS matrix failed", resp.status);
       }
     } catch (e) {
       console.warn("ORS matrix exception", (e as Error).message);
@@ -209,31 +206,18 @@ function optimizeOrder(stops: StopInput[], dur: number[][], startMinutes: number
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const url = Deno.env.get("SUPABASE_URL")!;
-  const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: claims, error: authErr } = await userClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-  if (authErr || !claims?.claims) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const tourId = String(body?.tour_id || "");
+    const access = await requireCallerAccess(req, corsHeaders, DELIVERY_ROUTE_ROLES);
+    if ('response' in access) return access.response;
+    const admin = access.caller;
+    const { data: canPlan, error: permissionError } = await admin.rpc('can_plan_delivery');
+    if (permissionError || canPlan !== true) return new Response('Forbidden', { status: 403, headers: corsHeaders });
+    const parsed = DeliveryRouteBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const body = parsed.data;
+    const tourId = body.tour_id;
     const optimize = body?.optimize === true;
     if (!tourId) {
       return new Response(JSON.stringify({ error: "tour_id erforderlich" }), {
@@ -244,21 +228,23 @@ Deno.serve(async (req) => {
 
     const { data: tour, error: tourErr } = await admin
       .from("delivery_tours")
-      .select("id, tour_date, planned_start_time, custom_start_address, planned_break_minutes")
+      .select("id, tenant_id, tour_date, planned_start_time, custom_start_address, planned_break_minutes")
       .eq("id", tourId)
       .maybeSingle();
-    if (tourErr || !tour) throw new Error(tourErr?.message || "Tour nicht gefunden");
+    if (tourErr || !tour) return new Response('Tour nicht gefunden', { status: 404, headers: corsHeaders });
+    if (!tour.tenant_id || !access.tenants.some((tenant: { id: string }) => tenant.id === tour.tenant_id)) return new Response('Forbidden', { status: 403, headers: corsHeaders });
 
     const { data: stopRows, error: stopErr } = await admin
       .from("delivery_tour_stops")
       .select(
-        "id, appointment_id, position, delivery_appointments:appointment_id(id, customer_name, company_name, customer_id, billing_address, delivery_street, delivery_zip, delivery_city, delivery_country, delivery_lat, delivery_lng, duration_minutes, is_vip, priority, time_window_start, time_window_end)",
+        "id, appointment_id, position, delivery_appointments:appointment_id(id, tenant_id, customer_name, company_name, customer_id, billing_address, delivery_street, delivery_zip, delivery_city, delivery_country, delivery_lat, delivery_lng, duration_minutes, is_vip, priority, time_window_start, time_window_end)",
       )
       .eq("tour_id", tourId)
       .order("position", { ascending: true });
     if (stopErr) throw new Error(stopErr.message);
 
     const rows = stopRows ?? [];
+    if (rows.some((row: any) => !row.delivery_appointments || row.delivery_appointments.tenant_id !== tour.tenant_id)) return new Response('Forbidden', { status: 403, headers: corsHeaders });
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "Tour hat keine Stopps" }), {
         status: 400,
@@ -349,7 +335,7 @@ Deno.serve(async (req) => {
       throw new Error(`Keine gültige Lieferadresse vorhanden: ${missing.join(", ")}`);
     }
 
-    const locations: [number, number][] = [startCoords, ...geoStops.map((s) => s.coords!)];
+    const locations: [number, number][] = [startCoords, ...geoStops.flatMap((s) => s.coords ? [s.coords] : [])];
     const { dist, dur, provider } = await buildMatrix(locations, Deno.env.get("OPENROUTESERVICE_API_KEY"));
 
     const startMinutes = minutesFromTime(tour.planned_start_time) ?? 8 * 60;

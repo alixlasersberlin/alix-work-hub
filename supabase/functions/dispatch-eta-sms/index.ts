@@ -7,14 +7,10 @@
 //   { de: string, at: string, sender?: string }
 // Platzhalter: {{eta}} {{name}} {{sender}} {{city}}
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
-import { z } from 'https://esm.sh/zod@3.23.8';
-
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { z } from 'npm:zod@3';
+import { corsHeaders as cors } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { DELIVERY_ROUTE_ROLES } from '../_shared/security-v42-scope.ts';
 
 const Body = z.object({
   route_plan_id: z.string().uuid(),
@@ -31,7 +27,12 @@ const DEFAULT_TEMPLATES = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   try {
+    const access = await requireCallerAccess(req, cors, [...DELIVERY_ROUTE_ROLES, 'Technik', 'Techniker', 'Service', 'Serviceleitung', 'Kundenservice']);
+    if ('response' in access) return access.response;
+    const supa = access.caller;
+    const user = access.user;
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
     const TWILIO_FROM = Deno.env.get('TWILIO_FROM_NUMBER');
@@ -39,35 +40,30 @@ Deno.serve(async (req) => {
     if (!TWILIO_API_KEY) return json({ error: 'TWILIO_API_KEY missing – Twilio-Connector nicht verknüpft' }, 500);
     if (!TWILIO_FROM) return json({ error: 'TWILIO_FROM_NUMBER Secret fehlt' }, 500);
 
-    const authHeader = req.headers.get('Authorization') ?? '';
-    if (!authHeader) return json({ error: 'unauthorized' }, 401);
-    const supa = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-    const { data: { user } } = await supa.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (!user) return json({ error: 'unauthorized' }, 401);
-
-    const parsed = Body.safeParse(await req.json());
+    const parsed = Body.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return json({ error: parsed.error.flatten().fieldErrors }, 400);
     const { route_plan_id, eta_minutes } = parsed.data;
 
     const { data: rp } = await supa.from('route_plans')
-      .select('id, customer_id, order_id, contact_name, contact_phone, address_line, zip, city')
+      .select('id, technician_user_id, customer_id, order_id, contact_name, contact_phone, address_line, zip, city')
       .eq('id', route_plan_id).maybeSingle();
     if (!rp) return json({ error: 'route_plan not found' }, 404);
+    if (rp.technician_user_id !== user.id && !access.roles.some(role => DELIVERY_ROUTE_ROLES.includes(role))) return json({ error: 'Forbidden' }, 403);
+    const { data: customer } = await supa.from('customers').select('id, source_system').eq('id', rp.customer_id).maybeSingle();
+    if (!customer?.source_system || !access.tenants.some((tenant: { zoho_source_system: string | null }) => tenant.zoho_source_system === customer.source_system)) return json({ error: 'Forbidden' }, 403);
     if (!rp.contact_phone) {
       return json({ error: 'Keine Telefonnummer beim Einsatz hinterlegt' }, 422);
     }
 
     const to = normalizePhone(rp.contact_phone);
-    if (!to) return json({ error: `Ungültige Telefonnummer: ${rp.contact_phone}` }, 422);
+    if (!to) return json({ error: 'Ungültige gespeicherte Telefonnummer' }, 422);
 
     // Land bestimmen: order.source_system → 'zoho_eu_2' = AT, sonst DE
     let variant: 'de' | 'at' = 'de';
     if (rp.order_id) {
       const { data: ord } = await supa.from('orders')
-        .select('source_system').eq('id', rp.order_id).maybeSingle();
+        .select('source_system, customer_id').eq('id', rp.order_id).maybeSingle();
+      if (!ord || ord.customer_id !== customer.id || ord.source_system !== customer.source_system) return json({ error: 'Forbidden' }, 403);
       if (ord?.source_system === 'zoho_eu_2') variant = 'at';
     }
 
@@ -111,7 +107,7 @@ Deno.serve(async (req) => {
     try { twilioJson = JSON.parse(twilioBody); } catch { /* keep raw */ }
 
     const ok = twilioRes.ok && !twilioJson?.error_code;
-    await supa.from('route_plans').update({ eta_at: etaAt.toISOString() } as any).eq('id', route_plan_id);
+    if (ok) await supa.from('route_plans').update({ eta_at: etaAt.toISOString() } as any).eq('id', route_plan_id);
     if (rp.customer_id) {
       await supa.from('customer_communication_log').insert({
         customer_id: rp.customer_id,

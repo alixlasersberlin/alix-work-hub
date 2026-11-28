@@ -1,23 +1,26 @@
 import "../_shared/global-bcc.ts";
 // Versendet einen Kostenvoranschlag per E-Mail an den Kunden.
 // Erwartet: { quote_id } – verwendet repair_quotes + repair_orders.
-import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { RepairQuoteSendBody, REPAIR_SEND_ROLES, escapeMailText } from '../_shared/security-v42-input.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   try {
-    const { quote_id } = await req.json();
-    if (!quote_id) return new Response(JSON.stringify({ error: 'quote_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const access = await requireCallerAccess(req, corsHeaders, REPAIR_SEND_ROLES);
+    if ('response' in access) return access.response;
+    const parsed = RepairQuoteSendBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { quote_id } = parsed.data;
+    const sb = access.caller;
+    const { data: canManage, error: permissionError } = await sb.rpc('can_manage_repair');
+    if (permissionError || (canManage !== true && !access.roles.includes('Finance'))) return new Response('Forbidden', { status: 403, headers: corsHeaders });
     const { data: q } = await sb.from('repair_quotes').select('*').eq('id', quote_id).maybeSingle();
     if (!q) return new Response(JSON.stringify({ error: 'quote not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     const { data: r } = await sb.from('repair_orders').select('*').eq('id', q.repair_order_id).maybeSingle();
+    if (!r?.tenant_id || !access.tenants.some((tenant: { id: string }) => tenant.id === r.tenant_id)) return new Response('Forbidden', { status: 403, headers: corsHeaders });
     if (!r?.customer_email) return new Response(JSON.stringify({ error: 'no customer email' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const APP_URL = Deno.env.get('APP_URL') || 'https://alixwork.de';
@@ -25,17 +28,17 @@ Deno.serve(async (req) => {
     const totalGross = Number(q.total_gross || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111;padding:24px;background:#fff">
-      <h2 style="color:#0f172a">Ihr Kostenvoranschlag ${q.quote_number}</h2>
-      <p>Hallo ${r.customer_name || ''},</p>
+      <h2 style="color:#0f172a">Ihr Kostenvoranschlag ${escapeMailText(q.quote_number)}</h2>
+      <p>Hallo ${escapeMailText(r.customer_name)},</p>
       <p>vielen Dank, dass wir Ihr Gerät reparieren dürfen. Anbei unser Kostenvoranschlag.</p>
       <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 8px;color:#666">Reparatur-Nr.</td><td style="padding:4px 8px"><b>${r.repair_number}</b></td></tr>
-        <tr><td style="padding:4px 8px;color:#666">KV-Nr.</td><td style="padding:4px 8px"><b>${q.quote_number}</b></td></tr>
+        <tr><td style="padding:4px 8px;color:#666">Reparatur-Nr.</td><td style="padding:4px 8px"><b>${escapeMailText(r.repair_number)}</b></td></tr>
+        <tr><td style="padding:4px 8px;color:#666">KV-Nr.</td><td style="padding:4px 8px"><b>${escapeMailText(q.quote_number)}</b></td></tr>
         <tr><td style="padding:4px 8px;color:#666">Gesamtbetrag (brutto)</td><td style="padding:4px 8px;font-size:18px"><b>${totalGross} €</b></td></tr>
       </table>
-      ${q.customer_note ? `<div style="background:#fffbea;border:1px solid #fde68a;padding:10px;margin:10px 0;border-radius:4px"><b>Hinweis:</b><br>${String(q.customer_note).replace(/</g, '&lt;')}</div>` : ''}
+      ${q.customer_note ? `<div style="background:#fffbea;border:1px solid #fde68a;padding:10px;margin:10px 0;border-radius:4px"><b>Hinweis:</b><br>${escapeMailText(q.customer_note)}</div>` : ''}
       <p style="margin-top:24px">Bitte bestätigen Sie den Kostenvoranschlag online:</p>
-      <p><a href="${approvalLink}" style="display:inline-block;background:#0f172a;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600">Kostenvoranschlag ansehen &amp; entscheiden</a></p>
+      <p><a href="${escapeMailText(approvalLink)}" style="display:inline-block;background:#0f172a;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600">Kostenvoranschlag ansehen &amp; entscheiden</a></p>
       <p style="margin-top:24px;color:#64748b;font-size:12px">Mit freundlichen Grüßen<br/>Ihr Alix Lasers Service-Team</p>
     </body></html>`;
 
@@ -64,9 +67,11 @@ Deno.serve(async (req) => {
       if (!resp.ok) sendError = await resp.text();
     }
 
-    await sb.from('repair_quotes').update({ status: 'Versendet', sent_at: new Date().toISOString() }).eq('id', quote_id);
+    if (sendStatus !== 'sent') return new Response(JSON.stringify({ ok: false, error: sendStatus === 'skipped' ? 'E-Mail-Konfiguration fehlt' : 'Versand fehlgeschlagen; nicht automatisch erneut senden' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { data: updated, error: updateError } = await sb.from('repair_quotes').update({ status: 'Versendet', sent_at: new Date().toISOString() }).eq('id', quote_id).select('id').maybeSingle();
+    if (updateError || !updated) return new Response(JSON.stringify({ ok: false, error: 'E-Mail angenommen, Status nicht gespeichert. Nicht erneut senden.' }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     await sb.from('repair_quote_history').insert({
-      quote_id, action: 'sent', actor_email: r.customer_email, meta: { status: sendStatus, error: sendError, link: approvalLink },
+      quote_id, action: 'sent', actor_email: access.user.email, meta: { status: sendStatus, error: sendError, link: approvalLink },
     });
 
     return new Response(JSON.stringify({ ok: true, status: sendStatus, link: approvalLink }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

@@ -1,14 +1,12 @@
 // KI-Bewertung für Angebote (Vertriebs-Cockpit / Angebotsanalyse).
 // Berechnet Kaufwahrscheinlichkeit, Begründung und Sofortmaßnahmen je Angebot.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { ORDER_CONFIRMATION_ROLES } from '../_shared/security-v42-mail.ts';
+import { z } from 'npm:zod@3';
+const ScoreBody = z.object({ offer_ids: z.array(z.string().uuid()).min(1).max(25) });
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-const AI_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const AI_KEY = Deno.env.get('LOVABLE_API_KEY') ?? '';
 const MODEL = 'google/gemini-3-flash-preview';
 
 const SYSTEM = `Du bist ein Vertriebsanalyst für medizinische Laser- und Beautygeräte.
@@ -21,22 +19,19 @@ function j(v: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return j({ error: 'Method not allowed' }, 405);
   try {
-    const authHeader = req.headers.get('Authorization') || '';
-    if (!authHeader.startsWith('Bearer ')) return j({ error: 'unauthorized' }, 401);
-
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: userData } = await sb.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (!userData?.user?.id) return j({ error: 'unauthorized' }, 401);
-
-    const body = await req.json().catch(() => ({}));
-    const ids: string[] = Array.isArray(body.offer_ids) ? body.offer_ids.slice(0, 25) : [];
-    if (!ids.length) return j({ error: 'offer_ids fehlt' }, 400);
+    const access = await requireCallerAccess(req, corsHeaders, ORDER_CONFIRMATION_ROLES);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const parsed = ScoreBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return j({ error: parsed.error.flatten().fieldErrors }, 400);
+    const ids = [...new Set(parsed.data.offer_ids)];
 
     const { data: offers, error } = await sb
       .from('offers')
       .select('id, offer_number, customer_name, offer_date, total_gross, total_net, status, stage, discount_percent, financing_type, lead_source, competitor, last_contact_at, next_followup_at, loss_reason')
-      .in('id', ids);
+      .in('id', ids).in('tenant_id', access.tenants.map((tenant: { id: string }) => tenant.id));
     if (error) return j({ error: error.message }, 500);
     if (!offers?.length) return j({ scored: 0 });
 
@@ -74,15 +69,16 @@ Deno.serve(async (req) => {
     try { results = JSON.parse(match?.[0] ?? '{}')?.results ?? []; } catch { results = []; }
 
     let scored = 0;
+    const authorizedIds = new Set(offers.map((offer: { id: string }) => offer.id));
     for (const r of results) {
-      if (!r?.id) continue;
+      if (!r?.id || !authorizedIds.has(r.id)) continue;
       const probability = Math.max(0, Math.min(1, Number(r.probability ?? 0)));
       const { error: upErr } = await sb.from('offers').update({
         ai_probability: probability,
         ai_reason: String(r.reason ?? '').slice(0, 500),
         ai_actions: Array.isArray(r.actions) ? r.actions.slice(0, 5) : [],
         ai_scored_at: new Date().toISOString(),
-      }).eq('id', r.id);
+      }).eq('id', r.id).in('tenant_id', access.tenants.map((tenant: { id: string }) => tenant.id));
       if (!upErr) scored++;
     }
 

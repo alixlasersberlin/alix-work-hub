@@ -1,12 +1,10 @@
 // ALIX – Wiederkehrende Zahler: versendet Zahlungserinnerungen (Sammel- & Einzelversand).
 // Nutzt die bestehende Mail-Infrastruktur (send-invoice-mail) und protokolliert in rz_reminder_log.
 import "../_shared/global-bcc.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireProcessAccess, financeRoles } from '../_shared/process-access.ts';
+import { z } from 'npm:zod@3';
+const ReminderBody = z.object({ reminder_ids: z.array(z.string().uuid()).min(1).max(100), preview: z.boolean().optional(), mode: z.enum(['auto', 'manual']).optional(), override: z.object({ to_email: z.string().email().optional(), subject: z.string().max(998).optional(), body_html: z.string().max(200_000).optional(), body_text: z.string().max(200_000).optional(), bcc: z.array(z.string().email()).max(10).optional() }).nullable().optional() });
 
 const json = (v: unknown, status = 200) =>
   new Response(JSON.stringify(v), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -163,44 +161,33 @@ ${fill(t.team, v)}`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const cronSecret = Deno.env.get("CRON_SECRET");
+  const access = await requireProcessAccess(req, corsHeaders, financeRoles);
+  if ('response' in access) return access.response;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? '';
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '';
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? '';
   const authHeader = req.headers.get("Authorization") ?? "";
-  const apiKeyHeader = req.headers.get("apikey") ?? "";
-
-  const isCron =
-    (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
-    authHeader === `Bearer ${serviceKey}` ||
-    apiKeyHeader === serviceKey;
-
-  let userId: string | null = null;
+  const userId = access.userId;
   let userEmail: string | null = null;
-  if (!isCron) {
-    if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-    const who = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: { Authorization: authHeader, apikey: anonKey },
-    });
-    if (!who.ok) return json({ error: "Unauthorized" }, 401);
-    const u = await who.json().catch(() => null);
-    userId = u?.id ?? null;
-    userEmail = u?.email ?? null;
+  if (!access.machine) {
+    const { data: identity } = await access.client.auth.getUser();
+    userEmail = identity.user?.email ?? null;
   }
 
   const rest = async (path: string, init?: RequestInit) =>
     fetch(`${supabaseUrl}/rest/v1/${path}`, {
       ...init,
       headers: {
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
+        apikey: access.machine ? serviceKey : anonKey,
+        Authorization: access.machine ? `Bearer ${serviceKey}` : authHeader,
         "Content-Type": "application/json",
         ...(init?.headers ?? {}),
       },
     });
 
-  const body = await req.json().catch(() => ({} as Record<string, unknown>));
+  const parsedBody = ReminderBody.safeParse(await req.json().catch(() => null));
+  if (!parsedBody.success) return json({ error: parsedBody.error.flatten().fieldErrors }, 400);
+  const body = parsedBody.data;
   const ids: string[] = Array.isArray(body.reminder_ids) ? (body.reminder_ids as string[]) : [];
   const preview = body.preview === true;
   const mode = body.mode === "auto" ? "auto" : "manual";
@@ -208,13 +195,8 @@ Deno.serve(async (req) => {
 
   // Manuelle Super-Admin-Übersteuerung (Empfänger, Betreff, Inhalt, BCC).
   const ov = (body.override ?? null) as Record<string, unknown> | null;
-  let isSuperAdmin = false;
-  if (ov && userId) {
-    const rolesRes = await rest(`user_roles?select=role&user_id=eq.${userId}`);
-    const roles = rolesRes.ok ? ((await rolesRes.json()) as any[]).map((x) => String(x.role)) : [];
-    isSuperAdmin = roles.includes("Super Admin");
-    if (!isSuperAdmin) return json({ error: "Nur Super Admin darf den Versand übersteuern." }, 403);
-  }
+  const isSuperAdmin = !access.machine && access.roles.includes('Super Admin');
+  if (ov && !isSuperAdmin) return json({ error: "Nur Super Admin darf den Versand übersteuern." }, 403);
   const override = isSuperAdmin ? ov : null;
 
 
@@ -225,7 +207,14 @@ Deno.serve(async (req) => {
   const shopUrl = settings.shop_url ?? "https://alixsmart.de";
   const subjectBase = settings.subject ?? "Ihre monatliche Rechnung";
 
-  const remRes = await rest(`rz_reminders?select=*&id=in.(${ids.join(",")})`);
+  let sourceFilter = '';
+  if (!access.machine) {
+    const { data: tenants, error: tenantError } = await access.client.from('tenants').select('zoho_source_system').in('id', access.tenantIds);
+    const sources = (tenants ?? []).flatMap((tenant: { zoho_source_system: string | null }) => tenant.zoho_source_system ? [tenant.zoho_source_system] : []);
+    if (tenantError || !sources.length) return json({ error: 'Forbidden' }, 403);
+    sourceFilter = `&source_system=in.(${sources.map(encodeURIComponent).join(',')})`;
+  }
+  const remRes = await rest(`rz_reminders?select=*&id=in.(${ids.join(",")})${sourceFilter}`);
   if (!remRes.ok) return json({ error: await remRes.text() }, 502);
   const reminders = (await remRes.json()) as any[];
 
@@ -272,7 +261,7 @@ Deno.serve(async (req) => {
     try {
       const mail = await fetch(`${supabaseUrl}/functions/v1/send-invoice-mail`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
+        headers: { "Content-Type": "application/json", Authorization: access.machine ? `Bearer ${serviceKey}` : authHeader, apikey: access.machine ? serviceKey : anonKey },
         body: JSON.stringify({
           to_email: toEmail,
           to_name: r.customer_name,

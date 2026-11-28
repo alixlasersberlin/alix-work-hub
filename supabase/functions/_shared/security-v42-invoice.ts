@@ -1,0 +1,8 @@
+import { z } from 'npm:zod@3';
+export const INVOICE_SEND_ROLES = ['Super Admin', 'Admin', 'Finance', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'FIBU LIGHT', 'Order', 'Auftragsverwaltung', 'SACHBEARBEITUNG', 'Österreich'];
+const attachment = z.object({ filename: z.string().min(1).max(255).refine(value => !/[\r\n/\\]/.test(value)), content: z.string().min(1).max(14_000_000).refine(value => /^[A-Za-z0-9+/]+={0,2}$/.test(value) && value.length % 4 === 0), contentType: z.string().max(100).optional(), content_type: z.string().max(100).optional() });
+export const InvoiceMailBody = z.object({ to_email: z.string().trim().email().max(254), to_name: z.string().max(255).optional(), subject: z.string().min(1).max(998).refine(value => !/[\r\n]/.test(value)), body_text: z.string().max(200_000).optional(), body_html: z.string().max(200_000).optional(), bcc: z.array(z.string().email()).max(10).optional(), attachments: z.array(attachment).max(10).optional(), invoice_number: z.string().max(255).optional() }).refine(value => value.body_text || value.body_html, 'body required').refine(value => (value.attachments ?? []).reduce((sum, file) => sum + file.content.length, 0) <= 20_000_000, 'Attachments too large');
+export function approvedInvoiceCopies(copies: string[] = []): boolean {
+  const allowed = ['service@alix-lasers.com', 'k.trinh@alix-operation.de', 'rde@alix-lasers.com', 'buchhaltung@alix-operation.de'];
+  return copies.every(value => allowed.includes(value.toLowerCase()));
+}

@@ -1,0 +1,68 @@
+[
+  {
+    "function": "plm-purchase-order-send",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "send-repair-quote",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "delivery-route-calc",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "esc-calendar-sync",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "send-order-confirmation",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "catalog-share-send",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "convert-signed-offer-to-order",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "offers-ai-score",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "dispatch-eta-sms",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "rz-reminder-send",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  {
+    "function": "send-invoice-mail",
+    "credential": "public project key",
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  }
+]

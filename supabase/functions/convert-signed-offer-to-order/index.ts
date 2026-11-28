@@ -1,27 +1,23 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { createOrderOnce, OrderIdentityConflict } from './order-identity.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { ORDER_CONFIRMATION_ROLES } from '../_shared/security-v42-mail.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
 
   try {
+    const access = await requireCallerAccess(req, corsHeaders, ORDER_CONFIRMATION_ROLES);
+    if ('response' in access) return access.response;
     const { offer_number } = await req.json().catch(() => ({}));
-    if (!offer_number || typeof offer_number !== 'string') {
+    if (!offer_number || typeof offer_number !== 'string' || offer_number.length > 128 || !/^[A-Za-z0-9-]+$/.test(offer_number)) {
       return new Response(JSON.stringify({ error: 'offer_number required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const url = Deno.env.get('SUPABASE_URL');
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!url || !serviceKey) throw new Error('Auftragsdienst nicht konfiguriert');
-    const supabase = createClient(url, serviceKey);
+    const supabase = access.caller;
 
     // Nummernkreis-Regel: Auftragsnummern IMMER mit "AB-"-Präfix speichern
     const base = offer_number.replace(/^ANG-/i, '').replace(/^AB-/i, '');
@@ -73,7 +69,8 @@ Deno.serve(async (req) => {
     const { data: cust, error: customerError } = await supabase
       .from('customers').select('source_system').eq('id', customer_id).maybeSingle();
     if (customerError) throw customerError;
-    const source_system = cust?.source_system || 'zoho_eu_1';
+    const source_system = cust?.source_system;
+    if (!source_system || !access.tenants.some((tenant: { zoho_source_system: string | null }) => tenant.zoho_source_system === source_system)) return new Response('Forbidden', { status: 403, headers: corsHeaders });
 
     const payment = payload.payment || {};
     const downPayment = Number(payment.down) || null;

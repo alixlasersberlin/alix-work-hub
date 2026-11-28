@@ -3,10 +3,12 @@
 // Direction: outbound (ESC → provider). Idempotent per event via external_ref stored in esc_events.external_note.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { CalendarSyncBody, ownCalendarScope } from '../_shared/security-v42-scope.ts';
 
 const admin = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  Deno.env.get("SUPABASE_URL") ?? '',
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '',
   { auth: { persistSession: false } },
 );
 
@@ -25,7 +27,7 @@ async function refreshGoogle(conn: any): Promise<string> {
     }),
   });
   const j = await res.json();
-  if (!res.ok) throw new Error(`google refresh: ${JSON.stringify(j)}`);
+  if (!res.ok) throw new Error(`google refresh: HTTP ${res.status}`);
   const expires = new Date(Date.now() + (j.expires_in ?? 3600) * 1000).toISOString();
   await admin.from("esc_calendar_connections")
     .update({ access_token: j.access_token, expires_at: expires })
@@ -50,7 +52,7 @@ async function refreshMicrosoft(conn: any): Promise<string> {
     }),
   });
   const j = await res.json();
-  if (!res.ok) throw new Error(`ms refresh: ${JSON.stringify(j)}`);
+  if (!res.ok) throw new Error(`ms refresh: HTTP ${res.status}`);
   const expires = new Date(Date.now() + (j.expires_in ?? 3600) * 1000).toISOString();
   await admin.from("esc_calendar_connections")
     .update({ access_token: j.access_token, expires_at: expires,
@@ -74,7 +76,7 @@ async function pushToGoogle(token: string, calendarId: string, ev: any) {
       body: JSON.stringify(body) },
   );
   const j = await res.json();
-  if (!res.ok) throw new Error(`google insert: ${JSON.stringify(j)}`);
+  if (!res.ok) throw new Error(`google insert: HTTP ${res.status}`);
   return j.id as string;
 }
 
@@ -93,30 +95,38 @@ async function pushToMicrosoft(token: string, ev: any) {
     body: JSON.stringify(body),
   });
   const j = await res.json();
-  if (!res.ok) throw new Error(`ms insert: ${JSON.stringify(j)}`);
+  if (!res.ok) throw new Error(`ms insert: HTTP ${res.status}`);
   return j.id as string;
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   try {
-    const { user_id } = await req.json().catch(() => ({}));
+    const access = await requireCallerAccess(req, corsHeaders);
+    if ('response' in access) return access.response;
+    const parsed = CalendarSyncBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!ownCalendarScope(access.user.id, parsed.data.user_id)) return new Response('Forbidden', { status: 403, headers: corsHeaders });
     const { data: conns, error } = await admin
       .from("esc_calendar_connections")
       .select("*")
       .eq("status", "active")
-      .then(r => user_id ? { data: (r.data ?? []).filter((c: any) => c.user_id === user_id), error: r.error } : r);
+      .eq('user_id', access.user.id);
     if (error) throw error;
 
     const results: any[] = [];
     for (const conn of conns ?? []) {
-      const { data: events } = await admin
+      if (conn.user_id !== access.user.id) throw new Error('Calendar ownership mismatch');
+      const { data: events, error: eventError } = await access.caller
         .from("esc_events")
         .select("id,title,description,location,start_at,end_at,assigned_user_id,status")
         .eq("assigned_user_id", conn.user_id)
+        .in('tenant_id', access.tenants.map((tenant: { id: string }) => tenant.id))
         .gte("start_at", new Date().toISOString())
         .lte("start_at", new Date(Date.now() + 30 * 86400_000).toISOString())
         .not("status", "in", '("storniert","abgelehnt")');
+      if (eventError) throw new Error('Calendar events unavailable');
 
       for (const ev of events ?? []) {
         try {

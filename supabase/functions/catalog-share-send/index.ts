@@ -1,24 +1,15 @@
 import "../_shared/global-bcc.ts";
 // Sendet Katalog-Share-Links per E-Mail, WhatsApp oder SMS.
 // Nutzt vorhandene Kanäle: send-mail (Resend), Twilio WhatsApp, Twilio SMS.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { CatalogShareBody, CATALOG_SEND_ROLES, catalogShareOwned, approvedCatalogBase } from '../_shared/security-v42-mail.ts';
+import { escapeMailText } from '../_shared/security-v42-input.ts';
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
 const TWILIO_WA_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM_NUMBER") ?? "";
 const TWILIO_SMS_FROM = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? "";
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -58,24 +49,22 @@ async function twilioSend(to: string, body: string, waMode: boolean) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
-    const userId = userData.user.id;
-
-    const body = await req.json().catch(() => ({}));
+    const access = await requireCallerAccess(req, corsHeaders, CATALOG_SEND_ROLES);
+    if ('response' in access) return access.response;
+    const admin = access.caller;
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const userId = access.user.id;
+    const parsed = CatalogShareBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json({ error: parsed.error.flatten().fieldErrors }, 400);
+    const body = parsed.data;
     const linkId = String(body.link_id ?? "").trim();
     const channel = String(body.channel ?? "").trim(); // 'email' | 'whatsapp' | 'sms'
     const fromEmail = String(body.from_email ?? "service@alix-lasers.com");
-    const baseUrl = String(body.base_url ?? "https://alixwork.de/catalog/share/");
+    const baseUrl = approvedCatalogBase(body.base_url);
+    if (!baseUrl) return json({ error: 'Nicht freigegebene Katalog-Linkadresse' }, 400);
     const customSubject = body.subject ? String(body.subject) : null;
     const customBody = body.body ? String(body.body) : null;
 
@@ -83,13 +72,14 @@ Deno.serve(async (req) => {
       return json({ error: "link_id und channel (email|whatsapp|sms) erforderlich" }, 400);
     }
 
-    // Link laden (mit service role, RLS-frei — Zugriff über auth bereits verifiziert)
+    // Caller RLS and explicit ownership both apply; unrelated sales users cannot send this link.
     const { data: link, error: linkErr } = await admin
       .from("catalog_share_links")
-      .select("id, token, item_id, recipient_name, recipient_email, recipient_phone, revoked_at, expires_at")
+      .select("id, created_by, token, item_id, recipient_name, recipient_email, recipient_phone, revoked_at, expires_at")
       .eq("id", linkId)
       .maybeSingle();
     if (linkErr || !link) return json({ error: "Link nicht gefunden" }, 404);
+    if (!catalogShareOwned(userId, link.created_by, access.roles)) return json({ error: 'Forbidden' }, 403);
     if (link.revoked_at) return json({ error: "Link wurde widerrufen" }, 400);
     if (link.expires_at && new Date(link.expires_at) < new Date()) {
       return json({ error: "Link ist abgelaufen" }, 400);
@@ -97,9 +87,11 @@ Deno.serve(async (req) => {
 
     const { data: item } = await admin
       .from("catalog_items")
-      .select("sku, name")
+      .select("sku, name, source_system")
       .eq("id", link.item_id)
       .maybeSingle();
+    if (!item) return json({ error: 'Artikel nicht zugänglich' }, 404);
+    if (!item.source_system || !access.tenants.some((tenant: { zoho_source_system: string | null }) => tenant.zoho_source_system === item.source_system)) return json({ error: 'Forbidden' }, 403);
 
     const url = `${baseUrl}${link.token}`;
     const itemName = item?.name ?? "Katalog-Artikel";
@@ -115,7 +107,7 @@ Deno.serve(async (req) => {
       if (!link.recipient_email) return json({ error: "Kein Empfänger-E-Mail hinterlegt" }, 400);
       const subject = customSubject ?? defaultSubject;
       const text = customBody ?? defaultTextBody;
-      const html = `<p>${text.replace(/\n/g, "<br>")}</p>`;
+      const html = `<p>${escapeMailText(text).replace(/\n/g, "<br>")}</p>`;
       const { data: sendData, error: sendErr } = await admin.functions.invoke("send-mail", {
         headers: { Authorization: authHeader },
         body: {

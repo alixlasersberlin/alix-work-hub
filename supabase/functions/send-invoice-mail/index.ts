@@ -2,19 +2,19 @@ import "../_shared/global-bcc.ts";
 // Sends an invoice email via Lovable Email (same pipeline as send-order-confirmation)
 // Body: { to_email, to_name?, subject, body_text, body_html?, bcc?: string[], attachments?: [{filename, content(base64), contentType}] }
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
+import { requireProcessAccess } from '../_shared/process-access.ts'
+import { InvoiceMailBody, INVOICE_SEND_ROLES, approvedInvoiceCopies } from '../_shared/security-v42-invoice.ts'
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
 const SITE_NAME = 'Alix Lasers I Finance'
 const SENDER_DOMAIN = 'alixwork.de'
 const FROM_DOMAIN = 'alixwork.de'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders })
+  const access = await requireProcessAccess(req, corsHeaders, INVOICE_SEND_ROLES)
+  if ('response' in access) return access.response
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
@@ -22,18 +22,21 @@ Deno.serve(async (req) => {
     })
   }
 
-  const auth = req.headers.get('Authorization') ?? ''
-  if (!auth.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const body = await req.json().catch(() => ({} as any))
+  const parsed = InvoiceMailBody.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const body = parsed.data
   const {
     to_email, to_name, subject, body_text, body_html,
     bcc, attachments, invoice_number,
   } = body ?? {}
+  if (!access.machine) {
+    if (!approvedInvoiceCopies(bcc)) return new Response(JSON.stringify({ error: 'Nicht freigegebene Kopieadresse' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const { data: tenants, error: tenantError } = await access.client.from('tenants').select('zoho_source_system').in('id', access.tenantIds)
+    const sources = (tenants ?? []).map((tenant: { zoho_source_system: string | null }) => tenant.zoho_source_system).filter((source: string | null): source is string => !!source)
+    if (tenantError || !sources.length) return new Response('Forbidden', { status: 403, headers: corsHeaders })
+    const { data: recipientsAllowed, error: recipientError } = await access.client.from('customers').select('id').eq('email', to_email).in('source_system', sources).limit(1)
+    if (recipientError || !recipientsAllowed?.length) return new Response(JSON.stringify({ error: 'Empfänger ist kein zugänglicher Kunde der zugewiesenen Firma' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
 
   if (!to_email || !subject || (!body_text && !body_html)) {
     return new Response(JSON.stringify({ error: 'to_email, subject und body erforderlich' }), {
@@ -101,12 +104,12 @@ Deno.serve(async (req) => {
     })
     const txt = await res.text()
     if (!res.ok) {
-      console.error(`Resend send failed [${res.status}]: ${txt}`)
-      return new Response(JSON.stringify({ success: false, error: `Mailversand fehlgeschlagen (${res.status}): ${txt.slice(0, 300)}` }), {
+      console.error('Invoice mail provider rejected request', res.status)
+      return new Response(JSON.stringify({ success: false, error: `Mailversand fehlgeschlagen (${res.status}); nicht automatisch erneut senden` }), {
         status: res.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    console.log('send-invoice-mail via resend ok', txt.slice(0, 200))
+    console.log('send-invoice-mail via resend accepted')
     return new Response(JSON.stringify({ success: true, provider: 'resend', results: [{ to: to_email, status: 'sent', attachments: attachments.map((a: any) => a.filename) }] }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

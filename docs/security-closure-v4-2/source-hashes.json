@@ -1,0 +1,68 @@
+[
+  {
+    "file": "supabase/functions/catalog-share-send/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "ca174aa0d99efefd0f8e09485b0e8d94d6bcdad6704e761f15b217d530b7a96c",
+    "current_sha256": "8a564f56b05890bdda2d60832250506062f7b59d74e299534e8c5abb2fbb6b37"
+  },
+  {
+    "file": "supabase/functions/convert-signed-offer-to-order/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "930f9245a48289f814ef217681aa6b546e3f63e55c5c7cdc2d2168d9308f4daa",
+    "current_sha256": "a21db2bac1171ee6e720d2f55dce25d78e6d20f8620e054d5586e98f3f8571ec"
+  },
+  {
+    "file": "supabase/functions/delivery-route-calc/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "7de37b5ff20cdce7288ca5076f0484773e8fb9f3ea2dea00d8e20d446b3d4f79",
+    "current_sha256": "db2785f49a5be76be98c93a45ee924053b4051c4e3a4d0a4f9a538728e467399"
+  },
+  {
+    "file": "supabase/functions/dispatch-eta-sms/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "9c5d538e4835c58274d307d0ee66765e197548f17361a11a5a2c83729b974d6b",
+    "current_sha256": "d121432f2db2577eee944f37f145922040a247cd83188744bbe4b920d2358df7"
+  },
+  {
+    "file": "supabase/functions/esc-calendar-sync/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "3330a256e8fa3b4ff96a3413e25589369def6bc7a0813190100c817179fd6bad",
+    "current_sha256": "6bad2f68e4219b93597466440b5d538a98efc74cf33022fdc1c2155fe1e1c26a"
+  },
+  {
+    "file": "supabase/functions/offers-ai-score/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "10df5249fa2e2342706726983ba3d842ce6c2734ad5adc81020a7c709ebb1513",
+    "current_sha256": "112b89f48a72d4fb98a157f088ea7a9f32079a8098ddff964861b111e19301f4"
+  },
+  {
+    "file": "supabase/functions/plm-purchase-order-send/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "e832c0008bc5a7bee7aeb295ba57dbec65aed2938efe3466d1688d12d69f3edc",
+    "current_sha256": "f9e1639e0402c35178937a984cab15c5a69a393a8b2abbdf7ccba7221effc440"
+  },
+  {
+    "file": "supabase/functions/rz-reminder-send/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "04fcf2ca31671358533aaa3f70bdba3fb4619e3231b12de6b9f5994465008035",
+    "current_sha256": "b9f33cf1c3c0b9bc1920c1f0afd96645cf4a1ecde284fec924ec8ba92d43edc9"
+  },
+  {
+    "file": "supabase/functions/send-invoice-mail/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "cb72522342365e1b64d95bbbe6dce30f38d78ad0ba7b22034e738746091c3042",
+    "current_sha256": "8a7705748f3c764533cbe035965a3e742ec38340412b7a2b37ed99db26793381"
+  },
+  {
+    "file": "supabase/functions/send-order-confirmation/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "5bcae92f390f320da0d5f0612f829e5691226f977a0094e4641831ed704a4536",
+    "current_sha256": "91ea0c79722e1b2283697ffe3901986f56a62859f96cea1eae91684f7f73de93"
+  },
+  {
+    "file": "supabase/functions/send-repair-quote/index.ts",
+    "previous_commit": "5b0e9d053f42bf091a9f3814fe0d61a222220218",
+    "previous_sha256": "e9d118f1d5316dcd367353d1335d399cfa12b666697b1f5d0815a68405ac56b6",
+    "current_sha256": "813b9d86a1c7955a51948d6f2fb62e45bae23b78fd7320924919247de0b5ddce"
+  }
+]

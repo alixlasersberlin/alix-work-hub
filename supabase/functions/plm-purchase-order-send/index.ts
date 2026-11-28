@@ -1,22 +1,14 @@
 import "../_shared/global-bcc.ts";
 // PLM – Bestellung per E-Mail an den Lieferanten senden.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { PurchaseOrderSendBody, PURCHASE_SEND_ROLES, escapeMailText } from '../_shared/security-v42-input.ts';
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") || "";
 const BCC = "rde@alix-lasers.com";
 
 function esc(s: unknown) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  return escapeMailText(s);
 }
 
 function fmtDate(v?: string | null) {
@@ -31,20 +23,19 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    const userSb = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: authHeader } } });
-    const { data: userData } = await userSb.auth.getUser();
-    if (!userData?.user) return json({ error: "Nicht angemeldet" }, 401);
-
-    const body = await req.json().catch(() => ({}));
-    const poId = String(body?.po_id ?? "");
-    const pdfBase64 = typeof body?.pdf_base64 === "string" ? body.pdf_base64 : "";
-    if (!poId) return json({ error: "po_id fehlt" }, 400);
+    const access = await requireCallerAccess(req, corsHeaders, PURCHASE_SEND_ROLES);
+    if ('response' in access) return access.response;
+    const sb = access.caller;
+    const { data: canWrite, error: permissionError } = await sb.rpc('plm_can_write');
+    if (permissionError || canWrite !== true) return json({ error: 'Forbidden' }, 403);
+    const parsed = PurchaseOrderSendBody.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return json({ error: parsed.error.flatten().fieldErrors }, 400);
+    const { po_id: poId, pdf_base64: pdfBase64 } = parsed.data;
     if (!RESEND_API_KEY || !LOVABLE_API_KEY) return json({ error: "E-Mail-Konfiguration fehlt" }, 500);
 
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: po, error } = await sb
       .from("plm_purchase_orders")
       .select("*, supplier:supplier_id(name, supplier_number, contact_name, email)")
@@ -126,9 +117,10 @@ Deno.serve(async (req) => {
     const out = await res.json().catch(() => ({}));
     if (!res.ok) return json({ error: out?.message || `HTTP ${res.status}` }, 502);
 
-    await sb.from("plm_purchase_orders")
+    const { data: updated, error: updateError } = await sb.from("plm_purchase_orders")
       .update({ sent_at: new Date().toISOString(), status: (po as any).status === "entwurf" ? (po as any).status : "bestellt" })
-      .eq("id", poId);
+      .eq("id", poId).select('id').maybeSingle();
+    if (updateError || !updated) return json({ error: 'E-Mail angenommen, Status nicht gespeichert. Nicht erneut senden.' }, 409);
 
     await sb.from("plm_audit_log").insert({
       entity_type: "purchase_order",
