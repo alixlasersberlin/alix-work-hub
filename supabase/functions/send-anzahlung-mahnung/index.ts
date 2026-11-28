@@ -2,6 +2,9 @@
 // Channel: 'email' | 'sms'. stage_id optional (sonst erste aktive Stufe).
 // Konfiguration kommt aus app_settings.key='anzahlung_mahnung_config'.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { loadTwilioConfig } from '../_shared/twilio-config.ts';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { z } from 'npm:zod@3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,9 +12,9 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const ANON = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
 const ENV_SID = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
 const ENV_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') ?? '';
@@ -62,38 +65,32 @@ async function loadConfig(): Promise<MahnConfig | null> {
 }
 
 async function loadTwilio(cfgSender?: string) {
-  const { data } = await admin.from('sms_settings').select('account_sid, auth_token, from_number').eq('id', true).maybeSingle();
-  return {
-    sid: (data?.account_sid?.trim()) || ENV_SID,
-    token: (data?.auth_token?.trim()) || ENV_TOKEN,
-    // Bevorzuge expliziten Sender aus Konfig (alphanumerische Sender-ID wie "ALIXLASERS")
-    from: (cfgSender?.trim()) || (data?.from_number?.trim()) || ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, ''),
-  };
+  const config = await loadTwilioConfig(admin,{sid:ENV_SID,token:ENV_TOKEN,from:ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, '')});
+  return {...config,from:cfgSender?.trim() || config.from};
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Unauthorized' }, 401);
+    if (req.method !== 'POST') return json({error:'Method not allowed'},405);
+    const access = await requireCallerAccess(req,corsHeaders,[...ALLOWED_ROLES]);
+    if ('response' in access) return access.response;
+    const userId = access.user.id;
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const parsed = z.object({order_id:z.string().uuid(),channel:z.enum(['email','sms']),stage_id:z.string().max(100).optional()}).safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({error:parsed.error.flatten()},400);
+    const {order_id,channel,stage_id} = parsed.data;
 
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const { data: claims, error: cerr } = await userClient.auth.getClaims(authHeader.replace('Bearer ', ''));
-    if (cerr || !claims?.claims) return json({ error: 'Unauthorized' }, 401);
-    const userId = claims.claims.sub as string;
-
-    const { data: roleRows } = await admin.from('user_roles').select('roles!inner(name)').eq('user_id', userId);
-    const roleNames = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-    if (!roleNames.some((n: string) => ALLOWED_ROLES.has(n))) return json({ error: 'Forbidden' }, 403);
-
-    const body = await req.json().catch(() => ({}));
-    const { order_id, channel, stage_id } = body ?? {};
-    if (!order_id || (channel !== 'email' && channel !== 'sms')) {
-      return json({ error: 'order_id und channel (email|sms) erforderlich' }, 400);
-    }
+    const {data:order,error:oerr} = await access.caller.from('orders')
+      .select('id,order_number,source_system,deposit_amount,deposit_ok_at,customer_id,salesperson_name').eq('id',order_id).maybeSingle();
+    if (oerr || !order) return json({error:'Auftrag nicht gefunden'},404);
+    if (!order.customer_id || !access.tenants.some(t => t.zoho_source_system === order.source_system)) return json({error:'Auftrag nicht für diese Firma zugänglich'},403);
+    const {data:cust,error:customerError} = await access.caller.from('customers')
+      .select('id,company_name,contact_name,email,phone,source_system').eq('id',order.customer_id).maybeSingle();
+    if (customerError || !cust || cust.source_system !== order.source_system) return json({error:'Kunde nicht zugänglich'},403);
+    const {data:custBank,error:bankError} = await access.caller.from('customer_bank_details')
+      .select('iban,bic,bank_name').eq('customer_id',order.customer_id).maybeSingle();
+    if (bankError) return json({error:'Kundenbankverbindung nicht zugänglich'},403);
 
     const cfg = await loadConfig();
     const stages = (cfg?.stages ?? []).filter(s => s.enabled);
@@ -101,25 +98,6 @@ Deno.serve(async (req) => {
       ? stages.find(s => s.id === stage_id)
       : stages[0];
     if (!stage) return json({ error: 'Keine aktive Mahnstufe konfiguriert. Bitte in OPERATIONS → Anzahlungs-Mahnung Konfiguration anlegen.' }, 400);
-
-    // Load order + customer
-    const { data: order, error: oerr } = await admin
-      .from('orders')
-      .select('id, order_number, source_system, deposit_amount, deposit_ok_at, customer_id, salesperson_name')
-      .eq('id', order_id).maybeSingle();
-    if (oerr || !order) return json({ error: 'Auftrag nicht gefunden' }, 404);
-    if (!order.customer_id) return json({ error: 'Auftrag hat keinen Kunden' }, 400);
-
-    const { data: cust } = await admin
-      .from('customers')
-      .select('id, company_name, contact_name, email, phone')
-      .eq('id', order.customer_id).maybeSingle();
-    if (!cust) return json({ error: 'Kunde nicht gefunden' }, 404);
-    const { data: custBank } = await admin
-      .from('customer_bank_details')
-      .select('iban, bic, bank_name')
-      .eq('customer_id', order.customer_id)
-      .maybeSingle();
 
     const customerName = cust.company_name || cust.contact_name || '';
     const orderNumber = order.order_number ?? '';

@@ -59253,6 +59253,7 @@ export type Database = {
       sidebar_sales_counts: { Args: never; Returns: Json }
       sig_can_send: { Args: never; Returns: boolean }
       sig_is_admin: { Args: never; Returns: boolean }
+      sms_effective_config: { Args: never; Returns: Json }
       sms_reserve_send: {
         Args: { p_recipient_hash: string; p_user_id: string }
         Returns: Json

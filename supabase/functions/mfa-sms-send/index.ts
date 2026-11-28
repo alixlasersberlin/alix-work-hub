@@ -1,5 +1,8 @@
 // Sendet einen 6-stelligen SMS-Code für die Zwei-Faktor-Verifizierung (Super Admin).
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { loadTwilioConfig as loadProtectedTwilioConfig } from '../_shared/twilio-config.ts';
+import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { sixDigitCode } from '../_shared/otp-code.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,8 +10,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? '';
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '';
 
 const ENV_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const ENV_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
@@ -38,33 +41,16 @@ async function sha256(text: string) {
 }
 
 async function loadTwilioConfig() {
-  const { data } = await admin
-    .from("sms_settings")
-    .select("account_sid, auth_token, from_number")
-    .eq("id", true)
-    .maybeSingle();
-  return {
-    sid: data?.account_sid?.trim() || ENV_SID,
-    token: data?.auth_token?.trim() || ENV_TOKEN,
-    from: data?.from_number?.trim() || ENV_FROM,
-  };
+  return loadProtectedTwilioConfig(admin,{sid:ENV_SID,token:ENV_TOKEN,from:ENV_FROM});
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return json({ error: "Unauthorized" }, 401);
-
-    const { data: userData } = await admin.auth.getUser(token);
-    const user = userData?.user;
-    if (!user) return json({ error: "Unauthorized" }, 401);
-
-    // SMS-Zweitfaktor steht jedem authentifizierten Nutzer für das
-    // eigene Konto zur Verfügung – keine zusätzliche Rollenprüfung.
-
-
+    if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+    const access = await requireCallerAccess(req, corsHeaders);
+    if ('response' in access) return access.response;
+    const user = access.user;
 
     const body = await req.json().catch(() => ({}));
     const purpose = body?.purpose === "enroll" ? "enroll" : "login";
@@ -86,12 +72,13 @@ Deno.serve(async (req) => {
 
     // Rate limit: max. 1 Code / 60 s, max. 6 Codes / Stunde
     const hourAgo = new Date(Date.now() - 3600_000).toISOString();
-    const { data: recent } = await admin
+    const { data: recent, error: recentError } = await admin
       .from("mfa_sms_codes")
       .select("created_at")
       .eq("user_id", user.id)
       .gte("created_at", hourAgo)
       .order("created_at", { ascending: false });
+    if (recentError) return json({ error: 'code_limit_unavailable' }, 503);
     // Hinweis statt HTTP-Fehler: der Client zeigt nur einen Hinweistext,
     // ein 429 würde im Browser als App-Fehler auftauchen.
     if ((recent?.length ?? 0) >= 6) return json({ error: "rate_limited" }, 200);
@@ -99,7 +86,7 @@ Deno.serve(async (req) => {
       return json({ error: "cooldown" }, 200);
     }
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code = sixDigitCode();
     const codeHash = await sha256(`${user.id}:${code}`);
 
     const { error: insErr } = await admin.from("mfa_sms_codes").insert({
@@ -141,6 +128,7 @@ Deno.serve(async (req) => {
       return json({ ok: true, channel: "email", email_masked: `${local.slice(0, 2)}•••@${domain}` });
     }
 
+    if (!phone) return json({ error: 'invalid_phone' }, 400);
     const cfg = await loadTwilioConfig();
     if (!cfg.sid || !cfg.token || !cfg.from) return json({ error: "twilio_not_configured" }, 500);
 

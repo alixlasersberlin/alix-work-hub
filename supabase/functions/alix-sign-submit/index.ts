@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { loadTwilioConfig } from '../_shared/twilio-config.ts'
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
 const APP_BASE_URL = 'https://www.alixwork.de'
@@ -16,15 +17,10 @@ async function sendInternalSmsNotification(admin: any, signRequestId: string, of
     let from = Deno.env.get('TWILIO_SMS_FROM_NUMBER') ?? ''
     if (!from) from = (Deno.env.get('TWILIO_WHATSAPP_FROM_NUMBER') ?? '').replace(/^whatsapp:/i, '')
 
-    const { data: cfg } = await admin
-      .from('sms_settings')
-      .select('account_sid, auth_token, from_number')
-      .eq('id', true)
-      .maybeSingle()
-
-    const finalSid = cfg?.account_sid?.trim() || sid
-    const finalTok = cfg?.auth_token?.trim() || tok
-    const finalFrom = cfg?.from_number?.trim() || from
+    const cfg = await loadTwilioConfig(admin,{sid,token:tok,from})
+    const finalSid = cfg.sid
+    const finalTok = cfg.token
+    const finalFrom = cfg.from
 
     if (!finalSid || !finalTok || !finalFrom) {
       await admin.from('alix_sign_audit_log').insert({
@@ -69,7 +65,7 @@ async function sendInternalSmsNotification(admin: any, signRequestId: string, of
 }
 
 async function sha256Hex(data: Uint8Array): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', data)
+  const buf = await crypto.subtle.digest('SHA-256', Uint8Array.from(data).buffer)
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 

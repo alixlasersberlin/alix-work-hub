@@ -2,6 +2,7 @@
 // Sendet eine SMS an eingehende Anrufer, deren Anruf verpasst wurde.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireJobAccess } from '../_shared/job-auth.ts';
+import { loadTwilioConfig } from '../_shared/twilio-config.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,8 +10,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? '';
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '';
 const ENV_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const ENV_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
 const ENV_FROM = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? "";
@@ -34,16 +35,7 @@ function json(data: unknown, status = 200) {
 }
 
 async function loadTwilio() {
-  const { data } = await admin
-    .from("sms_settings")
-    .select("account_sid, auth_token, from_number")
-    .eq("id", true)
-    .maybeSingle();
-  return {
-    sid: data?.account_sid?.trim() || ENV_SID,
-    token: data?.auth_token?.trim() || ENV_TOKEN,
-    from: data?.from_number?.trim() || ENV_FROM,
-  };
+  return loadTwilioConfig(admin,{sid:ENV_SID,token:ENV_TOKEN,from:ENV_FROM});
 }
 
 async function isInBusinessHours(): Promise<boolean> {

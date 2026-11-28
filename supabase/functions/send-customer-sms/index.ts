@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCallerAccess } from "../_shared/caller-access.ts";
 import { smsReview } from "../_shared/sms-policy.ts";
 import { reserveSmsSend, smsLimitWithCors } from "../_shared/sms-limit.ts";
+import { loadTwilioConfig as loadProtectedTwilioConfig } from "../_shared/twilio-config.ts";
 import { maskPhone } from "../_shared/security-core.ts";
 import { z } from "npm:zod@3";
 
@@ -24,12 +25,7 @@ const ENV_WA_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM_NUMBER") ?? "";
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
 async function loadTwilioConfig() {
-  const { data } = await admin.from("sms_settings").select("account_sid, auth_token, from_number").eq("id", true).maybeSingle();
-  return {
-    sid: (data?.account_sid?.trim()) || ENV_SID,
-    token: (data?.auth_token?.trim()) || ENV_TOKEN,
-    from: (data?.from_number?.trim()) || ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, ""),
-  };
+  return loadProtectedTwilioConfig(admin,{sid:ENV_SID,token:ENV_TOKEN,from:ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, "")});
 }
 
 const ALLOWED_ROLES = new Set([

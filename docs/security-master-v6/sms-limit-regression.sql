@@ -5,8 +5,9 @@ DECLARE u uuid; h text; r jsonb; n int;
 BEGIN
  IF has_function_privilege('anon','public.sms_reserve_send(uuid,text)','EXECUTE') OR has_function_privilege('authenticated','public.sms_reserve_send(uuid,text)','EXECUTE') THEN RAISE EXCEPTION 'Limiter exposed to client'; END IF;
  IF NOT has_function_privilege('service_role','public.sms_reserve_send(uuid,text)','EXECUTE') THEN RAISE EXCEPTION 'Service cannot reserve'; END IF;
+ IF has_function_privilege('anon','public.check_rate_limit(text,integer,integer)','EXECUTE') OR has_function_privilege('authenticated','public.check_rate_limit(text,integer,integer)','EXECUTE') THEN RAISE EXCEPTION 'Legacy limiter exposed to client'; END IF;
 
- -- Authenticated legacy limiter must not delete or add dedicated SMS reservations.
+ -- Even the legacy server limiter must not delete or add dedicated SMS reservations.
  u := gen_random_uuid();
  INSERT INTO public.api_rate_limits(bucket_key,request_at) VALUES ('sms:v1:user:'||u,clock_timestamp()-interval '2 hours');
  IF NOT public.check_rate_limit('sms:v1:user:'||u,100,60) THEN RAISE EXCEPTION 'Legacy limiter accepted SMS namespace'; END IF;

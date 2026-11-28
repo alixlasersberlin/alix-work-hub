@@ -1,6 +1,6 @@
 import {assertEquals} from 'https://deno.land/std@0.224.0/assert/mod.ts';
 type Handler=(req:Request)=>Response|Promise<Response>;
-const functions=['zoho-invoices-auto-import','ticket-ai-assist','sync-to-alixsmart','mobile-voice-transcribe','finance-ai-analyze','finance-tax-export','sig-ai-analyze','finance-approval-action','alix-copilot','op-light-send-sms','send-customer-sms','alixsmart-match-run','ac-journey-run'];
+const functions=['zoho-invoices-auto-import','ticket-ai-assist','sync-to-alixsmart','mobile-voice-transcribe','finance-ai-analyze','finance-tax-export','sig-ai-analyze','finance-approval-action','alix-copilot','op-light-send-sms','send-customer-sms','sms-config-test','mfa-sms-send','send-anzahlung-mahnung','alixsmart-match-run','ac-journey-run'];
 const uuid='11111111-1111-4111-8111-111111111111';
 const foreign='22222222-2222-4222-8222-222222222222';
 const handlers=new Map<string,Handler>();
@@ -35,6 +35,7 @@ function fixtureFetch(active=true,roles=['Finance'],ticketVisible=false){
       return j(null);
     }
     if(url.pathname.endsWith('/order_documents')||url.pathname.endsWith('/sig_documents'))return j(null);
+    if(url.pathname.endsWith('/orders')) return j(null);
     throw new Error('Unexpected business/provider action');
   };
   return {fetcher,calls};
@@ -77,4 +78,12 @@ Deno.test('Supplied contract text cannot bypass document authorization',async()=
   const original=globalThis.fetch;const fixture=fixtureFetch();globalThis.fetch=fixture.fetcher;
   try{const handler=handlers.get('sig-ai-analyze');if(!handler)throw new Error('Missing handler');assertEquals((await handler(request({document_id:foreign,text_content:'Text'},'v6-staff'))).status,404);}
   finally{globalThis.fetch=original;}
+});
+Deno.test('Deposit reminder rejects inaccessible orders before banking, configuration or provider access',async()=>{
+  const original=globalThis.fetch;const fixture=fixtureFetch(true,['Finance']);globalThis.fetch=fixture.fetcher;
+  try{
+    const handler=handlers.get('send-anzahlung-mahnung');if(!handler)throw new Error('Missing deposit reminder handler');
+    assertEquals((await handler(request({order_id:foreign,channel:'sms'},'v6-staff'))).status,404);
+    assertEquals(fixture.calls.filter(c=>new URL(c.url).pathname.endsWith('/customer_bank_details')).length,0);
+  }finally{globalThis.fetch=original;}
 });

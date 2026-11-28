@@ -1,0 +1,128 @@
+[
+  {
+    "kind": "anonymous_database_denial",
+    "endpoint": "sms_reserve_send",
+    "status": 401
+  },
+  {
+    "kind": "anonymous_database_denial",
+    "endpoint": "sms_effective_config",
+    "status": 401
+  },
+  {
+    "kind": "anonymous_database_denial",
+    "endpoint": "check_rate_limit",
+    "status": 401
+  },
+  {
+    "kind": "anonymous_database_denial",
+    "endpoint": "audit_retention_purge",
+    "status": 401
+  },
+  {
+    "kind": "anonymous_database_denial",
+    "endpoint": "alixdocs2_purge_deleted",
+    "status": 401
+  },
+  {
+    "kind": "anonymous_database_denial",
+    "endpoint": "sys_health_autofix",
+    "status": 401
+  },
+  {
+    "kind": "anonymous_fail_closed_read",
+    "table": "mfa_sms_codes",
+    "status": 200,
+    "empty": true
+  },
+  {
+    "kind": "anonymous_fail_closed_read",
+    "table": "social_credentials",
+    "status": 200,
+    "empty": true
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "send-customer-sms",
+    "credential_kind": "public_key",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "send-customer-sms",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "op-light-send-sms",
+    "credential_kind": "public_key",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "op-light-send-sms",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "sms-config-test",
+    "credential_kind": "public_key",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "sms-config-test",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "as-send-sms-reminder",
+    "credential_kind": "public_key",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "as-send-sms-reminder",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "ac-missed-call-sms",
+    "credential_kind": "public_key",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "ac-missed-call-sms",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "mfa-sms-send",
+    "credential_kind": "public_key",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "mfa-sms-send",
+    "credential_kind": "invalid",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "send-anzahlung-mahnung",
+    "credential_kind": "public_key",
+    "status": 401
+  },
+  {
+    "kind": "edge_authentication_denial",
+    "endpoint": "send-anzahlung-mahnung",
+    "credential_kind": "invalid",
+    "status": 401
+  }
+]

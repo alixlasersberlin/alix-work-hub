@@ -1,4 +1,5 @@
 import { requireCallerAccess } from '../_shared/caller-access.ts';
+import { loadTwilioConfig } from '../_shared/twilio-config.ts';
 // as-send-sms-reminder
 // Sendet eine kurze After-Sales-SMS via Twilio + protokolliert die Aktion.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -9,9 +10,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? '';
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '';
+const ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? '';
 const ENV_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const ENV_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
 const ENV_SMS_FROM = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? "";
@@ -49,12 +50,7 @@ function normalizeE164(raw: string): string | null {
 }
 
 async function loadTwilio() {
-  const { data } = await admin.from("sms_settings").select("account_sid, auth_token, from_number").eq("id", true).maybeSingle();
-  return {
-    sid: data?.account_sid?.trim() || ENV_SID,
-    token: data?.auth_token?.trim() || ENV_TOKEN,
-    from: data?.from_number?.trim() || ENV_SMS_FROM,
-  };
+  return loadTwilioConfig(admin,{sid:ENV_SID,token:ENV_TOKEN,from:ENV_SMS_FROM});
 }
 
 Deno.serve(async (req) => {

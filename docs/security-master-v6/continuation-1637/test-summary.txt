@@ -1,0 +1,31 @@
+server SHA-256 1cd486598ae1f8d86d8c386db5550994b823c139b16d163166b9ca612d18e5ea
+SMS admin test rejects absent tenant assignments ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+SMS admin test status neither reserves nor sends nor returns tokens ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+SMS admin test validates recipient and bounds text before configuration ... [0m[32mok[0m [0m[38;5;245m(13ms)[0m
+SMS admin test cannot bypass shared recipient quota ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+SMS admin test fails closed on quota and audit outages ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+SMS admin test uses verified caller quota and logs a simulated send ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+SMS admin test never retries an uncertain provider send ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+
+[0m[32mok[0m | 607 passed | 0 failed [0m[38;5;245m(15s)[0m
+
+app SHA-256 e1aac9c0dc3dc9cfac3318aae10e2ea9b83ad02a122ddf037c672cea086174d6
+ ✓ src/lib/finance/creditNote.test.ts (2 tests) 5ms
+ ✓ src/lib/sales/lead-chat.test.ts (1 test) 6ms
+ ✓ src/test/example.test.ts (1 test) 4ms
+ ✓ src/components/producthub/DeIdentityField.test.ts (2 tests) 7ms
+
+ Test Files  59 passed (59)
+      Tests  279 passed (279)
+   Start at  16:48:36
+   Duration  40.74s (transform 2.33s, setup 89.77s, collect 30.76s, tests 4.42s, environment 303.55s, prepare 52.38s)
+
+types SHA-256 f8691e279a7739f7725b86f26b70cec3c7f6e5c58824247b61a25eb1356a2374
+[0m[32mCheck[0m supabase/functions/sms-config-test/index.ts
+[0m[32mCheck[0m supabase/functions/send-customer-sms/index.ts
+[0m[32mCheck[0m supabase/functions/op-light-send-sms/index.ts
+[0m[32mCheck[0m supabase/functions/as-send-sms-reminder/index.ts
+[0m[32mCheck[0m supabase/functions/ac-missed-call-sms/index.ts
+[0m[32mCheck[0m supabase/functions/mfa-sms-send/index.ts
+[0m[32mCheck[0m supabase/functions/send-anzahlung-mahnung/index.ts
+[0m[32mCheck[0m supabase/functions/alix-sign-submit/index.ts

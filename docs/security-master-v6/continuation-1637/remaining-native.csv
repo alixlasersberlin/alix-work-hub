@@ -1,0 +1,235 @@
+internal_id,level,name
+lov_finding_0337ac7d70faa2b2,warn,Any signed-in user can send delivery notices to any phone
+lov_finding_03c63da47731a381,warn,Autofiled uploads have no type or size limit
+lov_finding_040f79f8da123789,error,Any signed-in user can alter your product catalog
+lov_finding_051a4bc234829b51,warn,Any signed-in user can read another user's documents
+lov_finding_06eae87937d60eef,warn,Anyone can inject markup into rental-request emails
+lov_finding_0aaa95335930b95f,warn,Anyone can link a new rental request to another customer
+lov_finding_0f32d69f370ebec9,warn,Someone with the link can place formulas in package exports
+lov_finding_0f377c8d465e69e6,warn,Any signed-in user can search other customers' documents
+lov_finding_1525b9bc406e203a,error,Import upsert lets sales users overwrite an existing lead
+lov_finding_16d3e37b9c8ba4ad,error,Any signed-in user can view another website's funnel analytics
+lov_finding_1794cebaf2967832,error,Production staff can grant their own QM approvals
+lov_finding_18e595aa07a561bd,warn,Signing invites can be sent to a caller-chosen email address
+lov_finding_1912d539688be633,warn,Anyone can create document links
+lov_finding_193e452aa8130a17,error,Anyone can send an announcement to every employee
+lov_finding_1b423c4366778754,warn,Any signed-in user can inspect another website’s audience
+lov_finding_1b423c4366778754_78e6bd31,error,Any signed-in user can view another site's live visitor map
+lov_finding_1b423c4366778754_fe81bc8c,warn,Any signed-in user can view another site's experiment stats
+lov_finding_1c474bcf3698135a,warn,Finance users can view every customer's regional finances
+lov_finding_1cf985cadb57e6af,warn,Anyone can place markup in rental inquiry emails
+lov_finding_1d0e79da2110a9d7,warn,Any signed-in user can view other customers' website analytics
+lov_finding_1deb9bcf8e2fe9db,error,Anyone can change another user's ticket
+lov_finding_1f1cf82cf52e7e61,warn,Any signed-in user can query arbitrary orders
+lov_finding_214081f60b07281d,error,Any signed-in user can add an internal note to any ticket
+lov_finding_21a637de07028856,error,Public token permits unauthenticated employee-data access
+lov_finding_22c0f6308817b8b5,warn,Any workspace member can store files without a file-type check
+lov_finding_22c6727e71c6e6db,warn,Any signed-in user can see another studio’s setup progress
+lov_finding_2332a1f29f9db74a,warn,Any signed-in user can read pending approval tasks
+lov_finding_257a1a05a2ec345e,warn,Any workspace member can search customer records across tenants
+lov_finding_26ec1c8b0892a48e_3d2e13d0,error,Any sales or service user can contact any customer
+lov_finding_26ec1c8b0892a48e_4ae2f503,warn,Staff can send arbitrary reminder SMS text
+lov_finding_26ec1c8b0892a48e_8c170482,warn,Staff can send custom customer emails
+lov_finding_26ec1c8b0892a48e_a593460a,warn,Reminder role can retrieve any customer's contact details
+lov_finding_274746008eddd8d1_118503e3,warn,Any signed-in user can manipulate sales-lead searches
+lov_finding_274746008eddd8d1_1f68da48,warn,Any signed-in user can retrieve extra data through the copilot
+lov_finding_274746008eddd8d1_283bf1ac,warn,Authenticated users can supply model instruction roles
+lov_finding_274746008eddd8d1_2cf3a0b0,warn,Any workspace member can widen device searches
+lov_finding_274746008eddd8d1_38118044,error,Any signed-in user can manipulate device searches
+lov_finding_274746008eddd8d1_3c9af058,warn,Any signed-in user can set copilot instructions
+lov_finding_274746008eddd8d1_4c48cf10,warn,Any finance user can manipulate invoice searches
+lov_finding_274746008eddd8d1_52f768d4,warn,Any workspace member can widen production searches
+lov_finding_274746008eddd8d1_5a6e4205,warn,Any signed-in user can set copilot instructions
+lov_finding_274746008eddd8d1_6202407f,error,Any signed-in user can manipulate device searches
+lov_finding_274746008eddd8d1_755f7fcf,warn,Any signed-in user can send messages as the AI
+lov_finding_274746008eddd8d1_9de4994d,warn,Any signed-in user can set copilot instructions
+lov_finding_274746008eddd8d1_9df008c0,warn,Any signed-in user can send messages as the AI
+lov_finding_274746008eddd8d1_bbba6ea4,warn,Authenticated users can supply model instruction roles
+lov_finding_296ecccd06ebdc19,warn,Any workspace member can embed formulas in cost exports
+lov_finding_2a0a6ab683598d2c,error,Any signed-in user can change another user's conversation
+lov_finding_2ad517073e19d7a3,error,Finance users can send and mark any customer's reminder
+lov_finding_2bc3d9f7d79e8045,error,Ordinary users can send survey invitations
+lov_finding_2c6eeae643a145a5,error,Any signed-in user can release another customer's invoices
+lov_finding_2cda12758b491ae3,error,Signed-in callers can send WhatsApp to arbitrary recipients
+lov_finding_2d96488747bd90ab,error,Unassigned approval states can be decided by any signed-in user
+lov_finding_312fcf7bf6edca18_3be70c29,error,Any invoice manager can send caller-written email via Resend
+lov_finding_31c72ba6cc9913bc,error,Dunning run bypasses tenant ownership checks
+lov_finding_321b0bea0163279e,error,Any finance user can create records across tenants
+lov_finding_3274dc7f2d773bec,error,Finance users can send another customer's payment reminder
+lov_finding_354aea63d3df7954,warn,Any signed-in user can view all visitor chat statistics
+lov_finding_354aea63d3df7954_c76d1c81,warn,Any signed-in user can see chat-service metrics
+lov_finding_35f07aac3006ae6a,warn,Users can access restricted knowledge-base entries via copilot
+lov_finding_36b05dc3eae268c4,warn,Any signed-in user can broaden the knowledge search
+lov_finding_37aebb1aa2b73448,warn,Any signed-in user can message any WhatsApp contact
+lov_finding_37d780060351d132,warn,Any signed-in user can send order updates to chosen addresses
+lov_finding_3945c4fc0435bfbd,error,Ordinary users can create links to arbitrary documents
+lov_finding_3a84ba389632eb77_4c53d990,error,Any signed-in user can approve invoices
+lov_finding_3a84ba389632eb77_e50601b0,error,Any signed-in user can approve invoices
+lov_finding_3b5015328924feec,warn,Any signed-in customer can guess a contract signing code
+lov_finding_3c5d483058625bb9,warn,Authorized staff can email arbitrary recipients
+lov_finding_3cea0000acc26bb1,error,Any support staff member can email any customer
+lov_finding_3dec4d354164ba27,warn,Any signed-in user can see company-wide dashboard totals
+lov_finding_3e6f3a3c10a40230,error,Any signed-in user can release held invoices
+lov_finding_3e98351e84204cdc,error,Signed-in users can send arbitrary branded appointment emails
+lov_finding_3f531b21758d8b2f,error,Authorized mail senders can email anyone
+lov_finding_407a2fad5d5da185,warn,Anyone can create document links
+lov_finding_41a6b36a5369c756,warn,Any signed-in user can change another invoice's number
+lov_finding_4329f15ed75c1d5a,warn,Any signed-in administrator can send invites to any address
+lov_finding_43ed7481be92428b,warn,Internal staff can view visitor sessions for any website
+lov_finding_44bb365e2d552fde,warn,Anyone can create document links
+lov_finding_44ddf2563f3b0bce,error,CMR document send lacks tenant ownership binding
+lov_finding_47008b040e014166_521b9608,warn,Share sender emails caller-written content
+lov_finding_47008b040e014166_696ebfbe,warn,Share sender sends caller-written WhatsApp text
+lov_finding_47c516bf79325c89,warn,Any workspace member can add formulas to document reports
+lov_finding_48084827c1e59520,warn,System push exposes another conversation preview
+lov_finding_4bd5ac08511c8e04,warn,Caller controls reminder SMS content
+lov_finding_4c0bbf2efd550541,warn,Webhook test posts to any HTTPS destination
+lov_finding_51533bb728cbdfe3,warn,Any signed-in user can view every site's journey analytics
+lov_finding_51533bb728cbdfe3_c76d1c81,warn,Any signed-in user can see visitor trends
+lov_finding_5219762f92dc1e2c,warn,Any signed-in user can store unchecked files
+lov_finding_5374119f29248b31,warn,Anyone can trigger metered AI completion requests
+lov_finding_5422295243c00d10,error,A partner can read another partner's signing request
+lov_finding_552dbb84f3b24cb8,error,Any signed-in user can view another website's visitor map
+lov_finding_5659b14729ec391a,warn,Any authenticated user can read employee scheduling settings
+lov_finding_56d0c79c1318c3ea,warn,Admin can make the canary fetch arbitrary URLs
+lov_finding_5815675e82477a6d,error,Delivery token can be sent to a caller-chosen recipient
+lov_finding_582b5258efdada88,error,Anyone can change another ticket’s appointment
+lov_finding_5976c437ba1e2613_49365ac2,error,Any signed-in user can add an internal note to any ticket
+lov_finding_5976c437ba1e2613_56745222,error,Any signed-in caller can add an internal note to any ticket
+lov_finding_59d025243a7e5687_3be70c29,error,Any signed-in user can send survey invitations
+lov_finding_5a4b77537eec8b00,error,ZIP download trusts caller-writable version storage paths
+lov_finding_5c7be8cb8b467dc0,warn,Finance users can email collection documents to any address
+lov_finding_5ca4124025dad7ab,warn,Finance reports expose transactions beyond caller scope
+lov_finding_5d6fbfeb3491514f,warn,Anyone can probe customer existence via lead submission
+lov_finding_5e2415c314caa5f3,warn,Statistics endpoint exposes cross-tenant document data
+lov_finding_5e865420cc71ba0c,error,Finance users can send arbitrary SMS content to customers
+lov_finding_5f0099b70185d10a,error,Customer details are served without caller authentication
+lov_finding_61db72fc9101d76e,warn,Any signed-in user can inject markup into offer emails
+lov_finding_669414f8e21adaae,error,Anyone can change another user's ticket
+lov_finding_66ff4724117f7742,error,Any signed-in user can change others' document details
+lov_finding_6708a45359831172,error,Any finance user can email payment demands to anyone
+lov_finding_6cdb90a4e4b3d4f9,error,Any super admin can email reports to anyone
+lov_finding_6f0047eafdff148c,error,Any signed-in user can trigger recurring-payment notices
+lov_finding_70c84e6ba8f516cf,warn,A member can point a document to another user's file
+lov_finding_7353d35057dade91,warn,Any signed-in sales user can send custom texts to customers
+lov_finding_73a591d5686cae09,warn,Any signed-in user can view every tenant's attribution totals
+lov_finding_74e13969233e5319,error,Any signed-in user can send payment reminders to customers
+lov_finding_753f96e33146f59a,warn,Request text is inserted into the system prompt
+lov_finding_75a833f07ddd47bb,error,Any signed-in user can add an internal note to any ticket
+lov_finding_76945bb32b730aa5,warn,Any workspace member can add formulas to audit reports
+lov_finding_773ec74739954988,error,Any signed-in user can copy any mail attachment
+lov_finding_77810b1b4b728af7,error,Any signed-in user can view another site's goal results
+lov_finding_7a1b3fff5a92e03c,warn,Internal staff can view live schedule adherence for all agents
+lov_finding_7cf31af852f86c9b,warn,Any workspace member can alter order searches
+lov_finding_7f3cf914eb1ff11a,warn,Any signed-in user can inject markup into support emails
+lov_finding_813f30cdfce0d3a0,warn,Any signed-in user can change reply instructions
+lov_finding_82fa0f2066ce7b4b,warn,System push exposes another conversation preview
+lov_finding_834103d6b724468c,warn,Any signed-in user with mail access can send email to others
+lov_finding_840f31fb29294dc7,error,Admins can send arbitrary test SMS messages to any number
+lov_finding_860f4ef640ddf1ef,warn,Anyone with access to your app can alter AI instructions
+lov_finding_86a979bd8688c2a0,error,CMR users can send arbitrary invoice emails to any address
+lov_finding_86c2e27b97555ad5,warn,Any signed-in user can view all visitor chat statistics
+lov_finding_86c2e27b97555ad5_c76d1c81,warn,Any signed-in user can see chat-service metrics
+lov_finding_86d3d8b71cfd055f,error,Any finance user can create another tenant’s payment link
+lov_finding_8703f96241dee35e_58c949e8,error,Any signed-in user can sync a caller-selected protected ticket
+lov_finding_8703f96241dee35e_6c522b90,error,Any signed-in user can send another customer's ticket details
+lov_finding_88c82a38d6bfce36,warn,Any workspace member can alter the copilot's searches
+lov_finding_8bbd440488ec9ff0,warn,Regional finance users can read QR invoices outside their region
+lov_finding_8bdc85f5f83cc25e,warn,Any signed-in user can reach factory invoicing by email
+lov_finding_8cc11e86523a6a1b,warn,Anyone with a repair link can alter service emails
+lov_finding_8deae0c69b850acd,warn,Any signed-in user can make your app contact any website
+lov_finding_93b12ef31e7a012a,warn,Any finance user can falsely settle collections
+lov_finding_94d5de7f4e719207,warn,Signed-in users can send order emails to arbitrary recipients
+lov_finding_950f643578026644,warn,Any signed-in user can view every tenant's visitor cohorts
+lov_finding_956310c904efe1c2,error,Finance users can generate documents for arbitrary cases
+lov_finding_96a4ae412ce2a520,warn,Any signed-in user can start another user's approval
+lov_finding_96de51807866d281,warn,Anyone can send a company-wide announcement
+lov_finding_98051a4a477129d7,error,Any signed-in user can request signatures on others' documents
+lov_finding_982d4e7da963d70c,warn,Any signed-in user can read another tenant's messages
+lov_finding_9a1236c1ec5aad94,warn,Request controls the AI system instruction
+lov_finding_9be076cefe3fc4a5,error,Regional finance users can send payment demands across regions
+lov_finding_9d259994222f49a7,error,Approved staff roles can read arbitrary order and bank records
+lov_finding_a11f999fb688bec4,warn,Uploaded document can be attached to any customer or order
+lov_finding_a45b5b5828593c3e,warn,Regional finance users can send payment links for any customer
+lov_finding_a7401cb3c80f2da9,error,Any signed-in user can add internal notes to tickets
+lov_finding_a86d415b1fbe8c55,warn,Any signed-in user can inject roles into copilot messages
+lov_finding_abecb1a7e574f1bd,warn,Any workspace member can embed formulas in cost exports
+lov_finding_aca0bf1eb36bddcc,error,Any signed-in user can access another order’s review token
+lov_finding_ad6f5c1d67558ce5,warn,Anyone can put markup in appointment emails
+lov_finding_add1d8017d448ff5,warn,Signed-in users can send arbitrary emails
+lov_finding_ae041d22cd49aa24,error,Ordinary users can send survey invitations
+lov_finding_af6f5ffa498d5b44,error,Someone with a signing link can bypass the emailed code
+lov_finding_afcf8b12fd476a3a,error,Any signed-in user can query finance collection records
+lov_finding_b143826790bf7b30,warn,Signed-in users can make the server POST to any HTTPS URL
+lov_finding_b4deaaa277c70ff4,warn,Staff can send onboarding invitation links to any email address
+lov_finding_b5132a0a49f614f2,error,Tax export can delete another tenant’s filing
+lov_finding_b535dca7da1458b2,error,Signature uploads lack type and size checks
+lov_finding_b58065ea66d180e4,warn,Anyone can mark another person's mail messages as unsubscribed
+lov_finding_b68a24bb3b584223,warn,Finance users can create payment links for arbitrary cases
+lov_finding_b86c0cca0683482a,error,Anyone can create ticket appointments
+lov_finding_b9deeea58bcd8b64,error,Any signed-in user can send another survey's invitations
+lov_finding_bca1ad19d7647c3b,warn,Admins can send arbitrary SMS or WhatsApp messages
+lov_finding_bcaf4da9778a3843,warn,Any signed-in user can create royalty invoices
+lov_finding_c1f51fb90f414c65,error,Signed-in users can place calls to arbitrary destinations
+lov_finding_c25e424420c20c46,error,A public message can be attached to a different ticket sync
+lov_finding_c2b7b08dda07b414,warn,Regional finance users can update QR invoices cross-region
+lov_finding_c4bcebcef88683c2,error,Caller controls reminder email content
+lov_finding_c4f756dedfd516d9,warn,Signed-in users can read delivery data across tenants
+lov_finding_c9a71b6764601e30,warn,Staff can send arbitrary reminder content to customer contacts
+lov_finding_cb16ccbf1b4481ee,error,Anyone can read password-protected public catalogs
+lov_finding_cc294c6fc858dbbb,warn,Signed-in users can send any shipment assignment
+lov_finding_cd2ce2ad522f11c1,error,Signature invitations target arbitrary recipients
+lov_finding_cdff60b5ab5b9c10,warn,Any signed-in user can see another customer's package progress
+lov_finding_cf3507ea8eab1d3c,error,Collection mail can target arbitrary recipients and content
+lov_finding_d056bd7c0021c222,warn,Authorized users can set AI post instructions
+lov_finding_d1d0e8fe336ec6f2,warn,Any workspace member can message arbitrary WhatsApp numbers
+lov_finding_d2473feaef579f52_380fba8f,warn,Any signed-in user can message any WhatsApp contact
+lov_finding_d2473feaef579f52_380fba8f_380fba8f,warn,Any signed-in user can message any WhatsApp contact
+lov_finding_d2473feaef579f52_380fba8f_380fba8f_1,warn,Any signed-in user can message any WhatsApp contact
+lov_finding_d2473feaef579f52_380fba8f_380fba8f_2,warn,Any signed-in user can message any WhatsApp contact
+lov_finding_d2473feaef579f52_691f92c6,error,Any signed-in user can message another customer
+lov_finding_d2473feaef579f52_7c16c7ef,error,Any signed-in user can message any customer
+lov_finding_d2473feaef579f52_f453a872,warn,Any signed-in user can message any WhatsApp contact
+lov_finding_d2ea69a286d7ab4a,warn,Any signed-in user can view every tenant's attribution totals
+lov_finding_d4eaecc88ffdf1d2_2b8ae78b,warn,Signed-in users can make the server POST to any HTTPS URL
+lov_finding_d4eaecc88ffdf1d2_c93f4c42,error,Signed-in users can make the server POST to arbitrary HTTPS URLs
+lov_finding_d51da742f6515a44,error,Any signed-in user can access another order’s review token
+lov_finding_d5f7c5cf72674fcc,warn,Anyone can check whether an email address is unsubscribed
+lov_finding_d622c4a54c5625f0,warn,Any service user can widen repair-guidance searches
+lov_finding_d73d2342e76a806c_30da19e3,warn,Ticket creation can target any customer record
+lov_finding_d73d2342e76a806c_b7f288c1,warn,Notifications can be written to any user
+lov_finding_d827e70493abbc17,error,Any signed-in user can export restricted audit logs
+lov_finding_da722e431603e2f7,error,Any signed-in user can enumerate customer payment profiles
+lov_finding_dc9dfcdd7cb4ab4f,warn,Finance users can send payment links to any address
+lov_finding_ddd4dc7e03377db7,warn,Any signed-in admin can remove another tenant’s documents
+lov_finding_de0606301f6fe61f,error,Any signed-in user can approve invoices
+lov_finding_de2309c2d5bdcd02,warn,Any signed-in campaign manager can email an unrestricted list
+lov_finding_df6fdc9c6acda235,warn,Any signed-in user can inject markup into support emails
+lov_finding_e246ce59f31d1c0e,error,Any signed-in user can send another customer's ticket details
+lov_finding_e2c4ff5d7611f02d,warn,Unauthenticated requests read private document metadata
+lov_finding_e2f71dd9ddc9da59,error,Operators can email appointment details to arbitrary recipients
+lov_finding_e34d218037cc26e0,warn,Any sender can attach documents to another customer's record
+lov_finding_e6fe0ba3afe294ac,warn,Any signed-in user can assign another customer's invoice number
+lov_finding_e72aa2d3e18e4fc9,warn,Signed-in users can send SMS to arbitrary numbers
+lov_finding_e75b8684adf72817,warn,Any signed-in user can view other tenants' activity totals
+lov_finding_e7e8c924ca06a7f7,warn,Signed-in users can send invites to arbitrary addresses
+lov_finding_e8757fcbf28dd1b6,error,Authorized CMR users can send arbitrary emails to any recipient
+lov_finding_e97ee86dc03bce4c,warn,Admins can log customer billing addresses to service logs
+lov_finding_eb30b4530b5fe223,warn,Any signed-in user can process another user's private document
+lov_finding_edd66577e687284b,warn,Any workspace member can access orders across accounting regions and tenants
+lov_finding_ee272cd70c04cc65,warn,Any signed-in user can expose another person's event
+lov_finding_ee44c233b0696c8f,error,Any signed-in user can attach calls to another user's contacts
+lov_finding_ef1070a22b723c41,error,Any signed-in caller can add an internal note to any ticket
+lov_finding_ef8daa497c253e85,error,Any signed-in user can copy another user's mail attachment
+lov_finding_f26da156240a2f62,warn,Any signed-in user can see dispatch and customer details
+lov_finding_f2c4b7f10eb12867,warn,Any signed-in user can query arbitrary orders
+lov_finding_f5e0701cc9803015,warn,Anyone with a password can bypass SMS verification
+lov_finding_f6c3654341e11009_561efb0f,warn,Any signed-in user can store unchecked files
+lov_finding_f6c3654341e11009_77ec9202,warn,Autofile accepts unbounded files of any declared type
+lov_finding_f6c3654341e11009_ba88d076,warn,Autofiled uploads have no type or size limit
+lov_finding_f6c3654341e11009_f096a7e6,warn,Any signed-in user can upload unchecked files
+lov_finding_f925eef4435f7b1f,error,Uploaded signature PDFs have no type or size limit
+lov_finding_f96755eb5792fedc,warn,Any signed-in user can set copilot instructions
+lov_finding_fa76ad0c8151f87b,error,Any finance user can send demands across tenants
+lov_finding_fcc29527a32c923f,error,CMR users can send arbitrary invoice emails to any address
+lov_finding_ff271ba19700e47f,error,Any signed-in user can send arbitrary approval PDFs to anyone

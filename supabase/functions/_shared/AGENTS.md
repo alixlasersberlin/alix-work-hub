@@ -1,0 +1,5 @@
+- SMS administrator tests use the same service-only user/recipient reservation as customer and OP sends; this prevents using the test endpoint to bypass shared quotas.
+- Shared Twilio configuration reads the fixed service-only sms_effective_config vault reference; never select the removed plaintext token column or mix different provider accounts, keeping existing secrets server-only without rotation.
+- Internal maintenance, financial materialization, notification and lifecycle helpers are service-only while definer triggers and protected server callers retain access; client commands must not expose these authorization-free workers.
+- Mobile aggregate/search readers use invoker rights and forecasts explicitly filter assigned active tenants; escalation policies require readable parent conversations so aggregates cannot bypass record access.
+- Authentication codes use cryptographic, rejection-sampled six-digit generation; predictable or biased random sources must not issue authentication secrets.
