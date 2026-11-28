@@ -1,10 +1,13 @@
 import { assert, assertEquals, assertThrows } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 import { correctionProposal, controlInventory, approvalIdentity } from './control.ts';
-Deno.test('inventory preserves 188 open scanner findings and 493 separate database hints', () => {
-  assertEquals(controlInventory.findings.filter(f => f.source === 'agent_security_v2' && f.status === 'open').length, 188);
+Deno.test('inventory preserves historical 188 findings and current 474 scan records separately from 493 database hints', () => {
+  assertEquals(controlInventory.sourceCounts.historicalDeepOpen, 188);
+  assertEquals(controlInventory.findings.filter(f => f.source === 'agent_security_v2' && f.status === 'open').length, 474);
   assertEquals(controlInventory.findings.filter(f => f.source === 'supabase_linter').length, 493);
   assertEquals(controlInventory.findings.filter(f => f.status === 'resolved').length, 25);
   assertEquals(controlInventory.deduplicationComplete, false);
+  assertEquals(controlInventory.scanStatus, 'incomplete');
+  assertEquals(controlInventory.audit.complete, false);
 });
 Deno.test('correction approval rejects unknown identities and stale report revisions', () => {
   assertThrows(() => correctionProposal('stale', ['unknown']));

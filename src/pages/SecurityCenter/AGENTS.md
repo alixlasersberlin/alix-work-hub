@@ -1,2 +1,3 @@
 - Security Control Center reads the revisioned protected report through the existing security-remediate endpoint; snapshots and detailed audit data never enter frontend assets, and unknown totals or incomplete audits must remain explicitly unknown.
+- Final-audit classifications retain every native finding identity and separate confirmed evidence, duplicates and unresolved checks; source markers and scan absence never establish a successful security acceptance.
 - Correction approval binds the exact report and selected same-component findings, records no execution or resolved state, and cannot activate Product Hub; reuse existing release-proof enforcement rather than a second gate.

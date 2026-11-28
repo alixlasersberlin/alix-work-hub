@@ -10,7 +10,7 @@ import { RELEASE_ROWS, releaseDashboard, type Cell, type Log } from '@/lib/phRel
 import { OPERATING_QUERY } from './ProductionControl';
 import { Link } from 'react-router-dom';
 import { useSecurityControl } from '@/hooks/useSecurityControl';
-import { securityTotals } from '@/lib/securityControl';
+import { productHubSecurityFindings, productHubSecurityBlockers, AUDIT_LABELS } from '@/lib/securityControl';
 
 const db = supabase as any;
 const tone: Record<Cell['state'], string> = { ok: 'text-success', fail: 'text-destructive', none: 'text-muted-foreground', info: 'text-foreground' };
@@ -52,9 +52,9 @@ export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; pr
   const de = releaseDashboard('de', gate, data?.logs ?? [], name('de'));
   const com = releaseDashboard('com', gate, data?.logs ?? [], name('com'));
   if (securityReport) {
-    const blockers = securityTotals(securityReport).confirmedBlockers.length;
+    const blockers = productHubSecurityBlockers(securityReport.findings).length;
     if (blockers || securityReport.scanStatus !== 'complete' || !securityReport.deduplicationComplete) {
-      const cell: Cell = { state: 'fail', text: blockers ? `${blockers} bestätigte kritische/hohe Product-Hub-Befunde · Freigabe gesperrt` : 'Vollständige Sicherheitsabnahme ausstehend' };
+      const cell: Cell = { state: 'fail', text: blockers ? `${blockers} bestätigte oder potenziell kritische Product-Hub-Befunde · Freigabe gesperrt` : 'Vollständige Sicherheitsabnahme ausstehend' };
       de['Sicherheitsprüfung'] = cell;
       com['Sicherheitsprüfung'] = cell;
     }
@@ -66,6 +66,11 @@ export function ReleaseDashboard({ canWrite, products }: { canWrite: boolean; pr
       <div><h2 className="text-lg font-semibold">Release Control v1.1</h2>
         <p className="text-sm text-muted-foreground">Nur tatsächlich ermittelte Prüfergebnisse. Keine Prüfung schaltet Pilot- oder Produktivbetrieb frei.</p></div>
       {canWrite && <Button variant="outline" size="sm" asChild><Link to="/security-center">Systemsicherheit · Priorisierter Prüfbericht</Link></Button>}
+      {canWrite && securityReport && <section className="border-y border-border py-3 space-y-2">
+        <h3 className="font-semibold text-sm">Product-Hub-relevante Sicherheitsbefunde</h3>
+        <p className="text-sm text-destructive">Bestätigte kritische/hohe und ungeklärte potenziell kritische Risiken blockieren die Pilotabnahme.</p>
+        {productHubSecurityFindings(securityReport.findings).filter(f => f.status === 'open').map(f => <details key={f.id} className="text-xs"><summary className="cursor-pointer">{f.priority} · {f.nativeId} · {f.title}</summary><p className="mt-1">{AUDIT_LABELS[f.classification ?? 'unresolved']} · Paket {f.correctionPackage}</p><p className="text-muted-foreground mt-1 break-words">{f.cause}</p><p className="mt-1 text-muted-foreground">{f.review}</p></details>)}
+      </section>}
       <Table>
         <TableHeader><TableRow><TableHead>Prüfung</TableHead><TableHead>alix-lasers.de</TableHead><TableHead>alix-lasers.com</TableHead></TableRow></TableHeader>
         <TableBody>{RELEASE_ROWS.map(r => <TableRow key={r}><TableCell className="font-medium">{r}</TableCell>

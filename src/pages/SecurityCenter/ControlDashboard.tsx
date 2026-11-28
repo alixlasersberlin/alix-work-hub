@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useSecurityControl, SECURITY_CONTROL_QUERY } from '@/hooks/useSecurityControl';
-import { securityTotals, filterSecurityFindings, correctionApproved, type SecurityFinding, type Priority } from '@/lib/securityControl';
+import { securityTotals, filterSecurityFindings, correctionApproved, CORRECTION_PACKAGES, AUDIT_LABELS, type SecurityFinding, type Priority } from '@/lib/securityControl';
 import { toast } from 'sonner';
 
 const tone: Record<Priority, string> = { P0: 'text-destructive', P1: 'text-destructive', P2: 'text-warning', P3: 'text-primary', P4: 'text-muted-foreground' };
@@ -30,13 +30,14 @@ export default function SecurityControlDashboard() {
   const [priority, setPriority] = useState('all');
   const [status, setStatus] = useState('open');
   const [source, setSource] = useState('all');
+  const [classification, setClassification] = useState('all');
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<SecurityFinding | null>(null);
   const [confirmation, setConfirmation] = useState('');
   const [wholeComponent, setWholeComponent] = useState(false);
   const totals = useMemo(() => data ? securityTotals(data) : null, [data]);
   const visible = useMemo(() => filterSecurityFindings(data?.findings ?? [], search, area, priority, status)
-    .filter(f => source === 'all' || f.source === source), [data, search, area, priority, status, source]);
+    .filter(f => (source === 'all' || f.source === source) && (classification === 'all' || f.classification === classification)), [data, search, area, priority, status, source, classification]);
   const pages = Math.max(1, Math.ceil(visible.length / 50));
   const currentPage = Math.min(page, pages - 1);
   const related = selected ? (data?.findings ?? []).filter(f => f.component === selected.component && f.status === 'open' && !f.potentialFalsePositive) : [];
@@ -57,24 +58,25 @@ export default function SecurityControlDashboard() {
   if (error || !data || !totals) return <div className="space-y-3 py-8"><ShieldAlert className="text-destructive" /><p>{error?.message ?? 'Kein belegter Prüfstand verfügbar.'}</p><Button variant="outline" onClick={() => refetch()}><RefreshCw className="mr-2 h-4 w-4" />Erneut laden</Button></div>;
 
   const exportCsv = () => {
-    const fields = ['nativeId','source','area','priority','confirmed','status','component','title','cause','impact','recommendation','review','relatedIds'] as const;
+    const fields = ['nativeId','source','area','priority','classification','correctionPackage','productHubRelevant','confirmed','status','component','title','cause','impact','recommendation','review','evidence','relatedIds'] as const;
     const rows = [fields.join(';'), ...data.findings.map(f => fields.map(key => csvCell(f[key])).join(';'))];
     download('\uFEFF' + rows.join('\r\n'), `ALIXWORK-Sicherheitsinventar-${data.reportId}.csv`, 'text/csv;charset=utf-8');
   };
   const exportReport = () => {
-    const header = `# ALIXWORK – Sicherheitsprüfbericht v${data.version}\n\nPrüfstand: ${data.generatedAt}\n\n188 offene Scannerbefunde und 493 Datenbankhinweise getrennt inventarisiert; 25 gezielt behobene Befunde. Kein abschließend deduplizierter Gesamtwert. Tiefenprüfung unvollständig. Bestätigung bezieht sich auf Quellcode, nicht auf produktive Ausnutzung. Weitere Korrekturen benötigen ausdrückliche Freigabe.\n\n## Release Control\n${data.release.reasons.map(r => '- ' + r).join('\n')}\n\nClient proof injection accepted: ${data.release.clientProof}\n\n`;
+    const header = `# ALIXWORK – Sicherheitsprüfbericht v${data.version}\n\nPrüfstand: ${data.generatedAt}\n\n${data.sourceCounts.deepOpen} aktuelle Scannerbefunde; ${data.sourceCounts.databaseHints} getrennte Datenbankhinweise; ${data.sourceCounts.fixedSelected} historisch gezielt behoben. Kein abschließend deduplizierter Gesamtwert. Scanstatus: ${data.scanStatus}.\n\n${data.audit?.scope ?? ''}\n\n${data.audit?.limitations.map(x => '- '+x).join('\n') ?? ''}\n\n## Schutzprüfungen\n${data.audit?.protectionChecks.map(c => `- ${c.name}: ${c.result}`).join('\n') ?? ''}\n\n## Release Control\n${data.release.reasons.map(r => '- ' + r).join('\n')}\n\n${data.release.clientProof}\n\n`;
     const body = data.findings.map(f => `## ${f.nativeId}\n\n${f.priority} – ${f.area} – ${f.status}\n\n**${f.title}**\n\nKomponente: ${f.component}\n\nPrüfstand: ${f.review}\n\nUrsache: ${f.cause}\n\nAuswirkung: ${f.impact}\n\nEmpfehlung: ${f.recommendation}\n\nGeplante Änderung: ${f.plannedChange}\n\nAbhängigkeiten:\n${f.dependencies.map(x => '- '+x).join('\n')}\n\nRegressionstests:\n${f.tests.map(x => '- '+x).join('\n')}\n\nWiederherstellung: ${f.rollback}\n\nVerwandte Befunde: ${f.relatedIds.join(', ') || 'Keine bestätigte Dublette zugeordnet'}\n`).join('\n');
-    download(header + body, `ALIXWORK-Sicherheitspruefbericht-${data.reportId}.md`, 'text/markdown;charset=utf-8');
+    const packages = CORRECTION_PACKAGES.map(p => `## Paket ${p.id} – ${p.title}\n\nNur vorbereitet, nicht ausgeführt.\n\n${data.findings.filter(f => f.status === 'open' && f.priority === p.priority).map(f => `- ${f.nativeId}${f.productHubRelevant ? ' [PRODUCT HUB]' : ''}: ${f.plannedChange}\n  Auswirkung: ${f.impact}\n  Prüfstand: ${f.review}`).join('\n')}`).join('\n\n');
+    download(header + packages + '\n\n' + body, `ALIXWORK-Sicherheitspruefbericht-${data.reportId}.md`, 'text/markdown;charset=utf-8');
   };
   return <div className="relative z-10 space-y-6 min-w-0 bg-background text-foreground">
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div><h2 className="text-xl font-semibold">Security Control Center v1.0</h2><p className="text-sm text-muted-foreground mt-1">Prüfstand {fmt(data.generatedAt)}</p></div>
+      <div><h2 className="text-xl font-semibold">Security Control Center · Final Audit</h2><p className="text-sm text-muted-foreground mt-1">Prüfstand {fmt(data.generatedAt)}</p></div>
       <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="mr-2 h-4 w-4" />Aktualisieren</Button><Button variant="outline" size="sm" onClick={exportCsv}><Download className="mr-2 h-4 w-4" />Inventar</Button><Button variant="outline" size="sm" onClick={exportReport}><Download className="mr-2 h-4 w-4" />Prüfbericht</Button></div>
     </div>
     <section className="border-y border-border py-4 space-y-2">
       <div className="flex items-center gap-2 text-warning font-medium"><ShieldAlert className="h-5 w-5 shrink-0" />Sicherheitsabnahme ausstehend</div>
       <p className="text-sm">{data.sourceCounts.deepOpen} offene Scannerbefunde · {data.sourceCounts.databaseHints} Datenbankhinweise · {data.sourceCounts.fixedSelected} gezielt behoben.</p>
-      <p className="text-xs text-muted-foreground">Quellbestände werden nicht ungeprüft addiert. Prioritäten sind vorläufig, soweit keine Einzelprüfung dokumentiert ist. Der bisherige Tiefenscan ist unvollständig; die neu angeforderte Tiefenprüfung ist in diesem Bericht noch nicht enthalten.</p>
+      <p className="text-xs text-muted-foreground">Der neue Tiefenscan ist enthalten, meldet jedoch weiterhin „incomplete“. Quellbestände werden nicht ungeprüft addiert. Keine vollständige Sicherheitsabnahme.</p>
     </section>
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
       {[
@@ -84,6 +86,17 @@ export default function SecurityControlDashboard() {
         ['P4 · Informativ / Prüfverdacht', totals.priorities.P4], ['Mögliche Fehlalarme', totals.possibleFalsePositives],
       ].map(([label,value]) => <div key={label} className="border border-border rounded-md p-3 min-w-0"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-xl font-semibold break-words">{value}</p></div>)}
     </div>
+    {data.audit && <section className="border-y border-border py-4 space-y-3">
+      <h3 className="font-semibold">Tatsächliche Sicherheitsbilanz</h3>
+      <p className="text-sm text-muted-foreground">{data.audit.scope}</p>
+      <div className="flex flex-wrap gap-2">{Object.entries(AUDIT_LABELS).map(([key,label]) => <Badge key={key} variant="outline">{label}: {data.audit?.classificationCounts[key] ?? 0}</Badge>)}</div>
+      <ul className="text-sm space-y-1">{data.audit.limitations.map(x => <li key={x}>{x}</li>)}</ul>
+      {data.audit.protectionChecks.map(c => <details key={c.name} className="text-sm"><summary className="cursor-pointer font-medium">{c.name}</summary><p className="mt-2 text-muted-foreground">{c.result}</p></details>)}
+    </section>}
+    <section className="border-b border-border pb-4 space-y-3">
+      <h3 className="font-semibold">Korrekturpakete · nur vorbereitet</h3>
+      <div className="flex flex-wrap gap-2">{CORRECTION_PACKAGES.map(p => <Button key={p.id} variant="outline" size="sm" onClick={() => { reset(setPriority,p.priority); setStatus('open'); }}><Layers className="mr-2 h-4 w-4" />Paket {p.id} · {p.title} ({data.findings.filter(f => f.status === 'open' && f.priority === p.priority).length})</Button>)}</div>
+    </section>
     <div className="grid md:grid-cols-2 gap-4 text-sm border-b border-border pb-4">
       <div><p className="text-muted-foreground text-xs">Letzter vollständiger Sicherheitsscan</p><p className="mt-1">{fmt(data.lastCompleteScan)}</p></div>
       <div><p className="text-muted-foreground text-xs">Letzte erfolgreiche begrenzte Sicherheitsprüfung</p><p className="mt-1">{fmt(data.lastSuccessfulCheck)}</p><p className="text-xs text-muted-foreground">Kein Nachweis einer vollständigen Sicherheitsabnahme.</p></div>
@@ -96,11 +109,12 @@ export default function SecurityControlDashboard() {
     </section>
     <section className="space-y-3">
       <h3 className="font-semibold">Befunde und Prioritäten</h3>
-      <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-2">
+      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-2">
         <Input aria-label="Sicherheitsbefunde suchen" placeholder="Kennung oder Komponente" value={search} onChange={e => reset(setSearch,e.target.value)} />
         <Select value={area} onValueChange={v => reset(setArea,v)}><SelectTrigger aria-label="Funktionsbereich"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Alle Bereiche</SelectItem>{[...new Set(data.findings.map(f => f.area))].sort().map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent></Select>
         <Select value={priority} onValueChange={v => reset(setPriority,v)}><SelectTrigger aria-label="Priorität"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Alle Prioritäten</SelectItem>{(['P0','P1','P2','P3','P4'] as const).map(p => <SelectItem value={p} key={p}>{p}</SelectItem>)}</SelectContent></Select>
-        <Select value={source} onValueChange={v => reset(setSource,v)}><SelectTrigger aria-label="Prüfquelle"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Alle Prüfquellen</SelectItem><SelectItem value="agent_security_v2">Tiefenscan</SelectItem><SelectItem value="supabase_linter">Datenbankhinweise</SelectItem></SelectContent></Select>
+        <Select value={source} onValueChange={v => reset(setSource,v)}><SelectTrigger aria-label="Prüfquelle"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Alle Prüfquellen</SelectItem><SelectItem value="agent_security_v2">Tiefenscan</SelectItem><SelectItem value="supabase_linter">Datenbankhinweise</SelectItem><SelectItem value="final_audit">Abschlussprüfung</SelectItem></SelectContent></Select>
+        <Select value={classification} onValueChange={v => reset(setClassification,v)}><SelectTrigger aria-label="Prüfbewertung"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Alle Bewertungen</SelectItem>{Object.entries(AUDIT_LABELS).map(([key,label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent></Select>
         <Select value={status} onValueChange={v => reset(setStatus,v)}><SelectTrigger aria-label="Befundstatus"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Alle Status</SelectItem><SelectItem value="open">Offen</SelectItem><SelectItem value="resolved">Behoben</SelectItem></SelectContent></Select>
       </div>
       <p className="text-xs text-muted-foreground">{visible.length} Prüfdatensätze · einschließlich getrennter Quellhinweise, kein eindeutiger Schwachstellen-Gesamtwert</p>
@@ -110,7 +124,7 @@ export default function SecurityControlDashboard() {
           <TableCell><Badge variant="outline" className={tone[f.priority]}>{f.priority}</Badge></TableCell>
           <TableCell className="min-w-56 max-w-md whitespace-normal"><p className="text-sm font-medium">{f.title}</p><p className="font-mono text-xs text-muted-foreground mt-1 break-all">{f.component}</p></TableCell>
           <TableCell className="whitespace-normal text-xs">{f.area}</TableCell>
-          <TableCell className="text-xs whitespace-normal">{f.status === 'resolved' ? <span className="text-success">Behoben</span> : f.confirmed ? 'Quellcode bestätigt' : f.potentialFalsePositive ? 'Fehlalarm prüfen' : 'Einzelprüfung offen'}{correctionApproved(data.reportId,f.id,data.approvals) && <p className="text-primary mt-1">Korrektur freigegeben</p>}</TableCell>
+          <TableCell className="text-xs whitespace-normal">{AUDIT_LABELS[f.classification ?? ''] ?? (f.status === 'resolved' ? 'Behoben' : 'Einzelprüfung offen')}{f.productHubRelevant && <p className="text-destructive mt-1">PRODUCT HUB</p>}{correctionApproved(data.reportId,f.id,data.approvals) && <p className="text-primary mt-1">Korrektur freigegeben</p>}</TableCell>
           <TableCell><Button size="icon" variant="ghost" title="Befund und Korrekturplan öffnen" aria-label={`Details ${f.nativeId}`} onClick={() => { setSelected(f); setWholeComponent(false); setConfirmation(''); }}><Eye className="h-4 w-4" /></Button></TableCell>
         </TableRow>)}{!visible.length && <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">Keine passenden Befunde</TableCell></TableRow>}</TableBody>
       </Table></div>
@@ -121,6 +135,8 @@ export default function SecurityControlDashboard() {
       {selected && <div className="space-y-4 text-sm min-w-0">
         <Badge variant="outline" className={tone[selected.priority]}>{selected.priority} · {selected.area}</Badge>
         <p className="font-mono text-xs break-all">{selected.component}</p><p className="text-muted-foreground">{selected.review}</p>
+        <p>{AUDIT_LABELS[selected.classification ?? ''] ?? 'Einzelprüfung offen'} · Paket {selected.correctionPackage ?? '–'}{selected.productHubRelevant ? ' · PRODUCT HUB' : ''}</p>
+        {selected.evidence?.length ? <details><summary className="cursor-pointer font-medium">Tatsächliche Einzelnachweise</summary><ul className="text-xs break-all space-y-2 mt-2">{selected.evidence.map(x => <li key={x}>{x}</li>)}</ul></details> : null}
         <dl className="space-y-3">{[['Technische Ursache',selected.cause],['Mögliche Auswirkungen',selected.impact],['Empfohlene Korrektur',selected.recommendation],['Geplante Änderungen',selected.plannedChange],['Wiederherstellung',selected.rollback]].map(([label,value]) => <div key={label}><dt className="font-medium">{label}</dt><dd className="text-muted-foreground mt-1 whitespace-pre-wrap break-words">{value}</dd></div>)}</dl>
         <div><h4 className="font-medium">Abhängigkeiten</h4><ul className="list-disc pl-5 text-muted-foreground">{selected.dependencies.map(x => <li key={x}>{x}</li>)}</ul></div>
         <div><h4 className="font-medium">Vorgesehene Regressionstests</h4><ul className="list-disc pl-5 text-muted-foreground">{selected.tests.map(x => <li key={x}>{x}</li>)}</ul></div>
